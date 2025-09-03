@@ -1,0 +1,805 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Perfil - Controle de Atendimento iConnect{% endblock %}
+{% block page_title %}Meu Perfil{% endblock %}
+{% block breadcrumb_title %}Perfil{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Tema escuro para profile */
+  .profile-container {
+    background: linear-gradient(135deg, #2a2a2f 0%, #1a1a1e 100%);
+    border-radius                      <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" placeholder="Digite seu sobrenome"> 15px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .profile-header {
+    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .profile-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    animation: shine 3s infinite;
+  }
+  
+  @keyframes shine {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Remover regras específicas dos profile-cards para evitar conflitos com sidebar principal */
+  .profile-page-content .profile-card.card {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+    animation: fadeInUp 0.6s ease-out;
+  }
+  
+  .profile-page-content .profile-card.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  }
+  
+  .profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4a5568, #2d3748);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: white;
+    border: 4px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    position: relative;
+    cursor: pointer;
+  }
+  
+  .profile-avatar:hover {
+    transform: scale(1.05);
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+  
+  .avatar-upload {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 30px;
+    height: 30px;
+    background: #4a5568;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .avatar-upload:hover {
+    background: #2d3748;
+    transform: scale(1.1);
+  }
+  
+  /* Aplicar estilos apenas ao conteúdo da página, não ao sidebar principal */
+  .profile-page-content .form-control {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+  
+  .profile-page-content .form-control:focus {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: #4a5568 !important;
+    box-shadow: 0 0 0 0.2rem rgba(74, 85, 104, 0.25) !important;
+    color: #ffffff !important;
+  }
+  
+  .profile-page-content .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+  
+  .profile-page-content .form-label {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-weight: 500;
+  }
+  
+  .section-title {
+    color: #ffffff;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+  }
+  
+  .section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 50px;
+    height: 2px;
+    background: linear-gradient(90deg, #4a5568, #2d3748);
+  }
+  
+  .stats-card {
+    background: rgba(74, 85, 104, 0.2);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+  }
+  
+  .stats-card:hover {
+    background: rgba(74, 85, 104, 0.3);
+    transform: translateY(-3px);
+  }
+  
+  .stats-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #ffffff;
+  }
+  
+  .stats-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  /* Aplicar estilos de botão apenas ao conteúdo da página, não ao sidebar */
+  .profile-page-content .btn-primary {
+    background: linear-gradient(135deg, #4a5568, #2d3748) !important;
+    border: none !important;
+    transition: all 0.3s ease;
+  }
+  
+  .profile-page-content .btn-primary:hover {
+    background: linear-gradient(135deg, #3a4356, #1a202c) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(74, 85, 104, 0.4);
+  }
+  
+  .profile-page-content .btn-outline-primary {
+    border-color: #4a5568 !important;
+    color: #4a5568 !important;
+  }
+  
+  .profile-page-content .btn-outline-primary:hover {
+    background: #4a5568 !important;
+    border-color: #4a5568 !important;
+    color: white !important;
+  }
+  
+  .progress-ring {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1rem;
+  }
+  
+  .progress-ring-circle {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.1);
+    stroke-width: 8;
+    stroke-dasharray: 220;
+    stroke-dashoffset: 0;
+    transform-origin: 50% 50%;
+    transform: rotate(-90deg);
+    transition: stroke-dashoffset 0.5s ease-in-out;
+  }
+  
+  .progress-ring-circle.progress-75 {
+    stroke: #4a5568;
+    stroke-dashoffset: 55;
+  }
+  
+  .collapsible-section {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+  
+  .collapsible-header {
+    background: rgba(74, 85, 104, 0.2);
+    padding: 1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  
+  .collapsible-header:hover {
+    background: rgba(74, 85, 104, 0.3);
+  }
+  
+  .collapsible-content {
+    padding: 1rem;
+    display: none;
+  }
+  
+  .collapsible-content.active {
+    display: block;
+    animation: fadeInUp 0.3s ease;
+  }
+  
+  .notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #4a5568, #2d3748);
+    color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    z-index: 9999;
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+  }
+  
+  .notification.show {
+    transform: translateX(0);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-page-content">
+  <!-- Notification Area -->
+  <div id="notification" class="notification">
+    <div class="d-flex align-items-center">
+      <i class="material-symbols-rounded me-2">check_circle</i>
+      <span id="notification-text">Perfil atualizado com sucesso!</span>
+    </div>
+  </div>
+
+  <!-- Profile Header -->
+  <div class="profile-header text-center">
+    <div class="row align-items-center">
+      <div class="col-md-3">
+        <div class="profile-avatar mx-auto" onclick="document.getElementById('avatar-upload').click()">
+          {{ user.username|first|upper }}
+          <div class="avatar-upload">
+            <i class="material-symbols-rounded" style="font-size: 14px;">camera_alt</i>
+          </div>
+          <input type="file" id="avatar-upload" accept="image/*" style="display: none;">
+        </div>
+        
+        <!-- Progress Ring -->
+        <div class="progress-ring">
+          <svg width="80" height="80">
+            <circle class="progress-ring-circle progress-75" cx="40" cy="40" r="35"/>
+          </svg>
+        </div>
+        <p style="color: rgba(255,255,255,0.8); margin: 0;">Perfil 75% completo</p>
+      </div>
+      <div class="col-md-9 text-md-start">
+        <h2 style="color: white; margin-bottom: 0.5rem;">{{ user.get_full_name|default:user.username }}</h2>
+        <p style="color: rgba(255,255,255,0.8); font-size: 1.1rem; margin-bottom: 1rem;">
+          <i class="material-symbols-rounded me-1">business_center</i>
+          {% if user.is_staff %}Agente de Suporte{% else %}Usuário{% endif %} | {{ user.email }}
+        </p>
+        <div class="row">
+          <div class="col-md-3">
+            <div class="stats-card">
+              <div class="stats-number">{{ user_stats.ocorrencias }}</div>
+              <div class="stats-label">Ocorrências</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stats-card">
+              <div class="stats-number">{{ user_stats.chamados }}</div>
+              <div class="stats-label">Chamados</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stats-card">
+              <div class="stats-number">{{ user_stats.atendimentos }}</div>
+              <div class="stats-label">Atendimentos</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stats-card">
+              <div class="stats-number">{{ user_stats.indisponibilidade }}</div>
+              <div class="stats-label">Indisponibilidade</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Main Profile Form -->
+    <div class="col-md-12">
+      <div class="profile-card card">
+        <div class="card-body">
+          <form id="profile-form">
+            {% csrf_token %}
+            
+            <!-- Personal Information Section -->
+            <div class="collapsible-section">
+              <div class="collapsible-header" onclick="toggleSection('personal')">
+                <h5 class="section-title mb-0">
+                  <i class="material-symbols-rounded me-2">person</i>
+                  Informações Pessoais
+                  <i class="material-symbols-rounded float-end">expand_more</i>
+                </h5>
+              </div>
+              <div class="collapsible-content active" id="personal-content">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Nome de usuário</label>
+                      <input type="text" class="form-control" id="username" value="{{ user.username }}" readonly>
+                      <small class="text-muted">O nome de usuário não pode ser alterado</small>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Email *</label>
+                      <input type="email" class="form-control" id="email" value="{{ user.email }}" required>
+                      <div class="invalid-feedback">Por favor, insira um email válido.</div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Primeiro Nome</label>
+                      <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" placeholder="Digite seu primeiro nome">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Último Nome</label>
+                      <input type="text" class="form-control" id="last_name" value="{{ user.last_name }}" placeholder="Digite seu último nome">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contact Information Section -->
+            <div class="collapsible-section">
+              <div class="collapsible-header" onclick="toggleSection('contact')">
+                <h5 class="section-title mb-0">
+                  <i class="material-symbols-rounded me-2">contact_phone</i>
+                  Informações de Contato
+                  <i class="material-symbols-rounded float-end">expand_more</i>
+                </h5>
+              </div>
+              <div class="collapsible-content" id="contact-content">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Telefone</label>
+                                            <input type="tel" class="form-control" id="telefone" name="telefone" value="{{ perfil.telefone }}" placeholder="(XX) XXXXX-XXXX">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Telefone Alternativo</label>
+                      <input type="tel" class="form-control" id="alt_phone" placeholder="(11) 99999-9999">
+                    </div>
+                  </div>
+                  <div class="col-md-12">
+                    <div class="mb-3">
+                      <label class="form-label">Endereço</label>
+                      <input type="text" class="form-control" id="address" name="endereco" value="{{ perfil.endereco }}" placeholder="Rua, Número, Bairro">
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">Cidade</label>
+                      <input type="text" class="form-control" id="city" placeholder="São Paulo">
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">Estado</label>
+                      <select class="form-control" id="state">
+                        <option value="">Selecione...</option>
+                        <option value="SP">São Paulo</option>
+                        <option value="RJ">Rio de Janeiro</option>
+                        <option value="MG">Minas Gerais</option>
+                        <option value="RS">Rio Grande do Sul</option>
+                        <option value="PR">Paraná</option>
+                        <option value="SC">Santa Catarina</option>
+                        <option value="BA">Bahia</option>
+                        <option value="GO">Goiás</option>
+                        <option value="DF">Distrito Federal</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">CEP</label>
+                      <input type="text" class="form-control" id="zip_code" placeholder="12345-678" maxlength="9">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Professional Information Section -->
+            <div class="collapsible-section">
+              <div class="collapsible-header" onclick="toggleSection('professional')">
+                <h5 class="section-title mb-0">
+                  <i class="material-symbols-rounded me-2">work</i>
+                  Informações Profissionais
+                  <i class="material-symbols-rounded float-end">expand_more</i>
+                </h5>
+              </div>
+              <div class="collapsible-content" id="professional-content">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Cargo</label>
+                      <input type="text" class="form-control" id="job_title" placeholder="{% if user.is_staff %}Agente de Suporte{% else %}Desenvolvedor Django{% endif %}">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Departamento</label>
+                      <select class="form-control" id="department">
+                        <option value="">Selecione...</option>
+                        <option value="TI">Tecnologia da Informação</option>
+                        <option value="SUP">Suporte Técnico</option>
+                        <option value="RH">Recursos Humanos</option>
+                        <option value="FIN">Financeiro</option>
+                        <option value="OPS">Operações</option>
+                        <option value="COM">Comercial</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-12">
+                    <div class="mb-3">
+                      <label class="form-label">Bio Profissional</label>
+                                            <textarea class="form-control" id="bio" name="bio" rows="3" placeholder="Conte um pouco sobre você...">{{ perfil.bio }}</textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-end mt-4">
+              <button type="button" class="btn btn-outline-primary me-2" onclick="resetForm()">
+                <i class="material-symbols-rounded me-1">refresh</i>
+                Resetar
+              </button>
+              <button type="submit" class="btn btn-primary">
+                <i class="material-symbols-rounded me-1">save</i>
+                Salvar Alterações
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> <!-- Fechamento do profile-page-content -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize form validation
+  initializeFormValidation();
+  
+  // Initialize image upload
+  initializeImageUpload();
+  
+  // Initialize auto-save if enabled
+  initializeAutoSave();
+  
+  // Initialize real-time validation
+  initializeRealTimeValidation();
+});
+
+// Toggle collapsible sections
+function toggleSection(sectionId) {
+  const content = document.getElementById(sectionId + '-content');
+  const icon = content.parentElement.querySelector('.float-end');
+  
+  content.classList.toggle('active');
+  
+  if (content.classList.contains('active')) {
+    content.style.display = 'block';
+    icon.style.transform = 'rotate(180deg)';
+  } else {
+    content.style.display = 'none';
+    icon.style.transform = 'rotate(0deg)';
+  }
+}
+
+// Show notification
+function showNotification(message, type = 'success') {
+  const notification = document.getElementById('notification');
+  const notificationText = document.getElementById('notification-text');
+  
+  notificationText.textContent = message;
+  notification.className = 'notification show';
+  
+  if (type === 'error') {
+    notification.style.background = 'linear-gradient(135deg, #dc3545, #c82333)';
+  } else {
+    notification.style.background = 'linear-gradient(135deg, #4a5568, #2d3748)';
+  }
+  
+  setTimeout(() => {
+    notification.classList.remove('show');
+  }, 3000);
+}
+
+// Form validation
+function initializeFormValidation() {
+  const form = document.getElementById('profile-form');
+  
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Validate required fields
+    const email = document.getElementById('email');
+    if (!isValidEmail(email.value)) {
+      email.classList.add('is-invalid');
+      showNotification('Por favor, insira um email válido.', 'error');
+      return;
+    }
+    
+    // Simulate API call
+    const submitButton = form.querySelector('button[type="submit"]');
+    const originalText = submitButton.innerHTML;
+    submitButton.innerHTML = '<i class="material-symbols-rounded me-1 spin">sync</i>Salvando...';
+    submitButton.disabled = true;
+    
+    setTimeout(() => {
+      // Reset button
+      submitButton.innerHTML = originalText;
+      submitButton.disabled = false;
+      
+      // Show success notification
+      showNotification('Perfil atualizado com sucesso!');
+      
+      // Update progress ring (simulate profile completion)
+      updateProfileProgress();
+      
+      // Remove validation classes
+      form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+      
+      // Save form data
+      saveFormData();
+      
+    }, 2000);
+  });
+}
+
+// Email validation
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// Real-time validation
+function initializeRealTimeValidation() {
+  const email = document.getElementById('email');
+  const zipCode = document.getElementById('zip_code');
+  
+  email.addEventListener('blur', function() {
+    if (this.value && !isValidEmail(this.value)) {
+      this.classList.add('is-invalid');
+    } else {
+      this.classList.remove('is-invalid');
+    }
+  });
+  
+  zipCode.addEventListener('input', function() {
+    // Format CEP as user types
+    let value = this.value.replace(/\D/g, '');
+    if (value.length > 5) {
+      value = value.replace(/^(\d{5})(\d)/, '$1-$2');
+    }
+    this.value = value;
+    
+    // Validate CEP format
+    if (value.length === 9) {
+      this.classList.remove('is-invalid');
+      // Simulate CEP lookup
+      lookupZipCode(value.replace('-', ''));
+    }
+  });
+}
+
+// CEP lookup simulation
+function lookupZipCode(cep) {
+  // This would normally make an API call to a CEP service
+  setTimeout(() => {
+    document.getElementById('city').value = 'São Paulo';
+    document.getElementById('state').value = 'SP';
+    showNotification('Endereço encontrado automaticamente!');
+  }, 500);
+}
+
+// Image upload
+function initializeImageUpload() {
+  const avatarUpload = document.getElementById('avatar-upload');
+  const avatar = document.querySelector('.profile-avatar');
+  
+  avatarUpload.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        showNotification('A imagem deve ter no máximo 2MB.', 'error');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        // Create image element
+        const img = document.createElement('img');
+        img.src = e.target.result;
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+        img.style.borderRadius = '50%';
+        
+        // Replace avatar content
+        avatar.innerHTML = '';
+        avatar.appendChild(img);
+        
+        // Re-add upload button
+        const uploadBtn = document.createElement('div');
+        uploadBtn.className = 'avatar-upload';
+        uploadBtn.innerHTML = '<i class="material-symbols-rounded" style="font-size: 14px;">camera_alt</i>';
+        uploadBtn.onclick = () => document.getElementById('avatar-upload').click();
+        avatar.appendChild(uploadBtn);
+        
+        showNotification('Foto de perfil atualizada!');
+        updateProfileProgress();
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+}
+
+// Auto-save functionality
+function initializeAutoSave() {
+  // Auto-load saved data on page load
+  loadFormData();
+}
+
+// Save form data to localStorage
+function saveFormData() {
+  const formData = {
+    email: document.getElementById('email').value,
+    firstName: document.getElementById('first_name').value,
+    lastName: document.getElementById('last_name').value,
+    phone: document.getElementById('phone').value,
+    altPhone: document.getElementById('alt_phone').value,
+    address: document.getElementById('address').value,
+    city: document.getElementById('city').value,
+    state: document.getElementById('state').value,
+    zipCode: document.getElementById('zip_code').value,
+    jobTitle: document.getElementById('job_title').value,
+    department: document.getElementById('department').value,
+    bio: document.getElementById('bio').value
+  };
+  
+  localStorage.setItem('profileFormData', JSON.stringify(formData));
+}
+
+// Load form data from localStorage
+function loadFormData() {
+  const savedData = localStorage.getItem('profileFormData');
+  if (savedData) {
+    const formData = JSON.parse(savedData);
+    
+    Object.keys(formData).forEach(key => {
+      const fieldName = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+      const element = document.getElementById(fieldName);
+      if (element && formData[key]) {
+        element.value = formData[key];
+      }
+    });
+  }
+}
+
+// Reset form
+function resetForm() {
+  if (confirm('Tem certeza que deseja resetar todas as alterações?')) {
+    document.getElementById('profile-form').reset();
+    localStorage.removeItem('profileFormData');
+    
+    // Reset user data
+    document.getElementById('email').value = '{{ user.email }}';
+    document.getElementById('first_name').value = '{{ user.first_name }}';
+    document.getElementById('last_name').value = '{{ user.last_name }}';
+    
+    // Reset validation classes
+    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+    
+    showNotification('Formulário resetado com sucesso!');
+    
+    // Update progress
+    updateProfileProgress();
+  }
+}
+
+// Update profile progress
+function updateProfileProgress() {
+  const fields = ['email', 'first_name', 'last_name', 'phone', 'address', 'city', 'job_title'];
+  let filledFields = 0;
+  
+  fields.forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    if (field && field.value.trim()) {
+      filledFields++;
+    }
+  });
+  
+  const progress = Math.round((filledFields / fields.length) * 100);
+  const progressCircle = document.querySelector('.progress-ring-circle.progress-75');
+  const circumference = 2 * Math.PI * 35; // radius = 35
+  const offset = circumference - (progress / 100) * circumference;
+  
+  if (progressCircle) {
+    progressCircle.style.strokeDashoffset = offset;
+    
+    // Update progress text
+    const progressText = progressCircle.closest('.col-md-3').querySelector('p');
+    if (progressText) {
+      progressText.textContent = `Perfil ${progress}% completo`;
+    }
+  }
+}
+
+// Add spinning animation for loading states
+const style = document.createElement('style');
+style.textContent = `
+  .spin {
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`;
+document.head.appendChild(style);
+
+// Update progress on page load
+setTimeout(() => {
+  updateProfileProgress();
+}, 100);
+</script>
+{% endblock %}

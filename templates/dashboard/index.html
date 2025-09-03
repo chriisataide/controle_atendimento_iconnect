@@ -1,0 +1,484 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Controle de Atendimento iConnect{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+{% block breadcrumb_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="ms-3">
+        <h3 class="mb-0 h4 font-weight-bolder">Dashboard</h3>
+        <p class="mb-4">
+            Controle de atendimento e métricas do sistema iConnect.
+        </p>
+    </div>
+    
+    <!-- Cards de Métricas -->
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Atendimentos Hoje</p>
+                        <h4 class="mb-0">{{ atendimentos_hoje|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">support_agent</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-success font-weight-bolder">+{{ variacao_atendimentos|floatformat:0 }}% </span>em relação a ontem</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Usuários Ativos</p>
+                        <h4 class="mb-0">{{ usuarios_ativos|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">person</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-success font-weight-bolder">+5% </span>este mês</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Tickets Abertos</p>
+                        <h4 class="mb-0">{{ tickets_abertos|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">assignment</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-warning font-weight-bolder">-3% </span>em relação a semana passada</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-sm-6">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Taxa de Resolução</p>
+                        <h4 class="mb-0">{{ taxa_resolucao|default:"0" }}%</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">trending_up</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-success font-weight-bolder">+8% </span>este mês</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4 col-md-6 mt-4 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="mb-0">Atendimentos por Hora</h6>
+                <p class="text-sm">Performance de atendimento diário</p>
+                <div class="pe-2">
+                    <div class="chart">
+                        <canvas id="chart-bars" class="chart-canvas" height="170"></canvas>
+                    </div>
+                </div>
+                <hr class="dark horizontal">
+                <div class="d-flex">
+                    <i class="material-symbols-rounded text-sm my-auto me-1">schedule</i>
+                    <p class="mb-0 text-sm">Dados atualizados em tempo real</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mt-4 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="mb-0">Tendência de Tickets</h6>
+                <p class="text-sm">(<span class="font-weight-bolder">+15%</span>) aumento nos atendimentos</p>
+                <div class="pe-2">
+                    <div class="chart">
+                        <canvas id="chart-line" class="chart-canvas" height="170"></canvas>
+                    </div>
+                </div>
+                <hr class="dark horizontal">
+                <div class="d-flex">
+                    <i class="material-symbols-rounded text-sm my-auto me-1">schedule</i>
+                    <p class="mb-0 text-sm">Última atualização: há 2 minutos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mt-4 mb-3">
+        <div class="card h-100">
+            <div class="card-header pb-0">
+                <h6>Resumo dos Atendimentos</h6>
+                <p class="text-sm">
+                    <i class="fa fa-arrow-up text-success" aria-hidden="true"></i>
+                    <span class="font-weight-bold">24%</span> este mês
+                </p>
+            </div>
+            <div class="card-body p-3">
+                <div class="timeline timeline-one-side">
+                    <div class="timeline-block mb-3">
+                        <span class="timeline-step">
+                            <i class="material-symbols-rounded text-success text-gradient">notifications</i>
+                        </span>
+                        <div class="timeline-content">
+                            <h6 class="text-dark text-sm font-weight-bold mb-0">Ticket #1234</h6>
+                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">22 DEC 7:20 PM</p>
+                            <p class="text-sm mt-3 mb-2">
+                                Problema resolvido com sucesso. Cliente satisfeito com o atendimento.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="timeline-block mb-3">
+                        <span class="timeline-step">
+                            <i class="material-symbols-rounded text-danger text-gradient">code</i>
+                        </span>
+                        <div class="timeline-content">
+                            <h6 class="text-dark text-sm font-weight-bold mb-0">Ticket #1233</h6>
+                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">21 DEC 11 PM</p>
+                            <p class="text-sm mt-3 mb-2">
+                                Erro de sistema reportado e correção aplicada.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="timeline-block mb-3">
+                        <span class="timeline-step">
+                            <i class="material-symbols-rounded text-info text-gradient">shopping_cart</i>
+                        </span>
+                        <div class="timeline-content">
+                            <h6 class="text-dark text-sm font-weight-bold mb-0">Ticket #1232</h6>
+                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">21 DEC 9:34 PM</p>
+                            <p class="text-sm mt-3 mb-2">
+                                Solicitação de nova funcionalidade em análise.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-lg-8 col-md-6 mb-md-0 mb-4">
+        <div class="card">
+            <div class="card-header pb-0">
+                <div class="row">
+                    <div class="col-lg-6 col-7">
+                        <h6>Atendimentos Recentes</h6>
+                        <p class="text-sm mb-0">
+                            <i class="fa fa-check text-info" aria-hidden="true"></i>
+                            <span class="font-weight-bold ms-1">30 finalizados</span> este mês
+                        </p>
+                    </div>
+                    <div class="col-lg-6 col-5 my-auto text-end">
+                        <div class="dropdown float-lg-end pe-4">
+                            <a class="cursor-pointer" id="dropdownTable" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa fa-ellipsis-v text-secondary"></i>
+                            </a>
+                            <ul class="dropdown-menu px-2 py-3 ms-sm-n4 ms-n5" aria-labelledby="dropdownTable">
+                                <li><a class="dropdown-item border-radius-md" href="javascript:;">Ação</a></li>
+                                <li><a class="dropdown-item border-radius-md" href="javascript:;">Outra ação</a></li>
+                                <li><a class="dropdown-item border-radius-md" href="javascript:;">Algo mais</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ticket</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cliente</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Data</th>
+                                <th class="text-secondary opacity-7"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in tickets_recentes %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">#{{ ticket.numero }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ ticket.categoria.nome }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">{{ ticket.cliente.nome }}</p>
+                                    <p class="text-xs text-secondary mb-0">{{ ticket.cliente.email }}</p>
+                                </td>
+                                <td class="align-middle text-center text-sm">
+                                    {% if ticket.status == 'resolvido' or ticket.status == 'fechado' %}
+                                        <span class="badge badge-sm bg-gradient-success">{{ ticket.get_status_display }}</span>
+                                    {% elif ticket.status == 'em_andamento' %}
+                                        <span class="badge badge-sm bg-gradient-warning">{{ ticket.get_status_display }}</span>
+                                    {% elif ticket.status == 'aberto' %}
+                                        <span class="badge badge-sm bg-gradient-info">{{ ticket.get_status_display }}</span>
+                                    {% else %}
+                                        <span class="badge badge-sm bg-gradient-secondary">{{ ticket.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">{{ ticket.criado_em|date:"d/m/Y" }}</span>
+                                </td>
+                                <td class="align-middle">
+                                    <a href="javascript:;" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="Ver ticket">
+                                        Ver
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">
+                                    <p class="text-sm text-secondary mb-0">Nenhum ticket encontrado</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6">
+        <div class="card h-100">
+            <div class="card-header pb-0">
+                <h6>Status dos Agentes</h6>
+            </div>
+            <div class="card-body p-3">
+                <div class="timeline timeline-one-side">
+                    {% for perfil in agentes_status %}
+                    <div class="timeline-block mb-3">
+                        <span class="timeline-step">
+                            {% if perfil.status == 'online' %}
+                                <i class="material-symbols-rounded text-success text-gradient">person</i>
+                            {% elif perfil.status == 'ocupado' %}
+                                <i class="material-symbols-rounded text-warning text-gradient">person</i>
+                            {% elif perfil.status == 'ausente' %}
+                                <i class="material-symbols-rounded text-info text-gradient">person</i>
+                            {% else %}
+                                <i class="material-symbols-rounded text-secondary text-gradient">person</i>
+                            {% endif %}
+                        </span>
+                        <div class="timeline-content">
+                            <h6 class="text-dark text-sm font-weight-bold mb-0">{{ perfil.user.get_full_name|default:perfil.user.username }}</h6>
+                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
+                                {{ perfil.get_status_display }} - {{ perfil.tickets_ativos }} tickets ativos
+                            </p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="timeline-block mb-3">
+                        <span class="timeline-step">
+                            <i class="material-symbols-rounded text-secondary text-gradient">person</i>
+                        </span>
+                        <div class="timeline-content">
+                            <h6 class="text-dark text-sm font-weight-bold mb-0">Nenhum agente encontrado</h6>
+                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">Configure agentes no admin</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    var ctx = document.getElementById("chart-bars").getContext("2d");
+    new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: ["8h", "10h", "12h", "14h", "16h", "18h", "20h"],
+            datasets: [{
+                label: "Atendimentos",
+                tension: 0.4,
+                borderWidth: 0,
+                borderRadius: 4,
+                borderSkipped: false,
+                backgroundColor: "rgba(255, 255, 255, .8)",
+                data: [12, 19, 15, 23, 18, 25, 10],
+                maxBarThickness: 6
+            }],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false,
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index',
+            },
+            scales: {
+                y: {
+                    grid: {
+                        drawBorder: false,
+                        display: true,
+                        drawOnChartArea: true,
+                        drawTicks: false,
+                        borderDash: [5, 5],
+                        color: 'rgba(255, 255, 255, .2)'
+                    },
+                    ticks: {
+                        display: true,
+                        color: '#f8f9fa',
+                        padding: 10,
+                        font: {
+                            size: 14,
+                            weight: 300,
+                            family: "Inter",
+                            style: 'normal',
+                            lineHeight: 2
+                        },
+                    }
+                },
+                x: {
+                    grid: {
+                        drawBorder: false,
+                        display: true,
+                        drawOnChartArea: true,
+                        drawTicks: false,
+                        borderDash: [5, 5],
+                        color: 'rgba(255, 255, 255, .2)'
+                    },
+                    ticks: {
+                        display: true,
+                        color: '#f8f9fa',
+                        padding: 10,
+                        font: {
+                            size: 14,
+                            weight: 300,
+                            family: "Inter",
+                            style: 'normal',
+                            lineHeight: 2
+                        },
+                    }
+                },
+            },
+        },
+    });
+
+    var ctx2 = document.getElementById("chart-line").getContext("2d");
+    new Chart(ctx2, {
+        type: "line",
+        data: {
+            labels: ["Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
+            datasets: [{
+                label: "Tickets",
+                tension: 0,
+                borderWidth: 0,
+                pointRadius: 5,
+                pointBackgroundColor: "rgba(255, 255, 255, .8)",
+                pointBorderColor: "transparent",
+                borderColor: "rgba(255, 255, 255, .8)",
+                borderColor: "rgba(255, 255, 255, .8)",
+                borderWidth: 4,
+                backgroundColor: "transparent",
+                fill: true,
+                data: [50, 40, 300, 320, 500, 350, 200, 230, 500],
+                maxBarThickness: 6
+            }],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false,
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index',
+            },
+            scales: {
+                y: {
+                    grid: {
+                        drawBorder: false,
+                        display: true,
+                        drawOnChartArea: true,
+                        drawTicks: false,
+                        borderDash: [5, 5],
+                        color: 'rgba(255, 255, 255, .2)'
+                    },
+                    ticks: {
+                        display: true,
+                        padding: 10,
+                        color: '#f8f9fa',
+                        font: {
+                            size: 14,
+                            weight: 300,
+                            family: "Inter",
+                            style: 'normal',
+                            lineHeight: 2
+                        },
+                    }
+                },
+                x: {
+                    grid: {
+                        drawBorder: false,
+                        display: false,
+                        drawOnChartArea: false,
+                        drawTicks: false,
+                        borderDash: [5, 5]
+                    },
+                    ticks: {
+                        display: true,
+                        color: '#f8f9fa',
+                        padding: 10,
+                        font: {
+                            size: 14,
+                            weight: 300,
+                            family: "Inter",
+                            style: 'normal',
+                            lineHeight: 2
+                        },
+                    }
+                },
+            },
+        },
+    });
+</script>
+{% endblock %}
