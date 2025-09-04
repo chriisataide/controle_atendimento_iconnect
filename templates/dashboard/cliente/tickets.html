@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Meus Tickets{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card my-4">
+        <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+          <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="text-white text-capitalize ps-3 mb-0">Meus Tickets</h6>
+              <div class="me-3">
+                <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-outline-white btn-sm mb-0">
+                  <i class="material-icons text-sm">add</i>&nbsp;&nbsp;Novo Ticket
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body px-0 pb-2">
+          <div class="table-responsive p-0">
+            <table class="table align-items-center mb-0">
+              <thead>
+                <tr>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ticket</th>
+                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Categoria</th>
+                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Agente</th>
+                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Criado</th>
+                  <th class="text-secondary opacity-7"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for ticket in tickets %}
+                <tr>
+                  <td>
+                    <div class="d-flex px-2 py-1">
+                      <div class="d-flex flex-column justify-content-center">
+                        <h6 class="mb-0 text-sm">#{{ ticket.numero }}</h6>
+                        <p class="text-xs text-secondary mb-0">{{ ticket.titulo|truncatechars:50 }}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="align-middle text-center text-sm">
+                    {% if ticket.status == 'aberto' %}
+                      <span class="badge badge-sm bg-gradient-danger">{{ ticket.get_status_display }}</span>
+                    {% elif ticket.status == 'em_andamento' %}
+                      <span class="badge badge-sm bg-gradient-warning">{{ ticket.get_status_display }}</span>
+                    {% elif ticket.status == 'aguardando_cliente' %}
+                      <span class="badge badge-sm bg-gradient-info">{{ ticket.get_status_display }}</span>
+                    {% elif ticket.status == 'resolvido' %}
+                      <span class="badge badge-sm bg-gradient-success">{{ ticket.get_status_display }}</span>
+                    {% else %}
+                      <span class="badge badge-sm bg-gradient-dark">{{ ticket.get_status_display }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="align-middle text-center">
+                    <span class="text-secondary text-xs font-weight-bold">{{ ticket.categoria.nome }}</span>
+                  </td>
+                  <td class="align-middle text-center">
+                    {% if ticket.agente %}
+                      <span class="text-secondary text-xs font-weight-bold">{{ ticket.agente.get_full_name|default:ticket.agente.username }}</span>
+                    {% else %}
+                      <span class="text-secondary text-xs">Não atribuído</span>
+                    {% endif %}
+                  </td>
+                  <td class="align-middle text-center">
+                    <span class="text-secondary text-xs font-weight-bold">{{ ticket.criado_em|date:"d/m/Y H:i" }}</span>
+                  </td>
+                  <td class="align-middle">
+                    <a href="{% url 'dashboard:ticket_detail' ticket.pk %}" class="text-secondary font-weight-bold text-xs">
+                      <i class="material-icons">visibility</i>
+                    </a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="6" class="text-center py-4">
+                    <div class="d-flex flex-column align-items-center">
+                      <i class="material-icons text-muted" style="font-size: 48px;">inbox</i>
+                      <p class="text-muted mt-2 mb-3">Você ainda não criou nenhum ticket.</p>
+                      <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-primary btn-sm">
+                        <i class="material-icons">add</i>&nbsp;&nbsp;Criar Primeiro Ticket
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Paginação -->
+          {% if is_paginated %}
+          <div class="d-flex justify-content-center mt-4">
+            <nav>
+              <ul class="pagination pagination-sm">
+                {% if page_obj.has_previous %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                  </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                  {% if page_obj.number == num %}
+                    <li class="page-item active">
+                      <span class="page-link">{{ num }}</span>
+                    </li>
+                  {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                  {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Próximo</a>
+                  </li>
+                {% endif %}
+              </ul>
+            </nav>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

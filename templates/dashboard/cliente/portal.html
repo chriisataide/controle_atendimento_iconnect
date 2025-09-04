@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Portal do Cliente{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  {% if cliente %}
+  <div class="row">
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+      <div class="card">
+        <div class="card-header p-3 pt-2">
+          <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary text-center border-radius-xl mt-n4 position-absolute">
+            <i class="material-icons opacity-10">confirmation_number</i>
+          </div>
+          <div class="text-end pt-1">
+            <p class="text-sm mb-0 text-capitalize">Total de Tickets</p>
+            <h4 class="mb-0">{{ total_tickets }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+      <div class="card">
+        <div class="card-header p-3 pt-2">
+          <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute">
+            <i class="material-icons opacity-10">pending</i>
+          </div>
+          <div class="text-end pt-1">
+            <p class="text-sm mb-0 text-capitalize">Tickets Abertos</p>
+            <h4 class="mb-0">{{ tickets_abertos }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+      <div class="card">
+        <div class="card-header p-3 pt-2">
+          <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
+            <i class="material-icons opacity-10">check_circle</i>
+          </div>
+          <div class="text-end pt-1">
+            <p class="text-sm mb-0 text-capitalize">Tickets Fechados</p>
+            <h4 class="mb-0">{{ tickets_fechados }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+      <div class="card">
+        <div class="card-header p-3 pt-2">
+          <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
+            <i class="material-icons opacity-10">add</i>
+          </div>
+          <div class="text-end pt-1">
+            <p class="text-sm mb-0 text-capitalize">Novo Ticket</p>
+            <h4 class="mb-0">
+              <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-info btn-sm">Criar</a>
+            </h4>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-4">
+    <div class="col-lg-8 col-md-6 mb-md-0 mb-4">
+      <div class="card">
+        <div class="card-header pb-0">
+          <div class="row">
+            <div class="col-lg-6 col-7">
+              <h6>Seus Tickets Recentes</h6>
+              <p class="text-sm mb-0">
+                <i class="fa fa-check text-info" aria-hidden="true"></i>
+                <span class="font-weight-bold ms-1">{{ tickets_recentes|length }}</span> tickets
+              </p>
+            </div>
+            <div class="col-lg-6 col-5 my-auto text-end">
+              <div class="dropdown float-lg-end pe-4">
+                <a class="cursor-pointer" href="{% url 'dashboard:cliente_tickets' %}">
+                  <i class="material-icons">more_vert</i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body px-0 pb-2">
+          <div class="table-responsive">
+            <table class="table align-items-center mb-0">
+              <thead>
+                <tr>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ticket</th>
+                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Agente</th>
+                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Criado</th>
+                  <th class="text-secondary opacity-7"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for ticket in tickets_recentes %}
+                <tr>
+                  <td>
+                    <div class="d-flex px-2 py-1">
+                      <div class="d-flex flex-column justify-content-center">
+                        <h6 class="mb-0 text-sm">#{{ ticket.numero }}</h6>
+                        <p class="text-xs text-secondary mb-0">{{ ticket.titulo|truncatechars:40 }}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="align-middle text-center text-sm">
+                    {% if ticket.status == 'aberto' %}
+                      <span class="badge badge-sm bg-gradient-danger">{{ ticket.get_status_display }}</span>
+                    {% elif ticket.status == 'em_andamento' %}
+                      <span class="badge badge-sm bg-gradient-warning">{{ ticket.get_status_display }}</span>
+                    {% elif ticket.status == 'resolvido' %}
+                      <span class="badge badge-sm bg-gradient-info">{{ ticket.get_status_display }}</span>
+                    {% else %}
+                      <span class="badge badge-sm bg-gradient-success">{{ ticket.get_status_display }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="align-middle text-center">
+                    {% if ticket.agente %}
+                      <span class="text-secondary text-xs font-weight-bold">{{ ticket.agente.get_full_name|default:ticket.agente.username }}</span>
+                    {% else %}
+                      <span class="text-secondary text-xs">Não atribuído</span>
+                    {% endif %}
+                  </td>
+                  <td class="align-middle text-center">
+                    <span class="text-secondary text-xs font-weight-bold">{{ ticket.criado_em|date:"d/m/Y" }}</span>
+                  </td>
+                  <td class="align-middle">
+                    <a href="{% url 'dashboard:ticket_detail' ticket.pk %}" class="text-secondary font-weight-bold text-xs">
+                      Ver
+                    </a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="5" class="text-center py-4">
+                    <p class="text-muted">Você ainda não criou nenhum ticket.</p>
+                    <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-primary btn-sm">Criar Primeiro Ticket</a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4 col-md-6">
+      <div class="card h-100">
+        <div class="card-header pb-0">
+          <h6>Informações da Conta</h6>
+        </div>
+        <div class="card-body p-3">
+          <div class="timeline timeline-one-side">
+            <div class="timeline-block mb-3">
+              <span class="timeline-step">
+                <i class="material-icons text-success text-gradient">person</i>
+              </span>
+              <div class="timeline-content">
+                <h6 class="text-dark text-sm font-weight-bold mb-0">{{ cliente.nome }}</h6>
+                <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">{{ cliente.email }}</p>
+                {% if cliente.telefone %}
+                <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">{{ cliente.telefone }}</p>
+                {% endif %}
+                {% if cliente.empresa %}
+                <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">{{ cliente.empresa }}</p>
+                {% endif %}
+              </div>
+            </div>
+            <div class="timeline-block mb-3">
+              <span class="timeline-step">
+                <i class="material-icons text-info text-gradient">date_range</i>
+              </span>
+              <div class="timeline-content">
+                <h6 class="text-dark text-sm font-weight-bold mb-0">Cliente desde</h6>
+                <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">{{ cliente.criado_em|date:"d/m/Y" }}</p>
+              </div>
+            </div>
+            <div class="timeline-block mb-3">
+              <span class="timeline-step">
+                <i class="material-icons text-warning text-gradient">support</i>
+              </span>
+              <div class="timeline-content">
+                <h6 class="text-dark text-sm font-weight-bold mb-0">Precisa de ajuda?</h6>
+                <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
+                  <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-sm btn-warning">Abrir Ticket</a>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body text-center py-5">
+          <i class="material-icons text-muted mb-3" style="font-size: 64px;">person_off</i>
+          <h4 class="text-muted">Acesso Restrito</h4>
+          <p class="text-muted">Você precisa ser cadastrado como cliente para acessar este portal.</p>
+          <p class="text-muted">Entre em contato com o suporte para mais informações.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

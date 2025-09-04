@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Criar Novo Ticket{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="card">
+        <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+          <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+            <h6 class="text-white text-capitalize ps-3 mb-0">Criar Novo Ticket</h6>
+          </div>
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="input-group input-group-outline mb-3">
+                  <label class="form-label">Cliente</label>
+                  <select class="form-control" name="cliente" required>
+                    <option value="">Selecione um cliente</option>
+                    {% for cliente in clientes %}
+                      <option value="{{ cliente.id }}">{{ cliente.nome }} ({{ cliente.email }})</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="input-group input-group-outline mb-3">
+                  <label class="form-label">Categoria</label>
+                  <select class="form-control" name="categoria" required>
+                    <option value="">Selecione uma categoria</option>
+                    {% for categoria in categorias %}
+                      <option value="{{ categoria.id }}">{{ categoria.nome }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-8">
+                <div class="input-group input-group-outline mb-3">
+                  <label class="form-label">Título do Ticket</label>
+                  <input type="text" class="form-control" name="titulo" required>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="input-group input-group-outline mb-3">
+                  <label class="form-label">Prioridade</label>
+                  <select class="form-control" name="prioridade" required>
+                    <option value="baixa">Baixa</option>
+                    <option value="media" selected>Média</option>
+                    <option value="alta">Alta</option>
+                    <option value="critica">Crítica</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="input-group input-group-outline mb-3">
+              <label class="form-label">Descrição Detalhada</label>
+              <textarea class="form-control" rows="6" name="descricao" required placeholder="Descreva o problema ou solicitação de forma detalhada..."></textarea>
+            </div>
+
+            <div class="d-flex justify-content-end">
+              <a href="{% url 'dashboard:ticket_list' %}" class="btn btn-light me-2">Cancelar</a>
+              <button type="submit" class="btn btn-primary">
+                <i class="material-icons">save</i>&nbsp;&nbsp;Criar Ticket
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

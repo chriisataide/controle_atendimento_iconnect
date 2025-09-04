@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Ticket #{{ ticket.numero }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row">
+    <!-- Informações do Ticket -->
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header pb-0">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <h6>Ticket #{{ ticket.numero }}</h6>
+              <p class="text-sm mb-0">{{ ticket.titulo }}</p>
+            </div>
+            <div>
+              <a href="{% url 'dashboard:ticket_update' ticket.pk %}" class="btn btn-primary btn-sm">
+                <i class="material-icons text-sm">edit</i>&nbsp;&nbsp;Editar
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="d-flex flex-column h-100">
+                <h6 class="text-sm">Descrição</h6>
+                <p class="text-sm">{{ ticket.descricao|linebreaks }}</p>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="d-flex flex-column h-100">
+                <h6 class="text-sm">Informações</h6>
+                <ul class="list-group">
+                  <li class="list-group-item border-0 ps-0 text-sm">
+                    <strong>Status:</strong>
+                    {% if ticket.status == 'aberto' %}
+                      <span class="badge bg-gradient-danger ms-2">{{ ticket.get_status_display }}</span>
+                    {% elif ticket.status == 'em_andamento' %}
+                      <span class="badge bg-gradient-warning ms-2">{{ ticket.get_status_display }}</span>
+                    {% elif ticket.status == 'resolvido' %}
+                      <span class="badge bg-gradient-info ms-2">{{ ticket.get_status_display }}</span>
+                    {% else %}
+                      <span class="badge bg-gradient-success ms-2">{{ ticket.get_status_display }}</span>
+                    {% endif %}
+                  </li>
+                  <li class="list-group-item border-0 ps-0 text-sm">
+                    <strong>Prioridade:</strong>
+                    {% if ticket.prioridade == 'critica' %}
+                      <span class="badge bg-gradient-danger ms-2">{{ ticket.get_prioridade_display }}</span>
+                    {% elif ticket.prioridade == 'alta' %}
+                      <span class="badge bg-gradient-warning ms-2">{{ ticket.get_prioridade_display }}</span>
+                    {% elif ticket.prioridade == 'media' %}
+                      <span class="badge bg-gradient-info ms-2">{{ ticket.get_prioridade_display }}</span>
+                    {% else %}
+                      <span class="badge bg-gradient-secondary ms-2">{{ ticket.get_prioridade_display }}</span>
+                    {% endif %}
+                  </li>
+                  <li class="list-group-item border-0 ps-0 text-sm">
+                    <strong>Categoria:</strong> <span style="color: {{ ticket.categoria.cor }};">{{ ticket.categoria.nome }}</span>
+                  </li>
+                  <li class="list-group-item border-0 ps-0 text-sm">
+                    <strong>Agente:</strong> {{ ticket.agente.get_full_name|default:ticket.agente.username|default:"Não atribuído" }}
+                  </li>
+                  <li class="list-group-item border-0 ps-0 text-sm">
+                    <strong>Criado:</strong> {{ ticket.criado_em|date:"d/m/Y às H:i" }}
+                  </li>
+                  <li class="list-group-item border-0 ps-0 text-sm">
+                    <strong>Atualizado:</strong> {{ ticket.atualizado_em|date:"d/m/Y às H:i" }}
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interações -->
+      <div class="card mt-4">
+        <div class="card-header pb-0">
+          <h6>Histórico de Interações</h6>
+        </div>
+        <div class="card-body">
+          <div class="timeline timeline-one-side">
+            {% for interacao in interacoes %}
+            <div class="timeline-block mb-3">
+              <span class="timeline-step">
+                {% if interacao.eh_publico %}
+                  <i class="material-icons text-success text-gradient">message</i>
+                {% else %}
+                  <i class="material-icons text-warning text-gradient">lock</i>
+                {% endif %}
+              </span>
+              <div class="timeline-content">
+                <h6 class="text-dark text-sm font-weight-bold mb-0">
+                  {{ interacao.usuario.get_full_name|default:interacao.usuario.username }}
+                  {% if not interacao.eh_publico %}
+                    <span class="badge badge-sm bg-gradient-warning">Interno</span>
+                  {% endif %}
+                </h6>
+                <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">{{ interacao.criado_em|date:"d/m/Y às H:i" }}</p>
+                <p class="text-sm mt-3 mb-2">{{ interacao.mensagem|linebreaks }}</p>
+              </div>
+            </div>
+            {% empty %}
+            <p class="text-center text-muted">Nenhuma interação registrada ainda.</p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Adicionar Interação -->
+      <div class="card mt-4">
+        <div class="card-header pb-0">
+          <h6>Adicionar Interação</h6>
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'dashboard:add_interaction' ticket.id %}">
+            {% csrf_token %}
+            <div class="input-group input-group-outline mb-3">
+              <label class="form-label">Mensagem</label>
+              <textarea class="form-control" rows="4" name="mensagem" required></textarea>
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" name="eh_publico" checked>
+              <label class="custom-control-label" for="eh_publico">Visível para o cliente</label>
+            </div>
+            <button type="submit" class="btn btn-primary">
+              <i class="material-icons">send</i>&nbsp;&nbsp;Enviar Interação
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Informações do Cliente -->
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-header pb-0">
+          <div class="d-flex align-items-center">
+            <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary text-center border-radius-xl">
+              <i class="material-icons opacity-10">person</i>
+            </div>
+            <div class="ms-3">
+              <h6 class="mb-0">Informações do Cliente</h6>
+            </div>
+          </div>
+        </div>
+        <div class="card-body pt-3">
+          <div class="author align-items-center">
+            <div class="name ps-3">
+              <span class="font-weight-bold">{{ ticket.cliente.nome }}</span>
+              <div class="stats">
+                <small>{{ ticket.cliente.email }}</small>
+              </div>
+              {% if ticket.cliente.telefone %}
+              <div class="stats">
+                <small>{{ ticket.cliente.telefone }}</small>
+              </div>
+              {% endif %}
+              {% if ticket.cliente.empresa %}
+              <div class="stats">
+                <small>{{ ticket.cliente.empresa }}</small>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          <hr class="horizontal gray-light my-3">
+          <ul class="list-group">
+            <li class="list-group-item border-0 ps-0 text-sm">
+              <strong>Cliente desde:</strong> {{ ticket.cliente.criado_em|date:"d/m/Y" }}
+            </li>
+            <li class="list-group-item border-0 ps-0 text-sm">
+              <strong>Total de tickets:</strong> {{ ticket.cliente.ticket_set.count }}
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Ações Rápidas -->
+      <div class="card mt-4">
+        <div class="card-header pb-0">
+          <h6>Ações Rápidas</h6>
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            <!-- Status Updates -->
+            {% if ticket.status == 'aberto' %}
+            <button class="btn btn-warning btn-sm" onclick="updateTicketStatus('{{ ticket.id }}', 'em_andamento')">
+              <i class="material-icons text-sm">play_arrow</i>&nbsp;&nbsp;Iniciar Atendimento
+            </button>
+            {% elif ticket.status == 'em_andamento' %}
+            <button class="btn btn-info btn-sm" onclick="updateTicketStatus('{{ ticket.id }}', 'resolvido')">
+              <i class="material-icons text-sm">check_circle</i>&nbsp;&nbsp;Marcar como Resolvido
+            </button>
+            {% elif ticket.status == 'resolvido' %}
+            <button class="btn btn-success btn-sm" onclick="updateTicketStatus('{{ ticket.id }}', 'fechado')">
+              <i class="material-icons text-sm">done_all</i>&nbsp;&nbsp;Fechar Ticket
+            </button>
+            {% endif %}
+            
+            {% if ticket.status != 'fechado' %}
+            <button class="btn btn-outline-secondary btn-sm" onclick="updateTicketStatus('{{ ticket.id }}', 'aguardando_cliente')">
+              <i class="material-icons text-sm">schedule</i>&nbsp;&nbsp;Aguardar Cliente
+            </button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function updateTicketStatus(ticketId, newStatus) {
+  if (confirm('Deseja realmente alterar o status deste ticket?')) {
+    fetch("{% url 'dashboard:update_ticket_status' %}", {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `ticket_id=${ticketId}&status=${newStatus}`
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert('Erro: ' + data.message);
+      }
+    })
+    .catch(error => {
+      alert('Erro na requisição: ' + error);
+    });
+  }
+}
+</script>
+{% endblock %}

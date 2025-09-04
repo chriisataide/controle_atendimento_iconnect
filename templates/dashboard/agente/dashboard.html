@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Dashboard do Agente{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+      <div class="card">
+        <div class="card-header p-3 pt-2">
+          <div class="icon icon-lg icon-shape bg-gradient-dark shadow-dark text-center border-radius-xl mt-n4 position-absolute">
+            <i class="material-icons opacity-10">assignment</i>
+          </div>
+          <div class="text-end pt-1">
+            <p class="text-sm mb-0 text-capitalize">Meus Tickets Abertos</p>
+            <h4 class="mb-0">{{ meus_tickets_abertos }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+      <div class="card">
+        <div class="card-header p-3 pt-2">
+          <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary text-center border-radius-xl mt-n4 position-absolute">
+            <i class="material-icons opacity-10">done_all</i>
+          </div>
+          <div class="text-end pt-1">
+            <p class="text-sm mb-0 text-capitalize">Total de Tickets</p>
+            <h4 class="mb-0">{{ meus_tickets_total }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+      <div class="card">
+        <div class="card-header p-3 pt-2">
+          <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
+            <i class="material-icons opacity-10">inbox</i>
+          </div>
+          <div class="text-end pt-1">
+            <p class="text-sm mb-0 text-capitalize">Não Atribuídos</p>
+            <h4 class="mb-0">{{ tickets_nao_atribuidos }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+      <div class="card">
+        <div class="card-header p-3 pt-2">
+          <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
+            <i class="material-icons opacity-10">person</i>
+          </div>
+          <div class="text-end pt-1">
+            <p class="text-sm mb-0 text-capitalize">Status</p>
+            <div class="dropdown">
+              <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="statusDropdown" data-bs-toggle="dropdown">
+                {% if status_agente == 'online' %}
+                  <span class="badge bg-success">Online</span>
+                {% elif status_agente == 'ocupado' %}
+                  <span class="badge bg-warning">Ocupado</span>
+                {% elif status_agente == 'ausente' %}
+                  <span class="badge bg-info">Ausente</span>
+                {% else %}
+                  <span class="badge bg-secondary">Offline</span>
+                {% endif %}
+              </button>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#" onclick="updateAgentStatus('online')">Online</a></li>
+                <li><a class="dropdown-item" href="#" onclick="updateAgentStatus('ocupado')">Ocupado</a></li>
+                <li><a class="dropdown-item" href="#" onclick="updateAgentStatus('ausente')">Ausente</a></li>
+                <li><a class="dropdown-item" href="#" onclick="updateAgentStatus('offline')">Offline</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-4">
+    <div class="col-lg-8 col-md-6 mb-md-0 mb-4">
+      <div class="card">
+        <div class="card-header pb-0">
+          <div class="row">
+            <div class="col-lg-6 col-7">
+              <h6>Meus Tickets Recentes</h6>
+              <p class="text-sm mb-0">
+                <i class="fa fa-check text-info" aria-hidden="true"></i>
+                <span class="font-weight-bold ms-1">{{ tickets_recentes|length }}</span> tickets
+              </p>
+            </div>
+            <div class="col-lg-6 col-5 my-auto text-end">
+              <div class="dropdown float-lg-end pe-4">
+                <a class="cursor-pointer" href="{% url 'dashboard:agente_tickets' %}">
+                  <i class="material-icons">more_vert</i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body px-0 pb-2">
+          <div class="table-responsive">
+            <table class="table align-items-center mb-0">
+              <thead>
+                <tr>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ticket</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cliente</th>
+                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Atualizado</th>
+                  <th class="text-secondary opacity-7"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for ticket in tickets_recentes %}
+                <tr>
+                  <td>
+                    <div class="d-flex px-2 py-1">
+                      <div class="d-flex flex-column justify-content-center">
+                        <h6 class="mb-0 text-sm">#{{ ticket.numero }}</h6>
+                        <p class="text-xs text-secondary mb-0">{{ ticket.titulo|truncatechars:40 }}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <p class="text-xs font-weight-bold mb-0">{{ ticket.cliente.nome }}</p>
+                    <p class="text-xs text-secondary mb-0">{{ ticket.cliente.email }}</p>
+                  </td>
+                  <td class="align-middle text-center text-sm">
+                    {% if ticket.status == 'aberto' %}
+                      <span class="badge badge-sm bg-gradient-danger">{{ ticket.get_status_display }}</span>
+                    {% elif ticket.status == 'em_andamento' %}
+                      <span class="badge badge-sm bg-gradient-warning">{{ ticket.get_status_display }}</span>
+                    {% elif ticket.status == 'resolvido' %}
+                      <span class="badge badge-sm bg-gradient-info">{{ ticket.get_status_display }}</span>
+                    {% else %}
+                      <span class="badge badge-sm bg-gradient-success">{{ ticket.get_status_display }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="align-middle text-center">
+                    <span class="text-secondary text-xs font-weight-bold">{{ ticket.atualizado_em|date:"d/m/Y" }}</span>
+                  </td>
+                  <td class="align-middle">
+                    <a href="{% url 'dashboard:ticket_detail' ticket.pk %}" class="text-secondary font-weight-bold text-xs">
+                      Ver
+                    </a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="5" class="text-center py-4">
+                    <p class="text-muted">Nenhum ticket atribuído ainda.</p>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4 col-md-6">
+      <div class="card h-100">
+        <div class="card-header pb-0">
+          <h6>Ações Rápidas</h6>
+        </div>
+        <div class="card-body p-3">
+          <div class="timeline timeline-one-side">
+            <div class="timeline-block mb-3">
+              <span class="timeline-step">
+                <i class="material-icons text-success text-gradient">add</i>
+              </span>
+              <div class="timeline-content">
+                <h6 class="text-dark text-sm font-weight-bold mb-0">Criar Novo Ticket</h6>
+                <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
+                  <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-sm btn-primary">Criar</a>
+                </p>
+              </div>
+            </div>
+            <div class="timeline-block mb-3">
+              <span class="timeline-step">
+                <i class="material-icons text-info text-gradient">list</i>
+              </span>
+              <div class="timeline-content">
+                <h6 class="text-dark text-sm font-weight-bold mb-0">Ver Todos os Tickets</h6>
+                <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
+                  <a href="{% url 'dashboard:ticket_list' %}" class="btn btn-sm btn-info">Ver Lista</a>
+                </p>
+              </div>
+            </div>
+            <div class="timeline-block mb-3">
+              <span class="timeline-step">
+                <i class="material-icons text-warning text-gradient">assignment</i>
+              </span>
+              <div class="timeline-content">
+                <h6 class="text-dark text-sm font-weight-bold mb-0">Meus Tickets</h6>
+                <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
+                  <a href="{% url 'dashboard:agente_tickets' %}" class="btn btn-sm btn-warning">Ver Meus</a>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function updateAgentStatus(newStatus) {
+  fetch("{% url 'dashboard:update_agent_status' %}", {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': '{{ csrf_token }}',
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: `status=${newStatus}`
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      location.reload();
+    } else {
+      alert('Erro: ' + data.message);
+    }
+  })
+  .catch(error => {
+    alert('Erro na requisição: ' + error);
+  });
+}
+</script>
+{% endblock %}
