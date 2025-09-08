@@ -323,4 +323,87 @@ Para suporte e dúvidas:
 - [ ] **Módulo de Conhecimento (KB)**
 - [ ] **Chatbot Inteligente**
 
-**🌟 Desenvolvido com ❤️ usando Django**
+**🌟 Desenvolvido com ❤️ usando Django e Material Dashboard**
+
+## Demo
+
+- [Start page](https://demos.creative-tim.com/material-dashboard/examples/dashboard.html)
+- [User profile page](https://demos.creative-tim.com/material-dashboard/examples/user.html)
+- [Tables page ](https://demos.creative-tim.com/material-dashboard/examples/tables.html)
+- [Maps Page](https://demos.creative-tim.com/material-dashboard/examples/map.html)
+- [Notifications page](https://demos.creative-tim.com/material-dashboard/examples/notifications.html)
+
+[View More](https://demos.creative-tim.com/material-dashboard/examples/dashboard.html).
+
+## Quick start
+
+- `npm i material-dashboard`
+- Clone the repo: `git clone https://github.com/creativetimofficial/material-dashboard.git`.
+- [Download from Github](https://github.com/creativetimofficial/material-dashboard/archive/master.zip).
+- [Download from Creative Tim](https://www.creative-tim.com/product/material-dashboard).
+
+## Deploy
+
+:rocket: You can deploy your own version of the template to Genezio with one click:
+
+[![Deploy to Genezio](https://raw.githubusercontent.com/Genez-io/graphics/main/svg/deploy-button.svg)](https://app.genez.io/start/deploy?repository=https://github.com/creativetimofficial/material-dashboard&utm_source=github&utm_medium=referral&utm_campaign=github-creativetim&utm_term=deploy-project&utm_content=button-head)
+
+## Documentation
+
+The documentation for the Material Dashboard is hosted at our [website](https://demos.creative-tim.com/material-dashboard/docs/2.1/getting-started/introduction.html).
+
+## File Structure
+
+Within the download you'll find the following directories and files:
+
+```
+material-dashboard
+    ├── assets
+    │   ├── css
+    │   ├── fonts
+    │   ├── img
+    │   ├── js
+    │   │   ├── core
+    │   │   ├── plugins
+    │   │   └── material-dashboard.js
+    │   │   └── material-dashboard.js.map
+    │   │   └── material-dashboard.min.js
+    │   └── scss
+    │       ├── material-dashboard
+    │       └── material-dashboard.scss
+    ├── docs
+    │   ├── documentation.html
+    ├── pages
+    ├── CHANGELOG.md
+    ├── gulpfile.mjs
+    ├── package.json
+```
+
+## Browser Support
+
+At present, we officially aim to support the last two versions of the following browsers:
+
+<img src="https://s3.amazonaws.com/creativetim_bucket/github/browser/chrome.png" width="64" height="64"> <img src="https://s3.amazonaws.com/creativetim_bucket/github/browser/firefox.png" width="64" height="64"> <img src="https://s3.amazonaws.com/creativetim_bucket/github/browser/edge.png" width="64" height="64"> <img src="https://s3.amazonaws.com/creativetim_bucket/github/browser/safari.png" width="64" height="64"> <img src="https://s3.amazonaws.com/creativetim_bucket/github/browser/opera.png" width="64" height="64">
+
+## Resources
+
+- Demo: <https://demos.creative-tim.com/material-dashboard/pages/dashboard.html>
+- Download Page: <https://www.creative-tim.com/product/material-dashboard>
+- Documentation: <https://demos.creative-tim.com/material-dashboard/docs/2.1/getting-started/introduction.html>
+- License Agreement: <https://www.creative-tim.com/license>
+- PRO Version: <https://www.creative-tim.com/product/material-dashboard-pro>
+- Support: <https://www.creative-tim.com/contact-us>
+- Issues: [Github Issues Page](https://github.com/creativetimofficial/material-dashboard/issues)
+- [Material Kit](https://www.creative-tim.com/product/material-kit?ref=github-md-free) - For Front End Development
+## 🎯 Roadmap Futuro
+
+- [ ] **Sistema de Relatórios Avançados**
+- [ ] **Notificações em Tempo Real**
+- [ ] **API REST Completa**
+- [ ] **Integração com WhatsApp/Telegram**
+- [ ] **Sistema de SLA e Métricas**
+- [ ] **Dashboard Executivo**
+- [ ] **Módulo de Conhecimento (KB)**
+- [ ] **Chatbot Inteligente**
+
+**🌟 Desenvolvido com ❤️ usando Django e Material Dashboard**

@@ -1,0 +1,562 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Administrativo - Sistema de Atendimento{% endblock %}
+
+{% block page_title %}Dashboard Administrativo{% endblock %}
+{% block breadcrumb_title %}Dashboard Administrativo{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="ms-3">
+        <h3 class="mb-0 h4 font-weight-bolder">Dashboard Administrativo</h3>
+        <p class="mb-4">
+            Controle total do sistema de atendimento • Bem-vindo, {{ user.get_full_name|default:user.username }}
+        </p>
+    </div>
+    
+    <!-- Estatísticas Gerais -->
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Total de Usuários</p>
+                        <h4 class="mb-0">{{ total_usuarios }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">group</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-primary font-weight-bolder">Sistema </span>completo</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Total de Clientes</p>
+                        <h4 class="mb-0">{{ total_clientes }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">business</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-success font-weight-bolder">Ativos </span>no sistema</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Total de Tickets</p>
+                        <h4 class="mb-0">{{ total_tickets }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">confirmation_number</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-warning font-weight-bolder">Histórico </span>completo</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Categorias</p>
+                        <h4 class="mb-0">{{ total_categorias }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">category</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-info font-weight-bolder">Organizadas </span>por tipo</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <h6 class="ms-2 mt-4 mb-3">Acesso Rápido</h6>
+    </div>
+    
+    <!-- Navegação Rápida -->
+    <div class="col-lg-2 col-md-6 col-sm-6">
+        <div class="card h-100">
+            <div class="card-header pb-0">
+                <div class="row">
+                    <div class="col-12 d-flex align-items-center">
+                        <div class="icon icon-shape bg-gradient-danger shadow text-center border-radius-lg">
+                            <i class="material-symbols-rounded opacity-10 text-lg">settings</i>
+                        </div>
+                        <div class="ms-3">
+                            <p class="text-sm mb-0 text-capitalize font-weight-bold">Django Admin</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-3">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex align-items-center">
+                            <a href="/admin/" class="btn btn-outline-danger btn-sm mb-0 w-100" target="_blank">
+                                Acessar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-6 col-sm-6">
+        <div class="card h-100">
+            <div class="card-header pb-0">
+                <div class="row">
+                    <div class="col-12 d-flex align-items-center">
+                        <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-lg">
+                            <i class="material-symbols-rounded opacity-10 text-lg">support_agent</i>
+                        </div>
+                        <div class="ms-3">
+                            <p class="text-sm mb-0 text-capitalize font-weight-bold">Tickets</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-3">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex align-items-center">
+                            <a href="{% url 'dashboard:ticket_list' %}" class="btn btn-outline-primary btn-sm mb-0 w-100">
+                                Gerenciar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-6 col-sm-6">
+        <div class="card h-100">
+            <div class="card-header pb-0">
+                <div class="row">
+                    <div class="col-12 d-flex align-items-center">
+                        <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-lg">
+                            <i class="material-symbols-rounded opacity-10 text-lg">manage_accounts</i>
+                        </div>
+                        <div class="ms-3">
+                            <p class="text-sm mb-0 text-capitalize font-weight-bold">Usuários</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-3">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex align-items-center">
+                            <a href="/admin/auth/user/" class="btn btn-outline-success btn-sm mb-0 w-100">
+                                Administrar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-6 col-sm-6">
+        <div class="card h-100">
+            <div class="card-header pb-0">
+                <div class="row">
+                    <div class="col-12 d-flex align-items-center">
+                        <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-lg">
+                            <i class="material-symbols-rounded opacity-10 text-lg">business_center</i>
+                        </div>
+                        <div class="ms-3">
+                            <p class="text-sm mb-0 text-capitalize font-weight-bold">Clientes</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-3">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex align-items-center">
+                            <a href="/admin/dashboard/cliente/" class="btn btn-outline-warning btn-sm mb-0 w-100">
+                                Gerenciar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-6 col-sm-6">
+        <div class="card h-100">
+            <div class="card-header pb-0">
+                <div class="row">
+                    <div class="col-12 d-flex align-items-center">
+                        <div class="icon icon-shape bg-gradient-info shadow text-center border-radius-lg">
+                            <i class="material-symbols-rounded opacity-10 text-lg">label</i>
+                        </div>
+                        <div class="ms-3">
+                            <p class="text-sm mb-0 text-capitalize font-weight-bold">Categorias</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-3">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex align-items-center">
+                            <a href="/admin/dashboard/categoriaticket/" class="btn btn-outline-info btn-sm mb-0 w-100">
+                                Configurar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-6 col-sm-6">
+        <div class="card h-100">
+            <div class="card-header pb-0">
+                <div class="row">
+                    <div class="col-12 d-flex align-items-center">
+                        <div class="icon icon-shape bg-gradient-secondary shadow text-center border-radius-lg">
+                            <i class="material-symbols-rounded opacity-10 text-lg">support</i>
+                        </div>
+                        <div class="ms-3">
+                            <p class="text-sm mb-0 text-capitalize font-weight-bold">Agente</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-3">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex align-items-center">
+                            <a href="{% url 'dashboard:agente_dashboard' %}" class="btn btn-outline-secondary btn-sm mb-0 w-100">
+                                Ver Painel
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Status dos Tickets -->
+    <div class="col-lg-6 col-md-6 mt-4 mb-4">
+        <div class="card z-index-2">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg py-3 pe-1">
+                    <div class="chart">
+                        <h6 class="text-white ms-4 mt-2 mb-0">Tickets por Status</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="icon icon-shape bg-gradient-danger shadow text-center border-radius-sm me-3">
+                                <i class="material-symbols-rounded opacity-10 text-sm">priority_high</i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">{{ tickets_abertos }}</h6>
+                                <p class="text-sm mb-0 text-capitalize">Abertos</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="icon icon-shape bg-gradient-info shadow text-center border-radius-sm me-3">
+                                <i class="material-symbols-rounded opacity-10 text-sm">pending</i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">{{ tickets_resolvidos }}</h6>
+                                <p class="text-sm mb-0 text-capitalize">Resolvidos</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-sm me-3">
+                                <i class="material-symbols-rounded opacity-10 text-sm">hourglass_empty</i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">{{ tickets_andamento }}</h6>
+                                <p class="text-sm mb-0 text-capitalize">Em Andamento</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-sm me-3">
+                                <i class="material-symbols-rounded opacity-10 text-sm">check_circle</i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">{{ tickets_fechados }}</h6>
+                                <p class="text-sm mb-0 text-capitalize">Fechados</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 col-md-6 mt-4 mb-4">
+        <div class="card z-index-2">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
+                <div class="bg-gradient-success shadow-success border-radius-lg py-3 pe-1">
+                    <div class="chart">
+                        <h6 class="text-white ms-4 mt-2 mb-0">Tickets por Prioridade</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="d-flex align-items-center justify-content-center flex-column">
+                            <div class="icon icon-shape bg-gradient-danger shadow text-center border-radius-sm mb-2">
+                                <i class="material-symbols-rounded opacity-10">priority_high</i>
+                            </div>
+                            <h4 class="mb-0">{{ tickets_alta }}</h4>
+                            <p class="text-sm mb-0 text-capitalize">Alta</p>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="d-flex align-items-center justify-content-center flex-column">
+                            <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-sm mb-2">
+                                <i class="material-symbols-rounded opacity-10">remove</i>
+                            </div>
+                            <h4 class="mb-0">{{ tickets_media }}</h4>
+                            <p class="text-sm mb-0 text-capitalize">Média</p>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="d-flex align-items-center justify-content-center flex-column">
+                            <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-sm mb-2">
+                                <i class="material-symbols-rounded opacity-10">keyboard_arrow_down</i>
+                            </div>
+                            <h4 class="mb-0">{{ tickets_baixa }}</h4>
+                            <p class="text-sm mb-0 text-capitalize">Baixa</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-lg-4 col-md-6 mt-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header pb-0">
+                <h6>Tickets Recentes</h6>
+                <p class="text-sm">
+                    <i class="fa fa-check text-info" aria-hidden="true"></i>
+                    <span class="font-weight-bold ms-1">Últimos registros</span> no sistema
+                </p>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ticket</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Data</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in tickets_recentes|slice:":5" %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div>
+                                            <div class="icon icon-shape icon-sm shadow border-radius-md bg-gradient-primary">
+                                                <i class="material-symbols-rounded opacity-10 text-sm">confirmation_number</i>
+                                            </div>
+                                        </div>
+                                        <div class="ms-3">
+                                            <p class="text-xs font-weight-bold mb-0">{{ ticket.titulo|truncatechars:25 }}</p>
+                                            <p class="text-xs text-secondary mb-0">{{ ticket.cliente.nome|truncatechars:20 }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="align-middle text-center text-sm">
+                                        <span class="badge badge-sm 
+                                            {% if ticket.status == 'aberto' %}bg-gradient-danger
+                                            {% elif ticket.status == 'em_andamento' %}bg-gradient-warning
+                                            {% elif ticket.status == 'resolvido' %}bg-gradient-info
+                                            {% else %}bg-gradient-success{% endif %}">
+                                            {{ ticket.get_status_display }}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">{{ ticket.criado_em|date:"d/m H:i" }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center">
+                                    <p class="text-xs text-secondary mb-0">Nenhum ticket encontrado</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mt-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header pb-0">
+                <h6>Usuários Recentes</h6>
+                <p class="text-sm">
+                    <i class="fa fa-user text-success" aria-hidden="true"></i>
+                    <span class="font-weight-bold ms-1">Novos membros</span> da equipe
+                </p>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Usuário</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Tipo</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Desde</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for usuario in usuarios_recentes|slice:":5" %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div>
+                                            <div class="icon icon-shape icon-sm shadow border-radius-md bg-gradient-success">
+                                                <i class="material-symbols-rounded opacity-10 text-sm">person</i>
+                                            </div>
+                                        </div>
+                                        <div class="ms-3">
+                                            <p class="text-xs font-weight-bold mb-0">{{ usuario.get_full_name|default:usuario.username|truncatechars:20 }}</p>
+                                            <p class="text-xs text-secondary mb-0">{{ usuario.email|truncatechars:25 }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="align-middle text-center text-sm">
+                                        {% if usuario.is_superuser %}
+                                            <span class="badge badge-sm bg-gradient-danger">Admin</span>
+                                        {% elif usuario.is_staff %}
+                                            <span class="badge badge-sm bg-gradient-warning">Staff</span>
+                                        {% else %}
+                                            <span class="badge badge-sm bg-gradient-primary">User</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">{{ usuario.date_joined|date:"d/m H:i" }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center">
+                                    <p class="text-xs text-secondary mb-0">Nenhum usuário encontrado</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6 mt-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header pb-0">
+                <h6>Clientes Recentes</h6>
+                <p class="text-sm">
+                    <i class="fa fa-building text-warning" aria-hidden="true"></i>
+                    <span class="font-weight-bold ms-1">Novos clientes</span> cadastrados
+                </p>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Cliente</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Empresa</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Desde</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cliente in clientes_recentes|slice:":5" %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div>
+                                            <div class="icon icon-shape icon-sm shadow border-radius-md bg-gradient-warning">
+                                                <i class="material-symbols-rounded opacity-10 text-sm">business</i>
+                                            </div>
+                                        </div>
+                                        <div class="ms-3">
+                                            <p class="text-xs font-weight-bold mb-0">{{ cliente.nome|truncatechars:20 }}</p>
+                                            <p class="text-xs text-secondary mb-0">{{ cliente.email|truncatechars:25 }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">{{ cliente.empresa|default:"--"|truncatechars:15 }}</p>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">{{ cliente.criado_em|date:"d/m H:i" }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center">
+                                    <p class="text-xs text-secondary mb-0">Nenhum cliente encontrado</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

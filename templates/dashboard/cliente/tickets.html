@@ -13,12 +13,53 @@
               <h6 class="text-white text-capitalize ps-3 mb-0">Meus Tickets</h6>
               <div class="me-3">
                 <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-outline-white btn-sm mb-0">
-                  <i class="material-icons text-sm">add</i>&nbsp;&nbsp;Novo Ticket
+                  <i class="material-symbols-rounded text-sm">add</i>&nbsp;&nbsp;Novo Ticket
                 </a>
               </div>
             </div>
           </div>
         </div>
+        
+        <!-- Filtros -->
+        <div class="card-body px-3 pt-3 pb-0">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="input-group input-group-outline">
+                <label class="form-label">Buscar ticket...</label>
+                <input type="text" class="form-control" id="searchTickets">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="input-group input-group-static">
+                <label for="statusFilter" class="ms-0">Filtrar por Status</label>
+                <select class="form-control" id="statusFilter">
+                  <option value="">Todos os status</option>
+                  <option value="aberto">Aberto</option>
+                  <option value="em_andamento">Em Andamento</option>
+                  <option value="resolvido">Resolvido</option>
+                  <option value="fechado">Fechado</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="input-group input-group-static">
+                <label for="prioridadeFilter" class="ms-0">Filtrar por Prioridade</label>
+                <select class="form-control" id="prioridadeFilter">
+                  <option value="">Todas as prioridades</option>
+                  <option value="alta">Alta</option>
+                  <option value="media">Média</option>
+                  <option value="baixa">Baixa</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-2">
+              <button class="btn btn-primary w-100" onclick="clearFilters()">
+                <i class="material-symbols-rounded">clear</i> Limpar
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div class="card-body px-0 pb-2">
           <div class="table-responsive p-0">
             <table class="table align-items-center mb-0">
@@ -71,7 +112,7 @@
                   </td>
                   <td class="align-middle">
                     <a href="{% url 'dashboard:ticket_detail' ticket.pk %}" class="text-secondary font-weight-bold text-xs">
-                      <i class="material-icons">visibility</i>
+                      <i class="material-symbols-rounded">visibility</i>
                     </a>
                   </td>
                 </tr>
@@ -79,10 +120,10 @@
                 <tr>
                   <td colspan="6" class="text-center py-4">
                     <div class="d-flex flex-column align-items-center">
-                      <i class="material-icons text-muted" style="font-size: 48px;">inbox</i>
+                      <i class="material-symbols-rounded text-muted" style="font-size: 48px;">inbox</i>
                       <p class="text-muted mt-2 mb-3">Você ainda não criou nenhum ticket.</p>
                       <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-primary btn-sm">
-                        <i class="material-icons">add</i>&nbsp;&nbsp;Criar Primeiro Ticket
+                        <i class="material-symbols-rounded">add</i>&nbsp;&nbsp;Criar Primeiro Ticket
                       </a>
                     </div>
                   </td>
@@ -129,4 +170,51 @@
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchTickets');
+    const statusFilter = document.getElementById('statusFilter');
+    const prioridadeFilter = document.getElementById('prioridadeFilter');
+    const tableRows = document.querySelectorAll('tbody tr');
+
+    function filterTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const statusValue = statusFilter.value;
+        const prioridadeValue = prioridadeFilter.value;
+
+        tableRows.forEach(row => {
+            const ticketText = row.cells[0].textContent.toLowerCase();
+            const statusText = row.cells[1].textContent.toLowerCase();
+            const prioridadeText = row.cells[2] ? row.cells[2].textContent.toLowerCase() : '';
+
+            const matchesSearch = ticketText.includes(searchTerm);
+            const matchesStatus = !statusValue || statusText.includes(statusValue.toLowerCase());
+            const matchesPrioridade = !prioridadeValue || prioridadeText.includes(prioridadeValue.toLowerCase());
+
+            if (matchesSearch && matchesStatus && matchesPrioridade) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    // Eventos para filtros
+    searchInput.addEventListener('keyup', filterTable);
+    statusFilter.addEventListener('change', filterTable);
+    prioridadeFilter.addEventListener('change', filterTable);
+});
+
+function clearFilters() {
+    document.getElementById('searchTickets').value = '';
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('prioridadeFilter').value = '';
+    
+    // Mostrar todas as linhas
+    document.querySelectorAll('tbody tr').forEach(row => {
+        row.style.display = '';
+    });
+}
+</script>
 {% endblock %}

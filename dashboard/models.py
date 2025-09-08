@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+import uuid
 
 
 class Cliente(models.Model):
@@ -46,16 +47,71 @@ class CategoriaTicket(models.Model):
         return self.nome
 
 
+class SLAPolicy(models.Model):
+    """Políticas de SLA por categoria e prioridade"""
+    name = models.CharField(max_length=100)
+    categoria = models.ForeignKey(CategoriaTicket, on_delete=models.CASCADE, null=True, blank=True)
+    prioridade = models.CharField(max_length=10, choices=PrioridadeTicket.choices)
+    response_time_hours = models.IntegerField(help_text="Tempo de resposta em horas")
+    resolution_time_hours = models.IntegerField(help_text="Tempo de resolução em horas", null=True, blank=True)
+    business_hours_only = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Política de SLA"
+        verbose_name_plural = "Políticas de SLA"
+    
+    def __str__(self):
+        return self.name
+
+
+class WorkflowRule(models.Model):
+    """Regras de workflow automatizado"""
+    EVENT_CHOICES = [
+        ('ticket_created', 'Ticket Criado'),
+        ('ticket_updated', 'Ticket Atualizado'),
+        ('status_changed', 'Status Alterado'),
+        ('agent_assigned', 'Agente Atribuído'),
+        ('interaction_added', 'Interação Adicionada'),
+        ('sla_warning', 'Aviso de SLA'),
+        ('sla_breach', 'Violação de SLA'),
+    ]
+    
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    trigger_event = models.CharField(max_length=50, choices=EVENT_CHOICES)
+    conditions = models.JSONField(help_text="Condições em formato JSON")
+    actions = models.JSONField(help_text="Ações em formato JSON")
+    priority = models.IntegerField(default=1, help_text="Prioridade de execução (1-10)")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Regra de Workflow"
+        verbose_name_plural = "Regras de Workflow"
+        ordering = ['-priority', 'name']
+    
+    def __str__(self):
+        return self.name
+
+
 class Ticket(models.Model):
     numero = models.CharField(max_length=10, unique=True, blank=True)
-    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
-    agente = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    categoria = models.ForeignKey(CategoriaTicket, on_delete=models.CASCADE)
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='tickets')
+    agente = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='tickets_agente')
+    categoria = models.ForeignKey(CategoriaTicket, on_delete=models.SET_NULL, null=True, blank=True)
     
     titulo = models.CharField(max_length=200)
     descricao = models.TextField()
     status = models.CharField(max_length=20, choices=StatusTicket.choices, default=StatusTicket.ABERTO)
     prioridade = models.CharField(max_length=10, choices=PrioridadeTicket.choices, default=PrioridadeTicket.MEDIA)
+    origem = models.CharField(max_length=20, default='web', help_text="web, email, whatsapp, slack")
+    
+    # Campos relacionados ao SLA
+    sla_deadline = models.DateTimeField(null=True, blank=True, help_text="Prazo de resposta SLA")
+    first_response_at = models.DateTimeField(null=True, blank=True)
     
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
@@ -188,3 +244,160 @@ class PerfilUsuario(models.Model):
         
         campos_preenchidos = sum(1 for campo in campos_obrigatorios if campo and campo.strip())
         return round((campos_preenchidos / len(campos_obrigatorios)) * 100)
+
+
+# ========== NOVOS MODELOS PARA RECURSOS AVANÇADOS ==========
+
+class SLAViolation(models.Model):
+    """Registro de violações de SLA"""
+    VIOLATION_TYPES = [
+        ('deadline_missed', 'Prazo Perdido'),
+        ('escalation_failed', 'Falha na Escalação'),
+        ('response_delayed', 'Resposta Atrasada'),
+    ]
+    
+    SEVERITY_LEVELS = [
+        ('low', 'Baixa'),
+        ('medium', 'Média'),
+        ('high', 'Alta'),
+        ('critical', 'Crítica'),
+    ]
+    
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='sla_violations')
+    violation_type = models.CharField(max_length=20, choices=VIOLATION_TYPES)
+    severity = models.CharField(max_length=10, choices=SEVERITY_LEVELS, default='medium')
+    expected_deadline = models.DateTimeField()
+    actual_time = models.DateTimeField()
+    time_exceeded = models.DurationField()
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Violação de SLA"
+        verbose_name_plural = "Violações de SLA"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Violação SLA - Ticket #{self.ticket.numero}"
+
+
+class WorkflowExecution(models.Model):
+    """Registro de execuções de workflow"""
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='workflow_executions')
+    rule = models.ForeignKey(WorkflowRule, on_delete=models.CASCADE)
+    trigger_event = models.CharField(max_length=50)
+    execution_result = models.JSONField()
+    executed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    execution_time = models.DurationField(null=True, blank=True)
+    success = models.BooleanField(default=True)
+    error_message = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Execução de Workflow"
+        verbose_name_plural = "Execuções de Workflow"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Execução {self.rule.name} - Ticket #{self.ticket.numero}"
+
+
+class NotificationLog(models.Model):
+    """Log de notificações enviadas"""
+    NOTIFICATION_TYPES = [
+        ('email', 'Email'),
+        ('slack', 'Slack'),
+        ('whatsapp', 'WhatsApp'),
+        ('sms', 'SMS'),
+        ('push', 'Push Notification'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pendente'),
+        ('sent', 'Enviado'),
+        ('delivered', 'Entregue'),
+        ('failed', 'Falhou'),
+        ('bounced', 'Rejeitado'),
+    ]
+    
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
+    recipient = models.CharField(max_length=200)
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
+    event_type = models.CharField(max_length=50)
+    subject = models.CharField(max_length=200, blank=True)
+    message = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    sent_at = models.DateTimeField(null=True, blank=True)
+    delivered_at = models.DateTimeField(null=True, blank=True)
+    error_message = models.TextField(blank=True)
+    external_id = models.CharField(max_length=100, blank=True)  # ID do serviço externo
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Log de Notificação"
+        verbose_name_plural = "Logs de Notificações"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.notification_type} para {self.recipient}"
+
+
+class AutomationSettings(models.Model):
+    """Configurações de automação do sistema"""
+    key = models.CharField(max_length=100, unique=True)
+    value = models.JSONField()
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Configuração de Automação"
+        verbose_name_plural = "Configurações de Automação"
+    
+    def __str__(self):
+        return self.key
+
+
+class KnowledgeBase(models.Model):
+    """Base de conhecimento para chatbot"""
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    keywords = models.JSONField(help_text="Lista de palavras-chave para busca")
+    category = models.CharField(max_length=50, blank=True)
+    is_public = models.BooleanField(default=True)
+    view_count = models.IntegerField(default=0)
+    helpful_votes = models.IntegerField(default=0)
+    unhelpful_votes = models.IntegerField(default=0)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Base de Conhecimento"
+        verbose_name_plural = "Base de Conhecimento"
+        ordering = ['-view_count', '-created_at']
+    
+    def __str__(self):
+        return self.title
+
+
+class SystemMetrics(models.Model):
+    """Métricas do sistema para dashboard executivo"""
+    date = models.DateField(unique=True)
+    total_tickets = models.IntegerField(default=0)
+    new_tickets = models.IntegerField(default=0)
+    resolved_tickets = models.IntegerField(default=0)
+    sla_compliance_rate = models.FloatField(default=0.0)
+    avg_resolution_time = models.FloatField(default=0.0)  # em horas
+    customer_satisfaction = models.FloatField(default=0.0)
+    agent_productivity = models.JSONField(default=dict)  # métricas por agente
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Métricas do Sistema"
+        verbose_name_plural = "Métricas do Sistema"
+        ordering = ['-date']
+    
+    def __str__(self):
+        return f"Métricas {self.date}"

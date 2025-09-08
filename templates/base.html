@@ -93,9 +93,30 @@
                 <li class="nav-item mt-3">
                     <h6 class="ps-4 ms-2 text-uppercase text-xs text-dark font-weight-bolder opacity-8">Sistema</h6>
                 </li>
+                {% if user.is_superuser or user.is_staff %}
+                <li class="nav-item">
+                    <a class="nav-link text-dark {% if request.resolver_match.url_name == 'admin_dashboard' %}active bg-gradient-danger text-white{% endif %}" href="{% url 'dashboard:admin_dashboard' %}">
+                        <i class="material-symbols-rounded opacity-5">admin_panel_settings</i>
+                        <span class="nav-link-text ms-1">Painel Admin</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-dark" href="/admin/" target="_blank">
+                        <i class="material-symbols-rounded opacity-5">settings</i>
+                        <span class="nav-link-text ms-1">Django Admin</span>
+                    </a>
+                </li>
+                {% endif %}
+                <li class="nav-item">
                     <a class="nav-link text-dark {% if request.resolver_match.url_name == 'profile' %}active bg-gradient-dark text-white{% endif %}" href="{% url 'dashboard:profile' %}">
                         <i class="material-symbols-rounded opacity-5">person</i>
                         <span class="nav-link-text ms-1">Perfil</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-dark" href="{% url 'logout' %}">
+                        <i class="material-symbols-rounded opacity-5 text-danger">logout</i>
+                        <span class="nav-link-text ms-1 text-danger">Sair</span>
                     </a>
                 </li>
             </ul>
@@ -138,8 +159,26 @@
                         </li>
                         <li class="nav-item dropdown pe-3 d-flex align-items-center">
                             <a href="javascript:;" class="nav-link text-body p-0" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="material-symbols-rounded">notifications</i>
+                                <i class="material-symbols-rounded">account_circle</i>
                             </a>
+                            <ul class="dropdown-menu dropdown-menu-end px-2 py-3" aria-labelledby="dropdownMenuButton">
+                                <li>
+                                    <h6 class="dropdown-header">Olá, {{ user.get_full_name|default:user.username }}!</h6>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item border-radius-md" href="{% url 'dashboard:profile' %}">
+                                        <i class="material-symbols-rounded me-2">person</i>
+                                        Meu Perfil
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item border-radius-md text-danger" href="{% url 'logout' %}">
+                                        <i class="material-symbols-rounded me-2 text-danger">logout</i>
+                                        Sair
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                     </ul>
                 </div>

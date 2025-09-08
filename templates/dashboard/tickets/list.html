@@ -13,7 +13,7 @@
               <h6 class="text-white text-capitalize ps-3 mb-0">Gerenciar Tickets</h6>
               <div class="me-3">
                 <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-outline-white btn-sm mb-0">
-                  <i class="material-icons text-sm">add</i>&nbsp;&nbsp;Novo Ticket
+                  <i class="material-symbols-rounded text-sm">add</i>&nbsp;&nbsp;Novo Ticket
                 </a>
               </div>
             </div>
@@ -57,7 +57,7 @@
                   <div class="input-group">
                     <input type="text" name="search" class="form-control" placeholder="Número, título, cliente..." value="{{ filters.search }}">
                     <button class="btn btn-outline-secondary" type="submit">
-                      <i class="material-icons">search</i>
+                      <i class="material-symbols-rounded">search</i>
                     </button>
                   </div>
                 </div>
@@ -129,7 +129,7 @@
                   <td class="align-middle">
                     <div class="dropdown">
                       <button class="btn btn-link text-secondary mb-0" data-bs-toggle="dropdown">
-                        <i class="material-icons">more_vert</i>
+                        <i class="material-symbols-rounded">more_vert</i>
                       </button>
                       <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{% url 'dashboard:ticket_detail' ticket.pk %}">Ver Detalhes</a></li>
@@ -142,7 +142,7 @@
                 <tr>
                   <td colspan="7" class="text-center py-4">
                     <div class="d-flex flex-column align-items-center">
-                      <i class="material-icons text-muted" style="font-size: 48px;">inbox</i>
+                      <i class="material-symbols-rounded text-muted" style="font-size: 48px;">inbox</i>
                       <p class="text-muted mt-2">Nenhum ticket encontrado</p>
                     </div>
                   </td>

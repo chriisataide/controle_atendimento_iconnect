@@ -10,7 +10,7 @@
       <div class="card">
         <div class="card-header p-3 pt-2">
           <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary text-center border-radius-xl mt-n4 position-absolute">
-            <i class="material-icons opacity-10">confirmation_number</i>
+            <i class="material-symbols-rounded opacity-10">confirmation_number</i>
           </div>
           <div class="text-end pt-1">
             <p class="text-sm mb-0 text-capitalize">Total de Tickets</p>
@@ -23,7 +23,7 @@
       <div class="card">
         <div class="card-header p-3 pt-2">
           <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute">
-            <i class="material-icons opacity-10">pending</i>
+            <i class="material-symbols-rounded opacity-10">pending</i>
           </div>
           <div class="text-end pt-1">
             <p class="text-sm mb-0 text-capitalize">Tickets Abertos</p>
@@ -36,7 +36,7 @@
       <div class="card">
         <div class="card-header p-3 pt-2">
           <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
-            <i class="material-icons opacity-10">check_circle</i>
+            <i class="material-symbols-rounded opacity-10">check_circle</i>
           </div>
           <div class="text-end pt-1">
             <p class="text-sm mb-0 text-capitalize">Tickets Fechados</p>
@@ -45,21 +45,208 @@
         </div>
       </div>
     </div>
-    <div class="col-xl-3 col-sm-6">
+        <div class="col-xl-3 col-sm-6">
       <div class="card">
         <div class="card-header p-3 pt-2">
           <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
-            <i class="material-icons opacity-10">add</i>
+            <i class="material-symbols-rounded opacity-10">schedule</i>
           </div>
           <div class="text-end pt-1">
-            <p class="text-sm mb-0 text-capitalize">Novo Ticket</p>
-            <h4 class="mb-0">
-              <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-info btn-sm">Criar</a>
-            </h4>
+            <p class="text-sm mb-0 text-capitalize">Tempo Médio Resposta</p>
+            <h4 class="mb-0">{{ tempo_medio_resposta }}</h4>
           </div>
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- Segunda linha de cards -->
+  <div class="row mt-4">
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+      <div class="card">
+        <div class="card-header p-3 pt-2">
+          <div class="icon icon-lg icon-shape bg-gradient-danger shadow-danger text-center border-radius-xl mt-n4 position-absolute">
+            <i class="material-symbols-rounded opacity-10">priority_high</i>
+          </div>
+          <div class="text-end pt-1">
+            <p class="text-sm mb-0 text-capitalize">Alta Prioridade</p>
+            <h4 class="mb-0">{{ tickets_alta_prioridade }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+      <div class="card">
+        <div class="card-header p-3 pt-2">
+          <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute">
+            <i class="material-symbols-rounded opacity-10">pending</i>
+          </div>
+          <div class="text-end pt-1">
+            <p class="text-sm mb-0 text-capitalize">Em Andamento</p>
+            <h4 class="mb-0">{{ tickets_em_andamento }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+      <div class="card">
+        <div class="card-header p-3 pt-2">
+          <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
+            <i class="material-symbols-rounded opacity-10">task_alt</i>
+          </div>
+          <div class="text-end pt-1">
+            <p class="text-sm mb-0 text-capitalize">Resolvidos</p>
+            <h4 class="mb-0">{{ tickets_resolvidos }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+      <div class="card">
+        <div class="card-header p-3 pt-2">
+          <div class="icon icon-lg icon-shape bg-gradient-secondary shadow-secondary text-center border-radius-xl mt-n4 position-absolute">
+            <i class="material-symbols-rounded opacity-10">trending_up</i>
+          </div>
+          <div class="text-end pt-1">
+            <p class="text-sm mb-0 text-capitalize">Média Prioridade</p>
+            <h4 class="mb-0">{{ tickets_media_prioridade }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Seção de Ação Rápida -->
+  <div class="row mt-4">
+    <div class="col-md-3">
+      <div class="card h-100">
+        <div class="card-header pb-0 p-3">
+          <div class="row">
+            <div class="col-md-8 d-flex align-items-center">
+              <h6 class="mb-0">Criar Novo Ticket</h6>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-3">
+          <p class="text-sm">Precisa de ajuda? Crie um novo ticket de atendimento rapidamente.</p>
+          <a href="{% url 'dashboard:ticket_create' %}" class="btn bg-gradient-primary w-100">
+            <i class="material-symbols-rounded me-2">add</i>
+            Novo Ticket
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seção de Notificações -->
+    <div class="col-md-3">
+      <div class="card h-100 bg-gradient-info">
+        <div class="card-header pb-0 p-3">
+          <div class="row">
+            <div class="col-md-8 d-flex align-items-center">
+              <h6 class="mb-0 text-white">Notificações</h6>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-3">
+          {% if tickets_recentes_mudancas > 0 %}
+            <div class="d-flex align-items-center mb-2">
+              <div class="icon icon-sm bg-white shadow text-center me-2">
+                <i class="material-symbols-rounded text-info">update</i>
+              </div>
+              <div>
+                <p class="text-white text-sm mb-0">{{ tickets_recentes_mudancas }} ticket(s) atualizados</p>
+              </div>
+            </div>
+          {% endif %}
+          {% if tickets_aguardando_cliente > 0 %}
+            <div class="d-flex align-items-center mb-2">
+              <div class="icon icon-sm bg-white shadow text-center me-2">
+                <i class="material-symbols-rounded text-warning">schedule</i>
+              </div>
+              <div>
+                <p class="text-white text-sm mb-0">{{ tickets_aguardando_cliente }} ticket(s) aguardando sua resposta</p>
+              </div>
+            </div>
+          {% endif %}
+          {% if tickets_recentes_mudancas == 0 and tickets_aguardando_cliente == 0 %}
+            <div class="text-center">
+              <i class="material-symbols-rounded text-white opacity-6" style="font-size: 24px;">notifications</i>
+              <p class="text-white text-sm mb-0">Nenhuma notificação</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Seção Status do Último Ticket -->
+    <div class="col-md-6">
+      {% if ultimo_ticket %}
+      <div class="card h-100">
+        <div class="card-header pb-0 p-3">
+          <div class="row">
+            <div class="col-md-8 d-flex align-items-center">
+              <h6 class="mb-0">Último Ticket Criado</h6>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-3">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="d-flex">
+                <div class="icon icon-shape icon-sm bg-gradient-primary shadow text-center me-2">
+                  <i class="material-symbols-rounded opacity-10">confirmation_number</i>
+                </div>
+                <div>
+                  <h6 class="text-sm mb-0">#{{ ultimo_ticket.numero }}</h6>
+                  <p class="text-xs text-secondary mb-0">{{ ultimo_ticket.titulo|truncatechars:40 }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="text-center">
+                {% if ultimo_ticket.status == 'aberto' %}
+                  <span class="badge badge-sm bg-gradient-danger">{{ ultimo_ticket.get_status_display }}</span>
+                {% elif ultimo_ticket.status == 'em_andamento' %}
+                  <span class="badge badge-sm bg-gradient-warning">{{ ultimo_ticket.get_status_display }}</span>
+                {% elif ultimo_ticket.status == 'resolvido' %}
+                  <span class="badge badge-sm bg-gradient-info">{{ ultimo_ticket.get_status_display }}</span>
+                {% else %}
+                  <span class="badge badge-sm bg-gradient-success">{{ ultimo_ticket.get_status_display }}</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="text-end">
+                <h6 class="text-sm mb-0">{{ ultimo_ticket.criado_em|date:"d/m/Y" }}</h6>
+                <p class="text-xs text-secondary mb-0">{{ ultimo_ticket.criado_em|time:"H:i" }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="row mt-2">
+            <div class="col-12">
+              <a href="{% url 'dashboard:ticket_detail' ultimo_ticket.pk %}" class="btn btn-outline-primary btn-sm w-100">
+                <i class="material-symbols-rounded me-1">visibility</i>
+                Ver Detalhes
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="card h-100">
+        <div class="card-body p-3 text-center">
+          <i class="material-symbols-rounded text-muted" style="font-size: 48px;">inbox</i>
+          <h6 class="text-muted mt-2 mb-1">Nenhum ticket criado</h6>
+          <p class="text-sm text-muted mb-3">Você ainda não criou nenhum ticket de suporte.</p>
+          <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-primary btn-sm">
+            <i class="material-symbols-rounded me-1">add</i>
+            Criar Primeiro Ticket
+          </a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
   </div>
 
   <div class="row mt-4">
@@ -77,7 +264,7 @@
             <div class="col-lg-6 col-5 my-auto text-end">
               <div class="dropdown float-lg-end pe-4">
                 <a class="cursor-pointer" href="{% url 'dashboard:cliente_tickets' %}">
-                  <i class="material-icons">more_vert</i>
+                  <i class="material-symbols-rounded">more_vert</i>
                 </a>
               </div>
             </div>
@@ -156,7 +343,7 @@
           <div class="timeline timeline-one-side">
             <div class="timeline-block mb-3">
               <span class="timeline-step">
-                <i class="material-icons text-success text-gradient">person</i>
+                <i class="material-symbols-rounded text-success text-gradient">person</i>
               </span>
               <div class="timeline-content">
                 <h6 class="text-dark text-sm font-weight-bold mb-0">{{ cliente.nome }}</h6>
@@ -171,7 +358,7 @@
             </div>
             <div class="timeline-block mb-3">
               <span class="timeline-step">
-                <i class="material-icons text-info text-gradient">date_range</i>
+                <i class="material-symbols-rounded text-info text-gradient">date_range</i>
               </span>
               <div class="timeline-content">
                 <h6 class="text-dark text-sm font-weight-bold mb-0">Cliente desde</h6>
@@ -180,7 +367,7 @@
             </div>
             <div class="timeline-block mb-3">
               <span class="timeline-step">
-                <i class="material-icons text-warning text-gradient">support</i>
+                <i class="material-symbols-rounded text-warning text-gradient">support</i>
               </span>
               <div class="timeline-content">
                 <h6 class="text-dark text-sm font-weight-bold mb-0">Precisa de ajuda?</h6>
@@ -199,7 +386,7 @@
     <div class="col-12">
       <div class="card">
         <div class="card-body text-center py-5">
-          <i class="material-icons text-muted mb-3" style="font-size: 64px;">person_off</i>
+          <i class="material-symbols-rounded text-muted mb-3" style="font-size: 64px;">person_off</i>
           <h4 class="text-muted">Acesso Restrito</h4>
           <p class="text-muted">Você precisa ser cadastrado como cliente para acessar este portal.</p>
           <p class="text-muted">Entre em contato com o suporte para mais informações.</p>
@@ -209,4 +396,208 @@
   </div>
   {% endif %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh das estatísticas a cada 30 segundos
+    const AUTO_REFRESH_INTERVAL = 30 * 1000; // 30 segundos
+    
+    function refreshStats() {
+        fetch('/dashboard/api/cliente/stats/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Erro ao carregar estatísticas:', data.error);
+                    return;
+                }
+                
+                // Atualizar os cards com as novas estatísticas
+                updateStatCard('total_tickets', data.total_tickets);
+                updateStatCard('tickets_abertos', data.tickets_abertos);
+                updateStatCard('tickets_fechados', data.tickets_fechados);
+                updateStatCard('tickets_em_andamento', data.tickets_em_andamento);
+                updateStatCard('tickets_resolvidos', data.tickets_resolvidos);
+                updateStatCard('tickets_alta_prioridade', data.tickets_alta_prioridade);
+                updateStatCard('tickets_media_prioridade', data.tickets_media_prioridade);
+                
+                // Atualizar indicador de última atualização
+                const lastUpdate = document.querySelector('.last-update');
+                if (lastUpdate) {
+                    lastUpdate.textContent = 'Atualizado às ' + data.ultimo_update;
+                    lastUpdate.style.color = '#28a745';
+                    setTimeout(() => {
+                        lastUpdate.style.color = '';
+                    }, 2000);
+                }
+                
+                console.log('Estatísticas atualizadas em:', data.ultimo_update);
+            })
+            .catch(error => {
+                console.error('Erro ao atualizar estatísticas:', error);
+                const lastUpdate = document.querySelector('.last-update');
+                if (lastUpdate) {
+                    lastUpdate.textContent = 'Erro ao atualizar - ' + new Date().toLocaleTimeString('pt-BR');
+                    lastUpdate.style.color = '#dc3545';
+                }
+            });
+    }
+    
+    function updateStatCard(elementName, newValue) {
+        // Procurar pelo card que contém esta estatística
+        const cards = document.querySelectorAll('.card h4');
+        cards.forEach(card => {
+            const parent = card.closest('.card');
+            const label = parent.querySelector('p');
+            if (label) {
+                const labelText = label.textContent.toLowerCase();
+                let shouldUpdate = false;
+                
+                switch(elementName) {
+                    case 'total_tickets':
+                        shouldUpdate = labelText.includes('total de tickets');
+                        break;
+                    case 'tickets_abertos':
+                        shouldUpdate = labelText.includes('tickets abertos');
+                        break;
+                    case 'tickets_fechados':
+                        shouldUpdate = labelText.includes('tickets fechados');
+                        break;
+                    case 'tickets_em_andamento':
+                        shouldUpdate = labelText.includes('em andamento');
+                        break;
+                    case 'tickets_resolvidos':
+                        shouldUpdate = labelText.includes('resolvidos');
+                        break;
+                    case 'tickets_alta_prioridade':
+                        shouldUpdate = labelText.includes('alta prioridade');
+                        break;
+                    case 'tickets_media_prioridade':
+                        shouldUpdate = labelText.includes('média prioridade');
+                        break;
+                }
+                
+                if (shouldUpdate && card.textContent !== newValue.toString()) {
+                    const oldValue = card.textContent;
+                    card.textContent = newValue;
+                    
+                    // Animar mudança
+                    card.style.color = '#28a745';
+                    card.style.transform = 'scale(1.1)';
+                    setTimeout(() => {
+                        card.style.color = '';
+                        card.style.transform = 'scale(1)';
+                    }, 1000);
+                    
+                    // Destacar card inteiro
+                    highlightCard(parent);
+                }
+            }
+        });
+    }
+    
+    // Configurar auto-refresh
+    setInterval(refreshStats, AUTO_REFRESH_INTERVAL);
+    
+    // Primeira atualização após 5 segundos
+    setTimeout(refreshStats, 5000);
+    
+    // Adicionar indicador de última atualização na primeira carga
+    const portalCards = document.querySelector('.row');
+    if (portalCards && !document.querySelector('.last-update')) {
+        const updateIndicator = document.createElement('div');
+        updateIndicator.className = 'col-12 text-center mt-2';
+        updateIndicator.innerHTML = '<small class="text-muted last-update">Carregado às ' + new Date().toLocaleTimeString('pt-BR') + ' - Atualização automática a cada 30s</small>';
+        portalCards.appendChild(updateIndicator);
+    }
+    
+    // Destacar cards com hover
+    document.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.transition = 'all 0.3s ease';
+            this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '';
+        });
+    });
+    
+    // Animação inicial para cards
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.6s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+    
+    // Animação para tabela de tickets
+    const ticketsRows = document.querySelectorAll('#tickets-recentes tr');
+    ticketsRows.forEach((row, index) => {
+        setTimeout(() => {
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(-20px)';
+            row.offsetHeight; // Force reflow
+            row.style.transition = 'all 0.5s ease';
+            row.style.opacity = '1';
+            row.style.transform = 'translateX(0)';
+        }, (cards.length * 100) + (index * 100));
+    });
+});
+
+// Função para destacar cards com mudanças
+function highlightCard(cardElement) {
+    cardElement.style.boxShadow = '0 0 20px rgba(76, 175, 80, 0.4)';
+    cardElement.style.transform = 'scale(1.02)';
+    setTimeout(() => {
+        cardElement.style.boxShadow = '';
+        cardElement.style.transform = 'scale(1)';
+    }, 2000);
+}
+
+// Função para criar notificação toast
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    toast.style.top = '20px';
+    toast.style.right = '20px';
+    toast.style.zIndex = '9999';
+    toast.style.minWidth = '300px';
+    toast.innerHTML = `
+        <strong>${type === 'success' ? 'Sucesso!' : 'Info'}</strong> ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 5000);
+}
+
+// Detectar inatividade e pausar atualizações
+let isActive = true;
+let inactiveTime = 0;
+const MAX_INACTIVE_TIME = 5 * 60 * 1000; // 5 minutos
+
+document.addEventListener('mousemove', () => {
+    isActive = true;
+    inactiveTime = 0;
+});
+
+setInterval(() => {
+    if (!isActive) {
+        inactiveTime += 1000;
+        if (inactiveTime >= MAX_INACTIVE_TIME) {
+            console.log('Página inativa - pausando atualizações');
+            // Você pode implementar lógica para pausar as atualizações aqui
+        }
+    }
+    isActive = false;
+}, 1000);
+</script>
 {% endblock %}

@@ -18,10 +18,15 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from dashboard import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('dashboard.urls')),
+    path('', views.home_redirect, name='home'),  # Página inicial inteligente
+    path('login/', views.custom_login, name='login'),
+    path('logout/', views.custom_logout, name='logout'),
+    path('dashboard/', include('dashboard.urls')),
+    path('api/user-info/', views.get_user_info, name='user_info'),
 ]
 
 if settings.DEBUG:

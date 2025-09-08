@@ -16,7 +16,7 @@
             </div>
             <div>
               <a href="{% url 'dashboard:ticket_update' ticket.pk %}" class="btn btn-primary btn-sm">
-                <i class="material-icons text-sm">edit</i>&nbsp;&nbsp;Editar
+                <i class="material-symbols-rounded text-sm">edit</i>&nbsp;&nbsp;Editar
               </a>
             </div>
           </div>
@@ -87,9 +87,9 @@
             <div class="timeline-block mb-3">
               <span class="timeline-step">
                 {% if interacao.eh_publico %}
-                  <i class="material-icons text-success text-gradient">message</i>
+                  <i class="material-symbols-rounded text-success text-gradient">message</i>
                 {% else %}
-                  <i class="material-icons text-warning text-gradient">lock</i>
+                  <i class="material-symbols-rounded text-warning text-gradient">lock</i>
                 {% endif %}
               </span>
               <div class="timeline-content">
@@ -127,7 +127,7 @@
               <label class="custom-control-label" for="eh_publico">Visível para o cliente</label>
             </div>
             <button type="submit" class="btn btn-primary">
-              <i class="material-icons">send</i>&nbsp;&nbsp;Enviar Interação
+              <i class="material-symbols-rounded">send</i>&nbsp;&nbsp;Enviar Interação
             </button>
           </form>
         </div>
@@ -140,7 +140,7 @@
         <div class="card-header pb-0">
           <div class="d-flex align-items-center">
             <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary text-center border-radius-xl">
-              <i class="material-icons opacity-10">person</i>
+              <i class="material-symbols-rounded opacity-10">person</i>
             </div>
             <div class="ms-3">
               <h6 class="mb-0">Informações do Cliente</h6>
@@ -188,21 +188,21 @@
             <!-- Status Updates -->
             {% if ticket.status == 'aberto' %}
             <button class="btn btn-warning btn-sm" onclick="updateTicketStatus('{{ ticket.id }}', 'em_andamento')">
-              <i class="material-icons text-sm">play_arrow</i>&nbsp;&nbsp;Iniciar Atendimento
+              <i class="material-symbols-rounded text-sm">play_arrow</i>&nbsp;&nbsp;Iniciar Atendimento
             </button>
             {% elif ticket.status == 'em_andamento' %}
             <button class="btn btn-info btn-sm" onclick="updateTicketStatus('{{ ticket.id }}', 'resolvido')">
-              <i class="material-icons text-sm">check_circle</i>&nbsp;&nbsp;Marcar como Resolvido
+              <i class="material-symbols-rounded text-sm">check_circle</i>&nbsp;&nbsp;Marcar como Resolvido
             </button>
             {% elif ticket.status == 'resolvido' %}
             <button class="btn btn-success btn-sm" onclick="updateTicketStatus('{{ ticket.id }}', 'fechado')">
-              <i class="material-icons text-sm">done_all</i>&nbsp;&nbsp;Fechar Ticket
+              <i class="material-symbols-rounded text-sm">done_all</i>&nbsp;&nbsp;Fechar Ticket
             </button>
             {% endif %}
             
             {% if ticket.status != 'fechado' %}
             <button class="btn btn-outline-secondary btn-sm" onclick="updateTicketStatus('{{ ticket.id }}', 'aguardando_cliente')">
-              <i class="material-icons text-sm">schedule</i>&nbsp;&nbsp;Aguardar Cliente
+              <i class="material-symbols-rounded text-sm">schedule</i>&nbsp;&nbsp;Aguardar Cliente
             </button>
             {% endif %}
           </div>

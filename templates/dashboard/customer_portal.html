@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Portal do Cliente - iConnect{% endblock %}
+
+{% block extra_css %}
+<style>
+    .customer-portal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        border: none;
+        height: 100%;
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        margin-bottom: 1rem;
+    }
+    
+    .ticket-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        border-left: 4px solid #667eea;
+        transition: all 0.3s ease;
+    }
+    
+    .ticket-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="customer-portal-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h2 class="mb-0">
+                    <i class="material-symbols-rounded me-2 align-middle">person</i>
+                    Portal do Cliente
+                </h2>
+                <p class="mb-0 opacity-8">Bem-vindo, {{ customer.name }}!</p>
+            </div>
+            <div class="col-lg-4 text-end">
+                <button class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#newTicketModal">
+                    <i class="material-symbols-rounded me-2">add</i>
+                    Novo Ticket
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-success">
+                    <i class="material-symbols-rounded">confirmation_number</i>
+                </div>
+                <h3 class="text-dark mb-0">{{ open_tickets }}</h3>
+                <p class="text-muted mb-0">Tickets Abertos</p>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-warning">
+                    <i class="material-symbols-rounded">pending</i>
+                </div>
+                <h3 class="text-dark mb-0">{{ in_progress_tickets }}</h3>
+                <p class="text-muted mb-0">Em Andamento</p>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-info">
+                    <i class="material-symbols-rounded">check_circle</i>
+                </div>
+                <h3 class="text-dark mb-0">{{ closed_tickets }}</h3>
+                <p class="text-muted mb-0">Tickets Fechados</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Tickets -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg">
+                <div class="card-header bg-gradient-primary">
+                    <h4 class="text-white mb-0">
+                        <i class="material-symbols-rounded me-2">list</i>
+                        Meus Tickets
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if tickets %}
+                        {% for ticket in tickets %}
+                            <div class="ticket-card">
+                                <div class="row align-items-center">
+                                    <div class="col-lg-6">
+                                        <h6 class="mb-1">
+                                            <strong>#{{ ticket.id }}</strong> - {{ ticket.assunto }}
+                                        </h6>
+                                        <p class="text-muted mb-2">{{ ticket.descricao|truncatewords:15 }}</p>
+                                        <small class="text-muted">
+                                            <i class="material-symbols-rounded align-middle" style="font-size: 16px;">access_time</i>
+                                            {{ ticket.criado_em|date:"d/m/Y H:i" }}
+                                        </small>
+                                    </div>
+                                    
+                                    <div class="col-lg-2">
+                                        {% if ticket.prioridade == 'alta' %}
+                                            <span class="badge bg-danger">Alta</span>
+                                        {% elif ticket.prioridade == 'media' %}
+                                            <span class="badge bg-warning">Média</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Baixa</span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="col-lg-2">
+                                        {% if ticket.status == 'aberto' %}
+                                            <span class="badge bg-primary">Aberto</span>
+                                        {% elif ticket.status == 'em_andamento' %}
+                                            <span class="badge bg-warning">Em Andamento</span>
+                                        {% elif ticket.status == 'resolvido' %}
+                                            <span class="badge bg-success">Resolvido</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Fechado</span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="col-lg-2 text-end">
+                                        <a href="{% url 'dashboard:ticket_detail' ticket.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="material-symbols-rounded">visibility</i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="material-symbols-rounded" style="font-size: 64px; color: #ccc;">inbox</i>
+                            <h5 class="text-muted mt-3">Nenhum ticket encontrado</h5>
+                            <p class="text-muted">Você ainda não possui tickets em aberto.</p>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newTicketModal">
+                                <i class="material-symbols-rounded me-2">add</i>
+                                Criar Primeiro Ticket
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Novo Ticket -->
+<div class="modal fade" id="newTicketModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-primary">
+                <h5 class="modal-title text-white">
+                    <i class="material-symbols-rounded me-2">add</i>
+                    Novo Ticket de Suporte
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'dashboard:ticket_create' %}">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Assunto *</label>
+                            <input type="text" class="form-control" name="assunto" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Prioridade *</label>
+                            <select class="form-select" name="prioridade" required>
+                                <option value="baixa">Baixa</option>
+                                <option value="media" selected>Média</option>
+                                <option value="alta">Alta</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Categoria</label>
+                        <select class="form-select" name="categoria">
+                            <option value="">Selecione uma categoria</option>
+                            <option value="tecnico">Suporte Técnico</option>
+                            <option value="comercial">Comercial</option>
+                            <option value="financeiro">Financeiro</option>
+                            <option value="outros">Outros</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Descrição *</label>
+                        <textarea class="form-control" name="descricao" rows="4" 
+                                  placeholder="Descreva detalhadamente o seu problema ou solicitação..." required></textarea>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="material-symbols-rounded me-2">send</i>
+                            Criar Ticket
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

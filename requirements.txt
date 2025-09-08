@@ -1,3 +1,18 @@
+# Django Core
 Django==5.2.6
 django-environ==0.11.2
 whitenoise==6.8.2
+
+# Dependências já instaladas
+requests
+celery
+redis
+
+# Análise de texto básica
+textblob
+
+# Environment Variables
+python-decouple
+
+# Timezone
+pytz

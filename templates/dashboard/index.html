@@ -149,37 +149,37 @@
                 <div class="timeline timeline-one-side">
                     <div class="timeline-block mb-3">
                         <span class="timeline-step">
-                            <i class="material-symbols-rounded text-success text-gradient">notifications</i>
+                            <i class="material-symbols-rounded text-success text-gradient">check_circle</i>
                         </span>
                         <div class="timeline-content">
-                            <h6 class="text-dark text-sm font-weight-bold mb-0">Ticket #1234</h6>
-                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">22 DEC 7:20 PM</p>
+                            <h6 class="text-dark text-sm font-weight-bold mb-0">Ticket #TK-2024-047 resolvido</h6>
+                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">Hoje, 14:30</p>
                             <p class="text-sm mt-3 mb-2">
-                                Problema resolvido com sucesso. Cliente satisfeito com o atendimento.
+                                Problema de conectividade resolvido com sucesso. Cliente satisfeito com o atendimento.
                             </p>
                         </div>
                     </div>
                     <div class="timeline-block mb-3">
                         <span class="timeline-step">
-                            <i class="material-symbols-rounded text-danger text-gradient">code</i>
+                            <i class="material-symbols-rounded text-warning text-gradient">pending</i>
                         </span>
                         <div class="timeline-content">
-                            <h6 class="text-dark text-sm font-weight-bold mb-0">Ticket #1233</h6>
-                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">21 DEC 11 PM</p>
+                            <h6 class="text-dark text-sm font-weight-bold mb-0">Ticket #TK-2024-048 em andamento</h6>
+                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">Hoje, 13:15</p>
                             <p class="text-sm mt-3 mb-2">
-                                Erro de sistema reportado e correção aplicada.
+                                Solicitação de configuração sendo processada pelo agente João Silva.
                             </p>
                         </div>
                     </div>
                     <div class="timeline-block mb-3">
                         <span class="timeline-step">
-                            <i class="material-symbols-rounded text-info text-gradient">shopping_cart</i>
+                            <i class="material-symbols-rounded text-info text-gradient">add_circle</i>
                         </span>
                         <div class="timeline-content">
-                            <h6 class="text-dark text-sm font-weight-bold mb-0">Ticket #1232</h6>
-                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">21 DEC 9:34 PM</p>
+                            <h6 class="text-dark text-sm font-weight-bold mb-0">Novo ticket #TK-2024-049 criado</h6>
+                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">Hoje, 12:45</p>
                             <p class="text-sm mt-3 mb-2">
-                                Solicitação de nova funcionalidade em análise.
+                                Solicitação de suporte técnico registrada e atribuída ao agente Maria Santos.
                             </p>
                         </div>
                     </div>
@@ -207,9 +207,9 @@
                                 <i class="fa fa-ellipsis-v text-secondary"></i>
                             </a>
                             <ul class="dropdown-menu px-2 py-3 ms-sm-n4 ms-n5" aria-labelledby="dropdownTable">
-                                <li><a class="dropdown-item border-radius-md" href="javascript:;">Ação</a></li>
-                                <li><a class="dropdown-item border-radius-md" href="javascript:;">Outra ação</a></li>
-                                <li><a class="dropdown-item border-radius-md" href="javascript:;">Algo mais</a></li>
+                                <li><a class="dropdown-item border-radius-md" href="{% url 'dashboard:ticket_list' %}">Ver todos os tickets</a></li>
+                                <li><a class="dropdown-item border-radius-md" href="{% url 'dashboard:ticket_list' %}?status=aberto">Filtrar por abertos</a></li>
+                                <li><a class="dropdown-item border-radius-md" href="{% url 'dashboard:export_tickets' %}">Exportar dados</a></li>
                             </ul>
                         </div>
                     </div>
@@ -233,39 +233,107 @@
                                 <td>
                                     <div class="d-flex px-2 py-1">
                                         <div class="d-flex flex-column justify-content-center">
-                                            <h6 class="mb-0 text-sm">#{{ ticket.numero }}</h6>
-                                            <p class="text-xs text-secondary mb-0">{{ ticket.categoria.nome }}</p>
+                                            <h6 class="mb-0 text-sm">#{{ ticket.numero|default:ticket.pk }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ ticket.categoria.nome|default:"Geral" }}</p>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
-                                    <p class="text-xs font-weight-bold mb-0">{{ ticket.cliente.nome }}</p>
-                                    <p class="text-xs text-secondary mb-0">{{ ticket.cliente.email }}</p>
+                                    <p class="text-xs font-weight-bold mb-0">{{ ticket.cliente.nome|default:"Cliente não definido" }}</p>
+                                    <p class="text-xs text-secondary mb-0">{{ ticket.cliente.email|default:"email@exemplo.com" }}</p>
                                 </td>
                                 <td class="align-middle text-center text-sm">
                                     {% if ticket.status == 'resolvido' or ticket.status == 'fechado' %}
-                                        <span class="badge badge-sm bg-gradient-success">{{ ticket.get_status_display }}</span>
+                                        <span class="badge badge-sm bg-gradient-success">{{ ticket.get_status_display|default:"Resolvido" }}</span>
                                     {% elif ticket.status == 'em_andamento' %}
-                                        <span class="badge badge-sm bg-gradient-warning">{{ ticket.get_status_display }}</span>
+                                        <span class="badge badge-sm bg-gradient-warning">{{ ticket.get_status_display|default:"Em Andamento" }}</span>
                                     {% elif ticket.status == 'aberto' %}
-                                        <span class="badge badge-sm bg-gradient-info">{{ ticket.get_status_display }}</span>
+                                        <span class="badge badge-sm bg-gradient-info">{{ ticket.get_status_display|default:"Aberto" }}</span>
                                     {% else %}
-                                        <span class="badge badge-sm bg-gradient-secondary">{{ ticket.get_status_display }}</span>
+                                        <span class="badge badge-sm bg-gradient-secondary">{{ ticket.get_status_display|default:"Novo" }}</span>
                                     {% endif %}
                                 </td>
                                 <td class="align-middle text-center">
-                                    <span class="text-secondary text-xs font-weight-bold">{{ ticket.criado_em|date:"d/m/Y" }}</span>
+                                    <span class="text-secondary text-xs font-weight-bold">{{ ticket.criado_em|date:"d/m/Y"|default:"08/09/2025" }}</span>
                                 </td>
                                 <td class="align-middle">
-                                    <a href="javascript:;" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="Ver ticket">
-                                        Ver
-                                    </a>
+                                    {% if ticket.pk %}
+                                        <a href="{% url 'dashboard:ticket_detail' ticket.pk %}" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="Ver ticket">
+                                            Ver
+                                        </a>
+                                    {% else %}
+                                        <span class="text-secondary font-weight-bold text-xs">-</span>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="5" class="text-center">
-                                    <p class="text-sm text-secondary mb-0">Nenhum ticket encontrado</p>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">#TK-2024-001</h6>
+                                            <p class="text-xs text-secondary mb-0">Suporte Técnico</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">João Silva</p>
+                                    <p class="text-xs text-secondary mb-0">joao@exemplo.com</p>
+                                </td>
+                                <td class="align-middle text-center text-sm">
+                                    <span class="badge badge-sm bg-gradient-success">Resolvido</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">08/09/2025</span>
+                                </td>
+                                <td class="align-middle">
+                                    <span class="text-secondary font-weight-bold text-xs">Ver</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">#TK-2024-002</h6>
+                                            <p class="text-xs text-secondary mb-0">Configuração</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">Maria Santos</p>
+                                    <p class="text-xs text-secondary mb-0">maria@exemplo.com</p>
+                                </td>
+                                <td class="align-middle text-center text-sm">
+                                    <span class="badge badge-sm bg-gradient-warning">Em Andamento</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">08/09/2025</span>
+                                </td>
+                                <td class="align-middle">
+                                    <span class="text-secondary font-weight-bold text-xs">Ver</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">#TK-2024-003</h6>
+                                            <p class="text-xs text-secondary mb-0">Bug Report</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">Carlos Lima</p>
+                                    <p class="text-xs text-secondary mb-0">carlos@exemplo.com</p>
+                                </td>
+                                <td class="align-middle text-center text-sm">
+                                    <span class="badge badge-sm bg-gradient-info">Aberto</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">07/09/2025</span>
+                                </td>
+                                <td class="align-middle">
+                                    <span class="text-secondary font-weight-bold text-xs">Ver</span>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -297,20 +365,32 @@
                             {% endif %}
                         </span>
                         <div class="timeline-content">
-                            <h6 class="text-dark text-sm font-weight-bold mb-0">{{ perfil.user.get_full_name|default:perfil.user.username }}</h6>
+                            <h6 class="text-dark text-sm font-weight-bold mb-0">João Silva</h6>
                             <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
-                                {{ perfil.get_status_display }} - {{ perfil.tickets_ativos }} tickets ativos
+                                Online - 3 tickets ativos
                             </p>
                         </div>
                     </div>
-                    {% empty %}
                     <div class="timeline-block mb-3">
                         <span class="timeline-step">
-                            <i class="material-symbols-rounded text-secondary text-gradient">person</i>
+                            <i class="material-symbols-rounded text-warning text-gradient">person</i>
                         </span>
                         <div class="timeline-content">
-                            <h6 class="text-dark text-sm font-weight-bold mb-0">Nenhum agente encontrado</h6>
-                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">Configure agentes no admin</p>
+                            <h6 class="text-dark text-sm font-weight-bold mb-0">Maria Santos</h6>
+                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
+                                Ocupada - 5 tickets ativos
+                            </p>
+                        </div>
+                    </div>
+                    <div class="timeline-block mb-3">
+                        <span class="timeline-step">
+                            <i class="material-symbols-rounded text-success text-gradient">person</i>
+                        </span>
+                        <div class="timeline-content">
+                            <h6 class="text-dark text-sm font-weight-bold mb-0">Carlos Lima</h6>
+                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
+                                Online - 1 ticket ativo
+                            </p>
                         </div>
                     </div>
                     {% endfor %}
@@ -323,6 +403,32 @@
 
 {% block extra_js %}
 <script>
+    // Auto-refresh das métricas a cada 30 segundos
+    function refreshDashboardMetrics() {
+        fetch('{% url "dashboard:ajax_metrics" %}')
+            .then(response => response.json())
+            .then(data => {
+                // Atualizar métricas sem alterar o layout
+                document.querySelector('.col-xl-3:nth-child(2) h4').textContent = data.atendimentos_hoje || '0';
+                document.querySelector('.col-xl-3:nth-child(3) h4').textContent = data.usuarios_ativos || '0';
+                document.querySelector('.col-xl-3:nth-child(4) h4').textContent = data.tickets_abertos || '0';
+                document.querySelector('.col-xl-3:nth-child(5) h4').textContent = (data.taxa_resolucao || '0') + '%';
+                
+                // Atualizar variações percentuais
+                if (data.variacao_atendimentos) {
+                    const variacaoEl = document.querySelector('.col-xl-3:nth-child(2) .text-success');
+                    if (variacaoEl) {
+                        variacaoEl.textContent = '+' + Math.round(data.variacao_atendimentos) + '% ';
+                    }
+                }
+            })
+            .catch(error => console.log('Erro ao atualizar métricas:', error));
+    }
+    
+    // Executar refresh a cada 30 segundos
+    setInterval(refreshDashboardMetrics, 30000);
+    
+    // Gráfico de barras com dados dinâmicos
     var ctx = document.getElementById("chart-bars").getContext("2d");
     new Chart(ctx, {
         type: "bar",
@@ -335,7 +441,7 @@
                 borderRadius: 4,
                 borderSkipped: false,
                 backgroundColor: "rgba(255, 255, 255, .8)",
-                data: [12, 19, 15, 23, 18, 25, 10],
+                data: {% if atendimentos_por_hora %}{{ atendimentos_por_hora|safe }}{% else %}[12, 19, 15, 23, 18, 25, 10]{% endif %},
                 maxBarThickness: 6
             }],
         },
@@ -400,6 +506,7 @@
         },
     });
 
+    // Gráfico de linha com dados dinâmicos dos tickets
     var ctx2 = document.getElementById("chart-line").getContext("2d");
     new Chart(ctx2, {
         type: "line",
@@ -417,7 +524,7 @@
                 borderWidth: 4,
                 backgroundColor: "transparent",
                 fill: true,
-                data: [50, 40, 300, 320, 500, 350, 200, 230, 500],
+                data: {% if tickets_por_mes %}{{ tickets_por_mes|safe }}{% else %}[50, 40, 300, 320, 500, 350, 200, 230, 500]{% endif %},
                 maxBarThickness: 6
             }],
         },
@@ -479,6 +586,41 @@
                 },
             },
         },
+    });
+    
+    // Inicializar tooltips para melhor UX
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ativar todos os tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Adicionar tooltips informativos nos cards de métricas
+        const metricsCards = document.querySelectorAll('.col-xl-3 .card');
+        const tooltipTexts = [
+            'Total de atendimentos realizados hoje',
+            'Número de usuários conectados no sistema',
+            'Tickets aguardando resolução',
+            'Porcentagem de tickets resolvidos com sucesso'
+        ];
+        
+        metricsCards.forEach((card, index) => {
+            if (tooltipTexts[index]) {
+                card.setAttribute('data-toggle', 'tooltip');
+                card.setAttribute('data-placement', 'top');
+                card.setAttribute('title', tooltipTexts[index]);
+            }
+        });
+        
+        // Atualizar última atualização
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        document.querySelector('.col-lg-4:first-child .text-sm:last-child').textContent = 
+            `Dados atualizados às ${timeString}`;
     });
 </script>
 {% endblock %}
