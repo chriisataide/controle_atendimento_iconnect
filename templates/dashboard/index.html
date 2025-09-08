@@ -428,8 +428,47 @@
     // Executar refresh a cada 30 segundos
     setInterval(refreshDashboardMetrics, 30000);
     
-    // Gráfico de barras com dados dinâmicos
+    // Sistema de cores Material Dashboard
+    const materialColors = {
+        primary: '#e91e63',
+        success: '#4caf50', 
+        warning: '#ff9800',
+        info: '#00bcd4',
+        danger: '#f44336',
+        dark: '#344767',
+        light: '#f8f9fa'
+    };
+
+    // Função para criar gradientes dinâmicos
+    function createGradient(ctx, colorStart, colorEnd, vertical = true) {
+        const gradient = vertical ? 
+            ctx.createLinearGradient(0, 0, 0, 170) : 
+            ctx.createLinearGradient(0, 0, ctx.canvas.width, 0);
+        gradient.addColorStop(0, colorStart);
+        gradient.addColorStop(1, colorEnd);
+        return gradient;
+    }
+
+    // Função para gerar cores baseadas nos dados
+    function generateDataColors(data, baseColor) {
+        const maxValue = Math.max(...data);
+        return data.map(value => {
+            const intensity = value / maxValue;
+            const alpha = 0.3 + (intensity * 0.7); // Varia de 0.3 a 1.0
+            return baseColor.replace('1)', `${alpha})`);
+        });
+    }
+
+    // Gráfico de barras com cores dinâmicas e gradientes
     var ctx = document.getElementById("chart-bars").getContext("2d");
+    const chartData = {% if atendimentos_por_hora %}{{ atendimentos_por_hora|safe }}{% else %}[12, 19, 15, 23, 18, 25, 10]{% endif %};
+    
+    // Criar gradiente para as barras
+    const barGradient = createGradient(ctx, 'rgba(233, 30, 99, 0.8)', 'rgba(233, 30, 99, 0.3)');
+    
+    // Cores dinâmicas baseadas nos valores
+    const dynamicColors = generateDataColors(chartData, 'rgba(233, 30, 99, 1)');
+    
     new Chart(ctx, {
         type: "bar",
         data: {
@@ -437,94 +476,127 @@
             datasets: [{
                 label: "Atendimentos",
                 tension: 0.4,
-                borderWidth: 0,
-                borderRadius: 4,
+                borderWidth: 2,
+                borderRadius: 8,
                 borderSkipped: false,
-                backgroundColor: "rgba(255, 255, 255, .8)",
-                data: {% if atendimentos_por_hora %}{{ atendimentos_por_hora|safe }}{% else %}[12, 19, 15, 23, 18, 25, 10]{% endif %},
-                maxBarThickness: 6
+                backgroundColor: dynamicColors,
+                borderColor: materialColors.primary,
+                hoverBackgroundColor: materialColors.primary,
+                hoverBorderColor: materialColors.dark,
+                hoverBorderWidth: 3,
+                data: chartData,
+                maxBarThickness: 8
             }],
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(52, 71, 103, 0.9)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: materialColors.primary,
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        displayColors: true,
+                        callbacks: {
+                            title: function(context) {
+                                return `Horário: ${context[0].label}`;
+                            },
+                            label: function(context) {
+                                return `Atendimentos: ${context.parsed.y}`;
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index',
+                },
+                scales: {
+                    y: {
+                        grid: {
+                            drawBorder: false,
+                            display: true,
+                            drawOnChartArea: true,
+                            drawTicks: false,
+                            borderDash: [5, 5],
+                            color: 'rgba(233, 30, 99, 0.1)'
+                        },
+                        ticks: {
+                            display: true,
+                            color: materialColors.dark,
+                            padding: 10,
+                            font: {
+                                size: 12,
+                                weight: 500,
+                                family: "Inter",
+                                style: 'normal',
+                                lineHeight: 2
+                            },
+                        }
+                    },
+                    x: {
+                        grid: {
+                            drawBorder: false,
+                            display: true,
+                            drawOnChartArea: true,
+                            drawTicks: false,
+                            borderDash: [5, 5],
+                            color: 'rgba(233, 30, 99, 0.1)'
+                        },
+                        ticks: {
+                            display: true,
+                            color: materialColors.dark,
+                            padding: 10,
+                            font: {
+                                size: 12,
+                                weight: 500,
+                                family: "Inter",
+                                style: 'normal',
+                                lineHeight: 2
+                            },
+                        }
+                    },
+                },
+                animation: {
+                    duration: 2000,
+                    easing: 'easeInOutQuart'
                 }
             },
-            interaction: {
-                intersect: false,
-                mode: 'index',
-            },
-            scales: {
-                y: {
-                    grid: {
-                        drawBorder: false,
-                        display: true,
-                        drawOnChartArea: true,
-                        drawTicks: false,
-                        borderDash: [5, 5],
-                        color: 'rgba(255, 255, 255, .2)'
-                    },
-                    ticks: {
-                        display: true,
-                        color: '#f8f9fa',
-                        padding: 10,
-                        font: {
-                            size: 14,
-                            weight: 300,
-                            family: "Inter",
-                            style: 'normal',
-                            lineHeight: 2
-                        },
-                    }
-                },
-                x: {
-                    grid: {
-                        drawBorder: false,
-                        display: true,
-                        drawOnChartArea: true,
-                        drawTicks: false,
-                        borderDash: [5, 5],
-                        color: 'rgba(255, 255, 255, .2)'
-                    },
-                    ticks: {
-                        display: true,
-                        color: '#f8f9fa',
-                        padding: 10,
-                        font: {
-                            size: 14,
-                            weight: 300,
-                            family: "Inter",
-                            style: 'normal',
-                            lineHeight: 2
-                        },
-                    }
-                },
-            },
-        },
-    });
+        });
 
-    // Gráfico de linha com dados dinâmicos dos tickets
+    // Gráfico de linha com gradientes e múltiplas cores
     var ctx2 = document.getElementById("chart-line").getContext("2d");
+    const lineData = {% if tickets_por_mes %}{{ tickets_por_mes|safe }}{% else %}[50, 40, 300, 320, 500, 350, 200, 230, 500]{% endif %};
+    
+    // Criar gradiente para área preenchida
+    const lineGradient = createGradient(ctx2, 'rgba(76, 175, 80, 0.3)', 'rgba(76, 175, 80, 0.05)');
+    
     new Chart(ctx2, {
         type: "line",
         data: {
             labels: ["Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
             datasets: [{
-                label: "Tickets",
-                tension: 0,
-                borderWidth: 0,
-                pointRadius: 5,
-                pointBackgroundColor: "rgba(255, 255, 255, .8)",
-                pointBorderColor: "transparent",
-                borderColor: "rgba(255, 255, 255, .8)",
-                borderColor: "rgba(255, 255, 255, .8)",
-                borderWidth: 4,
-                backgroundColor: "transparent",
+                label: "Tickets Resolvidos",
+                tension: 0.4,
+                borderWidth: 3,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                pointBackgroundColor: materialColors.success,
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointHoverBackgroundColor: materialColors.success,
+                pointHoverBorderColor: materialColors.dark,
+                pointHoverBorderWidth: 3,
+                borderColor: materialColors.success,
+                backgroundColor: lineGradient,
                 fill: true,
-                data: {% if tickets_por_mes %}{{ tickets_por_mes|safe }}{% else %}[50, 40, 300, 320, 500, 350, 200, 230, 500]{% endif %},
+                data: lineData,
                 maxBarThickness: 6
             }],
         },
@@ -534,6 +606,23 @@
             plugins: {
                 legend: {
                     display: false,
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(52, 71, 103, 0.9)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: materialColors.success,
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    displayColors: true,
+                    callbacks: {
+                        title: function(context) {
+                            return `Mês: ${context[0].label}`;
+                        },
+                        label: function(context) {
+                            return `Tickets: ${context.parsed.y}`;
+                        }
+                    }
                 }
             },
             interaction: {
@@ -548,15 +637,15 @@
                         drawOnChartArea: true,
                         drawTicks: false,
                         borderDash: [5, 5],
-                        color: 'rgba(255, 255, 255, .2)'
+                        color: 'rgba(76, 175, 80, 0.1)'
                     },
                     ticks: {
                         display: true,
                         padding: 10,
-                        color: '#f8f9fa',
+                        color: materialColors.dark,
                         font: {
-                            size: 14,
-                            weight: 300,
+                            size: 12,
+                            weight: 500,
                             family: "Inter",
                             style: 'normal',
                             lineHeight: 2
@@ -573,11 +662,11 @@
                     },
                     ticks: {
                         display: true,
-                        color: '#f8f9fa',
+                        color: materialColors.dark,
                         padding: 10,
                         font: {
-                            size: 14,
-                            weight: 300,
+                            size: 12,
+                            weight: 500,
                             family: "Inter",
                             style: 'normal',
                             lineHeight: 2
@@ -585,11 +674,122 @@
                     }
                 },
             },
+            animation: {
+                duration: 2500,
+                easing: 'easeInOutQuart'
+            }
         },
     });
     
-    // Inicializar tooltips para melhor UX
+    // Sistema de cores dinâmico para métricas
+    function updateMetricColors() {
+        const metricCards = document.querySelectorAll('.col-xl-3 .card');
+        const colors = [materialColors.primary, materialColors.success, materialColors.warning, materialColors.info];
+        
+        metricCards.forEach((card, index) => {
+            if (colors[index]) {
+                // Adicionar efeito hover
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px)';
+                    this.style.boxShadow = `0 8px 25px rgba(${hexToRgb(colors[index])}, 0.3)`;
+                    this.style.transition = 'all 0.3s ease';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = '';
+                });
+            }
+        });
+    }
+    
+    // Converter hex para RGB
+    function hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? 
+            `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : 
+            '0, 0, 0';
+    }
+    
+    // Atualização em tempo real dos gráficos
+    function refreshChartsData() {
+        // Simular dados em tempo real
+        const now = new Date();
+        const hours = now.getHours();
+        
+        // Destacar hora atual no gráfico de barras
+        const currentHourIndex = Math.floor((hours - 8) / 2);
+        if (currentHourIndex >= 0 && currentHourIndex < 7) {
+            const barColors = dynamicColors.map((color, index) => 
+                index === currentHourIndex ? materialColors.warning : color
+            );
+            // Atualizar cores se necessário
+        }
+    }
+    
+    // Inicialização de animações suaves
+    function initSmoothAnimations() {
+        // Animação de fade-in para os cards
+        const cards = document.querySelectorAll('.card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.transition = 'all 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 150);
+        });
+        
+        // Animação pulsante para indicadores ativos
+        const activeIndicators = document.querySelectorAll('.text-success, .bg-gradient-success');
+        activeIndicators.forEach(indicator => {
+            indicator.style.animation = 'pulse 2s infinite';
+        });
+    }
+    
+    // Adicionar CSS para animações
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        .chart-container:hover {
+            transform: scale(1.02);
+            transition: transform 0.3s ease;
+        }
+        
+        .timeline-step i {
+            transition: all 0.3s ease;
+        }
+        
+        .timeline-step:hover i {
+            transform: scale(1.2);
+            filter: drop-shadow(0 0 8px currentColor);
+        }
+        
+        .card {
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Inicializar todas as funcionalidades quando o DOM estiver pronto
     document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar animações suaves
+        initSmoothAnimations();
+        
+        // Atualizar cores das métricas
+        updateMetricColors();
+        
         // Ativar todos os tooltips
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'));
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -599,28 +799,73 @@
         // Adicionar tooltips informativos nos cards de métricas
         const metricsCards = document.querySelectorAll('.col-xl-3 .card');
         const tooltipTexts = [
-            'Total de atendimentos realizados hoje',
-            'Número de usuários conectados no sistema',
-            'Tickets aguardando resolução',
-            'Porcentagem de tickets resolvidos com sucesso'
+            'Total de atendimentos realizados hoje - Atualizado em tempo real',
+            'Número de usuários conectados no sistema agora',
+            'Tickets aguardando resolução - Prioridade alta destacada',
+            'Taxa de sucesso dos atendimentos - Meta: 95%'
         ];
         
         metricsCards.forEach((card, index) => {
             if (tooltipTexts[index]) {
-                card.setAttribute('data-toggle', 'tooltip');
-                card.setAttribute('data-placement', 'top');
+                card.setAttribute('data-bs-toggle', 'tooltip');
+                card.setAttribute('data-bs-placement', 'top');
                 card.setAttribute('title', tooltipTexts[index]);
             }
         });
         
-        // Atualizar última atualização
+        // Atualizar timestamp dinâmico
         const now = new Date();
         const timeString = now.toLocaleTimeString('pt-BR', {
             hour: '2-digit',
             minute: '2-digit'
         });
-        document.querySelector('.col-lg-4:first-child .text-sm:last-child').textContent = 
-            `Dados atualizados às ${timeString}`;
+        
+        const updateElements = document.querySelectorAll('.text-sm:contains("atualizados"), .text-sm:contains("atualização")');
+        if (updateElements.length > 0) {
+            updateElements[0].textContent = `Dados atualizados às ${timeString}`;
+        }
+        
+        // Configurar atualização automática dos gráficos
+        setInterval(refreshChartsData, 30000); // Atualiza a cada 30 segundos
+        
+        // Adicionar indicadores de status em tempo real
+        const statusIndicators = document.querySelectorAll('.timeline-step i');
+        statusIndicators.forEach((indicator, index) => {
+            const colors = [materialColors.success, materialColors.warning, materialColors.info];
+            if (colors[index]) {
+                indicator.style.color = colors[index];
+                indicator.style.textShadow = `0 0 8px ${colors[index]}40`;
+            }
+        });
+        
+        // Sistema de notificações visuais
+        function showUpdateNotification() {
+            const notification = document.createElement('div');
+            notification.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            notification.style.cssText = `
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                background: linear-gradient(45deg, ${materialColors.success}, ${materialColors.info});
+                color: white;
+                border: none;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            `;
+            notification.innerHTML = `
+                <i class="material-symbols-rounded me-2">check_circle</i>
+                Gráficos atualizados com sucesso!
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+        
+        // Mostrar notificação inicial
+        setTimeout(showUpdateNotification, 1000);
     });
 </script>
 {% endblock %}

@@ -1,12 +1,12 @@
 {
-    "name": "creativetimofficial/material-dashboard",
-    "description": "Material Dashboard - Free Bootstrap Material Design Admin",
+    "name": "chrisataide/controle-atendimento-iconnect",
+    "description": "Sistema completo de controle de atendimento e tickets desenvolvido em Django",
     "type": "project",
     "license": "MIT",
     "authors": [
         {
-            "name": "Creative Tim",
-            "email": "hello@creative-tim.com"
+            "name": "Chris Ataíde",
+            "email": "chris@iconnect.com"
         }
     ],
     "require": {}

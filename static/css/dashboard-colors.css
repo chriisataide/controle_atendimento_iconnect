@@ -1,0 +1,279 @@
+/*
+ * Dashboard Enhanced Colors & Animations
+ * Sistema de cores integrado com Material Dashboard
+ * Criado para melhorar a visualização dos gráficos
+ */
+
+:root {
+    /* Material Dashboard Colors */
+    --md-primary: #e91e63;
+    --md-success: #4caf50;
+    --md-warning: #ff9800;
+    --md-info: #00bcd4;
+    --md-danger: #f44336;
+    --md-dark: #344767;
+    --md-light: #f8f9fa;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(45deg, var(--md-primary), #ec407a);
+    --gradient-success: linear-gradient(45deg, var(--md-success), #66bb6a);
+    --gradient-warning: linear-gradient(45deg, var(--md-warning), #ffb74d);
+    --gradient-info: linear-gradient(45deg, var(--md-info), #26c6da);
+    
+    /* Chart Colors */
+    --chart-primary-rgba: rgba(233, 30, 99, 0.8);
+    --chart-success-rgba: rgba(76, 175, 80, 0.8);
+    --chart-warning-rgba: rgba(255, 152, 0, 0.8);
+    --chart-info-rgba: rgba(0, 188, 212, 0.8);
+}
+
+/* Animações personalizadas */
+@keyframes pulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.05); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInUp {
+    0% { 
+        opacity: 0; 
+        transform: translateY(30px); 
+    }
+    100% { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+@keyframes shimmer {
+    0% { background-position: -200px 0; }
+    100% { background-position: calc(200px + 100%) 0; }
+}
+
+/* Estilos para cards de métricas */
+.metric-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.metric-card:hover::before {
+    left: 100%;
+}
+
+/* Containers de gráficos */
+.chart-container {
+    position: relative;
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.chart-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.05) 100%);
+    pointer-events: none;
+    border-radius: 12px;
+}
+
+.chart-container:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* Elementos do timeline */
+.timeline-step {
+    transition: all 0.3s ease;
+}
+
+.timeline-step:hover {
+    transform: scale(1.1);
+}
+
+.timeline-step i {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 0 0 transparent);
+}
+
+.timeline-step:hover i {
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 8px currentColor);
+}
+
+/* Indicadores de status com cores dinâmicas */
+.status-success {
+    color: var(--md-success) !important;
+    text-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+    animation: pulse 2s infinite;
+}
+
+.status-warning {
+    color: var(--md-warning) !important;
+    text-shadow: 0 0 8px rgba(255, 152, 0, 0.3);
+}
+
+.status-info {
+    color: var(--md-info) !important;
+    text-shadow: 0 0 8px rgba(0, 188, 212, 0.3);
+}
+
+.status-danger {
+    color: var(--md-danger) !important;
+    text-shadow: 0 0 8px rgba(244, 67, 54, 0.3);
+}
+
+/* Cards com gradientes aprimorados */
+.bg-gradient-primary {
+    background: var(--gradient-primary) !important;
+}
+
+.bg-gradient-success {
+    background: var(--gradient-success) !important;
+}
+
+.bg-gradient-warning {
+    background: var(--gradient-warning) !important;
+}
+
+.bg-gradient-info {
+    background: var(--gradient-info) !important;
+}
+
+/* Tooltips customizados */
+.custom-tooltip {
+    background: rgba(52, 71, 103, 0.95) !important;
+    border: 1px solid var(--md-primary) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
+    backdrop-filter: blur(10px);
+}
+
+.custom-tooltip .tooltip-inner {
+    padding: 8px 12px;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+/* Notificações flutuantes */
+.floating-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 320px;
+    background: var(--gradient-success);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    animation: slideInUp 0.5s ease;
+    backdrop-filter: blur(10px);
+}
+
+/* Efeitos de loading para gráficos */
+.chart-loading {
+    position: relative;
+}
+
+.chart-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200px 100%;
+    animation: shimmer 2s infinite;
+    border-radius: 8px;
+}
+
+/* Responsividade para animações */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Estados de hover melhorados */
+.card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1);
+}
+
+/* Micro-interações para botões */
+.btn {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+/* Indicadores de carga dinâmica */
+.data-indicator {
+    position: relative;
+}
+
+.data-indicator::after {
+    content: '●';
+    position: absolute;
+    top: -2px;
+    right: -8px;
+    color: var(--md-success);
+    font-size: 8px;
+    animation: pulse 1.5s infinite;
+}
+
+/* Melhorias para acessibilidade */
+.focus-visible {
+    outline: 2px solid var(--md-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* Tema escuro (se implementado) */
+@media (prefers-color-scheme: dark) {
+    .chart-container {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .custom-tooltip {
+        background: rgba(255, 255, 255, 0.95) !important;
+        color: var(--md-dark) !important;
+    }
+}

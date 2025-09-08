@@ -8,7 +8,7 @@
 ![Dashboard](https://img.shields.io/badge/Dashboard-Agente-orange.svg)
 ![Portal](https://img.shields.io/badge/Portal-Cliente-blue.svg)
 
-Um sistema completo de gestão de atendimento e tickets desenvolvido em **Django** com interface **Material Dashboard**. O sistema oferece funcionalidades avançadas para controle de chamados, gestão de agentes e portal do cliente.
+Um sistema completo de gestão de atendimento e tickets desenvolvido em **Django** com interface moderna baseada em **Material Design**. O sistema oferece funcionalidades avançadas para controle de chamados, gestão de agentes e portal do cliente.
 
 ## ✨ Principais Funcionalidades
 
