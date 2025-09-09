@@ -27,12 +27,14 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Para arquivos estáticos
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'dashboard.monitoring.MonitoringMiddleware',  # Monitoramento customizado
 ]
 
 ROOT_URLCONF = 'controle_atendimento.urls'
@@ -234,3 +236,11 @@ AI_CONFIG = {
     'AUTO_ASSIGNMENT': os.environ.get('ENABLE_AUTO_ASSIGNMENT', 'True').lower() == 'true',
     'SENTIMENT_ANALYSIS': os.environ.get('ENABLE_SENTIMENT_ANALYSIS', 'False').lower() == 'true',
 }
+
+# Celery Configuration
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://redis:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://redis:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE

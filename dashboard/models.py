@@ -105,6 +105,7 @@ class Ticket(models.Model):
     
     titulo = models.CharField(max_length=200)
     descricao = models.TextField()
+    tags = models.CharField(max_length=500, blank=True, help_text="Tags separadas por vírgula")
     status = models.CharField(max_length=20, choices=StatusTicket.choices, default=StatusTicket.ABERTO)
     prioridade = models.CharField(max_length=10, choices=PrioridadeTicket.choices, default=PrioridadeTicket.MEDIA)
     origem = models.CharField(max_length=20, default='web', help_text="web, email, whatsapp, slack")
@@ -141,8 +142,32 @@ class Ticket(models.Model):
             
         super().save(*args, **kwargs)
     
+    def get_tags_list(self):
+        """Retorna lista de tags"""
+        if self.tags:
+            return [tag.strip() for tag in self.tags.split(',') if tag.strip()]
+        return []
+    
     def __str__(self):
         return f"#{self.numero} - {self.titulo}"
+
+
+class TicketAnexo(models.Model):
+    """Modelo para anexos dos tickets"""
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='anexos')
+    arquivo = models.FileField(upload_to='tickets/anexos/%Y/%m/')
+    nome_original = models.CharField(max_length=255)
+    tamanho = models.BigIntegerField(help_text="Tamanho em bytes")
+    tipo_mime = models.CharField(max_length=100)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    criado_por = models.ForeignKey(User, on_delete=models.CASCADE)
+    
+    class Meta:
+        verbose_name = "Anexo do Ticket"
+        verbose_name_plural = "Anexos dos Tickets"
+        
+    def __str__(self):
+        return f"Anexo: {self.nome_original} - Ticket #{self.ticket.numero}"
 
 
 class InteracaoTicket(models.Model):

@@ -1,0 +1,143 @@
+# ================================
+# CONTROLE ATENDIMENTO ICONNECT
+# Docker Compose - Ambiente Completo
+# ================================
+
+version: '3.8'
+
+services:
+  # Banco de dados PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: iconnect_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: iconnect_db
+      POSTGRES_USER: iconnect_user
+      POSTGRES_PASSWORD: iconnect_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iconnect_user -d iconnect_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Cache Redis
+  redis:
+    image: redis:7-alpine
+    container_name: iconnect_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass redis_password
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Aplicação Django
+  web:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: iconnect_web
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=True
+      - SECRET_KEY=your-super-secret-key-change-this
+      - DATABASE_URL=postgresql://iconnect_user:iconnect_password@db:5432/iconnect_db
+      - REDIS_URL=redis://:redis_password@redis:6379/0
+      - CELERY_BROKER_URL=redis://:redis_password@redis:6379/0
+      - ALLOWED_HOSTS=localhost,127.0.0.1,your-domain.com
+      - SECURE_SSL_REDIRECT=False
+    volumes:
+      - .:/app  # Mapeia o código fonte para desenvolvimento
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+      - ./logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "chmod +x docker-entrypoint-dev.sh && ./docker-entrypoint-dev.sh"
+
+  # Worker Celery
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: iconnect_celery
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=False
+      - SECRET_KEY=your-super-secret-key-change-this
+      - DATABASE_URL=postgresql://iconnect_user:iconnect_password@db:5432/iconnect_db
+      - REDIS_URL=redis://:redis_password@redis:6379/0
+      - CELERY_BROKER_URL=redis://:redis_password@redis:6379/0
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A controle_atendimento worker --loglevel=info
+
+  # Monitor Celery
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: iconnect_flower
+    restart: unless-stopped
+    ports:
+      - "5555:5555"
+    environment:
+      - CELERY_BROKER_URL=redis://:redis_password@redis:6379/0
+    depends_on:
+      - redis
+      - celery
+    command: celery -A controle_atendimento flower --port=5555
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: iconnect_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+      - ./ssl:/etc/ssl/certs
+    depends_on:
+      - web
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  static_volume:
+    driver: local
+  media_volume:
+    driver: local
+
+networks:
+  default:
+    name: iconnect_network

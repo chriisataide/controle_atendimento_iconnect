@@ -10,7 +10,7 @@ from django.urls import reverse_lazy, reverse
 from django.core.paginator import Paginator
 from django.utils import timezone
 from datetime import datetime, timedelta
-from .models import Cliente, Ticket, PerfilUsuario, CategoriaTicket, InteracaoTicket, PerfilAgente, StatusTicket, PrioridadeTicket
+from .models import Cliente, Ticket, PerfilUsuario, CategoriaTicket, InteracaoTicket, PerfilAgente, StatusTicket, PrioridadeTicket, TicketAnexo
 
 User = get_user_model()
 
@@ -297,7 +297,7 @@ class TicketDetailView(DetailView):
 class TicketCreateView(CreateView):
     model = Ticket
     template_name = 'dashboard/tickets/create.html'
-    fields = ['cliente', 'categoria', 'titulo', 'descricao', 'prioridade']
+    fields = ['cliente', 'categoria', 'titulo', 'descricao', 'prioridade', 'tags']
     
     def get_success_url(self):
         return reverse('dashboard:ticket_detail', kwargs={'pk': self.object.pk})
@@ -324,9 +324,31 @@ class TicketCreateView(CreateView):
             form.instance.cliente = cliente
         except Cliente.DoesNotExist:
             pass
+        
+        # Processar tags
+        tags = self.request.POST.get('tags', '')
+        if tags:
+            form.instance.tags = tags
             
-        messages.success(self.request, 'Ticket criado com sucesso!')
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        
+        # Processar anexos
+        if 'anexos' in self.request.FILES:
+            anexos = self.request.FILES.getlist('anexos')
+            for anexo in anexos:
+                # Validar tamanho (10MB)
+                if anexo.size <= 10 * 1024 * 1024:
+                    TicketAnexo.objects.create(
+                        ticket=self.object,
+                        arquivo=anexo,
+                        nome_original=anexo.name,
+                        tamanho=anexo.size,
+                        tipo_mime=anexo.content_type or 'application/octet-stream',
+                        criado_por=self.request.user
+                    )
+        
+        messages.success(self.request, f'Ticket #{self.object.numero} criado com sucesso!')
+        return response
 
 
 @method_decorator(login_required, name='dispatch')

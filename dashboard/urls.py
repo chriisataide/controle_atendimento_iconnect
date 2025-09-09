@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views, integrations
+from .monitoring import HealthCheckView, MetricsView
 
 app_name = 'dashboard'
 
@@ -15,6 +16,10 @@ urlpatterns = [
     path('tickets/<int:pk>/', views.TicketDetailView.as_view(), name='ticket_detail'),
     path('tickets/<int:pk>/editar/', views.TicketUpdateView.as_view(), name='ticket_update'),
     path('tickets/<int:ticket_id>/interacao/', views.add_interaction, name='add_interaction'),
+    
+    # Monitoramento
+    path('health/', HealthCheckView.as_view(), name='health_check'),
+    path('metrics/', MetricsView.as_view(), name='metrics'),
     
     # Dashboard do Agente
     path('agente/', views.AgenteDashboardView.as_view(), name='agente_dashboard'),

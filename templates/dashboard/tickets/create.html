@@ -1,32 +1,425 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block page_title %}Criar Novo Ticket{% endblock %}
 
+{% block extra_css %}
+<style>
+.priority-indicator {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+.priority-baixa { background: #e8f5e8; color: #2e7d32; }
+.priority-media { background: #fff3e0; color: #f57c00; }
+.priority-alta { background: #ffebee; color: #d32f2f; }
+.priority-critica { background: #f3e5f5; color: #7b1fa2; animation: pulse 2s infinite; }
+
+.client-autocomplete {
+    position: relative;
+}
+.client-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: none;
+}
+.client-suggestion {
+    padding: 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+}
+.client-suggestion:hover {
+    background: #f8f9fa;
+}
+.client-suggestion:last-child {
+    border-bottom: none;
+}
+.suggestion-name { font-weight: 600; }
+.suggestion-email { color: #666; font-size: 12px; }
+
+.template-selector {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+.template-option {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.template-option:hover {
+    background: #e3f2fd;
+    border-color: #2196f3;
+}
+.template-option.active {
+    background: #e3f2fd;
+    border-color: #2196f3;
+    font-weight: 600;
+}
+
+.file-upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.file-upload-area:hover {
+    border-color: #2196f3;
+    background: #f8f9ff;
+}
+.file-list {
+    margin-top: 12px;
+}
+.file-item {
+    display: flex;
+    align-items: center;
+    background: #f0f0f0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 4px 0;
+}
+.file-remove {
+    margin-left: auto;
+    color: #d32f2f;
+    cursor: pointer;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.rich-editor {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    min-height: 150px;
+}
+.editor-toolbar {
+    background: #f8f9fa;
+    border-bottom: 1px solid #ddd;
+    padding: 8px;
+    border-radius: 8px 8px 0 0;
+}
+.editor-content {
+    padding: 12px;
+    min-height: 120px;
+    outline: none;
+}
+
+.sla-estimate {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    margin: 16px 0;
+    text-align: center;
+}
+
+.auto-save-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #4caf50;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    display: none;
+    z-index: 9999;
+}
+
+/* Labels flutuantes organizados e sem sobreposição */
+.input-group-outline {
+    position: relative;
+    margin-bottom: 24px;
+}
+
+.input-group-outline .form-label {
+    position: absolute;
+    top: 0px;
+    left: 16px;
+    background: white;
+    padding: 0 8px;
+    color: #6c757d;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    z-index: 2;
+    transform: translateY(-50%);
+}
+
+/* Label dentro do campo quando vazio */
+.input-group-outline:not(.is-focused):not(.is-filled):not(.has-value) .form-label {
+    top: 50%;
+    color: #9ca3af;
+    font-size: 16px;
+    font-weight: 400;
+    background: transparent;
+    padding: 0;
+}
+
+/* Label acima do campo quando ativo/preenchido */
+.input-group-outline.is-focused .form-label,
+.input-group-outline.is-filled .form-label,
+.input-group-outline.has-value .form-label {
+    top: 0px;
+    color: #e91e63;
+    font-size: 12px;
+    font-weight: 600;
+    background: white;
+    padding: 0 8px;
+    transform: translateY(-50%);
+    border-radius: 4px;
+}
+
+.input-group-outline .form-control {
+    width: 100%;
+    padding: 16px 18px;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    background: white;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #374151;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+    margin-top: 0;
+}
+
+.input-group-outline .form-control:focus {
+    border-color: #e91e63;
+    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+    outline: none;
+}
+
+/* Placeholder invisível por padrão */
+.input-group-outline .form-control::placeholder {
+    color: transparent;
+    opacity: 0;
+}
+
+/* Placeholder visível apenas quando focado */
+.input-group-outline.is-focused .form-control::placeholder {
+    color: #9ca3af;
+    opacity: 1;
+}
+
+/* Hover states */
+.input-group-outline:not(.is-focused) .form-control:hover {
+    border-color: #d1d5db;
+}
+
+.input-group-outline:hover:not(.is-focused) .form-label {
+    color: #6b7280;
+}
+
+/* Select específico */
+.input-group-outline select.form-control {
+    cursor: pointer;
+    padding-right: 45px;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 16px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.input-group-outline.is-focused select.form-control {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23e91e63' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+}
+
+/* Campo desabilitado */
+.input-group-outline .form-control:disabled {
+    background-color: #f9fafb;
+    border-color: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+    opacity: 0.75;
+}
+
+.input-group-outline .form-control:disabled ~ .form-label {
+    color: #9ca3af;
+}
+
+/* Remover estilos extras desnecessários */
+
+/* Estilos complementares organizados */
+.rich-editor {
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    min-height: 150px;
+    transition: all 0.3s ease;
+}
+
+.rich-editor:focus-within {
+    border-color: #e91e63;
+    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+}
+
+.file-upload-area {
+    border: 2px dashed #d1d5db;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.file-upload-area:hover {
+    border-color: #e91e63;
+    background: rgba(233, 30, 99, 0.05);
+}
+
+.client-suggestions {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 4px;
+    border: 1px solid #e5e7eb;
+}
+
+.client-suggestion:hover {
+    background: rgba(233, 30, 99, 0.05);
+}
+
+/* Garantir que campos com valor tenham label acima */
+.input-group-outline.has-value .form-label {
+    top: -12px !important;
+    left: 12px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #e91e63 !important;
+    transform: translateY(0) !important;
+    background: white !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    box-shadow: 0 0 0 2px white !important;
+}
+
+/* Estilos complementares para outros elementos */
+.rich-editor {
+    border: 2px solid #d2d6da;
+    border-radius: 8px;
+    min-height: 150px;
+    transition: all 0.2s ease;
+}
+
+.rich-editor:focus-within {
+    border-color: #e91e63;
+    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.15);
+}
+
+.editor-content {
+    padding: 12px;
+    min-height: 120px;
+    outline: none;
+}
+
+.file-upload-area {
+    border: 2px dashed #d2d6da;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.file-upload-area:hover {
+    border-color: #e91e63;
+    background: rgba(233, 30, 99, 0.05);
+}
+</style>
+{% endblock %}
+
 {% block content %}
+<!-- Auto-save indicator -->
+<div class="auto-save-indicator" id="autoSaveIndicator">
+    <i class="material-symbols-rounded" style="font-size: 14px;">cloud_done</i> Rascunho salvo
+</div>
+
 <div class="container-fluid py-4">
   <div class="row">
-    <div class="col-lg-8 mx-auto">
+    <div class="col-lg-10 mx-auto">
       <div class="card">
         <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
           <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
-            <h6 class="text-white text-capitalize ps-3 mb-0">Criar Novo Ticket</h6>
+            <h6 class="text-white text-capitalize ps-3 mb-0">
+              <i class="material-symbols-rounded me-2">add_circle</i>
+              Criar Novo Ticket
+            </h6>
           </div>
         </div>
         <div class="card-body">
-          <form method="post">
+          <!-- Templates de Ticket -->
+          <div class="template-selector">
+            <h6 class="mb-3">
+              <i class="material-symbols-rounded me-2">library_books</i>
+              Templates Rápidos (Opcional)
+            </h6>
+            <div class="row" id="templateOptions">
+              <div class="col-md-3">
+                <div class="template-option" data-template="suporte-tecnico">
+                  <i class="material-symbols-rounded me-2">computer</i>
+                  Suporte Técnico
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="template-option" data-template="duvida">
+                  <i class="material-symbols-rounded me-2">help</i>
+                  Dúvida/Pergunta
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="template-option" data-template="solicitacao">
+                  <i class="material-symbols-rounded me-2">request_quote</i>
+                  Solicitação
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="template-option" data-template="bug">
+                  <i class="material-symbols-rounded me-2">bug_report</i>
+                  Relatar Bug
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <form method="post" id="ticketForm" enctype="multipart/form-data">
             {% csrf_token %}
             
             <div class="row">
               {% if not is_cliente %}
               <div class="col-md-6">
-                <div class="input-group input-group-outline mb-3">
-                  <label class="form-label">Cliente</label>
-                  <select class="form-control" name="cliente" required>
-                    <option value="">Selecione um cliente</option>
-                    {% for cliente in clientes %}
-                      <option value="{{ cliente.id }}">{{ cliente.nome }} ({{ cliente.email }})</option>
-                    {% endfor %}
-                  </select>
+                <div class="input-group input-group-outline mb-3 client-autocomplete">
+                  <label class="form-label">Cliente *</label>
+                  <input type="text" class="form-control" id="clienteSearch" placeholder="Digite para buscar cliente..." required>
+                  <input type="hidden" name="cliente" id="clienteId" required>
+                  <div class="client-suggestions" id="clienteSuggestions"></div>
                 </div>
               </div>
               {% else %}
@@ -40,8 +433,8 @@
               {% endif %}
               <div class="col-md-6">
                 <div class="input-group input-group-outline mb-3">
-                  <label class="form-label">Categoria</label>
-                  <select class="form-control" name="categoria" required>
+                  <label class="form-label">Categoria *</label>
+                  <select class="form-control" name="categoria" id="categoriaSelect" required>
                     <option value="">Selecione uma categoria</option>
                     {% for categoria in categorias %}
                       <option value="{{ categoria.id }}">{{ categoria.nome }}</option>
@@ -54,33 +447,129 @@
             <div class="row">
               <div class="col-md-8">
                 <div class="input-group input-group-outline mb-3">
-                  <label class="form-label">Título do Ticket</label>
-                  <input type="text" class="form-control" name="titulo" required>
+                  <label class="form-label">Título do Ticket *</label>
+                  <input type="text" class="form-control" name="titulo" id="tituloInput" required>
                 </div>
               </div>
               <div class="col-md-4">
                 <div class="input-group input-group-outline mb-3">
-                  <label class="form-label">Prioridade</label>
-                  <select class="form-control" name="prioridade" required>
+                  <label class="form-label">Prioridade *</label>
+                  <select class="form-control" name="prioridade" id="prioridadeSelect" required>
                     <option value="baixa">Baixa</option>
                     <option value="media" selected>Média</option>
                     <option value="alta">Alta</option>
                     <option value="critica">Crítica</option>
                   </select>
+                  <span class="priority-indicator" id="priorityIndicator">
+                    <i class="material-symbols-rounded me-1">flag</i>
+                    Média
+                  </span>
                 </div>
               </div>
             </div>
 
+            <!-- Tags -->
             <div class="input-group input-group-outline mb-3">
-              <label class="form-label">Descrição Detalhada</label>
-              <textarea class="form-control" rows="6" name="descricao" required placeholder="Descreva o problema ou solicitação de forma detalhada..."></textarea>
+              <label class="form-label">Tags (separadas por vírgula)</label>
+              <input type="text" class="form-control" name="tags" id="tagsInput" placeholder="Ex: urgente, sistema, login">
             </div>
 
-            <div class="d-flex justify-content-end">
-              <a href="{% url 'dashboard:ticket_list' %}" class="btn btn-light me-2">Cancelar</a>
-              <button type="submit" class="btn btn-primary">
-                <i class="material-symbols-rounded">save</i>&nbsp;&nbsp;Criar Ticket
-              </button>
+            <!-- Editor Rico para Descrição -->
+            <div class="mb-3">
+              <label class="form-label mb-2">Descrição Detalhada *</label>
+              <div class="rich-editor">
+                <div class="editor-toolbar">
+                  <button type="button" class="btn btn-sm btn-light" onclick="formatText('bold')">
+                    <i class="material-symbols-rounded">format_bold</i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-light" onclick="formatText('italic')">
+                    <i class="material-symbols-rounded">format_italic</i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-light" onclick="formatText('underline')">
+                    <i class="material-symbols-rounded">format_underlined</i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-light" onclick="formatText('insertUnorderedList')">
+                    <i class="material-symbols-rounded">format_list_bulleted</i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-light" onclick="formatText('insertOrderedList')">
+                    <i class="material-symbols-rounded">format_list_numbered</i>
+                  </button>
+                </div>
+                <div class="editor-content" id="editorContent" contenteditable="true" 
+                     placeholder="Descreva o problema ou solicitação de forma detalhada..."></div>
+              </div>
+              <textarea name="descricao" id="descricaoHidden" style="display: none;" required></textarea>
+            </div>
+
+            <!-- Upload de Anexos -->
+            <div class="mb-3">
+                          <!-- Anexos -->
+            <div class="mb-4">
+              <label class="form-label mb-2">
+                <i class="material-symbols-rounded me-2">attach_file</i>
+                Anexar Arquivos
+              <div class="file-upload-area" id="fileUploadArea">
+                <i class="material-symbols-rounded mb-2" style="font-size: 48px; color: #bbb;">cloud_upload</i>
+                <p class="mb-2">Clique aqui ou arraste arquivos para anexar</p>
+                <small class="text-muted">Máximo 5 arquivos, 10MB cada (PDF, DOC, JPG, PNG)</small>
+                <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt" style="display: none;">
+              </div>
+              <div class="file-list" id="fileList"></div>
+            </div>
+
+            <!-- Estimativa de SLA -->
+            <div class="sla-estimate" id="slaEstimate" style="display: none;">
+              <div class="d-flex align-items-center justify-content-center">
+                <i class="material-symbols-rounded me-2">schedule</i>
+                <span id="slaText">Tempo estimado de resposta será calculado</span>
+              </div>
+            </div>
+
+            <!-- Preview do Ticket -->
+            <div class="card border" id="ticketPreview" style="display: none; margin: 20px 0;">
+              <div class="card-header bg-light">
+                <h6 class="mb-0">
+                  <i class="material-symbols-rounded me-2">preview</i>
+                  Preview do Ticket
+                </h6>
+              </div>
+              <div class="card-body">
+                <div id="previewContent">
+                  <!-- Preview será preenchido dinamicamente -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Histórico de Tickets do Cliente -->
+            <div class="card border" id="clientHistory" style="display: none; margin: 20px 0;">
+              <div class="card-header bg-light">
+                <h6 class="mb-0">
+                  <i class="material-symbols-rendered me-2">history</i>
+                  Últimos Tickets do Cliente
+                </h6>
+              </div>
+              <div class="card-body" id="historyContent">
+                <!-- Histórico será carregado dinamicamente -->
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="d-flex">
+                <button type="button" class="btn btn-info me-2" id="previewBtn">
+                  <i class="material-symbols-rounded">visibility</i>&nbsp;&nbsp;Preview
+                </button>
+                <button type="button" class="btn btn-secondary me-2" id="saveDraftBtn">
+                  <i class="material-symbols-rounded">draft</i>&nbsp;&nbsp;Salvar Rascunho
+                </button>
+              </div>
+              <div class="d-flex">
+                <a href="{% url 'dashboard:ticket_list' %}" class="btn btn-light me-2">
+                  <i class="material-symbols-rounded">cancel</i>&nbsp;&nbsp;Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                  <i class="material-symbols-rounded">send</i>&nbsp;&nbsp;Criar Ticket
+                </button>
+              </div>
             </div>
           </form>
         </div>
@@ -88,4 +577,492 @@
     </div>
   </div>
 </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Templates de ticket
+const ticketTemplates = {
+    'suporte-tecnico': {
+        title: 'Problema Técnico - [Descreva brevemente]',
+        description: `<strong>Problema encontrado:</strong><br>
+[Descreva o problema]<br><br>
+
+<strong>Passos para reproduzir:</strong><br>
+1. [Passo 1]<br>
+2. [Passo 2]<br>
+3. [Passo 3]<br><br>
+
+<strong>Resultado esperado:</strong><br>
+[O que deveria acontecer]<br><br>
+
+<strong>Resultado atual:</strong><br>
+[O que está acontecendo]<br><br>
+
+<strong>Informações adicionais:</strong><br>
+- Browser: [Chrome/Firefox/Safari]<br>
+- Sistema: [Windows/Mac/Linux]<br>
+- Versão: [se aplicável]`,
+        category: null,
+        priority: 'media'
+    },
+    'duvida': {
+        title: 'Dúvida sobre [Assunto]',
+        description: `<strong>Dúvida:</strong><br>
+[Descreva sua dúvida]<br><br>
+
+<strong>Context:</strong><br>
+[Explique o contexto da situação]<br><br>
+
+<strong>O que já foi tentado:</strong><br>
+[Se já tentou alguma solução, descreva aqui]`,
+        category: null,
+        priority: 'baixa'
+    },
+    'solicitacao': {
+        title: 'Solicitação - [Descreva o que precisa]',
+        description: `<strong>Solicitação:</strong><br>
+[Descreva detalhadamente o que precisa]<br><br>
+
+<strong>Justificativa:</strong><br>
+[Por que esta solicitação é necessária]<br><br>
+
+<strong>Prazo desejado:</strong><br>
+[Quando precisa que seja atendido]<br><br>
+
+<strong>Impacto:</strong><br>
+[Qual o impacto se não for atendido]`,
+        category: null,
+        priority: 'media'
+    },
+    'bug': {
+        title: 'Bug Report - [Título do bug]',
+        description: `<strong>🐛 Descrição do Bug:</strong><br>
+[Descreva o bug encontrado]<br><br>
+
+<strong>📋 Passos para Reproduzir:</strong><br>
+1. [Primeiro passo]<br>
+2. [Segundo passo]<br>
+3. [Terceiro passo]<br><br>
+
+<strong>✅ Comportamento Esperado:</strong><br>
+[O que deveria acontecer]<br><br>
+
+<strong>❌ Comportamento Atual:</strong><br>
+[O que está acontecendo]<br><br>
+
+<strong>🖥️ Ambiente:</strong><br>
+- Device: [Desktop/Mobile/Tablet]<br>
+- Browser: [Chrome/Firefox/Safari + versão]<br>
+- OS: [Windows/Mac/Linux + versão]<br><br>
+
+<strong>📎 Screenshots:</strong><br>
+[Anexe screenshots se possível]`,
+        category: null,
+        priority: 'alta'
+    }
+};
+
+// SLA estimates baseado em categoria e prioridade
+const slaEstimates = {
+    'baixa': '24-48 horas',
+    'media': '8-12 horas',  
+    'alta': '2-4 horas',
+    'critica': '30 minutos - 1 hora'
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Dados dos clientes para autocomplete
+    const clientes = [
+        {% for cliente in clientes %}
+        {
+            id: {{ cliente.id }},
+            nome: "{{ cliente.nome|escapejs }}",
+            email: "{{ cliente.email|escapejs }}"
+        },
+        {% endfor %}
+    ];
+
+    // Auto-complete para clientes
+    const clienteSearch = document.getElementById('clienteSearch');
+    const clienteSuggestions = document.getElementById('clienteSuggestions');
+    const clienteId = document.getElementById('clienteId');
+
+    if (clienteSearch) {
+        clienteSearch.addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            if (query.length < 2) {
+                clienteSuggestions.style.display = 'none';
+                return;
+            }
+
+            const filtered = clientes.filter(cliente => 
+                cliente.nome.toLowerCase().includes(query) ||
+                cliente.email.toLowerCase().includes(query)
+            );
+
+            if (filtered.length > 0) {
+                clienteSuggestions.innerHTML = filtered.map(cliente => 
+                    `<div class="client-suggestion" data-id="${cliente.id}">
+                        <div class="suggestion-name">${cliente.nome}</div>
+                        <div class="suggestion-email">${cliente.email}</div>
+                    </div>`
+                ).join('');
+                clienteSuggestions.style.display = 'block';
+            } else {
+                clienteSuggestions.style.display = 'none';
+            }
+        });
+
+        clienteSuggestions.addEventListener('click', function(e) {
+            const suggestion = e.target.closest('.client-suggestion');
+            if (suggestion) {
+                const id = suggestion.dataset.id;
+                const cliente = clientes.find(c => c.id == id);
+                clienteSearch.value = `${cliente.nome} (${cliente.email})`;
+                clienteId.value = id;
+                clienteSuggestions.style.display = 'none';
+                
+                // Carregar histórico do cliente
+                loadClientHistory(id);
+            }
+        });
+
+        // Esconder sugestões ao clicar fora
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.client-autocomplete')) {
+                clienteSuggestions.style.display = 'none';
+            }
+        });
+    }
+
+    // Templates de ticket
+    document.querySelectorAll('.template-option').forEach(option => {
+        option.addEventListener('click', function() {
+            // Remove active de outros
+            document.querySelectorAll('.template-option').forEach(opt => opt.classList.remove('active'));
+            this.classList.add('active');
+
+            const templateKey = this.dataset.template;
+            const template = ticketTemplates[templateKey];
+            
+            if (template) {
+                document.getElementById('tituloInput').value = template.title;
+                document.getElementById('editorContent').innerHTML = template.description;
+                document.getElementById('prioridadeSelect').value = template.priority;
+                updatePriorityIndicator(template.priority);
+                updateSLAEstimate();
+            }
+        });
+    });
+
+    // Indicador visual de prioridade
+    const prioridadeSelect = document.getElementById('prioridadeSelect');
+    const priorityIndicator = document.getElementById('priorityIndicator');
+
+    function updatePriorityIndicator(priority) {
+        const indicators = {
+            'baixa': { text: 'Baixa', class: 'priority-baixa', icon: 'flag' },
+            'media': { text: 'Média', class: 'priority-media', icon: 'flag' },
+            'alta': { text: 'Alta', class: 'priority-alta', icon: 'priority_high' },
+            'critica': { text: 'Crítica', class: 'priority-critica', icon: 'warning' }
+        };
+
+        const indicator = indicators[priority];
+        priorityIndicator.className = `priority-indicator ${indicator.class}`;
+        priorityIndicator.innerHTML = `<i class="material-symbols-rounded me-1">${indicator.icon}</i>${indicator.text}`;
+    }
+
+    prioridadeSelect.addEventListener('change', function() {
+        updatePriorityIndicator(this.value);
+        updateSLAEstimate();
+    });
+
+    // Editor de texto rico
+    function formatText(command) {
+        document.execCommand(command, false, null);
+        document.getElementById('editorContent').focus();
+    }
+    window.formatText = formatText;
+
+    // Sincronizar editor com textarea oculta
+    const editorContent = document.getElementById('editorContent');
+    const descricaoHidden = document.getElementById('descricaoHidden');
+
+    editorContent.addEventListener('input', function() {
+        descricaoHidden.value = this.innerHTML;
+    });
+
+    // Upload de arquivos
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const fileList = document.getElementById('fileList');
+    let selectedFiles = [];
+
+    fileUploadArea.addEventListener('click', () => fileInput.click());
+
+    fileUploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#2196f3';
+        this.style.background = '#f8f9ff';
+    });
+
+    fileUploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#ddd';
+        this.style.background = 'transparent';
+    });
+
+    fileUploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#ddd';
+        this.style.background = 'transparent';
+        handleFiles(e.dataTransfer.files);
+    });
+
+    fileInput.addEventListener('change', function() {
+        handleFiles(this.files);
+    });
+
+    function handleFiles(files) {
+        Array.from(files).forEach(file => {
+            if (selectedFiles.length < 5 && file.size <= 10 * 1024 * 1024) {
+                selectedFiles.push(file);
+                displayFile(file);
+            }
+        });
+    }
+
+    function displayFile(file) {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.innerHTML = `
+            <i class="material-symbols-rounded me-2">description</i>
+            <span>${file.name} (${formatFileSize(file.size)})</span>
+            <i class="material-symbols-rendered file-remove ms-auto" onclick="removeFile('${file.name}')">delete</i>
+        `;
+        fileList.appendChild(fileItem);
+    }
+
+    function removeFile(fileName) {
+        selectedFiles = selectedFiles.filter(file => file.name !== fileName);
+        updateFileList();
+    }
+    window.removeFile = removeFile;
+
+    function updateFileList() {
+        fileList.innerHTML = '';
+        selectedFiles.forEach(file => displayFile(file));
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Estimativa de SLA
+    function updateSLAEstimate() {
+        const priority = document.getElementById('prioridadeSelect').value;
+        const slaEstimate = document.getElementById('slaEstimate');
+        const slaText = document.getElementById('slaText');
+
+        if (priority && slaEstimates[priority]) {
+            slaText.textContent = `Tempo estimado de resposta: ${slaEstimates[priority]}`;
+            slaEstimate.style.display = 'block';
+        }
+    }
+
+    // Preview do ticket
+    document.getElementById('previewBtn').addEventListener('click', function() {
+        const preview = document.getElementById('ticketPreview');
+        const content = document.getElementById('previewContent');
+        
+        const titulo = document.getElementById('tituloInput').value;
+        const descricao = document.getElementById('editorContent').innerHTML;
+        const prioridade = document.getElementById('prioridadeSelect').value;
+        
+        content.innerHTML = `
+            <h6><strong>Título:</strong> ${titulo || '[Não preenchido]'}</h6>
+            <p><strong>Prioridade:</strong> <span class="priority-indicator priority-${prioridade}">${prioridade}</span></p>
+            <div><strong>Descrição:</strong></div>
+            <div class="border p-3 mt-2">${descricao || '[Não preenchida]'}</div>
+            ${selectedFiles.length > 0 ? `<p class="mt-3"><strong>Anexos:</strong> ${selectedFiles.length} arquivo(s)</p>` : ''}
+        `;
+        
+        preview.style.display = preview.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // Carregar histórico do cliente
+    function loadClientHistory(clienteId) {
+        // Simulação - em produção faria requisição AJAX
+        const clientHistory = document.getElementById('clientHistory');
+        const historyContent = document.getElementById('historyContent');
+        
+        historyContent.innerHTML = `
+            <div class="d-flex justify-content-center py-3">
+                <div class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+                <span class="ms-2">Carregando histórico...</span>
+            </div>
+        `;
+        clientHistory.style.display = 'block';
+        
+        // Simulação de delay de carregamento
+        setTimeout(() => {
+            historyContent.innerHTML = `
+                <div class="row">
+                    <div class="col-12">
+                        <p class="text-muted">Últimos 3 tickets deste cliente:</p>
+                        <div class="list-group">
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">#12345 - Problema com login</h6>
+                                    <small>Há 3 dias</small>
+                                </div>
+                                <p class="mb-1">Status: <span class="badge bg-success">Resolvido</span></p>
+                            </div>
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">#12298 - Solicitação de acesso</h6>
+                                    <small class="text-muted">Há 1 semana</small>
+                                </div>
+                                <p class="mb-1">Status: <span class="badge bg-info">Fechado</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }, 1500);
+    }
+
+    // Auto-save (rascunho)
+    let autoSaveTimeout;
+    function autoSave() {
+        clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = setTimeout(() => {
+            const formData = new FormData(document.getElementById('ticketForm'));
+            
+            // Simulação de salvamento
+            const indicator = document.getElementById('autoSaveIndicator');
+            indicator.style.display = 'block';
+            setTimeout(() => {
+                indicator.style.display = 'none';
+            }, 2000);
+            
+            console.log('Rascunho salvo automaticamente');
+        }, 3000);
+    }
+
+    // Detectar mudanças nos campos para auto-save
+    document.querySelectorAll('#ticketForm input, #ticketForm select, #ticketForm textarea').forEach(field => {
+        field.addEventListener('input', autoSave);
+    });
+
+    document.getElementById('editorContent').addEventListener('input', autoSave);
+
+    // Inicializar indicador de prioridade
+    updatePriorityIndicator('media');
+    updateSLAEstimate();
+
+    // Validações em tempo real
+    const form = document.getElementById('ticketForm');
+    form.addEventListener('submit', function(e) {
+        // Sincronizar editor com campo oculto
+        descricaoHidden.value = editorContent.innerHTML;
+        
+        // Validação básica
+        if (!editorContent.innerHTML.trim() || editorContent.innerHTML.trim() === '<br>') {
+            e.preventDefault();
+            alert('Por favor, preencha a descrição do ticket.');
+            editorContent.focus();
+            return false;
+        }
+    });
+    
+    // Sistema de gerenciamento de labels simplificado e organizado
+    function initInputLabels() {
+        const inputGroups = document.querySelectorAll('.input-group-outline');
+        
+        inputGroups.forEach(group => {
+            const input = group.querySelector('.form-control');
+            
+            if (input) {
+                
+                // Função para verificar se há valor no campo
+                function hasValue() {
+                    if (input.tagName.toLowerCase() === 'select') {
+                        return input.value !== '' && input.selectedIndex > 0;
+                    }
+                    return input.value && input.value.trim() !== '';
+                }
+                
+                // Função para atualizar classes
+                function updateClasses() {
+                    const isFocused = document.activeElement === input;
+                    const hasVal = hasValue();
+                    const isDisabled = input.disabled;
+                    
+                    // Remover todas as classes
+                    group.classList.remove('is-focused', 'is-filled', 'has-value');
+                    
+                    // Adicionar classes conforme estado
+                    if (isFocused) {
+                        group.classList.add('is-focused', 'is-filled');
+                    } else if (hasVal || isDisabled) {
+                        group.classList.add('has-value', 'is-filled');
+                    }
+                }
+                
+                // Event listeners
+                input.addEventListener('focus', () => {
+                    group.classList.add('is-focused', 'is-filled');
+                });
+                
+                input.addEventListener('blur', () => {
+                    setTimeout(updateClasses, 50);
+                });
+                
+                input.addEventListener('input', updateClasses);
+                input.addEventListener('change', updateClasses);
+                
+                // Estado inicial
+                updateClasses();
+                
+                // Verificação especial para campos preenchidos
+                if (hasValue() || input.disabled) {
+                    group.classList.add('has-value', 'is-filled');
+                }
+            }
+        });
+        
+        // Verificação adicional para campos preenchidos via JavaScript
+        setTimeout(() => {
+            inputGroups.forEach(group => {
+                const input = group.querySelector('.form-control');
+                if (input && input.value && input.value.trim() !== '') {
+                    group.classList.add('has-value', 'is-filled');
+                }
+            });
+        }, 200);
+    }
+    
+    // Inicializar labels quando a página carrega
+    initInputLabels();
+    
+    // Re-inicializar se novos elementos forem adicionados dinamicamente
+    const observer = new MutationObserver(() => {
+        initInputLabels();
+    });
+    
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+});
+</script>
 {% endblock %}
