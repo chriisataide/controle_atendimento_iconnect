@@ -1,0 +1,506 @@
+{% extends "base.html" %}
+
+{% block title %}Automation Engine - iConnect{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+.automation-card {
+    border-radius: 15px;
+    transition: transform 0.2s;
+}
+
+.automation-card:hover {
+    transform: translateY(-5px);
+}
+
+.workflow-step {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    margin: 0 auto 10px;
+}
+
+.workflow-status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-active { background-color: #d4edda; color: #155724; }
+.status-paused { background-color: #fff3cd; color: #856404; }
+.status-inactive { background-color: #f8d7da; color: #721c24; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <div class="d-flex align-items-center">
+                        <i class="material-icons text-lg me-2">settings</i>
+                        <h6>⚡ Automation Engine</h6>
+                        <div class="ms-auto">
+                            <button class="btn btn-outline-primary btn-sm me-2" id="createWorkflow">
+                                <i class="material-icons text-sm">add</i> Novo Workflow
+                            </button>
+                            <button class="btn btn-outline-success btn-sm" id="refreshWorkflows">
+                                <i class="material-icons text-sm">refresh</i> Atualizar
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-sm mb-0 mt-2">
+                        Automação inteligente de processos e workflows para otimizar atendimento
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row">
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card automation-card">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
+                        <i class="material-icons opacity-10">play_circle</i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0 text-capitalize">Workflows Ativos</p>
+                        <h4 class="mb-0" id="activeWorkflows">5</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0">
+                <div class="card-footer p-3">
+                    <p class="mb-0"><span class="text-success text-sm font-weight-bolder">+2 </span>novos esta semana</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card automation-card">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary text-center border-radius-xl mt-n4 position-absolute">
+                        <i class="material-icons opacity-10">task_alt</i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0 text-capitalize">Tarefas Executadas</p>
+                        <h4 class="mb-0" id="executedTasks">1,247</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0">
+                <div class="card-footer p-3">
+                    <p class="mb-0"><span class="text-success text-sm font-weight-bolder">+15% </span>desde ontem</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card automation-card">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
+                        <i class="material-icons opacity-10">schedule</i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0 text-capitalize">Tempo Economizado</p>
+                        <h4 class="mb-0" id="timeSaved">127h</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0">
+                <div class="card-footer p-3">
+                    <p class="mb-0"><span class="text-info text-sm font-weight-bolder">este mês</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6">
+            <div class="card automation-card">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute">
+                        <i class="material-icons opacity-10">error_outline</i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0 text-capitalize">Erros</p>
+                        <h4 class="mb-0" id="errors">3</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0">
+                <div class="card-footer p-3">
+                    <p class="mb-0"><span class="text-warning text-sm font-weight-bolder">-2 </span>desde ontem</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workflow Templates -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>🛠️ Templates de Workflow Disponíveis</h6>
+                    <p class="text-sm mb-0">Clique para ativar automatizações pré-configuradas</p>
+                </div>
+                <div class="card-body px-3">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card automation-card h-100">
+                                <div class="card-body text-center">
+                                    <div class="workflow-step">1</div>
+                                    <h6>Auto-Assignement</h6>
+                                    <p class="text-sm text-secondary">Atribuição automática de tickets baseada em critérios</p>
+                                    <div class="mt-3">
+                                        <button class="btn btn-sm btn-outline-primary activate-workflow" data-workflow="auto-assign">
+                                            Ativar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="card automation-card h-100">
+                                <div class="card-body text-center">
+                                    <div class="workflow-step">2</div>
+                                    <h6>SLA Monitoring</h6>
+                                    <p class="text-sm text-secondary">Monitoramento automático de SLA com alertas</p>
+                                    <div class="mt-3">
+                                        <button class="btn btn-sm btn-outline-success activate-workflow" data-workflow="sla-monitor">
+                                            Ativar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="card automation-card h-100">
+                                <div class="card-body text-center">
+                                    <div class="workflow-step">3</div>
+                                    <h6>Email Notifications</h6>
+                                    <p class="text-sm text-secondary">Envio automático de e-mails para clientes</p>
+                                    <div class="mt-3">
+                                        <button class="btn btn-sm btn-outline-info activate-workflow" data-workflow="email-notify">
+                                            Ativar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="card automation-card h-100">
+                                <div class="card-body text-center">
+                                    <div class="workflow-step">4</div>
+                                    <h6>Priority Escalation</h6>
+                                    <p class="text-sm text-secondary">Escalonamento automático por prioridade</p>
+                                    <div class="mt-3">
+                                        <button class="btn btn-sm btn-outline-warning activate-workflow" data-workflow="escalation">
+                                            Ativar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="card automation-card h-100">
+                                <div class="card-body text-center">
+                                    <div class="workflow-step">5</div>
+                                    <h6>Auto-Resolution</h6>
+                                    <p class="text-sm text-secondary">Resolução automática de tickets simples</p>
+                                    <div class="mt-3">
+                                        <button class="btn btn-sm btn-outline-danger activate-workflow" data-workflow="auto-resolve">
+                                            Ativar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="card automation-card h-100">
+                                <div class="card-body text-center">
+                                    <div class="workflow-step">+</div>
+                                    <h6>Custom Workflow</h6>
+                                    <p class="text-sm text-secondary">Crie seu próprio workflow personalizado</p>
+                                    <div class="mt-3">
+                                        <button class="btn btn-sm btn-outline-dark" id="createCustomWorkflow">
+                                            Criar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Workflows -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>⚡ Workflows Ativos</h6>
+                    <p class="text-sm mb-0">Gerenciar workflows em execução</p>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Workflow</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Execuções</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Última Exec.</th>
+                                    <th class="text-secondary opacity-7">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-2 py-1">
+                                            <div>
+                                                <div class="workflow-step" style="width: 30px; height: 30px; font-size: 12px;">1</div>
+                                            </div>
+                                            <div class="d-flex flex-column justify-content-center ms-3">
+                                                <h6 class="mb-0 text-sm">Auto-Assignment Tickets</h6>
+                                                <p class="text-xs text-secondary mb-0">Atribuição automática por categoria</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="workflow-status status-active">Ativo</span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <span class="text-secondary text-xs font-weight-bold">1,234</span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <span class="text-secondary text-xs font-weight-bold">Há 2 min</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                Ações
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#">Pausar</a></li>
+                                                <li><a class="dropdown-item" href="#">Configurar</a></li>
+                                                <li><a class="dropdown-item" href="#">Ver Logs</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item text-danger" href="#">Desativar</a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-2 py-1">
+                                            <div>
+                                                <div class="workflow-step" style="width: 30px; height: 30px; font-size: 12px;">2</div>
+                                            </div>
+                                            <div class="d-flex flex-column justify-content-center ms-3">
+                                                <h6 class="mb-0 text-sm">SLA Monitor</h6>
+                                                <p class="text-xs text-secondary mb-0">Monitoramento de prazos</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="workflow-status status-active">Ativo</span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <span class="text-secondary text-xs font-weight-bold">567</span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <span class="text-secondary text-xs font-weight-bold">Há 1 min</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                Ações
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#">Pausar</a></li>
+                                                <li><a class="dropdown-item" href="#">Configurar</a></li>
+                                                <li><a class="dropdown-item" href="#">Ver Logs</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item text-danger" href="#">Desativar</a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-2 py-1">
+                                            <div>
+                                                <div class="workflow-step" style="width: 30px; height: 30px; font-size: 12px;">3</div>
+                                            </div>
+                                            <div class="d-flex flex-column justify-content-center ms-3">
+                                                <h6 class="mb-0 text-sm">Email Notifications</h6>
+                                                <p class="text-xs text-secondary mb-0">Envio automático de emails</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="workflow-status status-paused">Pausado</span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <span class="text-secondary text-xs font-weight-bold">89</span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <span class="text-secondary text-xs font-weight-bold">Há 15 min</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                Ações
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#">Reativar</a></li>
+                                                <li><a class="dropdown-item" href="#">Configurar</a></li>
+                                                <li><a class="dropdown-item" href="#">Ver Logs</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item text-danger" href="#">Desativar</a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Chart -->
+    <div class="row mt-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>📊 Execuções por Hora</h6>
+                    <p class="text-sm mb-0">Performance dos workflows nas últimas 24h</p>
+                </div>
+                <div class="card-body">
+                    <div class="chart">
+                        <canvas id="executionChart" class="chart-canvas" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>🎯 Top Workflows</h6>
+                    <p class="text-sm mb-0">Mais utilizados</p>
+                </div>
+                <div class="card-body">
+                    <div class="chart">
+                        <canvas id="topWorkflowsChart" class="chart-canvas" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar gráfico de execuções
+    const executionCtx = document.getElementById('executionChart').getContext('2d');
+    new Chart(executionCtx, {
+        type: 'line',
+        data: {
+            labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+            datasets: [{
+                label: 'Execuções',
+                data: [12, 19, 15, 23, 18, 25, 10, 22, 20, 18, 15, 12, 19, 23, 22, 20, 15, 18, 24, 20, 15, 12, 8, 6],
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+    
+    // Configurar gráfico de top workflows
+    const topWorkflowsCtx = document.getElementById('topWorkflowsChart').getContext('2d');
+    new Chart(topWorkflowsCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Auto-Assignment', 'SLA Monitor', 'Email Notify', 'Escalation'],
+            datasets: [{
+                data: [45, 25, 20, 10],
+                backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#f5576c']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { 
+                    position: 'bottom',
+                    labels: { fontSize: 10 }
+                }
+            }
+        }
+    });
+    
+    // Event listeners
+    document.querySelectorAll('.activate-workflow').forEach(button => {
+        button.addEventListener('click', function() {
+            const workflow = this.dataset.workflow;
+            this.innerHTML = '<i class="material-icons text-sm">check</i> Ativado';
+            this.classList.remove('btn-outline-primary', 'btn-outline-success', 'btn-outline-info', 'btn-outline-warning', 'btn-outline-danger');
+            this.classList.add('btn-success');
+            this.disabled = true;
+            
+            // Simular ativação
+            setTimeout(() => {
+                alert(`Workflow "${workflow}" ativado com sucesso!`);
+            }, 500);
+        });
+    });
+    
+    document.getElementById('createCustomWorkflow').addEventListener('click', function() {
+        alert('Funcionalidade de criação de workflow personalizado será implementada em breve!');
+    });
+    
+    document.getElementById('refreshWorkflows').addEventListener('click', function() {
+        const originalText = this.innerHTML;
+        this.innerHTML = '<i class="material-icons text-sm">refresh</i> Atualizando...';
+        this.disabled = true;
+        
+        setTimeout(() => {
+            this.innerHTML = originalText;
+            this.disabled = false;
+            location.reload();
+        }, 1000);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard - iConnect{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+.analytics-card {
+    border-radius: 15px;
+    transition: transform 0.2s;
+}
+
+.analytics-card:hover {
+    transform: translateY(-5px);
+}
+
+.metric-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <div class="d-flex align-items-center">
+                        <i class="material-icons text-lg me-2">analytics</i>
+                        <h6>Analytics Dashboard</h6>
+                        <div class="ms-auto">
+                            <button class="btn btn-outline-primary btn-sm" id="refreshData">
+                                <i class="material-icons text-sm">refresh</i> Atualizar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="row">
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card analytics-card">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon icon-lg icon-shape bg-gradient-dark shadow-dark text-center border-radius-xl mt-n4 position-absolute">
+                        <i class="material-icons opacity-10">receipt_long</i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0 text-capitalize">Total Tickets</p>
+                        <h4 class="mb-0 metric-value" id="totalTickets">---</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0">
+                <div class="card-footer p-3">
+                    <p class="mb-0"><span class="text-success text-sm font-weight-bolder" id="ticketsTrend">+0% </span>desde ontem</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card analytics-card">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary text-center border-radius-xl mt-n4 position-absolute">
+                        <i class="material-icons opacity-10">person</i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0 text-capitalize">Agentes Ativos</p>
+                        <h4 class="mb-0 metric-value" id="activeAgents">---</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0">
+                <div class="card-footer p-3">
+                    <p class="mb-0"><span class="text-success text-sm font-weight-bolder" id="agentsTrend">0 </span>online agora</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card analytics-card">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
+                        <i class="material-icons opacity-10">speed</i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0 text-capitalize">Tempo Médio</p>
+                        <h4 class="mb-0 metric-value" id="avgResponseTime">---</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0">
+                <div class="card-footer p-3">
+                    <p class="mb-0"><span class="text-danger text-sm font-weight-bolder" id="timeTrend">0min </span>de resposta</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6">
+            <div class="card analytics-card">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
+                        <i class="material-icons opacity-10">thumb_up</i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0 text-capitalize">Satisfação</p>
+                        <h4 class="mb-0 metric-value" id="satisfaction">---%</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0">
+                <div class="card-footer p-3">
+                    <p class="mb-0"><span class="text-success text-sm font-weight-bolder" id="satisfactionTrend">+0% </span>este mês</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mt-4">
+        <div class="col-lg-4 col-md-6 mt-4 mb-4">
+            <div class="card z-index-2">
+                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
+                    <div class="bg-gradient-primary shadow-primary border-radius-lg py-3 pe-1">
+                        <div class="chart-container">
+                            <canvas id="ticketsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h6 class="mb-0">Tickets por Status</h6>
+                    <p class="text-sm">Distribuição atual dos tickets</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mt-4 mb-4">
+            <div class="card z-index-2">
+                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
+                    <div class="bg-gradient-success shadow-success border-radius-lg py-3 pe-1">
+                        <div class="chart-container">
+                            <canvas id="responseTimeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h6 class="mb-0">Tempo de Resposta</h6>
+                    <p class="text-sm">Últimos 7 dias</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mt-4 mb-3">
+            <div class="card z-index-2">
+                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
+                    <div class="bg-gradient-dark shadow-dark border-radius-lg py-3 pe-1">
+                        <div class="chart-container">
+                            <canvas id="agentPerformanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h6 class="mb-0">Performance dos Agentes</h6>
+                    <p class="text-sm">Tickets resolvidos este mês</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real-time Activity -->
+    <div class="row">
+        <div class="col-12 mt-4">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>Atividade em Tempo Real</h6>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Evento</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Usuário</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Hora</th>
+                                    <th class="text-secondary opacity-7"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="activityFeed">
+                                <!-- Será preenchido via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- WebSocket para atualizações em tempo real -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar WebSocket para atualizações em tempo real
+    const ws = new WebSocket('ws://localhost:8000/ws/notifications/');
+    
+    ws.onopen = function() {
+        console.log('🟢 Analytics WebSocket conectado');
+    };
+    
+    ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        if (data.type === 'analytics_update') {
+            updateDashboard(data.data);
+        }
+    };
+    
+    // Função para carregar dados iniciais
+    function loadAnalyticsData() {
+        fetch('/api/analytics/')
+            .then(response => response.json())
+            .then(data => {
+                updateDashboard(data);
+                initCharts(data);
+            })
+            .catch(error => console.error('Erro ao carregar analytics:', error));
+    }
+    
+    // Função para atualizar dashboard
+    function updateDashboard(data) {
+        document.getElementById('totalTickets').textContent = data.total_tickets || '---';
+        document.getElementById('activeAgents').textContent = data.active_agents || '---';
+        document.getElementById('avgResponseTime').textContent = (data.avg_response_time || 0) + 'min';
+        document.getElementById('satisfaction').textContent = (data.satisfaction_rate || 0) + '%';
+    }
+    
+    // Função para inicializar gráficos
+    function initCharts(data) {
+        // Gráfico de Tickets por Status
+        const ticketsCtx = document.getElementById('ticketsChart').getContext('2d');
+        new Chart(ticketsCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Aberto', 'Em Andamento', 'Resolvido', 'Fechado'],
+                datasets: [{
+                    data: [30, 15, 45, 10],
+                    backgroundColor: ['#f56565', '#ed8936', '#38b2ac', '#68d391']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+        
+        // Gráfico de Tempo de Resposta
+        const responseCtx = document.getElementById('responseTimeChart').getContext('2d');
+        new Chart(responseCtx, {
+            type: 'line',
+            data: {
+                labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'],
+                datasets: [{
+                    label: 'Tempo (min)',
+                    data: [15, 12, 18, 10, 14, 16, 11],
+                    borderColor: '#38b2ac',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+        
+        // Gráfico de Performance dos Agentes
+        const agentCtx = document.getElementById('agentPerformanceChart').getContext('2d');
+        new Chart(agentCtx, {
+            type: 'bar',
+            data: {
+                labels: ['João', 'Maria', 'Pedro', 'Ana'],
+                datasets: [{
+                    label: 'Tickets Resolvidos',
+                    data: [45, 38, 52, 41],
+                    backgroundColor: '#667eea'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+    
+    // Event listeners
+    document.getElementById('refreshData').addEventListener('click', loadAnalyticsData);
+    
+    // Carregar dados iniciais
+    loadAnalyticsData();
+    
+    // Auto refresh a cada 30 segundos
+    setInterval(loadAnalyticsData, 30000);
+});
+</script>
+{% endblock %}

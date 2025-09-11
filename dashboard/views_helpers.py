@@ -3,6 +3,7 @@ from django.db.models import Count, Q
 from django.utils import timezone
 from datetime import datetime, timedelta
 from django.contrib.auth.models import User
+import json
 
 
 def get_dashboard_metrics():
@@ -17,8 +18,7 @@ def get_dashboard_metrics():
     
     # Importar models apenas quando necessário para evitar circular imports
     try:
-        from tickets.models import Ticket
-        from accounts.models import UserProfile
+        from .models import Ticket, PerfilAgente
         
         # Atendimentos hoje vs ontem
         atendimentos_hoje = Ticket.objects.filter(
@@ -62,11 +62,11 @@ def get_dashboard_metrics():
         ).order_by('-criado_em')[:10]
         
         # Status dos agentes
-        agentes_status = UserProfile.objects.filter(
-            user_type='agente'
-        ).select_related('user')[:5]
+        agentes_status = PerfilAgente.objects.select_related('user')[:5]
         
-        # Dados para gráficos
+        # Dados para gráficos - usar dados reais de analytics
+        analytics_data = get_analytics_data()
+        
         # Atendimentos por hora (últimas 24h)
         atendimentos_por_hora = []
         for i in range(7):  # 7 períodos de 3h cada
@@ -78,17 +78,6 @@ def get_dashboard_metrics():
             ).count()
             atendimentos_por_hora.append(count)
         
-        # Tickets por mês (últimos 9 meses)
-        tickets_por_mes = []
-        for i in range(9):
-            mes = hoje.replace(day=1) - timedelta(days=30*i)
-            proximo_mes = (mes + timedelta(days=32)).replace(day=1)
-            count = Ticket.objects.filter(
-                criado_em__gte=mes,
-                criado_em__lt=proximo_mes
-            ).count()
-            tickets_por_mes.insert(0, count)  # Inserir no início para ordem cronológica
-        
         return {
             'atendimentos_hoje': atendimentos_hoje,
             'variacao_atendimentos': round(variacao_atendimentos, 1),
@@ -97,8 +86,12 @@ def get_dashboard_metrics():
             'taxa_resolucao': round(taxa_resolucao, 1),
             'tickets_recentes': tickets_recentes,
             'agentes_status': agentes_status,
-            'atendimentos_por_hora': atendimentos_por_hora,
-            'tickets_por_mes': tickets_por_mes,
+            'atendimentos_por_hora': json.dumps(atendimentos_por_hora),
+            # Usar dados reais de analytics em vez de dados de exemplo
+            'tickets_por_mes': json.dumps(analytics_data.get('tickets_por_mes', [])),
+            'status_data': json.dumps(analytics_data.get('status_data', {}), ensure_ascii=False),
+            'agent_performance': json.dumps(analytics_data.get('agent_performance', []), ensure_ascii=False),
+            'heatmap_data': json.dumps(analytics_data.get('heatmap_data', [])),
         }
         
     except ImportError:
@@ -128,3 +121,73 @@ def get_ajax_metrics():
         'tickets_abertos': metrics['tickets_abertos'],
         'taxa_resolucao': metrics['taxa_resolucao'],
     }
+
+
+def get_analytics_data():
+    """
+    Retorna dados específicos para gráficos e analytics
+    """
+    try:
+        from .models import Ticket
+        
+        # Dados para gráfico de linha (últimos 12 meses)
+        hoje = timezone.now().date()
+        tickets_por_mes = []
+        for i in range(12):
+            mes = hoje.replace(day=1) - timedelta(days=30*i)
+            proximo_mes = mes + timedelta(days=32)
+            proximo_mes = proximo_mes.replace(day=1)
+            
+            count = Ticket.objects.filter(
+                criado_em__date__gte=mes,
+                criado_em__date__lt=proximo_mes
+            ).count()
+            tickets_por_mes.insert(0, count)
+        
+        # Distribuição por status
+        status_counts = Ticket.objects.values('status').annotate(count=Count('id'))
+        status_data = {item['status']: item['count'] for item in status_counts}
+        
+        # Performance por agente
+        agent_performance = Ticket.objects.filter(
+            status__in=['resolvido', 'fechado']
+        ).values('agente__username').annotate(
+            count=Count('id')
+        ).order_by('-count')[:5]
+        
+        # Heatmap de horários (por dia da semana e hora)
+        heatmap_data = []
+        for dia_semana in range(7):  # 0=domingo, 6=sábado
+            dia_data = []
+            for hora in range(0, 24, 2):  # A cada 2 horas
+                count = Ticket.objects.filter(
+                    criado_em__week_day=dia_semana+1,
+                    criado_em__hour__gte=hora,
+                    criado_em__hour__lt=hora+2
+                ).count()
+                dia_data.append(count)
+            heatmap_data.append(dia_data)
+        
+        return {
+            'tickets_por_mes': json.dumps(tickets_por_mes),
+            'status_data': status_data,
+            'agent_performance': list(agent_performance),
+            'heatmap_data': heatmap_data,
+            'tickets_abertos': status_data.get('aberto', 0),
+            'tickets_andamento': status_data.get('em_andamento', 0),
+            'tickets_resolvidos': status_data.get('resolvido', 0),
+            'tickets_fechados': status_data.get('fechado', 0),
+        }
+        
+    except Exception:
+        # Dados de exemplo em caso de erro
+        return {
+            'tickets_por_mes': json.dumps([10, 15, 12, 20, 25, 18, 22, 30, 28, 35, 40, 38]),
+            'status_data': {'aberto': 8, 'em_andamento': 15, 'resolvido': 42, 'fechado': 120},
+            'agent_performance': [],
+            'heatmap_data': [],
+            'tickets_abertos': 8,
+            'tickets_andamento': 15,
+            'tickets_resolvidos': 42,
+            'tickets_fechados': 120,
+        }

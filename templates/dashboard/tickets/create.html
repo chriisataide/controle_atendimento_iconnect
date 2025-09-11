@@ -1,376 +1,725 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load static %}
 
-{% block page_title %}Criar Novo Ticket{% endblock %}
+{% block title %}Criar Novo Ticket{% endblock %}
 
 {% block extra_css %}
 <style>
-.priority-indicator {
-    display: inline-flex;
-    align-items: center;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
-    margin-left: 8px;
-}
-.priority-baixa { background: #e8f5e8; color: #2e7d32; }
-.priority-media { background: #fff3e0; color: #f57c00; }
-.priority-alta { background: #ffebee; color: #d32f2f; }
-.priority-critica { background: #f3e5f5; color: #7b1fa2; animation: pulse 2s infinite; }
-
-.client-autocomplete {
+  /* Estilos melhorados dos templates */
+  .template-selector {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
     position: relative;
-}
-.client-suggestions {
+    overflow: hidden;
+  }
+
+  .template-selector::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 1px, transparent 1px),
+                radial-gradient(circle at 75% 75%, rgba(255,255,255,0.1) 1px, transparent 1px),
+                radial-gradient(circle at 50% 10%, rgba(255,255,255,0.08) 0.5px, transparent 0.5px);
+    background-size: 100px 100px, 100px 100px, 100px 100px;
+    opacity: 0.3;
+    z-index: 0;
+  }
+
+  .template-selector h6 {
+    color: white;
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    position: relative;
+    z-index: 1;
+    margin-bottom: 1.5rem;
+  }
+
+  .template-option {
+    padding: 1.2rem;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: center;
+    border: 2px solid transparent;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    backdrop-filter: blur(10px);
+    position: relative;
+    z-index: 1;
+    /* Garantir altura uniforme */
+    height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 120px;
+    max-height: 120px;
+  }
+
+  .template-option:hover {
+    background: rgba(255, 255, 255, 1);
+    border-color: #667eea;
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
+  }
+
+  .template-option.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-color: #764ba2;
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+  }
+
+  .template-option i {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    display: block;
+    opacity: 0.8;
+    flex-shrink: 0;
+  }
+
+  .template-option.active i {
+    opacity: 1;
+  }
+
+  .template-option small {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    display: block;
+    margin-top: 0.25rem;
+    line-height: 1.2;
+  }
+
+  /* Texto do template responsivo */
+  .template-option {
+    font-size: 0.85rem;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  /* Formulários melhorados */
+  .form-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+
+  .input-group-outline {
+    position: relative;
+    margin-bottom: 1.5rem;
+  }
+
+  .input-group-outline .form-control {
+    background-color: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  .input-group-outline .form-control:focus {
+    background-color: white;
+    border-color: #667eea;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
+    outline: none;
+  }
+  
+  /* Melhorias para selects */
+  select.form-control {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1rem;
+    padding-right: 2.5rem;
+  }
+  
+  select.form-control:focus {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23667eea' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  }
+  
+  /* Placeholder styles para select */
+  select.form-control option[disabled] {
+    color: #6c757d;
+    font-style: italic;
+    background-color: #f8f9fa;
+    font-weight: 400;
+  }
+  
+  select.form-control option:not([disabled]) {
+    color: #495057;
+    font-weight: 500;
+    background-color: #ffffff;
+  }
+  
+  /* Select sem valor selecionado (mostra placeholder) */
+  select.form-control:invalid {
+    color: #6c757d;
+    font-style: italic;
+  }
+  
+  /* Select com valor válido selecionado */
+  select.form-control:valid {
+    color: #495057;
+    font-style: normal;
+    font-weight: 500;
+  }
+  
+  /* Hover effect nas opções */
+  select.form-control option:hover {
+    background-color: #e9ecef;
+  }
+
+  .input-group-outline .form-label {
+    position: absolute;
+    top: 1rem;
+    left: 1.25rem;
+    background: transparent;
+    color: #6c757d;
+    font-size: 0.95rem;
+    font-weight: 400;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .input-group-outline.is-focused .form-label,
+  .input-group-outline.is-filled .form-label {
+    transform: translateY(-2.2rem) scale(0.85);
+    color: #667eea;
+    font-weight: 500;
+    background: white;
+    padding: 0 0.5rem;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  /* Labels especiais para selects - sempre visíveis no topo */
+  .input-group-outline.select-field .form-label {
+    position: absolute;
+    top: -0.8rem;
+    left: 1.25rem;
+    transform: scale(0.85);
+    background: white;
+    padding: 0 0.5rem;
+    border-radius: 4px;
+    color: #6c757d;
+    font-weight: 500;
+    z-index: 10;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+  }
+  
+  /* Label ativo em selects */
+  .input-group-outline.select-field.has-selection .form-label {
+    color: #28a745;
+  }
+  
+  .input-group-outline.select-field:focus-within .form-label {
+    color: #667eea;
+  }
+  
+  /* Ajuste do padding do select para não interferir com label fixo */
+  .input-group-outline.select-field .form-control {
+    padding-top: 1.2rem;
+  }
+
+  /* Rich Editor melhorado */
+  .rich-editor {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .rich-editor:focus-within {
+    border-color: #667eea;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
+  }
+
+  .editor-toolbar {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .format-btn {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .format-btn:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  }
+
+  #editorContent {
+    min-height: 280px;
+    padding: 1.5rem;
+    outline: none;
+    font-family: inherit;
+    line-height: 1.6;
+    overflow-y: auto;
+    background: white;
+  }
+
+  #editorContent.empty::before {
+    content: "Digite a descrição detalhada do ticket aqui... Use os botões acima para formatar o texto.";
+    color: #999;
+    font-style: italic;
+  }
+
+  /* Cliente Autocomplete melhorado */
+  .client-autocomplete {
+    position: relative;
+  }
+
+  .client-suggestions {
     position: absolute;
     top: 100%;
     left: 0;
     right: 0;
     background: white;
-    border: 1px solid #ddd;
-    border-radius: 8px;
+    border: 2px solid #667eea;
+    border-top: none;
+    border-radius: 0 0 12px 12px;
     max-height: 200px;
     overflow-y: auto;
     z-index: 1000;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     display: none;
-}
-.client-suggestion {
-    padding: 12px;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+  }
+
+  .suggestion-item {
+    padding: 1rem;
     cursor: pointer;
-    border-bottom: 1px solid #f0f0f0;
-}
-.client-suggestion:hover {
-    background: #f8f9fa;
-}
-.client-suggestion:last-child {
-    border-bottom: none;
-}
-.suggestion-name { font-weight: 600; }
-.suggestion-email { color: #666; font-size: 12px; }
+    border-bottom: 1px solid #f1f3f4;
+    transition: all 0.2s ease;
+  }
 
-.template-selector {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 20px;
-}
-.template-option {
-    display: flex;
-    align-items: center;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    margin: 4px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.template-option:hover {
-    background: #e3f2fd;
-    border-color: #2196f3;
-}
-.template-option.active {
-    background: #e3f2fd;
-    border-color: #2196f3;
-    font-weight: 600;
-}
+  .suggestion-item:hover {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+  }
 
-.file-upload-area {
-    border: 2px dashed #ddd;
-    border-radius: 8px;
-    padding: 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.file-upload-area:hover {
-    border-color: #2196f3;
-    background: #f8f9ff;
-}
-.file-list {
-    margin-top: 12px;
-}
-.file-item {
-    display: flex;
-    align-items: center;
-    background: #f0f0f0;
-    padding: 8px 12px;
-    border-radius: 6px;
-    margin: 4px 0;
-}
-.file-remove {
-    margin-left: auto;
-    color: #d32f2f;
-    cursor: pointer;
-}
+  .suggestion-name {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 0.25rem;
+  }
 
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
+  .suggestion-email {
+    font-size: 0.875rem;
+    color: #666;
+  }
 
-.rich-editor {
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    min-height: 150px;
-}
-.editor-toolbar {
-    background: #f8f9fa;
-    border-bottom: 1px solid #ddd;
-    padding: 8px;
-    border-radius: 8px 8px 0 0;
-}
-.editor-content {
-    padding: 12px;
-    min-height: 120px;
-    outline: none;
-}
-
-.sla-estimate {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 12px;
-    border-radius: 8px;
-    margin: 16px 0;
-    text-align: center;
-}
-
-.auto-save-indicator {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #4caf50;
-    color: white;
-    padding: 8px 16px;
+  /* Prioridade visual melhorada */
+  .priority-indicator {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
     border-radius: 20px;
-    font-size: 12px;
-    display: none;
-    z-index: 9999;
-}
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
 
-/* Labels flutuantes organizados e sem sobreposição */
-.input-group-outline {
-    position: relative;
-    margin-bottom: 24px;
-}
+  .priority-baixa { 
+    background: linear-gradient(135deg, #d4edda, #c3e6cb); 
+    color: #155724; 
+  }
+  .priority-media { 
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7); 
+    color: #856404; 
+  }
+  .priority-alta { 
+    background: linear-gradient(135deg, #f8d7da, #f5c6cb); 
+    color: #721c24; 
+  }
 
-.input-group-outline .form-label {
-    position: absolute;
-    top: 0px;
-    left: 16px;
-    background: white;
-    padding: 0 8px;
-    color: #6c757d;
-    font-size: 14px;
+  /* Botões melhorados */
+  .btn {
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
     font-weight: 500;
     transition: all 0.3s ease;
-    pointer-events: none;
-    z-index: 2;
-    transform: translateY(-50%);
-}
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
 
-/* Label dentro do campo quando vazio */
-.input-group-outline:not(.is-focused):not(.is-filled):not(.has-value) .form-label {
-    top: 50%;
-    color: #9ca3af;
-    font-size: 16px;
-    font-weight: 400;
-    background: transparent;
-    padding: 0;
-}
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+  }
 
-/* Label acima do campo quando ativo/preenchido */
-.input-group-outline.is-focused .form-label,
-.input-group-outline.is-filled .form-label,
-.input-group-outline.has-value .form-label {
-    top: 0px;
-    color: #e91e63;
-    font-size: 12px;
-    font-weight: 600;
-    background: white;
-    padding: 0 8px;
-    transform: translateY(-50%);
-    border-radius: 4px;
-}
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+  }
 
-.input-group-outline .form-control {
-    width: 100%;
-    padding: 16px 18px;
-    border: 2px solid #e5e7eb;
-    border-radius: 10px;
-    background: white;
-    font-size: 16px;
-    line-height: 1.5;
-    color: #374151;
-    transition: all 0.3s ease;
+  .btn-light {
+    background: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+  }
+
+  .btn-light:hover {
+    background: #e9ecef;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+
+  /* Upload de arquivos melhorado com drag & drop */
+  .file-upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
     position: relative;
-    z-index: 1;
-    margin-top: 0;
-}
+  }
 
-.input-group-outline .form-control:focus {
+  .file-upload-area:hover {
     border-color: #e91e63;
-    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
-    outline: none;
-}
+    background: linear-gradient(135deg, #fdf2f8 0%, #ffffff 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(233, 30, 99, 0.15);
+  }
 
-/* Placeholder invisível por padrão */
-.input-group-outline .form-control::placeholder {
-    color: transparent;
+  .file-upload-area.drag-over {
+    border-color: #e91e63;
+    background: linear-gradient(135deg, #fce7f3 0%, #ffffff 100%);
+    transform: scale(1.02);
+  }
+  
+  .file-item {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 1px solid #e3e6ea !important;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    animation: slideInUp 0.3s ease forwards;
+  }
+  
+  .file-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #e91e63 !important;
+  }
+  
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Botões de formatação aprimorados */
+  .format-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid #dee2e6;
+    background: #ffffff;
+    border-radius: 6px;
+    color: #495057;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  
+  .format-btn:hover {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-color: #e91e63;
+    color: #e91e63;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(233, 30, 99, 0.15);
+  }
+  
+  .format-btn:active,
+  .format-btn.active {
+    background: linear-gradient(135deg, #e91e63 0%, #ad1457 100%);
+    border-color: #e91e63;
+    color: #ffffff;
+    transform: translateY(0);
+  }
+  
+  /* Animações de entrada */
+  .template-card {
+    animation: templateSlideIn 0.4s ease forwards;
     opacity: 0;
-}
-
-/* Placeholder visível apenas quando focado */
-.input-group-outline.is-focused .form-control::placeholder {
-    color: #9ca3af;
-    opacity: 1;
-}
-
-/* Hover states */
-.input-group-outline:not(.is-focused) .form-control:hover {
-    border-color: #d1d5db;
-}
-
-.input-group-outline:hover:not(.is-focused) .form-label {
-    color: #6b7280;
-}
-
-/* Select específico */
-.input-group-outline select.form-control {
-    cursor: pointer;
-    padding-right: 45px;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-    background-position: right 16px center;
-    background-repeat: no-repeat;
-    background-size: 16px;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-}
-
-.input-group-outline.is-focused select.form-control {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23e91e63' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-}
-
-/* Campo desabilitado */
-.input-group-outline .form-control:disabled {
-    background-color: #f9fafb;
-    border-color: #e5e7eb;
-    color: #9ca3af;
-    cursor: not-allowed;
-    opacity: 0.75;
-}
-
-.input-group-outline .form-control:disabled ~ .form-label {
-    color: #9ca3af;
-}
-
-/* Remover estilos extras desnecessários */
-
-/* Estilos complementares organizados */
-.rich-editor {
-    border: 2px solid #e5e7eb;
-    border-radius: 10px;
-    min-height: 150px;
-    transition: all 0.3s ease;
-}
-
-.rich-editor:focus-within {
-    border-color: #e91e63;
-    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
-}
-
-.file-upload-area {
-    border: 2px dashed #d1d5db;
-    border-radius: 10px;
-    padding: 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.file-upload-area:hover {
-    border-color: #e91e63;
-    background: rgba(233, 30, 99, 0.05);
-}
-
-.client-suggestions {
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin-top: 4px;
-    border: 1px solid #e5e7eb;
-}
-
-.client-suggestion:hover {
-    background: rgba(233, 30, 99, 0.05);
-}
-
-/* Garantir que campos com valor tenham label acima */
-.input-group-outline.has-value .form-label {
-    top: -12px !important;
-    left: 12px !important;
-    font-size: 12px !important;
-    font-weight: 600 !important;
-    color: #e91e63 !important;
-    transform: translateY(0) !important;
-    background: white !important;
-    padding: 2px 6px !important;
-    border-radius: 4px !important;
-    box-shadow: 0 0 0 2px white !important;
-}
-
-/* Estilos complementares para outros elementos */
-.rich-editor {
-    border: 2px solid #d2d6da;
-    border-radius: 8px;
-    min-height: 150px;
-    transition: all 0.2s ease;
-}
-
-.rich-editor:focus-within {
-    border-color: #e91e63;
-    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.15);
-}
-
-.editor-content {
-    padding: 12px;
-    min-height: 120px;
+    transform: translateY(20px);
+  }
+  
+  .template-card:nth-child(1) { animation-delay: 0.1s; }
+  .template-card:nth-child(2) { animation-delay: 0.2s; }
+  .template-card:nth-child(3) { animation-delay: 0.3s; }
+  .template-card:nth-child(4) { animation-delay: 0.4s; }
+  .template-card:nth-child(5) { animation-delay: 0.5s; }
+  .template-card:nth-child(6) { animation-delay: 0.6s; }
+  
+  @keyframes templateSlideIn {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Rich editor melhorado */
+  #editorContent:focus {
     outline: none;
-}
-
-.file-upload-area {
-    border: 2px dashed #d2d6da;
-    border-radius: 8px;
-    padding: 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.file-upload-area:hover {
     border-color: #e91e63;
-    background: rgba(233, 30, 99, 0.05);
-}
+    box-shadow: 0 0 0 2px rgba(233, 30, 99, 0.1);
+  }
+  
+  /* Scrollbar personalizada */
+  #editorContent::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  #editorContent::-webkit-scrollbar-track {
+    background: #f1f3f4;
+    border-radius: 3px;
+  }
+  
+  #editorContent::-webkit-scrollbar-thumb {
+    background: #e91e63;
+    border-radius: 3px;
+  }
+  
+  #editorContent::-webkit-scrollbar-thumb:hover {
+    background: #ad1457;
+  }
+  
+  /* Estilos especiais para categorias */
+  #categoriaSelect {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  
+  /* Melhor aparência das opções */
+  select.form-control option {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+  
+  /* Feedback visual ao selecionar categoria */
+  #categoriaSelect:valid {
+    border-left: 4px solid #28a745;
+  }
+  
+  /* Container com seleção válida */
+  .input-group-outline.has-selection .form-control {
+    background-color: rgba(40, 167, 69, 0.05);
+    border-color: #28a745;
+  }
+  
+  .input-group-outline.has-selection .form-label {
+    color: #28a745 !important;
+  }
+  
+  /* Estados de prioridade */
+  #prioridadeSelect.priority-baixa {
+    background: linear-gradient(135deg, #d1f2eb 0%, #a3e4d7 100%);
+    border-color: #1e7e34;
+    color: #155724;
+  }
+  
+  #prioridadeSelect.priority-media {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border-color: #d39e00;
+    color: #856404;
+  }
+  
+  #prioridadeSelect.priority-alta {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    border-color: #dc3545;
+    color: #721c24;
+  }
+  
+  /* Ícone de prioridade dinâmico */
+  .priority-icon {
+    position: absolute;
+    right: 2.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    z-index: 10;
+  }
+  
+  .priority-icon.show {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.1);
+  }
+  
+  .priority-icon.baixa {
+    color: #28a745;
+  }
+  
+  .priority-icon.media {
+    color: #ffc107;
+  }
+  
+  .priority-icon.alta {
+    color: #dc3545;
+    animation: gentlePulse 2.5s infinite;
+  }
+  
+  @keyframes gentlePulse {
+    0%, 100% {
+      transform: translateY(-50%) scale(1.1);
+      opacity: 0.8;
+    }
+    50% {
+      transform: translateY(-50%) scale(1.15);
+      opacity: 1;
+    }
+  }
+  
+  /* Hover effects para prioridade */
+  #prioridadeSelect:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  }
+  
+  /* Label da prioridade com cor dinâmica */
+  .input-group-outline.priority-baixa .form-label {
+    color: #28a745 !important;
+  }
+  
+  .input-group-outline.priority-media .form-label {
+    color: #ffc107 !important;
+  }
+  
+  .input-group-outline.priority-alta .form-label {
+    color: #dc3545 !important;
+  }
+  
+  @keyframes shake {
+    0%, 20%, 40%, 60%, 80% {
+      transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+      transform: translateX(-5px);
+    }
+  }
+
+  /* Animações */
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .form-section {
+    animation: slideInUp 0.6s ease-out;
+  }
+
+  /* Responsivo */
+  @media (max-width: 768px) {
+    .template-option {
+      margin-bottom: 1rem;
+      /* Ajustar tamanho em tablet */
+      height: 100px;
+      min-height: 100px;
+      max-height: 100px;
+      padding: 0.8rem;
+      font-size: 0.8rem;
+    }
+    
+    .template-option i {
+      font-size: 1.5rem;
+      margin-bottom: 0.3rem;
+    }
+    
+    .form-section {
+      padding: 1.5rem;
+    }
+
+    .editor-toolbar {
+      padding: 0.75rem;
+    }
+
+    .format-btn {
+      padding: 0.375rem 0.5rem;
+      font-size: 0.8rem;
+    }
+  }
+  
+  /* Mobile pequeno */
+  @media (max-width: 576px) {
+    .template-option {
+      height: 90px;
+      min-height: 90px;
+      max-height: 90px;
+      padding: 0.6rem;
+      font-size: 0.75rem;
+    }
+    
+    .template-option i {
+      font-size: 1.3rem;
+      margin-bottom: 0.25rem;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Auto-save indicator -->
-<div class="auto-save-indicator" id="autoSaveIndicator">
-    <i class="material-symbols-rounded" style="font-size: 14px;">cloud_done</i> Rascunho salvo
-</div>
-
-<div class="container-fluid py-4">
+<div class="container-fluid py-2">
   <div class="row">
-    <div class="col-lg-10 mx-auto">
-      <div class="card">
+    <div class="col-12">
+      <div class="card my-4">
         <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
           <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
-            <h6 class="text-white text-capitalize ps-3 mb-0">
+            <h6 class="text-white text-capitalize ps-3">
               <i class="material-symbols-rounded me-2">add_circle</i>
-              Criar Novo Ticket
+              Criar Novo Ticket de Suporte
             </h6>
           </div>
         </div>
@@ -382,28 +731,40 @@
               Templates Rápidos (Opcional)
             </h6>
             <div class="row" id="templateOptions">
-              <div class="col-md-3">
+              <div class="col-md-2">
                 <div class="template-option" data-template="suporte-tecnico">
-                  <i class="material-symbols-rounded me-2">computer</i>
+                  <i class="material-symbols-rounded">computer</i>
                   Suporte Técnico
                 </div>
               </div>
-              <div class="col-md-3">
+              <div class="col-md-2">
                 <div class="template-option" data-template="duvida">
-                  <i class="material-symbols-rounded me-2">help</i>
+                  <i class="material-symbols-rounded">help</i>
                   Dúvida/Pergunta
                 </div>
               </div>
-              <div class="col-md-3">
+              <div class="col-md-2">
                 <div class="template-option" data-template="solicitacao">
-                  <i class="material-symbols-rounded me-2">request_quote</i>
+                  <i class="material-symbols-rounded">request_quote</i>
                   Solicitação
                 </div>
               </div>
-              <div class="col-md-3">
+              <div class="col-md-2">
                 <div class="template-option" data-template="bug">
-                  <i class="material-symbols-rounded me-2">bug_report</i>
+                  <i class="material-symbols-rounded">bug_report</i>
                   Relatar Bug
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="template-option" data-template="melhoria">
+                  <i class="material-symbols-rounded">lightbulb</i>
+                  Melhoria
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="template-option" data-template="acesso">
+                  <i class="material-symbols-rounded">key</i>
+                  Acesso
                 </div>
               </div>
             </div>
@@ -412,163 +773,149 @@
           <form method="post" id="ticketForm" enctype="multipart/form-data">
             {% csrf_token %}
             
-            <div class="row">
-              {% if not is_cliente %}
-              <div class="col-md-6">
-                <div class="input-group input-group-outline mb-3 client-autocomplete">
-                  <label class="form-label">Cliente *</label>
-                  <input type="text" class="form-control" id="clienteSearch" placeholder="Digite para buscar cliente..." required>
-                  <input type="hidden" name="cliente" id="clienteId" required>
-                  <div class="client-suggestions" id="clienteSuggestions"></div>
+            <!-- Seção: Informações Básicas -->
+            <div class="form-section">
+              <h6 class="mb-4">
+                <i class="material-symbols-rounded me-2">info</i>
+                Informações Básicas
+              </h6>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="input-group-outline client-autocomplete">
+                    <label class="form-label">Cliente</label>
+                    <input type="text" id="clienteInput" name="cliente" class="form-control" required>
+                    <div id="clienteSuggestions" class="client-suggestions"></div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label">Título do Ticket</label>
+                    <input type="text" id="tituloInput" name="titulo" class="form-control" required>
+                  </div>
                 </div>
               </div>
-              {% else %}
-              <div class="col-md-6">
-                <div class="input-group input-group-outline mb-3 is-filled">
-                  <label class="form-label">Cliente</label>
-                  <input type="text" class="form-control" value="{{ cliente_logado.nome }} ({{ cliente_logado.email }})" disabled>
-                  <input type="hidden" name="cliente" value="{{ cliente_logado.id }}">
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="input-group-outline select-field">
+                    <label class="form-label">Categoria do Ticket</label>
+                    <select id="categoriaSelect" name="categoria" class="form-control">
+                      <option value="" disabled selected>Selecione uma categoria...</option>
+                      <option value="suporte">🔧 Suporte Técnico</option>
+                      <option value="duvida">❓ Dúvida/Consulta</option>
+                      <option value="solicitacao">📋 Solicitação</option>
+                      <option value="bug">🐛 Bug/Erro</option>
+                      <option value="melhoria">💡 Melhoria</option>
+                      <option value="acesso">🔑 Acesso</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline select-field" id="prioridadeContainer">
+                    <label class="form-label">Nível de Prioridade</label>
+                    <select id="prioridadeSelect" name="prioridade" class="form-control">
+                      <option value="" disabled selected>Selecione a prioridade...</option>
+                      <option value="baixa">🟢 Baixa</option>
+                      <option value="media">🟡 Média</option>
+                      <option value="alta">🔴 Alta</option>
+                    </select>
+                    <i class="material-symbols-rounded priority-icon" id="priorityIcon"></i>
+                  </div>
                 </div>
               </div>
-              {% endif %}
-              <div class="col-md-6">
-                <div class="input-group input-group-outline mb-3">
-                  <label class="form-label">Categoria *</label>
-                  <select class="form-control" name="categoria" id="categoriaSelect" required>
-                    <option value="">Selecione uma categoria</option>
-                    {% for categoria in categorias %}
-                      <option value="{{ categoria.id }}">{{ categoria.nome }}</option>
-                    {% endfor %}
-                  </select>
+
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="input-group-outline">
+                    <label class="form-label">Tags do Ticket</label>
+                    <input type="text" id="tagsInput" name="tags" class="form-control">
+                  </div>
+                  <small class="text-muted ms-2 mt-1">
+                    <i class="material-symbols-rounded me-1" style="font-size: 14px;">info</i>
+                    Separe as tags por vírgula (ex: sistema, login, urgente)
+                  </small>
                 </div>
               </div>
             </div>
 
-            <div class="row">
-              <div class="col-md-8">
-                <div class="input-group input-group-outline mb-3">
-                  <label class="form-label">Título do Ticket *</label>
-                  <input type="text" class="form-control" name="titulo" id="tituloInput" required>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="input-group input-group-outline mb-3">
-                  <label class="form-label">Prioridade *</label>
-                  <select class="form-control" name="prioridade" id="prioridadeSelect" required>
-                    <option value="baixa">Baixa</option>
-                    <option value="media" selected>Média</option>
-                    <option value="alta">Alta</option>
-                    <option value="critica">Crítica</option>
-                  </select>
-                  <span class="priority-indicator" id="priorityIndicator">
-                    <i class="material-symbols-rounded me-1">flag</i>
-                    Média
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Tags -->
-            <div class="input-group input-group-outline mb-3">
-              <label class="form-label">Tags (separadas por vírgula)</label>
-              <input type="text" class="form-control" name="tags" id="tagsInput" placeholder="Ex: urgente, sistema, login">
-            </div>
-
-            <!-- Editor Rico para Descrição -->
-            <div class="mb-3">
-              <label class="form-label mb-2">Descrição Detalhada *</label>
+            <!-- Seção: Descrição Detalhada -->
+            <div class="form-section">
+              <h6 class="mb-4">
+                <i class="material-symbols-rounded me-2">description</i>
+                Descrição Detalhada
+              </h6>
+              
               <div class="rich-editor">
                 <div class="editor-toolbar">
-                  <button type="button" class="btn btn-sm btn-light" onclick="formatText('bold')">
-                    <i class="material-symbols-rounded">format_bold</i>
+                  <button type="button" class="format-btn" data-command="bold" title="Negrito (Ctrl+B)">
+                    <i class="material-symbols-rounded" style="font-size: 16px;">format_bold</i>
+                    <span>Negrito</span>
                   </button>
-                  <button type="button" class="btn btn-sm btn-light" onclick="formatText('italic')">
-                    <i class="material-symbols-rounded">format_italic</i>
+                  <button type="button" class="format-btn" data-command="italic" title="Itálico (Ctrl+I)">
+                    <i class="material-symbols-rounded" style="font-size: 16px;">format_italic</i>
+                    <span>Itálico</span>
                   </button>
-                  <button type="button" class="btn btn-sm btn-light" onclick="formatText('underline')">
-                    <i class="material-symbols-rounded">format_underlined</i>
+                  <button type="button" class="format-btn" data-command="underline" title="Sublinhado (Ctrl+U)">
+                    <i class="material-symbols-rounded" style="font-size: 16px;">format_underlined</i>
+                    <span>Sublinhado</span>
                   </button>
-                  <button type="button" class="btn btn-sm btn-light" onclick="formatText('insertUnorderedList')">
-                    <i class="material-symbols-rounded">format_list_bulleted</i>
+                  <div style="width: 1px; height: 24px; background: #dee2e6; margin: 0 0.5rem;"></div>
+                  <button type="button" class="format-btn" data-command="insertUnorderedList" title="Lista com marcadores">
+                    <i class="material-symbols-rounded" style="font-size: 16px;">format_list_bulleted</i>
+                    <span>Lista</span>
                   </button>
-                  <button type="button" class="btn btn-sm btn-light" onclick="formatText('insertOrderedList')">
-                    <i class="material-symbols-rounded">format_list_numbered</i>
+                  <button type="button" class="format-btn" data-command="insertOrderedList" title="Lista numerada">
+                    <i class="material-symbols-rounded" style="font-size: 16px;">format_list_numbered</i>
+                    <span>Numerada</span>
                   </button>
                 </div>
-                <div class="editor-content" id="editorContent" contenteditable="true" 
-                     placeholder="Descreva o problema ou solicitação de forma detalhada..."></div>
+                <div id="editorContent" contenteditable="true" class="empty"></div>
               </div>
-              <textarea name="descricao" id="descricaoHidden" style="display: none;" required></textarea>
+              <input type="hidden" id="descricaoHidden" name="descricao">
             </div>
 
-            <!-- Upload de Anexos -->
-            <div class="mb-3">
-                          <!-- Anexos -->
-            <div class="mb-4">
-              <label class="form-label mb-2">
+            <!-- Seção: Anexos -->
+            <div class="form-section">
+              <h6 class="mb-4">
                 <i class="material-symbols-rounded me-2">attach_file</i>
-                Anexar Arquivos
-              <div class="file-upload-area" id="fileUploadArea">
-                <i class="material-symbols-rounded mb-2" style="font-size: 48px; color: #bbb;">cloud_upload</i>
-                <p class="mb-2">Clique aqui ou arraste arquivos para anexar</p>
-                <small class="text-muted">Máximo 5 arquivos, 10MB cada (PDF, DOC, JPG, PNG)</small>
-                <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt" style="display: none;">
+                Anexos (Opcional)
+              </h6>
+              
+              <div class="file-upload-area">
+                <i class="material-symbols-rounded mb-2" style="font-size: 2rem; color: #6c757d;">cloud_upload</i>
+                <p class="mb-2"><strong>Clique para selecionar arquivos ou arraste aqui</strong></p>
+                <p class="text-muted mb-3">Formatos aceitos: PDF, DOC, DOCX, TXT, PNG, JPG, JPEG, GIF (máx. 10MB por arquivo)</p>
+                <input type="file" id="anexosInput" name="anexos" class="form-control" 
+                       multiple accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif"
+                       style="position: absolute; opacity: 0; width: 100%; height: 100%; top: 0; left: 0; cursor: pointer;">
               </div>
-              <div class="file-list" id="fileList"></div>
+              
+              <div id="filePreview" class="mt-3" style="display: none;">
+                <small class="text-muted">Arquivos selecionados:</small>
+                <div id="fileList" class="mt-2"></div>
+              </div>
             </div>
 
-            <!-- Estimativa de SLA -->
-            <div class="sla-estimate" id="slaEstimate" style="display: none;">
-              <div class="d-flex align-items-center justify-content-center">
-                <i class="material-symbols-rounded me-2">schedule</i>
-                <span id="slaText">Tempo estimado de resposta será calculado</span>
-              </div>
-            </div>
-
-            <!-- Preview do Ticket -->
-            <div class="card border" id="ticketPreview" style="display: none; margin: 20px 0;">
-              <div class="card-header bg-light">
-                <h6 class="mb-0">
-                  <i class="material-symbols-rounded me-2">preview</i>
-                  Preview do Ticket
-                </h6>
-              </div>
-              <div class="card-body">
-                <div id="previewContent">
-                  <!-- Preview será preenchido dinamicamente -->
+            <!-- Botões de Ação -->
+            <div class="form-section">
+              <div class="row align-items-center">
+                <div class="col-md-6">
+                  <small class="text-muted">
+                    <i class="material-symbols-rounded me-1" style="font-size: 16px;">keyboard</i>
+                    <strong>Atalhos:</strong> Ctrl+S (Salvar) • Ctrl+Enter (Enviar)
+                  </small>
                 </div>
-              </div>
-            </div>
-
-            <!-- Histórico de Tickets do Cliente -->
-            <div class="card border" id="clientHistory" style="display: none; margin: 20px 0;">
-              <div class="card-header bg-light">
-                <h6 class="mb-0">
-                  <i class="material-symbols-rendered me-2">history</i>
-                  Últimos Tickets do Cliente
-                </h6>
-              </div>
-              <div class="card-body" id="historyContent">
-                <!-- Histórico será carregado dinamicamente -->
-              </div>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center">
-              <div class="d-flex">
-                <button type="button" class="btn btn-info me-2" id="previewBtn">
-                  <i class="material-symbols-rounded">visibility</i>&nbsp;&nbsp;Preview
-                </button>
-                <button type="button" class="btn btn-secondary me-2" id="saveDraftBtn">
-                  <i class="material-symbols-rounded">draft</i>&nbsp;&nbsp;Salvar Rascunho
-                </button>
-              </div>
-              <div class="d-flex">
-                <a href="{% url 'dashboard:ticket_list' %}" class="btn btn-light me-2">
-                  <i class="material-symbols-rounded">cancel</i>&nbsp;&nbsp;Cancelar
-                </a>
-                <button type="submit" class="btn btn-primary" id="submitBtn">
-                  <i class="material-symbols-rounded">send</i>&nbsp;&nbsp;Criar Ticket
-                </button>
+                <div class="col-md-6 text-end">
+                  <a href="{% url 'dashboard:ticket_list' %}" class="btn btn-light me-2">
+                    <i class="material-symbols-rounded me-1">cancel</i>
+                    Cancelar
+                  </a>
+                  <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <i class="material-symbols-rounded me-1">send</i>
+                    Criar Ticket
+                  </button>
+                </div>
               </div>
             </div>
           </form>
@@ -577,492 +924,545 @@
     </div>
   </div>
 </div>
-
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// Templates de ticket
-const ticketTemplates = {
-    'suporte-tecnico': {
-        title: 'Problema Técnico - [Descreva brevemente]',
-        description: `<strong>Problema encontrado:</strong><br>
-[Descreva o problema]<br><br>
-
-<strong>Passos para reproduzir:</strong><br>
-1. [Passo 1]<br>
-2. [Passo 2]<br>
-3. [Passo 3]<br><br>
-
-<strong>Resultado esperado:</strong><br>
-[O que deveria acontecer]<br><br>
-
-<strong>Resultado atual:</strong><br>
-[O que está acontecendo]<br><br>
-
-<strong>Informações adicionais:</strong><br>
-- Browser: [Chrome/Firefox/Safari]<br>
-- Sistema: [Windows/Mac/Linux]<br>
-- Versão: [se aplicável]`,
-        category: null,
-        priority: 'media'
-    },
-    'duvida': {
-        title: 'Dúvida sobre [Assunto]',
-        description: `<strong>Dúvida:</strong><br>
-[Descreva sua dúvida]<br><br>
-
-<strong>Context:</strong><br>
-[Explique o contexto da situação]<br><br>
-
-<strong>O que já foi tentado:</strong><br>
-[Se já tentou alguma solução, descreva aqui]`,
-        category: null,
-        priority: 'baixa'
-    },
-    'solicitacao': {
-        title: 'Solicitação - [Descreva o que precisa]',
-        description: `<strong>Solicitação:</strong><br>
-[Descreva detalhadamente o que precisa]<br><br>
-
-<strong>Justificativa:</strong><br>
-[Por que esta solicitação é necessária]<br><br>
-
-<strong>Prazo desejado:</strong><br>
-[Quando precisa que seja atendido]<br><br>
-
-<strong>Impacto:</strong><br>
-[Qual o impacto se não for atendido]`,
-        category: null,
-        priority: 'media'
-    },
-    'bug': {
-        title: 'Bug Report - [Título do bug]',
-        description: `<strong>🐛 Descrição do Bug:</strong><br>
-[Descreva o bug encontrado]<br><br>
-
-<strong>📋 Passos para Reproduzir:</strong><br>
-1. [Primeiro passo]<br>
-2. [Segundo passo]<br>
-3. [Terceiro passo]<br><br>
-
-<strong>✅ Comportamento Esperado:</strong><br>
-[O que deveria acontecer]<br><br>
-
-<strong>❌ Comportamento Atual:</strong><br>
-[O que está acontecendo]<br><br>
-
-<strong>🖥️ Ambiente:</strong><br>
-- Device: [Desktop/Mobile/Tablet]<br>
-- Browser: [Chrome/Firefox/Safari + versão]<br>
-- OS: [Windows/Mac/Linux + versão]<br><br>
-
-<strong>📎 Screenshots:</strong><br>
-[Anexe screenshots se possível]`,
-        category: null,
-        priority: 'alta'
-    }
-};
-
-// SLA estimates baseado em categoria e prioridade
-const slaEstimates = {
-    'baixa': '24-48 horas',
-    'media': '8-12 horas',  
-    'alta': '2-4 horas',
-    'critica': '30 minutos - 1 hora'
-};
-
 document.addEventListener('DOMContentLoaded', function() {
-    // Dados dos clientes para autocomplete
-    const clientes = [
-        {% for cliente in clientes %}
-        {
-            id: {{ cliente.id }},
-            nome: "{{ cliente.nome|escapejs }}",
-            email: "{{ cliente.email|escapejs }}"
-        },
-        {% endfor %}
-    ];
-
-    // Auto-complete para clientes
-    const clienteSearch = document.getElementById('clienteSearch');
-    const clienteSuggestions = document.getElementById('clienteSuggestions');
-    const clienteId = document.getElementById('clienteId');
-
-    if (clienteSearch) {
-        clienteSearch.addEventListener('input', function() {
-            const query = this.value.toLowerCase();
-            if (query.length < 2) {
-                clienteSuggestions.style.display = 'none';
-                return;
-            }
-
-            const filtered = clientes.filter(cliente => 
-                cliente.nome.toLowerCase().includes(query) ||
-                cliente.email.toLowerCase().includes(query)
-            );
-
-            if (filtered.length > 0) {
-                clienteSuggestions.innerHTML = filtered.map(cliente => 
-                    `<div class="client-suggestion" data-id="${cliente.id}">
-                        <div class="suggestion-name">${cliente.nome}</div>
-                        <div class="suggestion-email">${cliente.email}</div>
-                    </div>`
-                ).join('');
-                clienteSuggestions.style.display = 'block';
-            } else {
-                clienteSuggestions.style.display = 'none';
-            }
-        });
-
-        clienteSuggestions.addEventListener('click', function(e) {
-            const suggestion = e.target.closest('.client-suggestion');
-            if (suggestion) {
-                const id = suggestion.dataset.id;
-                const cliente = clientes.find(c => c.id == id);
-                clienteSearch.value = `${cliente.nome} (${cliente.email})`;
-                clienteId.value = id;
-                clienteSuggestions.style.display = 'none';
-                
-                // Carregar histórico do cliente
-                loadClientHistory(id);
-            }
-        });
-
-        // Esconder sugestões ao clicar fora
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.client-autocomplete')) {
-                clienteSuggestions.style.display = 'none';
-            }
-        });
-    }
-
+    
     // Templates de ticket
-    document.querySelectorAll('.template-option').forEach(option => {
-        option.addEventListener('click', function() {
-            // Remove active de outros
-            document.querySelectorAll('.template-option').forEach(opt => opt.classList.remove('active'));
-            this.classList.add('active');
+    window.ticketTemplates = {
+        'suporte-tecnico': {
+            title: 'Suporte Técnico - [Descreva o problema brevemente]',
+            description: `<div>
+<h4 style="color: #d32f2f;">🔧 PROBLEMA TÉCNICO</h4>
+<p><strong>📋 Descrição do Problema:</strong><br>
+Descreva detalhadamente qual problema técnico você está enfrentando.</p>
 
-            const templateKey = this.dataset.template;
-            const template = ticketTemplates[templateKey];
+<p><strong>🔄 Passos para Reproduzir:</strong></p>
+<ol>
+  <li>Acesse [sistema/página específica]</li>
+  <li>Execute a ação [descreva a ação]</li>
+  <li>Observe o resultado [descreva o que acontece]</li>
+</ol>
+
+<p><strong>✅ Resultado Esperado:</strong><br>
+O que deveria acontecer quando você executa essas ações.</p>
+
+<p><strong>❌ Resultado Atual:</strong><br>
+O que realmente está acontecendo (comportamento incorreto).</p>
+
+<p><strong>💻 Informações do Sistema:</strong></p>
+<ul>
+  <li><strong>Navegador:</strong> [Chrome/Firefox/Safari + versão]</li>
+  <li><strong>Sistema:</strong> [Windows/Mac/Linux]</li>
+  <li><strong>Hora do Incidente:</strong> [Data e hora]</li>
+</ul>
+</div>`,
+            priority: 'media',
+            tags: 'suporte, técnico, sistema'
+        },
+        
+        'duvida': {
+            title: 'Dúvida - [Assunto específico]',
+            description: `<div>
+<h4 style="color: #1976d2;">❓ DÚVIDA / CONSULTA</h4>
+<p><strong>🎯 Sua Dúvida:</strong><br>
+Formule sua pergunta de forma clara e específica.</p>
+
+<p><strong>📝 Contexto:</strong><br>
+Explique a situação em que surgiu esta dúvida.</p>
+
+<p><strong>🔍 O que já foi tentado:</strong><br>
+Liste as tentativas de solução realizadas.</p>
+</div>`,
+            priority: 'baixa',
+            tags: 'dúvida, consulta, orientação'
+        },
+        
+        'solicitacao': {
+            title: 'Solicitação - [Tipo de solicitação]',
+            description: `<div>
+<h4 style="color: #f57c00;">📋 SOLICITAÇÃO DE SERVIÇO</h4>
+<p><strong>🎯 O que você precisa:</strong><br>
+Descreva claramente qual serviço você está solicitando.</p>
+
+<p><strong>💼 Justificativa:</strong><br>
+Por que esta solicitação é necessária?</p>
+
+<p><strong>📅 Prazo:</strong><br>
+Quando você precisa que seja atendido?</p>
+</div>`,
+            priority: 'media',
+            tags: 'solicitação, serviço, demanda'
+        },
+        
+        'bug': {
+            title: 'Bug Report - [Sistema/Funcionalidade]',
+            description: `<div>
+<h4 style="color: #d32f2f;">🐛 RELATÓRIO DE BUG</h4>
+<p><strong>🎯 Resumo do Bug:</strong><br>
+Descreva em uma frase o que está funcionando incorretamente.</p>
+
+<p><strong>🔄 Passos para Reproduzir:</strong></p>
+<ol>
+  <li>Primeiro passo</li>
+  <li>Segundo passo</li>
+  <li>Terceiro passo</li>
+</ol>
+
+<p><strong>✅ Comportamento Esperado:</strong><br>
+O que deveria acontecer?</p>
+
+<p><strong>❌ Comportamento Atual:</strong><br>
+O que está acontecendo?</p>
+</div>`,
+            priority: 'alta',
+            tags: 'bug, erro, defeito'
+        },
+        
+        'melhoria': {
+            title: 'Sugestão de Melhoria - [Área]',
+            description: `<div>
+<h4 style="color: #7b1fa2;">💡 SUGESTÃO DE MELHORIA</h4>
+<p><strong>🎯 Melhoria Proposta:</strong><br>
+Descreva sua sugestão de melhoria.</p>
+
+<p><strong>📍 Situação Atual:</strong><br>
+Como funciona hoje?</p>
+
+<p><strong>✨ Situação Desejada:</strong><br>
+Como deveria funcionar?</p>
+</div>`,
+            priority: 'baixa',
+            tags: 'melhoria, sugestão, otimização'
+        },
+        
+        'acesso': {
+            title: 'Solicitação de Acesso - [Sistema/Recurso]',
+            description: `<div>
+<h4 style="color: #2e7d32;">🔑 SOLICITAÇÃO DE ACESSO</h4>
+<p><strong>🎯 Acesso Solicitado:</strong><br>
+A qual sistema ou recurso você precisa de acesso?</p>
+
+<p><strong>💼 Justificativa:</strong><br>
+Por que você precisa deste acesso?</p>
+
+<p><strong>⏰ Período:</strong><br>
+Por quanto tempo precisa do acesso?</p>
+</div>`,
+            priority: 'media',
+            tags: 'acesso, permissão, sistema'
+        }
+    };
+
+    // Inicializar templates
+    console.log('=== INICIALIZAÇÃO DOS TEMPLATES ===');
+    
+    setTimeout(() => {
+        const templateOptions = document.querySelectorAll('.template-option');
+        console.log('Templates encontrados:', templateOptions.length);
+        
+        templateOptions.forEach(option => {
+            const templateKey = option.dataset.template;
+            console.log('Configurando template:', templateKey);
             
-            if (template) {
-                document.getElementById('tituloInput').value = template.title;
-                document.getElementById('editorContent').innerHTML = template.description;
-                document.getElementById('prioridadeSelect').value = template.priority;
-                updatePriorityIndicator(template.priority);
-                updateSLAEstimate();
-            }
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('✓ Clique detectado:', templateKey);
+                
+                const template = window.ticketTemplates[templateKey];
+                if (!template) {
+                    console.error('Template não encontrado:', templateKey);
+                    return;
+                }
+                
+                // Feedback visual
+                document.querySelectorAll('.template-option').forEach(opt => {
+                    opt.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Aplicar campos
+                const titulo = document.getElementById('tituloInput');
+                if (titulo) {
+                    titulo.value = template.title;
+                    titulo.closest('.input-group-outline').classList.add('is-filled');
+                    console.log('✓ Título preenchido');
+                }
+                
+                const editor = document.getElementById('editorContent');
+                const hidden = document.getElementById('descricaoHidden');
+                if (editor && hidden) {
+                    editor.innerHTML = template.description;
+                    hidden.value = template.description;
+                    editor.classList.remove('empty');
+                    editor.classList.add('has-content');
+                    console.log('✓ Descrição preenchida');
+                }
+                
+                const prioridade = document.getElementById('prioridadeSelect');
+                if (prioridade) {
+                    prioridade.value = template.priority;
+                    prioridade.closest('.input-group-outline').classList.add('is-filled');
+                    // Atualizar visualmente a prioridade
+                    prioridade.dispatchEvent(new Event('change'));
+                    console.log('✓ Prioridade definida:', template.priority);
+                }
+                
+                const tags = document.getElementById('tagsInput');
+                if (tags) {
+                    tags.value = template.tags;
+                    tags.closest('.input-group-outline').classList.add('is-filled');
+                    console.log('✓ Tags preenchidas');
+                }
+                
+                console.log('✅ Template aplicado com sucesso!');
+            });
         });
-    });
+        
+        console.log('✅ Todos os templates configurados!');
+    }, 100);
 
-    // Indicador visual de prioridade
-    const prioridadeSelect = document.getElementById('prioridadeSelect');
-    const priorityIndicator = document.getElementById('priorityIndicator');
-
-    function updatePriorityIndicator(priority) {
-        const indicators = {
-            'baixa': { text: 'Baixa', class: 'priority-baixa', icon: 'flag' },
-            'media': { text: 'Média', class: 'priority-media', icon: 'flag' },
-            'alta': { text: 'Alta', class: 'priority-alta', icon: 'priority_high' },
-            'critica': { text: 'Crítica', class: 'priority-critica', icon: 'warning' }
-        };
-
-        const indicator = indicators[priority];
-        priorityIndicator.className = `priority-indicator ${indicator.class}`;
-        priorityIndicator.innerHTML = `<i class="material-symbols-rounded me-1">${indicator.icon}</i>${indicator.text}`;
-    }
-
-    prioridadeSelect.addEventListener('change', function() {
-        updatePriorityIndicator(this.value);
-        updateSLAEstimate();
-    });
-
-    // Editor de texto rico
-    function formatText(command) {
-        document.execCommand(command, false, null);
-        document.getElementById('editorContent').focus();
-    }
-    window.formatText = formatText;
-
-    // Sincronizar editor com textarea oculta
+    // Configurar Rich Text Editor
     const editorContent = document.getElementById('editorContent');
     const descricaoHidden = document.getElementById('descricaoHidden');
+    
+    if (editorContent && descricaoHidden) {
+        // Sincronização
+        editorContent.addEventListener('input', function() {
+            const content = this.innerHTML;
+            const textContent = this.textContent || this.innerText || '';
+            
+            descricaoHidden.value = content;
+            
+            if (textContent.trim() === '') {
+                this.classList.add('empty');
+                this.classList.remove('has-content');
+            } else {
+                this.classList.remove('empty');
+                this.classList.add('has-content');
+            }
+        });
 
-    editorContent.addEventListener('input', function() {
-        descricaoHidden.value = this.innerHTML;
-    });
+        // Focar
+        editorContent.addEventListener('focus', function() {
+            if (this.classList.contains('empty')) {
+                this.innerHTML = '';
+                this.classList.remove('empty');
+            }
+        });
 
-    // Upload de arquivos
-    const fileUploadArea = document.getElementById('fileUploadArea');
-    const fileInput = document.getElementById('fileInput');
-    const fileList = document.getElementById('fileList');
-    let selectedFiles = [];
-
-    fileUploadArea.addEventListener('click', () => fileInput.click());
-
-    fileUploadArea.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        this.style.borderColor = '#2196f3';
-        this.style.background = '#f8f9ff';
-    });
-
-    fileUploadArea.addEventListener('dragleave', function(e) {
-        e.preventDefault();
-        this.style.borderColor = '#ddd';
-        this.style.background = 'transparent';
-    });
-
-    fileUploadArea.addEventListener('drop', function(e) {
-        e.preventDefault();
-        this.style.borderColor = '#ddd';
-        this.style.background = 'transparent';
-        handleFiles(e.dataTransfer.files);
-    });
-
-    fileInput.addEventListener('change', function() {
-        handleFiles(this.files);
-    });
-
-    function handleFiles(files) {
-        Array.from(files).forEach(file => {
-            if (selectedFiles.length < 5 && file.size <= 10 * 1024 * 1024) {
-                selectedFiles.push(file);
-                displayFile(file);
+        // Blur
+        editorContent.addEventListener('blur', function() {
+            const textContent = this.textContent || this.innerText || '';
+            if (textContent.trim() === '') {
+                this.classList.add('empty');
+                this.classList.remove('has-content');
             }
         });
     }
 
-    function displayFile(file) {
-        const fileItem = document.createElement('div');
-        fileItem.className = 'file-item';
-        fileItem.innerHTML = `
-            <i class="material-symbols-rounded me-2">description</i>
-            <span>${file.name} (${formatFileSize(file.size)})</span>
-            <i class="material-symbols-rendered file-remove ms-auto" onclick="removeFile('${file.name}')">delete</i>
-        `;
-        fileList.appendChild(fileItem);
-    }
-
-    function removeFile(fileName) {
-        selectedFiles = selectedFiles.filter(file => file.name !== fileName);
-        updateFileList();
-    }
-    window.removeFile = removeFile;
-
-    function updateFileList() {
-        fileList.innerHTML = '';
-        selectedFiles.forEach(file => displayFile(file));
-    }
-
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    // Estimativa de SLA
-    function updateSLAEstimate() {
-        const priority = document.getElementById('prioridadeSelect').value;
-        const slaEstimate = document.getElementById('slaEstimate');
-        const slaText = document.getElementById('slaText');
-
-        if (priority && slaEstimates[priority]) {
-            slaText.textContent = `Tempo estimado de resposta: ${slaEstimates[priority]}`;
-            slaEstimate.style.display = 'block';
-        }
-    }
-
-    // Preview do ticket
-    document.getElementById('previewBtn').addEventListener('click', function() {
-        const preview = document.getElementById('ticketPreview');
-        const content = document.getElementById('previewContent');
-        
-        const titulo = document.getElementById('tituloInput').value;
-        const descricao = document.getElementById('editorContent').innerHTML;
-        const prioridade = document.getElementById('prioridadeSelect').value;
-        
-        content.innerHTML = `
-            <h6><strong>Título:</strong> ${titulo || '[Não preenchido]'}</h6>
-            <p><strong>Prioridade:</strong> <span class="priority-indicator priority-${prioridade}">${prioridade}</span></p>
-            <div><strong>Descrição:</strong></div>
-            <div class="border p-3 mt-2">${descricao || '[Não preenchida]'}</div>
-            ${selectedFiles.length > 0 ? `<p class="mt-3"><strong>Anexos:</strong> ${selectedFiles.length} arquivo(s)</p>` : ''}
-        `;
-        
-        preview.style.display = preview.style.display === 'none' ? 'block' : 'none';
-    });
-
-    // Carregar histórico do cliente
-    function loadClientHistory(clienteId) {
-        // Simulação - em produção faria requisição AJAX
-        const clientHistory = document.getElementById('clientHistory');
-        const historyContent = document.getElementById('historyContent');
-        
-        historyContent.innerHTML = `
-            <div class="d-flex justify-content-center py-3">
-                <div class="spinner-border spinner-border-sm" role="status">
-                    <span class="visually-hidden">Carregando...</span>
-                </div>
-                <span class="ms-2">Carregando histórico...</span>
-            </div>
-        `;
-        clientHistory.style.display = 'block';
-        
-        // Simulação de delay de carregamento
-        setTimeout(() => {
-            historyContent.innerHTML = `
-                <div class="row">
-                    <div class="col-12">
-                        <p class="text-muted">Últimos 3 tickets deste cliente:</p>
-                        <div class="list-group">
-                            <div class="list-group-item">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h6 class="mb-1">#12345 - Problema com login</h6>
-                                    <small>Há 3 dias</small>
-                                </div>
-                                <p class="mb-1">Status: <span class="badge bg-success">Resolvido</span></p>
-                            </div>
-                            <div class="list-group-item">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h6 class="mb-1">#12298 - Solicitação de acesso</h6>
-                                    <small class="text-muted">Há 1 semana</small>
-                                </div>
-                                <p class="mb-1">Status: <span class="badge bg-info">Fechado</span></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }, 1500);
-    }
-
-    // Auto-save (rascunho)
-    let autoSaveTimeout;
-    function autoSave() {
-        clearTimeout(autoSaveTimeout);
-        autoSaveTimeout = setTimeout(() => {
-            const formData = new FormData(document.getElementById('ticketForm'));
-            
-            // Simulação de salvamento
-            const indicator = document.getElementById('autoSaveIndicator');
-            indicator.style.display = 'block';
-            setTimeout(() => {
-                indicator.style.display = 'none';
-            }, 2000);
-            
-            console.log('Rascunho salvo automaticamente');
-        }, 3000);
-    }
-
-    // Detectar mudanças nos campos para auto-save
-    document.querySelectorAll('#ticketForm input, #ticketForm select, #ticketForm textarea').forEach(field => {
-        field.addEventListener('input', autoSave);
-    });
-
-    document.getElementById('editorContent').addEventListener('input', autoSave);
-
-    // Inicializar indicador de prioridade
-    updatePriorityIndicator('media');
-    updateSLAEstimate();
-
-    // Validações em tempo real
-    const form = document.getElementById('ticketForm');
-    form.addEventListener('submit', function(e) {
-        // Sincronizar editor com campo oculto
-        descricaoHidden.value = editorContent.innerHTML;
-        
-        // Validação básica
-        if (!editorContent.innerHTML.trim() || editorContent.innerHTML.trim() === '<br>') {
+    // Botões de formatação
+    document.querySelectorAll('.format-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
             e.preventDefault();
-            alert('Por favor, preencha a descrição do ticket.');
+            const command = this.dataset.command;
+            document.execCommand(command);
             editorContent.focus();
-            return false;
-        }
+            editorContent.dispatchEvent(new Event('input'));
+        });
     });
-    
-    // Sistema de gerenciamento de labels simplificado e organizado
-    function initInputLabels() {
+
+    // Sistema de Labels Flutuantes Aprimorado
+    function initFloatingLabels() {
         const inputGroups = document.querySelectorAll('.input-group-outline');
         
         inputGroups.forEach(group => {
-            const input = group.querySelector('.form-control');
+            const input = group.querySelector('input, select, textarea');
+            const label = group.querySelector('.form-label');
             
-            if (input) {
+            if (!input || !label) return;
+            
+            // Função para atualizar estado
+            function updateState() {
+                const hasValue = input.value && input.value.trim() !== '';
+                const isFocused = document.activeElement === input;
                 
-                // Função para verificar se há valor no campo
-                function hasValue() {
-                    if (input.tagName.toLowerCase() === 'select') {
-                        return input.value !== '' && input.selectedIndex > 0;
-                    }
-                    return input.value && input.value.trim() !== '';
+                // Remover todas as classes de estado
+                group.classList.remove('is-focused', 'is-filled');
+                
+                if (isFocused) {
+                    group.classList.add('is-focused');
                 }
                 
-                // Função para atualizar classes
-                function updateClasses() {
-                    const isFocused = document.activeElement === input;
-                    const hasVal = hasValue();
-                    const isDisabled = input.disabled;
-                    
-                    // Remover todas as classes
-                    group.classList.remove('is-focused', 'is-filled', 'has-value');
-                    
-                    // Adicionar classes conforme estado
-                    if (isFocused) {
-                        group.classList.add('is-focused', 'is-filled');
-                    } else if (hasVal || isDisabled) {
-                        group.classList.add('has-value', 'is-filled');
-                    }
-                }
-                
-                // Event listeners
-                input.addEventListener('focus', () => {
-                    group.classList.add('is-focused', 'is-filled');
-                });
-                
-                input.addEventListener('blur', () => {
-                    setTimeout(updateClasses, 50);
-                });
-                
-                input.addEventListener('input', updateClasses);
-                input.addEventListener('change', updateClasses);
-                
-                // Estado inicial
-                updateClasses();
-                
-                // Verificação especial para campos preenchidos
-                if (hasValue() || input.disabled) {
-                    group.classList.add('has-value', 'is-filled');
+                if (hasValue) {
+                    group.classList.add('is-filled');
                 }
             }
-        });
-        
-        // Verificação adicional para campos preenchidos via JavaScript
-        setTimeout(() => {
-            inputGroups.forEach(group => {
-                const input = group.querySelector('.form-control');
-                if (input && input.value && input.value.trim() !== '') {
-                    group.classList.add('has-value', 'is-filled');
-                }
+            
+            // Event listeners
+            input.addEventListener('focus', function() {
+                group.classList.add('is-focused');
+                // Animação suave para o label
+                label.style.transition = 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
             });
-        }, 200);
+            
+            input.addEventListener('blur', function() {
+                group.classList.remove('is-focused');
+                updateState();
+            });
+            
+            input.addEventListener('input', updateState);
+            input.addEventListener('change', updateState);
+            
+            // Estado inicial
+            updateState();
+        });
     }
     
-    // Inicializar labels quando a página carrega
-    initInputLabels();
+    // Sistema de Selects Aprimorado
+    function initSelectSystem() {
+        const selects = document.querySelectorAll('select.form-control');
+        
+        selects.forEach(select => {
+            // Estado inicial
+            updateSelectState(select);
+            
+            // Event listener para mudanças
+            select.addEventListener('change', function() {
+                updateSelectState(this);
+                
+                // Feedback visual para seleção
+                const container = this.closest('.input-group-outline');
+                if (container) {
+                    container.style.transform = 'scale(1.02)';
+                    setTimeout(() => {
+                        container.style.transform = 'scale(1)';
+                    }, 150);
+                }
+            });
+            
+            // Melhorar visual no focus
+            select.addEventListener('focus', function() {
+                const container = this.closest('.input-group-outline');
+                if (container) {
+                    container.style.transition = 'all 0.3s ease';
+                }
+            });
+        });
+        
+        function updateSelectState(select) {
+            const container = select.closest('.input-group-outline');
+            const selectedOption = select.options[select.selectedIndex];
+            
+            // Atualizar classe filled
+            if (select.value && select.value !== '') {
+                container.classList.add('is-filled', 'has-selection');
+            } else {
+                container.classList.remove('is-filled', 'has-selection');
+            }
+            
+            // Log para debug
+            if (select.value) {
+                console.log(`📋 ${select.name} selecionado: ${selectedOption.text}`);
+            }
+        }
+    }
     
-    // Re-inicializar se novos elementos forem adicionados dinamicamente
-    const observer = new MutationObserver(() => {
-        initInputLabels();
+    // Sistema de Prioridade Dinâmica
+    function initPrioritySystem() {
+        const prioridadeSelect = document.getElementById('prioridadeSelect');
+        const prioridadeContainer = document.getElementById('prioridadeContainer');
+        const priorityIcon = document.getElementById('priorityIcon');
+        
+        if (!prioridadeSelect || !prioridadeContainer || !priorityIcon) return;
+        
+        function updatePriorityVisuals(value) {
+            // Remover classes anteriores
+            prioridadeSelect.classList.remove('priority-baixa', 'priority-media', 'priority-alta');
+            prioridadeContainer.classList.remove('priority-baixa', 'priority-media', 'priority-alta');
+            priorityIcon.classList.remove('show', 'baixa', 'media', 'alta');
+            
+            // Configurações para cada prioridade
+            const configs = {
+                'baixa': {
+                    icon: 'trending_down',
+                    class: 'baixa',
+                    tooltip: 'Prioridade Baixa - Pode aguardar'
+                },
+                'media': {
+                    icon: 'trending_flat',
+                    class: 'media', 
+                    tooltip: 'Prioridade Média - Atenção normal'
+                },
+                'alta': {
+                    icon: 'trending_up',
+                    class: 'alta',
+                    tooltip: 'Prioridade Alta - Urgente!'
+                }
+            };
+            
+            if (configs[value]) {
+                const config = configs[value];
+                
+                // Aplicar classes
+                prioridadeSelect.classList.add(`priority-${config.class}`);
+                prioridadeContainer.classList.add(`priority-${config.class}`);
+                
+                // Configurar ícone
+                priorityIcon.textContent = config.icon;
+                priorityIcon.classList.add('show', config.class);
+                priorityIcon.title = config.tooltip;
+                
+                // Feedback visual mais sutil para prioridade alta
+                if (value === 'alta') {
+                    // Apenas um glow suave ao invés de pulse forte
+                    prioridadeContainer.style.animation = 'none';
+                    setTimeout(() => {
+                        prioridadeContainer.style.boxShadow = '0 0 15px rgba(220, 53, 69, 0.3)';
+                    }, 10);
+                } else {
+                    prioridadeContainer.style.animation = 'none';
+                    prioridadeContainer.style.boxShadow = '';
+                }
+                
+                console.log(`📊 Prioridade alterada para: ${value.toUpperCase()}`);
+            } else {
+                priorityIcon.classList.remove('show');
+                prioridadeContainer.style.animation = 'none';
+            }
+        }
+        
+        // Event listener para mudanças
+        prioridadeSelect.addEventListener('change', function() {
+            updatePriorityVisuals(this.value);
+        });
+        
+        // Estado inicial - apenas se já houver um valor selecionado
+        if (prioridadeSelect.value && prioridadeSelect.value !== '') {
+            updatePriorityVisuals(prioridadeSelect.value);
+        }
+    }
+    
+    // Inicializar labels flutuantes
+    initFloatingLabels();
+    
+    // Inicializar sistema de selects aprimorado
+    initSelectSystem();
+    
+    // Inicializar sistema de prioridade dinâmica
+    initPrioritySystem();
+    
+    // Upload de arquivos
+    const fileInput = document.getElementById('anexosInput');
+    const filePreview = document.getElementById('filePreview');
+    const fileList = document.getElementById('fileList');
+    const uploadArea = document.querySelector('.file-upload-area');
+    
+    if (fileInput && uploadArea) {
+        // Drag & Drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        uploadArea.addEventListener('drop', handleDrop, false);
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        function highlight() {
+            uploadArea.classList.add('drag-over');
+        }
+        
+        function unhighlight() {
+            uploadArea.classList.remove('drag-over');
+        }
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            fileInput.files = files;
+            updateFilePreview(files);
+        }
+        
+        fileInput.addEventListener('change', function() {
+            updateFilePreview(this.files);
+        });
+        
+        function updateFilePreview(files) {
+            if (files.length === 0) {
+                filePreview.style.display = 'none';
+                return;
+            }
+            
+            filePreview.style.display = 'block';
+            fileList.innerHTML = '';
+            
+            Array.from(files).forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item d-flex align-items-center justify-content-between p-2 mb-2 border rounded';
+                fileItem.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <i class="material-symbols-rounded me-2 text-primary">description</i>
+                        <div>
+                            <div class="fw-medium">${file.name}</div>
+                            <small class="text-muted">${formatFileSize(file.size)}</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile(${index})">
+                        <i class="material-symbols-rounded">close</i>
+                    </button>
+                `;
+                fileList.appendChild(fileItem);
+            });
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    }
+    
+    // Atalhos de teclado
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+S para salvar
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            // Implementar salvamento como rascunho
+            console.log('Salvar rascunho');
+        }
+        
+        // Ctrl+Enter para enviar
+        if (e.ctrlKey && e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('submitBtn').click();
+        }
+        
+        // ESC para cancelar
+        if (e.key === 'Escape') {
+            if (confirm('Deseja cancelar a criação do ticket? Todas as informações serão perdidas.')) {
+                window.location.href = "{% url 'dashboard:ticket_list' %}";
+            }
+        }
     });
     
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
+    console.log('=== SISTEMA COMPLETAMENTE INICIALIZADO ===');
 });
 </script>
 {% endblock %}

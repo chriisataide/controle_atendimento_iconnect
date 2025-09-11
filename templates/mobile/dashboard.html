@@ -1,0 +1,274 @@
+{% extends 'mobile/base.html' %}
+
+{% block title %}Dashboard - iConnect Mobile{% endblock %}
+
+{% block header_title %}Dashboard{% endblock %}
+
+{% block header_subtitle %}
+<p class="subtitle mb-0">
+    {% if is_agent %}
+        Agente - {{ user.get_full_name|default:user.username }}
+    {% else %}
+        Cliente - {{ user.get_full_name|default:user.username }}
+    {% endif %}
+</p>
+{% endblock %}
+
+{% block content %}
+
+{% if is_agent %}
+    <!-- Agent Dashboard -->
+    
+    <!-- Quick Stats -->
+    <div class="row g-2 mb-3">
+        <div class="col-6">
+            <div class="stat-card">
+                <div class="stat-number">{{ pending_count }}</div>
+                <div class="stat-label">Pendentes</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="stat-card">
+                <div class="stat-number">{{ today_resolved }}</div>
+                <div class="stat-label">Resolvidos Hoje</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="mobile-card">
+        <h6 class="fw-semibold mb-3">
+            <span class="material-symbols-rounded me-2" style="vertical-align: middle;">flash_on</span>
+            Ações Rápidas
+        </h6>
+        
+        <div class="row g-2">
+            <div class="col-6">
+                <button class="btn btn-outline-primary btn-sm w-100" onclick="takeNextTicket()">
+                    <span class="material-symbols-rounded me-1" style="font-size: 16px;">assignment_add</span>
+                    <small>Pegar Próximo</small>
+                </button>
+            </div>
+            <div class="col-6">
+                <button class="btn btn-outline-success btn-sm w-100" onclick="location.href='/mobile/tickets/?status=EM_ANDAMENTO'">
+                    <span class="material-symbols-rounded me-1" style="font-size: 16px;">assignment_turned_in</span>
+                    <small>Em Andamento</small>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- My Recent Tickets -->
+    <div class="mobile-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-semibold mb-0">
+                <span class="material-symbols-rounded me-2" style="vertical-align: middle;">assignment</span>
+                Meus Tickets Recentes
+            </h6>
+            <a href="/mobile/tickets/" class="btn btn-outline-primary btn-sm">
+                <span class="material-symbols-rounded" style="font-size: 16px;">arrow_forward</span>
+            </a>
+        </div>
+        
+        {% for ticket in my_tickets %}
+        <a href="/mobile/tickets/{{ ticket.id }}/" class="ticket-card">
+            <div class="ticket-header">
+                <div class="ticket-number">#{{ ticket.ticket_number }}</div>
+                <div class="d-flex gap-1">
+                    <span class="status-badge status-{{ ticket.status|lower }}">
+                        {{ ticket.get_status_display }}
+                    </span>
+                    <span class="priority-badge priority-{{ ticket.priority|lower }}">
+                        {{ ticket.get_priority_display }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="ticket-title text-truncate-2">{{ ticket.title }}</div>
+            
+            <div class="ticket-meta">
+                <span>
+                    <span class="material-symbols-rounded me-1" style="font-size: 14px; vertical-align: middle;">person</span>
+                    {{ ticket.customer.name|truncatechars:15 }}
+                </span>
+                <span>{{ ticket.created_at|timesince }} atrás</span>
+            </div>
+        </a>
+        {% empty %}
+        <div class="empty-state">
+            <span class="material-symbols-rounded">assignment</span>
+            <p class="mb-0">Nenhum ticket atribuído ainda</p>
+        </div>
+        {% endfor %}
+    </div>
+
+{% else %}
+    <!-- Customer Dashboard -->
+    
+    <!-- Quick Stats -->
+    <div class="row g-2 mb-3">
+        <div class="col-12">
+            <div class="stat-card">
+                <div class="stat-number">{{ ticket_count }}</div>
+                <div class="stat-label">Meus Tickets</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="mobile-card">
+        <h6 class="fw-semibold mb-3">
+            <span class="material-symbols-rounded me-2" style="vertical-align: middle;">flash_on</span>
+            Ações Rápidas
+        </h6>
+        
+        <div class="row g-2">
+            <div class="col-6">
+                <button class="btn btn-primary btn-sm w-100" onclick="location.href='/mobile/create-ticket/'">
+                    <span class="material-symbols-rounded me-1" style="font-size: 16px;">add_circle</span>
+                    <small>Novo Ticket</small>
+                </button>
+            </div>
+            <div class="col-6">
+                <button class="btn btn-outline-info btn-sm w-100" onclick="location.href='/mobile/tickets/'">
+                    <span class="material-symbols-rounded me-1" style="font-size: 16px;">list</span>
+                    <small>Ver Todos</small>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- My Tickets -->
+    <div class="mobile-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-semibold mb-0">
+                <span class="material-symbols-rounded me-2" style="vertical-align: middle;">assignment</span>
+                Meus Tickets
+            </h6>
+            <a href="/mobile/tickets/" class="btn btn-outline-primary btn-sm">
+                <span class="material-symbols-rounded" style="font-size: 16px;">arrow_forward</span>
+            </a>
+        </div>
+        
+        {% for ticket in my_tickets %}
+        <a href="/mobile/tickets/{{ ticket.id }}/" class="ticket-card">
+            <div class="ticket-header">
+                <div class="ticket-number">#{{ ticket.ticket_number }}</div>
+                <div class="d-flex gap-1">
+                    <span class="status-badge status-{{ ticket.status|lower }}">
+                        {{ ticket.get_status_display }}
+                    </span>
+                    <span class="priority-badge priority-{{ ticket.priority|lower }}">
+                        {{ ticket.get_priority_display }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="ticket-title text-truncate-2">{{ ticket.title }}</div>
+            
+            <div class="ticket-meta">
+                <span>
+                    {% if ticket.assigned_to %}
+                        <span class="material-symbols-rounded me-1" style="font-size: 14px; vertical-align: middle;">support_agent</span>
+                        {{ ticket.assigned_to.user.get_full_name|truncatechars:15 }}
+                    {% else %}
+                        <span class="material-symbols-rounded me-1" style="font-size: 14px; vertical-align: middle;">schedule</span>
+                        Aguardando atribuição
+                    {% endif %}
+                </span>
+                <span>{{ ticket.created_at|timesince }} atrás</span>
+            </div>
+        </a>
+        {% empty %}
+        <div class="empty-state">
+            <span class="material-symbols-rounded">assignment_add</span>
+            <p class="mb-2">Você ainda não tem tickets</p>
+            <button class="btn btn-primary btn-sm" onclick="location.href='/mobile/create-ticket/'">
+                Criar Primeiro Ticket
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+{% endif %}
+
+<!-- Tips Card -->
+<div class="mobile-card">
+    <h6 class="fw-semibold mb-2">
+        <span class="material-symbols-rounded me-2" style="vertical-align: middle; color: #f59e0b;">tips_and_updates</span>
+        Dica do Dia
+    </h6>
+    
+    <div class="d-flex align-items-start gap-2">
+        <span class="material-symbols-rounded text-warning" style="font-size: 20px; margin-top: 2px;">lightbulb</span>
+        <div>
+            <small class="text-muted">
+                {% if is_agent %}
+                    Use os filtros na lista de tickets para encontrar rapidamente os tickets que você precisa resolver.
+                {% else %}
+                    Você pode acompanhar o progresso dos seus tickets em tempo real. Ativamos as notificações push para mantê-lo informado!
+                {% endif %}
+            </small>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Quick actions for agents
+function takeNextTicket() {
+    if (confirm('Quer pegar o próximo ticket não atribuído?')) {
+        showToast('Buscando próximo ticket...', 'info');
+        
+        fetch('/api/tickets/take-next/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Ticket #' + data.ticket_number + ' atribuído!', 'success');
+                setTimeout(() => {
+                    location.href = '/mobile/tickets/' + data.ticket_id + '/';
+                }, 1000);
+            } else {
+                showToast(data.message || 'Nenhum ticket disponível', 'warning');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Erro ao buscar ticket', 'error');
+        });
+    }
+}
+
+// Auto-refresh stats every 30 seconds
+setInterval(() => {
+    // Subtle refresh of stats
+    fetch('/api/dashboard/stats/')
+        .then(response => response.json())
+        .then(data => {
+            // Update stats silently
+            const pendingEl = document.querySelector('.stat-number');
+            if (pendingEl && data.pending_count !== undefined) {
+                if (pendingEl.textContent !== data.pending_count.toString()) {
+                    pendingEl.textContent = data.pending_count;
+                    pendingEl.classList.add('text-primary');
+                    setTimeout(() => {
+                        pendingEl.classList.remove('text-primary');
+                    }, 1000);
+                }
+            }
+        })
+        .catch(error => {
+            // Silent fail
+            console.log('Stats refresh failed:', error);
+        });
+}, 30000);
+</script>
+{% endblock %}

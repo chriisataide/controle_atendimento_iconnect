@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Templates - Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .template-option { 
+            display: inline-block; 
+            padding: 10px 15px; 
+            margin: 10px; 
+            border: 2px solid #ccc; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            background: #f9f9f9;
+        }
+        .template-option:hover { background: #e0e0e0; }
+        .template-option.active { border-color: #007bff; background: #e7f3ff; }
+        
+        .editor { 
+            width: 100%; 
+            min-height: 200px; 
+            border: 1px solid #ccc; 
+            padding: 10px; 
+            margin-top: 20px; 
+        }
+        
+        .debug { 
+            background: #f0f0f0; 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-left: 4px solid #007bff; 
+        }
+        
+        input, select { 
+            width: 300px; 
+            padding: 8px; 
+            margin: 5px 0; 
+            display: block; 
+        }
+    </style>
+</head>
+<body>
+    <h1>Teste de Templates - Debug Mode</h1>
+    
+    <div class="debug" id="debugInfo">
+        <strong>Debug Info:</strong><br>
+        Aguardando ações...
+    </div>
+    
+    <h3>Templates Disponíveis:</h3>
+    <div id="templateOptions">
+        <div class="template-option" data-template="suporte-tecnico">🔧 Suporte Técnico</div>
+        <div class="template-option" data-template="duvida">❓ Dúvida</div>
+        <div class="template-option" data-template="bug">🐛 Bug Report</div>
+        <div class="template-option" data-template="solicitacao">📋 Solicitação</div>
+    </div>
+    
+    <h3>Campos do Formulário:</h3>
+    <input type="text" id="tituloInput" placeholder="Título do Ticket">
+    <input type="text" id="tagsInput" placeholder="Tags">
+    <select id="prioridadeSelect">
+        <option value="">Selecione prioridade</option>
+        <option value="baixa">Baixa</option>
+        <option value="media">Média</option>
+        <option value="alta">Alta</option>
+        <option value="critica">Crítica</option>
+    </select>
+    
+    <div contenteditable="true" class="editor" id="editorContent" placeholder="Descrição do ticket...">
+        Clique aqui para editar...
+    </div>
+    
+    <textarea id="descricaoHidden" style="display: none;"></textarea>
+
+    <script>
+        // Templates simplificados para teste
+        const ticketTemplates = {
+            'suporte-tecnico': {
+                title: 'Suporte Técnico - Problema Identificado',
+                description: '<h4>🔧 PROBLEMA TÉCNICO</h4><p>Descreva o problema técnico encontrado...</p>',
+                priority: 'media',
+                tags: 'suporte, técnico, sistema'
+            },
+            'duvida': {
+                title: 'Dúvida - Solicitação de Esclarecimento',
+                description: '<h4>❓ DÚVIDA</h4><p>Formule sua pergunta de forma clara...</p>',
+                priority: 'baixa',
+                tags: 'dúvida, consulta'
+            },
+            'bug': {
+                title: 'Bug Report - Erro no Sistema',
+                description: '<h4>🐛 BUG ENCONTRADO</h4><p>Descreva o comportamento incorreto...</p>',
+                priority: 'alta',
+                tags: 'bug, erro'
+            },
+            'solicitacao': {
+                title: 'Solicitação - Nova Demanda',
+                description: '<h4>📋 SOLICITAÇÃO</h4><p>Descreva o que você precisa...</p>',
+                priority: 'media',
+                tags: 'solicitação, demanda'
+            }
+        };
+
+        function updateDebug(message) {
+            const debugDiv = document.getElementById('debugInfo');
+            debugDiv.innerHTML += '<br>' + new Date().toLocaleTimeString() + ': ' + message;
+        }
+
+        function applyTemplate(templateKey) {
+            updateDebug('Aplicando template: ' + templateKey);
+            
+            const template = ticketTemplates[templateKey];
+            if (!template) {
+                updateDebug('❌ Template não encontrado: ' + templateKey);
+                return;
+            }
+            
+            // Aplicar título
+            const tituloInput = document.getElementById('tituloInput');
+            if (tituloInput) {
+                tituloInput.value = template.title;
+                updateDebug('✅ Título aplicado: ' + template.title);
+            } else {
+                updateDebug('❌ Campo título não encontrado');
+            }
+            
+            // Aplicar descrição
+            const editorContent = document.getElementById('editorContent');
+            const descricaoHidden = document.getElementById('descricaoHidden');
+            
+            if (editorContent) {
+                editorContent.innerHTML = template.description;
+                updateDebug('✅ Descrição aplicada no editor');
+            } else {
+                updateDebug('❌ Editor não encontrado');
+            }
+            
+            if (descricaoHidden) {
+                descricaoHidden.value = template.description;
+                updateDebug('✅ Descrição sincronizada no campo oculto');
+            } else {
+                updateDebug('❌ Campo oculto não encontrado');
+            }
+            
+            // Aplicar prioridade
+            const prioridadeSelect = document.getElementById('prioridadeSelect');
+            if (prioridadeSelect) {
+                prioridadeSelect.value = template.priority;
+                updateDebug('✅ Prioridade aplicada: ' + template.priority);
+            } else {
+                updateDebug('❌ Campo prioridade não encontrado');
+            }
+            
+            // Aplicar tags
+            const tagsInput = document.getElementById('tagsInput');
+            if (tagsInput && template.tags) {
+                tagsInput.value = template.tags;
+                updateDebug('✅ Tags aplicadas: ' + template.tags);
+            } else {
+                updateDebug('❌ Campo tags não encontrado ou tags vazias');
+            }
+            
+            updateDebug('🎉 Template aplicado com sucesso!');
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDebug('🚀 DOM carregado, inicializando...');
+            
+            const templateOptions = document.querySelectorAll('.template-option');
+            updateDebug('📋 Templates encontrados: ' + templateOptions.length);
+            
+            templateOptions.forEach((option, index) => {
+                updateDebug(`Template ${index + 1}: ${option.textContent} (${option.dataset.template})`);
+                
+                option.addEventListener('click', function() {
+                    updateDebug('🖱️ Clique detectado em: ' + this.textContent);
+                    
+                    // Remove active de outros
+                    templateOptions.forEach(opt => opt.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Aplicar template
+                    applyTemplate(this.dataset.template);
+                });
+            });
+            
+            updateDebug('✅ Inicialização completa!');
+        });
+    </script>
+</body>
+</html>

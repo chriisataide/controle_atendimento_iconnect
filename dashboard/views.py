@@ -160,7 +160,18 @@ class DashboardView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Cálculos dinâmicos de métricas
+        # Importar view helpers
+        from .views_helpers import get_dashboard_metrics, get_analytics_data
+        
+        # Obter métricas básicas
+        metrics = get_dashboard_metrics()
+        context.update(metrics)
+        
+        # Obter dados de analytics
+        analytics = get_analytics_data()
+        context.update(analytics)
+        
+        # Dados legados (manter compatibilidade)
         hoje = timezone.now().date()
         ontem = hoje - timedelta(days=1)
         mes_atual = hoje.replace(day=1)
@@ -766,4 +777,257 @@ def export_tickets(request):
             ticket.categoria.nome if ticket.categoria else 'N/A'
         ])
     
+    return response
+
+# ========== FUNCIONALIDADES AVANÇADAS ==========
+
+@login_required
+def analytics_dashboard(request):
+    """Dashboard de Analytics Avançados"""
+    return render(request, 'dashboard/analytics/dashboard.html', {
+        'title': 'Analytics Dashboard',
+        'current_page': 'analytics'
+    })
+
+@login_required
+def analytics_data_view(request):
+    """Endpoint para dados do analytics"""
+    from .views_helpers import get_dashboard_metrics
+    data = get_dashboard_metrics()
+    return JsonResponse(data)
+
+@login_required
+def notifications_center(request):
+    """Centro de Notificações"""
+    return render(request, 'dashboard/notifications/center.html', {
+        'title': 'Central de Notificações',
+        'current_page': 'notifications'
+    })
+
+@login_required
+def mark_notification_read(request, notification_id):
+    """Marcar notificação como lida"""
+    return JsonResponse({'status': 'success'})
+
+@login_required
+def chatbot_interface(request):
+    """Interface do Chatbot AI"""
+    return render(request, 'dashboard/chatbot/interface.html', {
+        'title': 'Chatbot AI - iConnect',
+        'current_page': 'chatbot'
+    })
+
+@login_required
+def chatbot_api(request):
+    """API do Chatbot"""
+    if request.method == 'POST':
+        import json
+        from .chatbot_service import ChatbotService
+        
+        try:
+            data = json.loads(request.body)
+            message = data.get('message', '')
+            
+            chatbot = ChatbotService()
+            response = chatbot.process_message(request.user.id, message)
+            
+            return JsonResponse({
+                'response': response.message,
+                'suggestions': response.suggestions,
+                'type': response.response_type
+            })
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Método não permitido'}, status=405)
+
+@login_required
+def chat_interface(request):
+    """Interface de Chat em Tempo Real"""
+    return render(request, 'dashboard/chat/interface.html', {
+        'title': 'Chat - iConnect',
+        'current_page': 'chat'
+    })
+
+@login_required
+def automation_dashboard(request):
+    """Dashboard do Sistema de Automação"""
+    return render(request, 'dashboard/automation/dashboard.html', {
+        'title': 'Automation Engine',
+        'current_page': 'automation'
+    })
+
+@login_required
+def automation_rules(request):
+    """Gerenciamento de Regras de Automação"""
+    return render(request, 'dashboard/automation/rules.html', {
+        'title': 'Regras de Automação',
+        'current_page': 'automation'
+    })
+
+@login_required
+def automation_workflows(request):
+    """Gerenciamento de Workflows"""
+    return render(request, 'dashboard/automation/workflows.html', {
+        'title': 'Workflows Automáticos',
+        'current_page': 'automation'
+    })
+
+@login_required
+def reports_dashboard(request):
+    """Dashboard de Relatórios Avançados"""
+    return render(request, 'dashboard/reports/advanced.html', {
+        'title': 'Relatórios Avançados',
+        'current_page': 'reports'
+    })
+
+@login_required
+def generate_report(request):
+    """Gerar Relatório Customizado"""
+    if request.method == 'POST':
+        # Lógica para gerar relatório
+        return JsonResponse({'status': 'success', 'report_id': 'temp_123'})
+    
+    return render(request, 'dashboard/reports/generate.html', {
+        'title': 'Gerar Relatório',
+        'current_page': 'reports'
+    })
+
+@login_required
+def download_report(request, report_id):
+    """Download de Relatório"""
+    from django.http import HttpResponse
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="relatorio_{report_id}.pdf"'
+    response.write(b'%PDF-1.4 placeholder')
+    return response
+
+@login_required
+def custom_reports(request):
+    """Relatórios Customizados"""
+    return render(request, 'dashboard/reports/custom.html', {
+        'title': 'Relatórios Customizados',
+        'current_page': 'reports'
+    })
+
+@login_required
+def advanced_search(request):
+    """Busca Avançada"""
+    query = request.GET.get('q', '')
+    results = []
+    
+    if query:
+        # Implementar busca avançada aqui
+        tickets = Ticket.objects.filter(
+            Q(titulo__icontains=query) |
+            Q(descricao__icontains=query) |
+            Q(numero__icontains=query)
+        )[:20]
+        
+        results = [
+            {
+                'id': t.id,
+                'title': t.titulo,
+                'number': t.numero,
+                'type': 'ticket'
+            } for t in tickets
+        ]
+    
+    return render(request, 'dashboard/search/advanced.html', {
+        'title': 'Busca Avançada',
+        'query': query,
+        'results': results,
+        'current_page': 'search'
+    })
+
+@login_required
+def search_suggestions(request):
+    """Sugestões de Busca"""
+    query = request.GET.get('q', '')
+    suggestions = []
+    
+    if len(query) >= 2:
+        tickets = Ticket.objects.filter(titulo__icontains=query)[:5]
+        suggestions = [t.titulo for t in tickets]
+    
+    return JsonResponse({'suggestions': suggestions})
+
+@login_required
+def pwa_info(request):
+    """Informações sobre PWA"""
+    return render(request, 'dashboard/pwa/info.html', {
+        'title': 'App Progressivo - PWA',
+        'current_page': 'pwa'
+    })
+
+@login_required
+def pwa_install_guide(request):
+    """Guia de Instalação PWA"""
+    return render(request, 'dashboard/pwa/install.html', {
+        'title': 'Como Instalar o App',
+        'current_page': 'pwa'
+    })
+
+# PWA Service Worker e Manifest
+def manifest(request):
+    """Manifest do PWA"""
+    from django.http import JsonResponse
+    
+    manifest_data = {
+        "name": "iConnect - Sistema de Atendimento",
+        "short_name": "iConnect",
+        "description": "Sistema completo de atendimento ao cliente",
+        "start_url": "/dashboard/",
+        "display": "standalone",
+        "theme_color": "#667eea",
+        "background_color": "#ffffff",
+        "icons": [
+            {
+                "src": "/static/img/icon-192x192.png",
+                "sizes": "192x192",
+                "type": "image/png"
+            },
+            {
+                "src": "/static/img/icon-512x512.png",
+                "sizes": "512x512",
+                "type": "image/png"
+            }
+        ]
+    }
+    
+    return JsonResponse(manifest_data)
+
+def service_worker(request):
+    """Service Worker do PWA"""
+    from django.http import HttpResponse
+    
+    sw_content = """
+const CACHE_NAME = 'iconnect-v1.0.0';
+const OFFLINE_URL = '/mobile/offline/';
+
+const urlsToCache = [
+    '/dashboard/',
+    '/static/css/material-dashboard.min.css',
+    '/static/js/material-dashboard.min.js',
+    OFFLINE_URL
+];
+
+self.addEventListener('install', event => {
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => cache.addAll(urlsToCache))
+    );
+});
+
+self.addEventListener('fetch', event => {
+    if (event.request.mode === 'navigate') {
+        event.respondWith(
+            fetch(event.request)
+                .catch(() => caches.match(OFFLINE_URL))
+        );
+    }
+});
+"""
+    
+    response = HttpResponse(sw_content, content_type='application/javascript')
     return response

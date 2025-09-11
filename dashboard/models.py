@@ -426,3 +426,55 @@ class SystemMetrics(models.Model):
     
     def __str__(self):
         return f"Métricas {self.date}"
+
+
+class Notification(models.Model):
+    """Notificações do sistema em tempo real"""
+    NOTIFICATION_TYPES = [
+        ('new_ticket', 'Novo Ticket'),
+        ('ticket_assigned', 'Ticket Atribuído'),
+        ('ticket_status_change', 'Mudança de Status'),
+        ('sla_warning', 'Alerta de SLA'),
+        ('new_interaction', 'Nova Interação'),
+        ('system_alert', 'Alerta do Sistema'),
+    ]
+    
+    COLOR_CHOICES = [
+        ('primary', 'Primária'),
+        ('secondary', 'Secundária'),
+        ('success', 'Sucesso'),
+        ('danger', 'Perigo'),
+        ('warning', 'Aviso'),
+        ('info', 'Informação'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    type = models.CharField(max_length=30, choices=NOTIFICATION_TYPES)
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    icon = models.CharField(max_length=50, default='notifications')
+    color = models.CharField(max_length=20, choices=COLOR_CHOICES, default='primary')
+    read = models.BooleanField(default=False)
+    read_at = models.DateTimeField(null=True, blank=True)
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, null=True, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)  # dados extras
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Notificação"
+        verbose_name_plural = "Notificações"
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['read', '-created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.title} - {self.user.username}"
+    
+    def mark_as_read(self):
+        """Marca a notificação como lida"""
+        if not self.read:
+            self.read = True
+            self.read_at = timezone.now()
+            self.save(update_fields=['read', 'read_at'])

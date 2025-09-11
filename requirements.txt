@@ -3,6 +3,10 @@ Django==5.2.6
 django-environ==0.11.2
 whitenoise==6.8.2
 
+# WebSocket & Real-time
+channels==4.0.0
+channels-redis==4.2.0
+
 # Security & Production
 python-decouple==3.8
 dj-database-url==2.1.0
@@ -32,3 +36,7 @@ textblob==0.17.1
 
 # Development Tools (comentar em produção)
 django-extensions==3.2.3
+
+# Advanced Features
+pandas==2.1.4
+numpy==1.24.4

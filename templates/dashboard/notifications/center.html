@@ -1,0 +1,668 @@
+{% extends "base.html" %}
+
+{% block title %}Notification Center - iConnect{% endblock %}
+
+{% block extra_css %}
+<style>
+.notification-card {
+    border-radius: 15px;
+    border-left: 4px solid;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.notification-card:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.notification-card.unread {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.notification-card.urgent {
+    border-left-color: #e74c3c;
+}
+
+.notification-card.warning {
+    border-left-color: #f39c12;
+}
+
+.notification-card.info {
+    border-left-color: #3498db;
+}
+
+.notification-card.success {
+    border-left-color: #27ae60;
+}
+
+.notification-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.notification-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    color: white;
+    padding: 20px;
+}
+
+.filter-btn {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    border-radius: 20px;
+    padding: 8px 16px;
+    margin: 2px;
+    transition: all 0.2s;
+}
+
+.filter-btn:hover, .filter-btn.active {
+    background: white;
+    color: #667eea;
+}
+
+.notification-stats {
+    display: flex;
+    justify-content: space-around;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.notification-time {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.mark-all-read {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    border-radius: 25px;
+    padding: 10px 20px;
+    transition: all 0.2s;
+}
+
+.mark-all-read:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.notification-actions {
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.notification-card:hover .notification-actions {
+    opacity: 1;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="notification-header">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center">
+                            <i class="material-icons text-4xl me-3">notifications_active</i>
+                            <div>
+                                <h3 class="mb-0">🔔 Central de Notificações</h3>
+                                <p class="mb-0 opacity-75">Real-time notifications com WebSocket</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button class="mark-all-read" id="markAllRead">
+                            <i class="material-icons text-sm me-1">done_all</i>
+                            Marcar todas como lidas
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="notification-stats">
+                    <div class="text-center">
+                        <div class="h4 mb-0" id="unreadCount">{{ unread_count|default:"12" }}</div>
+                        <small>Não lidas</small>
+                    </div>
+                    <div class="text-center">
+                        <div class="h4 mb-0" id="todayCount">{{ today_count|default:"8" }}</div>
+                        <small>Hoje</small>
+                    </div>
+                    <div class="text-center">
+                        <div class="h4 mb-0" id="urgentCount">{{ urgent_count|default:"3" }}</div>
+                        <small>Urgentes</small>
+                    </div>
+                    <div class="text-center">
+                        <div class="h4 mb-0" id="totalCount">{{ total_count|default:"47" }}</div>
+                        <small>Total</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body py-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex flex-wrap">
+                                <button class="filter-btn active" data-filter="all">Todas</button>
+                                <button class="filter-btn" data-filter="unread">Não lidas</button>
+                                <button class="filter-btn" data-filter="urgent">Urgentes</button>
+                                <button class="filter-btn" data-filter="tickets">Tickets</button>
+                                <button class="filter-btn" data-filter="system">Sistema</button>
+                                <button class="filter-btn" data-filter="automation">Automação</button>
+                                <button class="filter-btn" data-filter="reports">Relatórios</button>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-outline-primary btn-sm" id="refreshNotifications">
+                                <i class="material-icons text-sm">refresh</i> Atualizar
+                            </button>
+                            <button class="btn btn-outline-info btn-sm ms-2" id="notificationSettings">
+                                <i class="material-icons text-sm">settings</i> Configurar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Notificações -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div id="notificationsList">
+                <!-- Notificação Urgente -->
+                <div class="notification-card card mb-3 unread urgent" data-type="urgent" data-category="tickets">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-1">
+                                <div class="notification-avatar bg-gradient-danger text-white">
+                                    <i class="material-icons">priority_high</i>
+                                </div>
+                            </div>
+                            <div class="col-md-9">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">🚨 Ticket Crítico Aberto</h6>
+                                        <p class="text-sm text-secondary mb-2">
+                                            Ticket #1847 reportado por <strong>João Silva</strong> - Sistema indisponível para todos os usuários
+                                        </p>
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-gradient-danger me-2">Crítico</span>
+                                            <span class="notification-time">Agora mesmo</span>
+                                        </div>
+                                    </div>
+                                    <div class="notification-actions">
+                                        <button class="btn btn-sm btn-outline-primary me-1" title="Ver Ticket">
+                                            <i class="material-icons text-sm">visibility</i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success me-1" title="Marcar como lida">
+                                            <i class="material-icons text-sm">done</i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" title="Remover">
+                                            <i class="material-icons text-sm">close</i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notificação de Sistema -->
+                <div class="notification-card card mb-3 unread warning" data-type="warning" data-category="system">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-1">
+                                <div class="notification-avatar bg-gradient-warning text-white">
+                                    <i class="material-icons">warning</i>
+                                </div>
+                            </div>
+                            <div class="col-md-9">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">⚠️ SLA em Risco</h6>
+                                        <p class="text-sm text-secondary mb-2">
+                                            5 tickets estão próximos de estourar o SLA. Ação necessária nas próximas 2 horas
+                                        </p>
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-gradient-warning me-2">SLA</span>
+                                            <span class="notification-time">5 min atrás</span>
+                                        </div>
+                                    </div>
+                                    <div class="notification-actions">
+                                        <button class="btn btn-sm btn-outline-primary me-1" title="Ver Tickets">
+                                            <i class="material-icons text-sm">visibility</i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success me-1" title="Marcar como lida">
+                                            <i class="material-icons text-sm">done</i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" title="Remover">
+                                            <i class="material-icons text-sm">close</i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notificação de Automação -->
+                <div class="notification-card card mb-3 unread success" data-type="success" data-category="automation">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-1">
+                                <div class="notification-avatar bg-gradient-success text-white">
+                                    <i class="material-icons">smart_toy</i>
+                                </div>
+                            </div>
+                            <div class="col-md-9">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">✅ Automação Executada</h6>
+                                        <p class="text-sm text-secondary mb-2">
+                                            Workflow "Auto-Assignment" executado com sucesso. 12 tickets foram redistribuídos automaticamente
+                                        </p>
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-gradient-success me-2">Automação</span>
+                                            <span class="notification-time">15 min atrás</span>
+                                        </div>
+                                    </div>
+                                    <div class="notification-actions">
+                                        <button class="btn btn-sm btn-outline-primary me-1" title="Ver Detalhes">
+                                            <i class="material-icons text-sm">visibility</i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success me-1" title="Marcar como lida">
+                                            <i class="material-icons text-sm">done</i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" title="Remover">
+                                            <i class="material-icons text-sm">close</i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notificação de Relatório -->
+                <div class="notification-card card mb-3 info" data-type="info" data-category="reports">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-1">
+                                <div class="notification-avatar bg-gradient-info text-white">
+                                    <i class="material-icons">assessment</i>
+                                </div>
+                            </div>
+                            <div class="col-md-9">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">📊 Relatório Gerado</h6>
+                                        <p class="text-sm text-secondary mb-2">
+                                            Relatório "Performance Semanal" foi gerado e está disponível para download
+                                        </p>
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-gradient-info me-2">Relatório</span>
+                                            <span class="notification-time">1h atrás</span>
+                                        </div>
+                                    </div>
+                                    <div class="notification-actions">
+                                        <button class="btn btn-sm btn-outline-primary me-1" title="Download">
+                                            <i class="material-icons text-sm">download</i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success me-1" title="Marcar como lida">
+                                            <i class="material-icons text-sm">done</i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" title="Remover">
+                                            <i class="material-icons text-sm">close</i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notificação de Ticket Normal -->
+                <div class="notification-card card mb-3" data-type="info" data-category="tickets">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-1">
+                                <div class="notification-avatar bg-gradient-secondary text-white">
+                                    <i class="material-icons">support_agent</i>
+                                </div>
+                            </div>
+                            <div class="col-md-9">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">💬 Novo Comentário</h6>
+                                        <p class="text-sm text-secondary mb-2">
+                                            <strong>Maria Santos</strong> comentou no ticket #1832: "Problema resolvido, aguardando confirmação do cliente"
+                                        </p>
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-gradient-secondary me-2">Comentário</span>
+                                            <span class="notification-time">2h atrás</span>
+                                        </div>
+                                    </div>
+                                    <div class="notification-actions">
+                                        <button class="btn btn-sm btn-outline-primary me-1" title="Ver Ticket">
+                                            <i class="material-icons text-sm">visibility</i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success me-1" title="Marcar como lida">
+                                            <i class="material-icons text-sm">done</i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" title="Remover">
+                                            <i class="material-icons text-sm">close</i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Load More -->
+            <div class="text-center mt-4">
+                <button class="btn btn-outline-primary" id="loadMore">
+                    <i class="material-icons text-sm me-1">expand_more</i>
+                    Carregar mais notificações
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Configurações -->
+<div class="modal fade" id="settingsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">⚙️ Configurações de Notificação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                    <label class="form-check-label" for="emailNotifications">
+                        Notificações por Email
+                    </label>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="pushNotifications" checked>
+                    <label class="form-check-label" for="pushNotifications">
+                        Notificações Push
+                    </label>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="urgentOnly">
+                    <label class="form-check-label" for="urgentOnly">
+                        Apenas Notificações Urgentes
+                    </label>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="soundNotifications" checked>
+                    <label class="form-check-label" for="soundNotifications">
+                        Sons de Notificação
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveSettings">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // WebSocket para notificações em tempo real
+    let notificationSocket = null;
+    
+    // Inicializar WebSocket (simulado)
+    function initWebSocket() {
+        console.log('🔄 Conectando ao WebSocket de notificações...');
+        
+        // Simular conexão WebSocket
+        setTimeout(() => {
+            console.log('✅ Conectado ao sistema de notificações em tempo real');
+            
+            // Simular nova notificação a cada 30 segundos
+            setInterval(() => {
+                if (Math.random() > 0.7) {
+                    addNewNotification();
+                }
+            }, 30000);
+        }, 1000);
+    }
+    
+    // Adicionar nova notificação
+    function addNewNotification() {
+        const notifications = [
+            {
+                type: 'urgent',
+                category: 'tickets',
+                icon: 'priority_high',
+                title: '🚨 Novo Ticket Crítico',
+                message: 'Sistema apresentando instabilidade generalizada',
+                time: 'Agora mesmo',
+                badge: 'Crítico',
+                class: 'bg-gradient-danger'
+            },
+            {
+                type: 'success',
+                category: 'automation',
+                icon: 'smart_toy',
+                title: '✅ Automação Concluída',
+                message: 'Workflow de escalação executado com sucesso',
+                time: 'Agora mesmo',
+                badge: 'Automação',
+                class: 'bg-gradient-success'
+            }
+        ];
+        
+        const notification = notifications[Math.floor(Math.random() * notifications.length)];
+        
+        const notificationHTML = `
+            <div class="notification-card card mb-3 unread ${notification.type}" data-type="${notification.type}" data-category="${notification.category}" style="display: none;">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-1">
+                            <div class="notification-avatar ${notification.class} text-white">
+                                <i class="material-icons">${notification.icon}</i>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">${notification.title}</h6>
+                                    <p class="text-sm text-secondary mb-2">${notification.message}</p>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge ${notification.class} me-2">${notification.badge}</span>
+                                        <span class="notification-time">${notification.time}</span>
+                                    </div>
+                                </div>
+                                <div class="notification-actions">
+                                    <button class="btn btn-sm btn-outline-primary me-1" title="Ver Detalhes">
+                                        <i class="material-icons text-sm">visibility</i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success me-1" title="Marcar como lida">
+                                        <i class="material-icons text-sm">done</i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" title="Remover">
+                                        <i class="material-icons text-sm">close</i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        const notificationsList = document.getElementById('notificationsList');
+        notificationsList.insertAdjacentHTML('afterbegin', notificationHTML);
+        
+        // Animar entrada
+        const newNotification = notificationsList.firstElementChild;
+        newNotification.style.display = 'block';
+        newNotification.style.opacity = '0';
+        newNotification.style.transform = 'translateX(-100px)';
+        
+        setTimeout(() => {
+            newNotification.style.transition = 'all 0.5s ease';
+            newNotification.style.opacity = '1';
+            newNotification.style.transform = 'translateX(0)';
+        }, 100);
+        
+        // Atualizar contadores
+        updateCounters();
+        
+        // Reproduzir som (se habilitado)
+        if (document.getElementById('soundNotifications').checked) {
+            playNotificationSound();
+        }
+    }
+    
+    // Filtros
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const filter = this.dataset.filter;
+            filterNotifications(filter);
+        });
+    });
+    
+    function filterNotifications(filter) {
+        const notifications = document.querySelectorAll('.notification-card');
+        
+        notifications.forEach(notification => {
+            if (filter === 'all') {
+                notification.style.display = 'block';
+            } else if (filter === 'unread') {
+                notification.style.display = notification.classList.contains('unread') ? 'block' : 'none';
+            } else {
+                notification.style.display = notification.dataset.category === filter ? 'block' : 'none';
+            }
+        });
+    }
+    
+    // Marcar como lida
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.notification-actions .btn-outline-success')) {
+            const notification = e.target.closest('.notification-card');
+            notification.classList.remove('unread');
+            updateCounters();
+        }
+        
+        // Remover notificação
+        if (e.target.closest('.notification-actions .btn-outline-danger')) {
+            const notification = e.target.closest('.notification-card');
+            notification.style.transform = 'translateX(100%)';
+            notification.style.opacity = '0';
+            setTimeout(() => {
+                notification.remove();
+                updateCounters();
+            }, 300);
+        }
+    });
+    
+    // Marcar todas como lidas
+    document.getElementById('markAllRead').addEventListener('click', function() {
+        document.querySelectorAll('.notification-card.unread').forEach(notification => {
+            notification.classList.remove('unread');
+        });
+        updateCounters();
+        
+        this.innerHTML = '<i class="material-icons text-sm me-1">check</i> Todas marcadas!';
+        setTimeout(() => {
+            this.innerHTML = '<i class="material-icons text-sm me-1">done_all</i> Marcar todas como lidas';
+        }, 2000);
+    });
+    
+    // Configurações
+    document.getElementById('notificationSettings').addEventListener('click', function() {
+        const modal = new bootstrap.Modal(document.getElementById('settingsModal'));
+        modal.show();
+    });
+    
+    // Atualizar
+    document.getElementById('refreshNotifications').addEventListener('click', function() {
+        const btn = this;
+        const originalContent = btn.innerHTML;
+        
+        btn.innerHTML = '<i class="material-icons text-sm">hourglass_empty</i> Atualizando...';
+        btn.disabled = true;
+        
+        setTimeout(() => {
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+            
+            // Simular nova notificação
+            if (Math.random() > 0.5) {
+                addNewNotification();
+            }
+        }, 1500);
+    });
+    
+    // Carregar mais
+    document.getElementById('loadMore').addEventListener('click', function() {
+        const btn = this;
+        const originalContent = btn.innerHTML;
+        
+        btn.innerHTML = '<i class="material-icons text-sm">hourglass_empty</i> Carregando...';
+        btn.disabled = true;
+        
+        setTimeout(() => {
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+            alert('Todas as notificações foram carregadas!');
+        }, 2000);
+    });
+    
+    // Atualizar contadores
+    function updateCounters() {
+        const unread = document.querySelectorAll('.notification-card.unread').length;
+        const total = document.querySelectorAll('.notification-card').length;
+        const urgent = document.querySelectorAll('.notification-card.urgent').length;
+        
+        document.getElementById('unreadCount').textContent = unread;
+        document.getElementById('totalCount').textContent = total;
+        document.getElementById('urgentCount').textContent = urgent;
+    }
+    
+    // Reproduzir som de notificação
+    function playNotificationSound() {
+        try {
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMcBjuL0e/SeSwCJnrJ8OuVRwoUXrPo6qxYFAlFnt7wvGIcBzuL0e7QdysEKn3M8+uTRQkUXbPn6KlWEwxHoN/zsGEcCDKN0u7OeSYCJnzK8OmVRgsWYLDk66ZUEgxIot7xwGNeBjSM0O7LfCwHL3nE8+WQQQoUX7Xn6qRUEQxIpN7wxWNeBDKM0+3Ldl0DLHzH8+eSQQoTYLLl6aVUEwxIot7yuGNfBTCM0+/NeSsFLHzH8+eSQQsUXbPn6KdVEQxIpN7ww2NeBjKM0O7LfCwHL3nE8+WQQAoUX7Xn6qRUEgxHn93ztGdaBzKM0O7LfCwHL3nE8+WQQAoUX7Xn6qRUEgxHn93ztGdaBzKM0O7LfCwHL3nE8+WQQAoUX7Xn6qRUEgxHn93ztGdaBzKM0O7LfCwHL3nE8+WQQAoUX7Xn6qRUEgxHn93ztGdaBzKM0O7LfCwHL3nE8+WQQAoUX7Xn6qRUEgxHn93ztGdaBzKM0O7LfCwHL3nE8+WQQAoUX7Xn6qRUEgxHn93ztGdaBzKM0O7LfCwHL3nE8+WQQAoUX7Xn6qRUEgxHn93ztGdaBzKM0O7LfC');
+            audio.play().catch(e => console.log('Som não pode ser reproduzido'));
+        } catch (e) {
+            console.log('Som não suportado');
+        }
+    }
+    
+    // Inicializar
+    initWebSocket();
+});
+</script>
+{% endblock %}

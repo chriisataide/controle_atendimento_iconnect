@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-flex align-items-center">
+                        <p class="mb-0">{{ title }}</p>
+                        <div class="ms-auto">
+                            <a href="{% url 'dashboard:pwa_info' %}" class="btn btn-sm bg-gradient-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>
+                                Voltar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <p class="text-muted mb-4">
+                                Siga o guia abaixo para instalar nosso sistema como um aplicativo em seu dispositivo:
+                            </p>
+                            
+                            <!-- Desktop Installation -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">💻 Desktop (Windows/Mac/Linux)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6>Google Chrome:</h6>
+                                            <ol class="text-sm">
+                                                <li>Abra o site no Chrome</li>
+                                                <li>Procure o ícone de <strong>"Instalar"</strong> na barra de endereços (à direita)</li>
+                                                <li>Clique no ícone e selecione <strong>"Instalar"</strong></li>
+                                                <li>Confirme a instalação</li>
+                                            </ol>
+                                            
+                                            <h6 class="mt-3">Microsoft Edge:</h6>
+                                            <ol class="text-sm">
+                                                <li>Clique nos três pontos (⋯) no canto superior direito</li>
+                                                <li>Selecione <strong>"Aplicativos"</strong> → <strong>"Instalar este site como um aplicativo"</strong></li>
+                                                <li>Digite um nome para o app e clique em <strong>"Instalar"</strong></li>
+                                            </ol>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card bg-light">
+                                                <div class="card-body text-center">
+                                                    <i class="fas fa-download text-primary" style="font-size: 3rem;"></i>
+                                                    <p class="mt-2 mb-0 text-sm">
+                                                        O app aparecerá na sua área de trabalho e no menu iniciar
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Android Installation -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">📱 Android</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6>Chrome no Android:</h6>
+                                            <ol class="text-sm">
+                                                <li>Abra o site no Chrome</li>
+                                                <li>Toque nos três pontos (⋮) no canto superior direito</li>
+                                                <li>Selecione <strong>"Adicionar à tela inicial"</strong></li>
+                                                <li>Confirme tocando em <strong>"Adicionar"</strong></li>
+                                            </ol>
+                                            
+                                            <h6 class="mt-3">Firefox no Android:</h6>
+                                            <ol class="text-sm">
+                                                <li>Toque nos três pontos no menu</li>
+                                                <li>Selecione <strong>"Instalar"</strong> ou <strong>"Adicionar à tela inicial"</strong></li>
+                                                <li>Confirme a instalação</li>
+                                            </ol>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card bg-gradient-success">
+                                                <div class="card-body text-center text-white">
+                                                    <i class="fab fa-android" style="font-size: 3rem;"></i>
+                                                    <p class="mt-2 mb-0 text-sm">
+                                                        O ícone aparecerá na tela inicial do Android
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- iOS Installation -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">🍎 iPhone/iPad (iOS)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6>Safari no iOS:</h6>
+                                            <ol class="text-sm">
+                                                <li>Abra o site no Safari</li>
+                                                <li>Toque no ícone <strong>Compartilhar</strong> (quadrado com seta para cima)</li>
+                                                <li>Role para baixo e toque em <strong>"Adicionar à Tela de Início"</strong></li>
+                                                <li>Digite um nome e toque em <strong>"Adicionar"</strong></li>
+                                            </ol>
+                                            
+                                            <div class="alert alert-info mt-3">
+                                                <small>
+                                                    <strong>Nota:</strong> No iOS, use preferencialmente o Safari para melhor compatibilidade.
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card bg-gradient-info">
+                                                <div class="card-body text-center text-white">
+                                                    <i class="fab fa-apple" style="font-size: 3rem;"></i>
+                                                    <p class="mt-2 mb-0 text-sm">
+                                                        O app funcionará como nativo no iOS
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Benefits after installation -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">🎉 Após a Instalação</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3 col-6 text-center mb-3">
+                                            <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
+                                                <i class="fas fa-rocket opacity-10"></i>
+                                            </div>
+                                            <h6 class="mt-2">Inicialização Rápida</h6>
+                                            <p class="text-xs text-muted">Abre mais rápido que no navegador</p>
+                                        </div>
+                                        <div class="col-md-3 col-6 text-center mb-3">
+                                            <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-md">
+                                                <i class="fas fa-wifi opacity-10"></i>
+                                            </div>
+                                            <h6 class="mt-2">Funciona Offline</h6>
+                                            <p class="text-xs text-muted">Acesse dados mesmo sem internet</p>
+                                        </div>
+                                        <div class="col-md-3 col-6 text-center mb-3">
+                                            <div class="icon icon-shape bg-gradient-info shadow text-center border-radius-md">
+                                                <i class="fas fa-bell opacity-10"></i>
+                                            </div>
+                                            <h6 class="mt-2">Notificações</h6>
+                                            <p class="text-xs text-muted">Receba alertas importantes</p>
+                                        </div>
+                                        <div class="col-md-3 col-6 text-center mb-3">
+                                            <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-md">
+                                                <i class="fas fa-sync opacity-10"></i>
+                                            </div>
+                                            <h6 class="mt-2">Auto-Update</h6>
+                                            <p class="text-xs text-muted">Sempre na versão mais recente</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Troubleshooting -->
+                            <div class="card mt-4">
+                                <div class="card-header">
+                                    <h6 class="mb-0">🛠️ Problemas Comuns</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="accordion" id="troubleshooting">
+                                        <div class="accordion-item">
+                                            <h6 class="accordion-header" id="heading1">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
+                                                    Não aparece a opção "Instalar" ou "Adicionar à tela inicial"
+                                                </button>
+                                            </h6>
+                                            <div id="collapse1" class="accordion-collapse collapse" data-bs-parent="#troubleshooting">
+                                                <div class="accordion-body text-sm">
+                                                    <ul>
+                                                        <li>Certifique-se de que está usando um navegador compatível (Chrome, Edge, Safari)</li>
+                                                        <li>Verifique se o site está sendo acessado via HTTPS</li>
+                                                        <li>Tente recarregar a página (Ctrl+F5 ou Cmd+R)</li>
+                                                        <li>Em alguns casos, aguarde alguns segundos após carregar a página</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="accordion-item">
+                                            <h6 class="accordion-header" id="heading2">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
+                                                    O app não funciona offline
+                                                </button>
+                                            </h6>
+                                            <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#troubleshooting">
+                                                <div class="accordion-body text-sm">
+                                                    <ul>
+                                                        <li>Aguarde alguns minutos após a primeira instalação</li>
+                                                        <li>Use o app online algumas vezes antes de tentar usar offline</li>
+                                                        <li>Verifique se o Service Worker está ativo nas ferramentas do desenvolvedor</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

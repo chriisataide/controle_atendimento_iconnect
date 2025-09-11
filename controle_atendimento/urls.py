@@ -28,7 +28,17 @@ urlpatterns = [
     path('logout/', views.custom_logout, name='logout'),
     path('health/', HealthCheckView.as_view(), name='health_check'),  # Health check na raiz
     path('dashboard/', include('dashboard.urls')),
+    
+    # APIs Avançadas
+    path('api/', include('dashboard.api_urls')),
     path('api/user-info/', views.get_user_info, name='user_info'),
+    
+    # Mobile Interface
+    path('mobile/', include('dashboard.mobile_urls')),
+    
+    # PWA Files
+    path('manifest.json', views.manifest, name='manifest'),
+    path('service-worker.js', views.service_worker, name='service_worker'),
 ]
 
 if settings.DEBUG:

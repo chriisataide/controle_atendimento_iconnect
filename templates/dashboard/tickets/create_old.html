@@ -1,0 +1,2093 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}Criar Novo Ticket{% endblock %}
+
+{% block extra_css %}
+<style>
+.priority-indicator {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+.priority-baixa { background: #e8f5e8; color: #2e7d32; }
+.priority-media { background: #fff3e0; color: #f57c00; }
+.priority-alta { background: #ffebee; color: #d32f2f; }
+.priority-critica { background: #f3e5f5; color: #7b1fa2; animation: pulse 2s infinite; }
+
+.client-autocomplete {
+    position: relative;
+}
+.client-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: none;
+}
+.client-suggestion {
+    padding: 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+}
+.client-suggestion:hover {
+    background: #f8f9fa;
+}
+.client-suggestion:last-child {
+    border-bottom: none;
+}
+.suggestion-name { font-weight: 600; }
+.suggestion-email { color: #666; font-size: 12px; }
+
+.template-selector {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 28px;
+    border: 1px solid #e0e6ed;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.template-selector h6 {
+    color: #2d3748;
+    font-weight: 600;
+    margin-bottom: 20px;
+    font-size: 16px;
+}
+
+.template-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    margin: 8px 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    position: relative;
+    overflow: hidden;
+    min-height: 100px;
+    text-align: center;
+}
+
+.template-option::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #e91e63, #ad1457);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+    border-radius: 12px 12px 0 0;
+}
+
+.template-option i {
+    font-size: 24px;
+    margin-bottom: 8px;
+    color: #e91e63;
+    transition: all 0.3s ease;
+}
+
+.template-option span,
+.template-option {
+    font-size: 12px;
+    font-weight: 500;
+    color: #4a5568;
+    line-height: 1.2;
+}
+
+.template-option:hover {
+    background: linear-gradient(135deg, #fafbfc 0%, #f7fafc 100%);
+    border-color: #e91e63;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(233, 30, 99, 0.15);
+}
+
+.template-option:hover::before {
+    transform: scaleX(1);
+}
+
+.template-option:hover i {
+    color: #c2185b;
+    transform: scale(1.1);
+}
+
+.template-option.active {
+    background: linear-gradient(135deg, #fff5f8 0%, #fdf2f8 100%);
+    border-color: #e91e63;
+    font-weight: 700;
+    box-shadow: 0 8px 25px rgba(233, 30, 99, 0.25);
+    transform: translateY(-2px);
+}
+
+.template-option.active::before {
+    transform: scaleX(1);
+}
+
+.template-option.active i {
+    color: #ad1457;
+    transform: scale(1.15);
+}
+
+/* Responsividade para templates */
+@media (max-width: 768px) {
+    .template-option {
+        margin: 4px 2px;
+        padding: 14px 8px;
+        min-height: 80px;
+    }
+    
+    .template-option i {
+        font-size: 20px;
+        margin-bottom: 6px;
+    }
+    
+    .template-option span,
+    .template-option {
+        font-size: 11px;
+    }
+}
+
+.file-upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.file-upload-area:hover {
+    border-color: #2196f3;
+    background: #f8f9ff;
+}
+.file-list {
+    margin-top: 12px;
+}
+.file-item {
+    display: flex;
+    align-items: center;
+    background: #f0f0f0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 4px 0;
+}
+.file-remove {
+    margin-left: auto;
+    color: #d32f2f;
+    cursor: pointer;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.rich-editor {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    min-height: 150px;
+}
+.editor-toolbar {
+    background: #f8f9fa;
+    border-bottom: 1px solid #ddd;
+    padding: 8px;
+    border-radius: 8px 8px 0 0;
+}
+.editor-content {
+    padding: 12px;
+    min-height: 120px;
+    outline: none;
+}
+
+.sla-estimate {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    margin: 16px 0;
+    text-align: center;
+}
+
+.auto-save-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #4caf50;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    display: none;
+    z-index: 9999;
+}
+
+/* Labels flutuantes organizados e sem sobreposição */
+.input-group-outline {
+    position: relative;
+    margin-bottom: 24px;
+}
+
+.input-group-outline .form-label {
+    position: absolute;
+    top: 0px;
+    left: 16px;
+    background: white;
+    padding: 0 8px;
+    color: #6c757d;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    z-index: 2;
+    transform: translateY(-50%);
+}
+
+/* Label dentro do campo quando vazio */
+.input-group-outline:not(.is-focused):not(.is-filled):not(.has-value) .form-label {
+    top: 50%;
+    color: #9ca3af;
+    font-size: 16px;
+    font-weight: 400;
+    background: transparent;
+    padding: 0;
+}
+
+/* Label acima do campo quando ativo/preenchido */
+.input-group-outline.is-focused .form-label,
+.input-group-outline.is-filled .form-label,
+.input-group-outline.has-value .form-label {
+    top: 0px;
+    color: #e91e63;
+    font-size: 12px;
+    font-weight: 600;
+    background: white;
+    padding: 0 8px;
+    transform: translateY(-50%);
+    border-radius: 4px;
+}
+
+.input-group-outline .form-control {
+    width: 100%;
+    padding: 16px 18px;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    background: white;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #374151;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+    margin-top: 0;
+}
+
+.input-group-outline .form-control:focus {
+    border-color: #e91e63;
+    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+    outline: none;
+}
+
+/* Placeholder invisível por padrão */
+.input-group-outline .form-control::placeholder {
+    color: transparent;
+    opacity: 0;
+}
+
+/* Placeholder visível apenas quando focado */
+.input-group-outline.is-focused .form-control::placeholder {
+    color: #9ca3af;
+    opacity: 1;
+}
+
+/* Hover states */
+.input-group-outline:not(.is-focused) .form-control:hover {
+    border-color: #d1d5db;
+}
+
+.input-group-outline:hover:not(.is-focused) .form-label {
+    color: #6b7280;
+}
+
+/* Select específico */
+.input-group-outline select.form-control {
+    cursor: pointer;
+    padding-right: 45px;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 16px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.input-group-outline.is-focused select.form-control {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23e91e63' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+}
+
+/* Campo desabilitado */
+.input-group-outline .form-control:disabled {
+    background-color: #f9fafb;
+    border-color: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+    opacity: 0.75;
+}
+
+.input-group-outline .form-control:disabled ~ .form-label {
+    color: #9ca3af;
+}
+
+/* Estados de validação */
+.input-group-outline.is-invalid .form-control {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+.input-group-outline.is-invalid .form-label {
+    color: #dc3545;
+}
+
+.input-group-outline.is-valid .form-control {
+    border-color: #28a745;
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+}
+
+.input-group-outline.is-valid.has-value .form-label {
+    color: #28a745;
+}
+
+/* Melhorias no upload de arquivos */
+.file-upload-area.drag-over {
+    border-color: #e91e63;
+    background: rgba(233, 30, 99, 0.05);
+    transform: scale(1.02);
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: 6px 0;
+    border-left: 4px solid #e91e63;
+    transition: all 0.2s ease;
+}
+
+.file-item:hover {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.file-remove {
+    margin-left: auto;
+    color: #dc3545;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.file-remove:hover {
+    background: rgba(220, 53, 69, 0.1);
+    color: #a71e2a;
+}
+
+/* Progress bar personalizada */
+.upload-progress .progress {
+    height: 6px;
+    border-radius: 3px;
+    background: #e9ecef;
+}
+
+.upload-progress .progress-bar {
+    background: linear-gradient(90deg, #e91e63, #ad1457);
+    border-radius: 3px;
+}
+
+/* Notificações toast */
+.notification-toast {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* Animações suaves */
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.file-item, .client-suggestion, .template-option {
+    animation: fadeInRight 0.3s ease;
+}
+
+/* Responsividade mobile */
+@media (max-width: 768px) {
+    .template-option {
+        margin: 2px 0;
+        font-size: 14px;
+    }
+    
+    .file-upload-area {
+        padding: 15px;
+    }
+    
+    .file-upload-area i {
+        font-size: 36px !important;
+    }
+    
+    .notification-toast {
+        left: 10px;
+        right: 10px;
+        min-width: auto;
+        max-width: none;
+    }
+    
+    .editor-toolbar {
+        padding: 6px;
+        flex-wrap: wrap;
+    }
+    
+    .editor-toolbar button {
+        margin: 2px;
+        padding: 6px 8px;
+    }
+}
+
+/* Remover estilos extras desnecessários */
+
+/* Estilos complementares organizados */
+.rich-editor {
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    min-height: 150px;
+    transition: all 0.3s ease;
+}
+
+.rich-editor:focus-within {
+    border-color: #e91e63;
+    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+}
+
+.file-upload-area {
+    border: 2px dashed #d1d5db;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.file-upload-area:hover {
+    border-color: #e91e63;
+    background: rgba(233, 30, 99, 0.05);
+}
+
+.client-suggestions {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 4px;
+    border: 1px solid #e5e7eb;
+}
+
+.client-suggestion:hover {
+    background: rgba(233, 30, 99, 0.05);
+}
+
+/* Garantir que campos com valor tenham label acima */
+.input-group-outline.has-value .form-label {
+    top: -12px !important;
+    left: 12px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #e91e63 !important;
+    transform: translateY(0) !important;
+    background: white !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    box-shadow: 0 0 0 2px white !important;
+}
+
+/* Estilos complementares para outros elementos */
+.rich-editor {
+    border: 2px solid #d2d6da;
+    border-radius: 8px;
+    min-height: 150px;
+    transition: all 0.2s ease;
+}
+
+.rich-editor:focus-within {
+    border-color: #e91e63;
+    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.15);
+}
+
+.editor-content {
+    padding: 12px;
+    min-height: 120px;
+    outline: none;
+}
+
+.editor-content:empty::before {
+    content: attr(placeholder);
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.editor-content.has-content::before {
+    display: none;
+}
+
+.editor-content.has-content {
+    color: #374151;
+}
+
+/* Visual feedback para template aplicado */
+.template-applied {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1), 0 4px 12px rgba(16, 185, 129, 0.15) !important;
+    transition: all 0.3s ease;
+}
+
+.template-applied .editor-content {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    transition: background 1.5s ease;
+}
+
+/* Animação sutil para campos preenchidos pelo template */
+@keyframes templateFill {
+    0% { 
+        background: rgba(16, 185, 129, 0.1);
+        transform: scale(1.01);
+    }
+    100% { 
+        background: transparent;
+        transform: scale(1);
+    }
+}
+
+.template-filled {
+    animation: templateFill 1.2s ease;
+}
+
+.file-upload-area {
+    border: 2px dashed #d2d6da;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.file-upload-area:hover {
+    border-color: #e91e63;
+    background: rgba(233, 30, 99, 0.05);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Auto-save indicator -->
+<div class="auto-save-indicator" id="autoSaveIndicator">
+    <i class="material-symbols-rounded" style="font-size: 14px;">cloud_done</i> Rascunho salvo
+</div>
+
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-lg-10 mx-auto">
+      <div class="card">
+        <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+          <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+            <h6 class="text-white text-capitalize ps-3 mb-0">
+              <i class="material-symbols-rounded me-2">add_circle</i>
+              Criar Novo Ticket
+            </h6>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Templates de Ticket -->
+          <div class="template-selector">
+            <h6 class="mb-3">
+              <i class="material-symbols-rounded me-2">library_books</i>
+              Templates Rápidos (Opcional)
+            </h6>
+            <div class="row" id="templateOptions">
+              <div class="col-md-2">
+                <div class="template-option" data-template="suporte-tecnico" title="Template completo para problemas técnicos" onclick="console.log('Clique direto detectado: suporte-tecnico')">
+                  <i class="material-symbols-rounded me-2">computer</i>
+                  Suporte Técnico
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="template-option" data-template="duvida" title="Template para dúvidas e consultas" onclick="console.log('Clique direto detectado: duvida')">
+                  <i class="material-symbols-rounded me-2">help</i>
+                  Dúvida/Pergunta
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="template-option" data-template="solicitacao" title="Template para solicitações de serviço" onclick="console.log('Clique direto detectado: solicitacao')">
+                  <i class="material-symbols-rounded me-2">request_quote</i>
+                  Solicitação
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="template-option" data-template="bug" title="Template detalhado para relatar bugs" onclick="console.log('Clique direto detectado: bug')">
+                  <i class="material-symbols-rounded me-2">bug_report</i>
+                  Relatar Bug
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="template-option" data-template="melhoria" title="Template para sugestões de melhoria" onclick="console.log('Clique direto detectado: melhoria')">
+                  <i class="material-symbols-rounded me-2">lightbulb</i>
+                  Melhoria
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="template-option" data-template="acesso" title="Template para solicitar acessos e permissões" onclick="console.log('Clique direto detectado: acesso')">
+                  <i class="material-symbols-rounded me-2">key</i>
+                  Acesso
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <form method="post" id="ticketForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="row">
+              {% if not is_cliente %}
+              <div class="col-md-6">
+                <div class="input-group input-group-outline mb-3 client-autocomplete">
+                  <label class="form-label">Cliente *</label>
+                  <input type="text" class="form-control" id="clienteSearch" placeholder="Digite para buscar cliente..." required>
+                  <input type="hidden" name="cliente" id="clienteId" required>
+                  <div class="client-suggestions" id="clienteSuggestions"></div>
+                </div>
+              </div>
+              {% else %}
+              <div class="col-md-6">
+                <div class="input-group input-group-outline mb-3 is-filled">
+                  <label class="form-label">Cliente</label>
+                  <input type="text" class="form-control" value="{{ cliente_logado.nome }} ({{ cliente_logado.email }})" disabled>
+                  <input type="hidden" name="cliente" value="{{ cliente_logado.id }}">
+                </div>
+              </div>
+              {% endif %}
+              <div class="col-md-6">
+                <div class="input-group input-group-outline mb-3">
+                  <label class="form-label">Categoria *</label>
+                  <select class="form-control" name="categoria" id="categoriaSelect" required>
+                    <option value="">Selecione uma categoria</option>
+                    {% for categoria in categorias %}
+                      <option value="{{ categoria.id }}">{{ categoria.nome }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-8">
+                <div class="input-group input-group-outline mb-3">
+                  <label class="form-label">Título do Ticket *</label>
+                  <input type="text" class="form-control" name="titulo" id="tituloInput" required>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="input-group input-group-outline mb-3">
+                  <label class="form-label">Prioridade *</label>
+                  <select class="form-control" name="prioridade" id="prioridadeSelect" required>
+                    <option value="baixa">Baixa</option>
+                    <option value="media" selected>Média</option>
+                    <option value="alta">Alta</option>
+                    <option value="critica">Crítica</option>
+                  </select>
+                  <span class="priority-indicator" id="priorityIndicator">
+                    <i class="material-symbols-rounded me-1">flag</i>
+                    Média
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tags -->
+            <div class="input-group input-group-outline mb-3">
+              <label class="form-label">Tags (separadas por vírgula)</label>
+              <input type="text" class="form-control" name="tags" id="tagsInput" placeholder="Ex: urgente, sistema, login">
+            </div>
+
+            <!-- Editor Rico para Descrição -->
+            <div class="mb-3">
+              <label class="form-label mb-2">Descrição Detalhada *</label>
+              <div class="rich-editor">
+                <div class="editor-toolbar">
+                  <button type="button" class="btn btn-sm btn-light" onclick="formatText('bold')">
+                    <i class="material-symbols-rounded">format_bold</i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-light" onclick="formatText('italic')">
+                    <i class="material-symbols-rounded">format_italic</i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-light" onclick="formatText('underline')">
+                    <i class="material-symbols-rounded">format_underlined</i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-light" onclick="formatText('insertUnorderedList')">
+                    <i class="material-symbols-rounded">format_list_bulleted</i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-light" onclick="formatText('insertOrderedList')">
+                    <i class="material-symbols-rounded">format_list_numbered</i>
+                  </button>
+                </div>
+                <div class="editor-content" id="editorContent" contenteditable="true" 
+                     placeholder="Descreva o problema ou solicitação de forma detalhada..."></div>
+              </div>
+              <textarea name="descricao" id="descricaoHidden" style="display: none;" required></textarea>
+            </div>
+
+            <!-- Upload de Anexos -->
+            <div class="mb-4">
+              <label class="form-label mb-3">
+                <i class="material-symbols-rounded me-2">attach_file</i>
+                Anexar Arquivos (Opcional)
+              </label>
+              <div class="file-upload-area" id="fileUploadArea">
+                <i class="material-symbols-rounded mb-2" style="font-size: 48px; color: #bbb;">cloud_upload</i>
+                <p class="mb-2"><strong>Clique aqui ou arraste arquivos para anexar</strong></p>
+                <small class="text-muted">Máximo 5 arquivos, 10MB cada • Formatos: PDF, DOC, DOCX, JPG, JPEG, PNG, TXT</small>
+                <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt" style="display: none;">
+              </div>
+              <div class="file-list" id="fileList"></div>
+              <div class="upload-progress" id="uploadProgress" style="display: none;">
+                <div class="progress mt-3">
+                  <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                </div>
+                <small class="text-muted mt-1 d-block">Validando arquivos...</small>
+              </div>
+            </div>
+
+            <!-- Estimativa de SLA -->
+            <div class="sla-estimate" id="slaEstimate" style="display: none;">
+              <div class="d-flex align-items-center justify-content-center">
+                <i class="material-symbols-rounded me-2">schedule</i>
+                <span id="slaText">Tempo estimado de resposta será calculado</span>
+              </div>
+            </div>
+
+            <!-- Preview do Ticket -->
+            <div class="card border" id="ticketPreview" style="display: none; margin: 20px 0;">
+              <div class="card-header bg-light">
+                <h6 class="mb-0">
+                  <i class="material-symbols-rounded me-2">preview</i>
+                  Preview do Ticket
+                </h6>
+              </div>
+              <div class="card-body">
+                <div id="previewContent">
+                  <!-- Preview será preenchido dinamicamente -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Histórico de Tickets do Cliente -->
+            <div class="card border" id="clientHistory" style="display: none; margin: 20px 0;">
+              <div class="card-header bg-light">
+                <h6 class="mb-0">
+                  <i class="material-symbols-rendered me-2">history</i>
+                  Últimos Tickets do Cliente
+                </h6>
+              </div>
+              <div class="card-body" id="historyContent">
+                <!-- Histórico será carregado dinamicamente -->
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="d-flex">
+                <button type="button" class="btn btn-info me-2" id="previewBtn">
+                  <i class="material-symbols-rounded">visibility</i>&nbsp;&nbsp;Preview
+                </button>
+                <button type="button" class="btn btn-secondary me-2" id="saveDraftBtn">
+                  <i class="material-symbols-rounded">draft</i>&nbsp;&nbsp;Salvar Rascunho
+                </button>
+              </div>
+              <div class="d-flex align-items-center">
+                <small class="text-muted me-3" title="Atalhos de teclado disponíveis">
+                  <i class="material-symbols-rounded" style="font-size: 16px;">keyboard</i>
+                  <strong>Atalhos:</strong> Ctrl+S (Salvar) • Ctrl+Enter (Enviar) • Ctrl+P (Preview)
+                </small>
+                <a href="{% url 'dashboard:ticket_list' %}" class="btn btn-light me-2">
+                  <i class="material-symbols-rounded">cancel</i>&nbsp;&nbsp;Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                  <i class="material-symbols-rounded">send</i>&nbsp;&nbsp;Criar Ticket
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Templates de ticket expandidos e profissionais
+const ticketTemplates = {
+    'suporte-tecnico': {
+        title: 'Suporte Técnico - [Descreva o problema brevemente]',
+        description: `<div style="font-family: Arial, sans-serif;">
+
+<h4 style="color: #d32f2f; border-bottom: 2px solid #d32f2f; padding-bottom: 5px;">🔧 PROBLEMA TÉCNICO</h4>
+
+<p><strong>📋 Descrição do Problema:</strong><br>
+Descreva detalhadamente qual problema técnico você está enfrentando.</p>
+
+<p><strong>🔄 Passos para Reproduzir:</strong></p>
+<ol>
+  <li>Acesse [sistema/página específica]</li>
+  <li>Execute a ação [descreva a ação]</li>
+  <li>Observe o resultado [descreva o que acontece]</li>
+</ol>
+
+<p><strong>✅ Resultado Esperado:</strong><br>
+O que deveria acontecer quando você executa essas ações.</p>
+
+<p><strong>❌ Resultado Atual:</strong><br>
+O que realmente está acontecendo (comportamento incorreto).</p>
+
+<p><strong>⚡ Urgência/Impacto:</strong><br>
+□ Bloqueia trabalho completamente<br>
+□ Prejudica produtividade<br>
+□ Incomoda, mas há alternativas</p>
+
+<p><strong>💻 Informações do Sistema:</strong></p>
+<table border="1" style="border-collapse: collapse; width: 100%;">
+  <tr><td><strong>Navegador:</strong></td><td>[Chrome 118 / Firefox 119 / Safari 16 / Edge 117]</td></tr>
+  <tr><td><strong>Sistema Operacional:</strong></td><td>[Windows 11 / macOS 13 / Linux Ubuntu 22]</td></tr>
+  <tr><td><strong>Resolução da Tela:</strong></td><td>[1920x1080 / 2560x1440 / outro]</td></tr>
+  <tr><td><strong>Hora do Incidente:</strong></td><td>[Data e hora exata]</td></tr>
+</table>
+
+<p><strong>📸 Evidências:</strong><br>
+Por favor, anexe screenshots, prints de tela ou vídeos que demonstrem o problema.</p>
+
+<p><strong>🔍 Tentativas de Solução:</strong><br>
+Descreva o que já foi tentado para resolver o problema.</p>
+
+</div>`,
+        category: null,
+        priority: 'media',
+        tags: 'suporte, técnico, sistema'
+    },
+    
+    'duvida': {
+        title: 'Dúvida - [Assunto específico]',
+        description: `<div style="font-family: Arial, sans-serif;">
+
+<h4 style="color: #1976d2; border-bottom: 2px solid #1976d2; padding-bottom: 5px;">❓ DÚVIDA / CONSULTA</h4>
+
+<p><strong>🎯 Sua Dúvida:</strong><br>
+Formule sua pergunta de forma clara e específica.</p>
+
+<p><strong>📝 Contexto da Situação:</strong><br>
+Explique a situação em que surgiu esta dúvida:</p>
+<ul>
+  <li>O que você estava tentando fazer?</li>
+  <li>Em qual sistema/processo?</li>
+  <li>Qual é o objetivo final?</li>
+</ul>
+
+<p><strong>🔍 Pesquisas Realizadas:</strong><br>
+□ Consultei a documentação/manual<br>
+□ Busquei em tutoriais online<br>
+□ Perguntei a colegas<br>
+□ Procurei em fóruns especializados<br>
+□ Esta é minha primeira tentativa de solução</p>
+
+<p><strong>📚 Informações Adicionais:</strong><br>
+Qualquer detalhe que possa ajudar na resposta (versões, configurações, etc.)</p>
+
+<p><strong>⏰ Prazo:</strong><br>
+□ Urgente (preciso hoje)<br>
+□ Importante (preciso esta semana)<br>
+□ Normal (sem pressa específica)</p>
+
+<p><strong>💡 Tipo de Resposta Preferida:</strong><br>
+□ Explicação passo-a-passo<br>
+□ Documentação/links de referência<br>
+□ Demonstração prática<br>
+□ Treinamento personalizado</p>
+
+</div>`,
+        category: null,
+        priority: 'baixa',
+        tags: 'dúvida, consulta, orientação'
+    },
+    
+    'solicitacao': {
+        title: 'Solicitação - [Tipo de solicitação]',
+        description: `<div style="font-family: Arial, sans-serif;">
+
+<h4 style="color: #f57c00; border-bottom: 2px solid #f57c00; padding-bottom: 5px;">📋 SOLICITAÇÃO DE SERVIÇO</h4>
+
+<p><strong>🎯 O que você precisa:</strong><br>
+Descreva claramente qual serviço, recurso ou ação você está solicitando.</p>
+
+<p><strong>💼 Justificativa Empresarial:</strong><br>
+Explique por que esta solicitação é necessária:</p>
+<ul>
+  <li>Qual problema resolverá?</li>
+  <li>Que benefício trará?</li>
+  <li>Como impactará o trabalho/produtividade?</li>
+</ul>
+
+<p><strong>📋 Especificações Detalhadas:</strong></p>
+<table border="1" style="border-collapse: collapse; width: 100%;">
+  <tr><td><strong>Tipo de Solicitação:</strong></td><td>□ Acesso/Permissão □ Instalação □ Configuração □ Criação □ Outro</td></tr>
+  <tr><td><strong>Sistemas Envolvidos:</strong></td><td>[Liste os sistemas que serão afetados]</td></tr>
+  <tr><td><strong>Usuários Afetados:</strong></td><td>[Quantas pessoas serão beneficiadas]</td></tr>
+</table>
+
+<p><strong>📅 Cronograma:</strong></p>
+<ul>
+  <li><strong>Prazo Desejado:</strong> [Data específica ou período]</li>
+  <li><strong>Flexibilidade:</strong> □ Inflexível □ Pode aguardar □ Flexível</li>
+  <li><strong>Dependências:</strong> [O que precisa estar pronto antes]</li>
+</ul>
+
+<p><strong>⚖️ Prioridade e Impacto:</strong></p>
+<table border="1" style="border-collapse: collapse; width: 100%;">
+  <tr><td><strong>Se NÃO atendido:</strong></td><td>□ Para o trabalho □ Atrasa projetos □ Incomoda apenas</td></tr>
+  <tr><td><strong>Benefício esperado:</strong></td><td>□ Economia de tempo □ Melhoria de qualidade □ Redução de custos</td></tr>
+</table>
+
+<p><strong>💰 Orçamento/Custos:</strong><br>
+Há orçamento aprovado para esta solicitação? Existe alguma limitação de custo?</p>
+
+<p><strong>📞 Contato para Esclarecimentos:</strong><br>
+Nome: [Seu nome]<br>
+Telefone: [Seu telefone]<br>
+Melhor horário: [Período preferencial]</p>
+
+</div>`,
+        category: null,
+        priority: 'media',
+        tags: 'solicitação, serviço, demanda'
+    },
+    
+    'bug': {
+        title: 'Bug Report - [Sistema/Funcionalidade afetada]',
+        description: `<div style="font-family: Arial, sans-serif;">
+
+<h4 style="color: #d32f2f; border-bottom: 2px solid #d32f2f; padding-bottom: 5px;">🐛 RELATÓRIO DE BUG</h4>
+
+<p><strong>🎯 Resumo do Bug:</strong><br>
+Descreva em uma frase o que está funcionando incorretamente.</p>
+
+<p><strong>📋 Descrição Detalhada:</strong><br>
+Explique o bug de forma completa, incluindo todos os detalhes relevantes.</p>
+
+<p><strong>� Passos para Reproduzir:</strong></p>
+<ol>
+  <li><strong>Pré-condições:</strong> [Estado inicial necessário]</li>
+  <li><strong>Passo 1:</strong> [Primeira ação]</li>
+  <li><strong>Passo 2:</strong> [Segunda ação]</li>
+  <li><strong>Passo 3:</strong> [Terceira ação]</li>
+  <li><strong>Resultado:</strong> [O que acontece]</li>
+</ol>
+
+<p><strong>✅ Comportamento Esperado:</strong><br>
+Descreva detalhadamente o que DEVERIA acontecer.</p>
+
+<p><strong>❌ Comportamento Atual:</strong><br>
+Descreva exatamente o que ESTÁ acontecendo (comportamento incorreto).</p>
+
+<p><strong>⚡ Severidade do Bug:</strong></p>
+<table border="1" style="border-collapse: collapse; width: 100%;">
+  <tr><td>□ <strong>Crítico:</strong></td><td>Sistema completamente inutilizável</td></tr>
+  <tr><td>□ <strong>Alto:</strong></td><td>Funcionalidade importante não funciona</td></tr>
+  <tr><td>□ <strong>Médio:</strong></td><td>Funcionalidade funciona com problemas</td></tr>
+  <tr><td>□ <strong>Baixo:</strong></td><td>Problema cosmético ou menor</td></tr>
+</table>
+
+<p><strong>🖥️ Ambiente Técnico:</strong></p>
+<table border="1" style="border-collapse: collapse; width: 100%;">
+  <tr><td><strong>Sistema:</strong></td><td>[Nome do sistema/aplicação]</td></tr>
+  <tr><td><strong>Versão:</strong></td><td>[Versão do sistema, se conhecida]</td></tr>
+  <tr><td><strong>Navegador:</strong></td><td>[Chrome 118.0, Firefox 119.0, etc.]</td></tr>
+  <tr><td><strong>OS:</strong></td><td>[Windows 11, macOS 13.6, Ubuntu 22.04]</td></tr>
+  <tr><td><strong>Dispositivo:</strong></td><td>[Desktop, Laptop, Tablet, Smartphone]</td></tr>
+  <tr><td><strong>Resolução:</strong></td><td>[1920x1080, 1366x768, etc.]</td></tr>
+</table>
+
+<p><strong>🔁 Frequência:</strong></p>
+<ul>
+  <li>□ Sempre acontece (100%)</li>
+  <li>□ Frequentemente (mais de 50%)</li>
+  <li>□ Às vezes (menos de 50%)</li>
+  <li>□ Raramente (primeira vez)</li>
+</ul>
+
+<p><strong>📸 Evidências:</strong><br>
+<strong>IMPORTANTE:</strong> Por favor, anexe screenshots, vídeos ou logs que demonstrem o bug.</p>
+
+<p><strong>🔄 Workaround:</strong><br>
+Existe alguma forma alternativa de contornar o problema temporariamente?</p>
+
+<p><strong>📅 Informações Temporais:</strong><br>
+- <strong>Primeira ocorrência:</strong> [Data/hora]<br>
+- <strong>Última ocorrência:</strong> [Data/hora]<br>
+- <strong>Padrão temporal:</strong> [Acontece sempre, só de manhã, etc.]</p>
+
+</div>`,
+        category: null,
+        priority: 'alta',
+        tags: 'bug, erro, defeito'
+    },
+    
+    // Novos templates adicionais
+    'melhoria': {
+        title: 'Sugestão de Melhoria - [Área/Sistema]',
+        description: `<div style="font-family: Arial, sans-serif;">
+
+<h4 style="color: #7b1fa2; border-bottom: 2px solid #7b1fa2; padding-bottom: 5px;">💡 SUGESTÃO DE MELHORIA</h4>
+
+<p><strong>🎯 Melhoria Proposta:</strong><br>
+Descreva claramente qual melhoria você está sugerindo.</p>
+
+<p><strong>📍 Situação Atual:</strong><br>
+Como funciona atualmente? Quais são as limitações?</p>
+
+<p><strong>✨ Situação Desejada:</strong><br>
+Como deveria funcionar com a melhoria implementada?</p>
+
+<p><strong>📈 Benefícios Esperados:</strong></p>
+<ul>
+  <li>□ Economia de tempo</li>
+  <li>□ Redução de erros</li>
+  <li>□ Melhoria na qualidade</li>
+  <li>□ Maior satisfação do usuário</li>
+  <li>□ Redução de custos</li>
+  <li>□ Outro: ___________</li>
+</ul>
+
+<p><strong>👥 Impacto nos Usuários:</strong><br>
+Quantas pessoas seriam beneficiadas? Quais departamentos/equipes?</p>
+
+<p><strong>💰 Estimativa de ROI:</strong><br>
+Qual o retorno estimado desta melhoria (tempo economizado, custos reduzidos, etc.)?</p>
+
+</div>`,
+        category: null,
+        priority: 'baixa',
+        tags: 'melhoria, sugestão, otimização'
+    },
+    
+    'acesso': {
+        title: 'Solicitação de Acesso - [Sistema/Recurso]',
+        description: `<div style="font-family: Arial, sans-serif;">
+
+<h4 style="color: #2e7d32; border-bottom: 2px solid #2e7d32; padding-bottom: 5px;">🔑 SOLICITAÇÃO DE ACESSO</h4>
+
+<p><strong>🎯 Acesso Solicitado:</strong><br>
+Especifique exatamente a qual sistema, pasta, recurso ou funcionalidade você precisa de acesso.</p>
+
+<p><strong>� Informações do Solicitante:</strong></p>
+<table border="1" style="border-collapse: collapse; width: 100%;">
+  <tr><td><strong>Nome Completo:</strong></td><td>[Seu nome completo]</td></tr>
+  <tr><td><strong>Cargo/Função:</strong></td><td>[Seu cargo atual]</td></tr>
+  <tr><td><strong>Departamento:</strong></td><td>[Seu departamento]</td></tr>
+  <tr><td><strong>Supervisor/Gestor:</strong></td><td>[Nome do seu supervisor]</td></tr>
+</table>
+
+<p><strong>🔐 Tipo de Acesso Necessário:</strong></p>
+<ul>
+  <li>□ Leitura apenas</li>
+  <li>□ Escrita/Modificação</li>
+  <li>□ Administração completa</li>
+  <li>□ Acesso temporário</li>
+  <li>□ Acesso permanente</li>
+</ul>
+
+<p><strong>💼 Justificativa Empresarial:</strong><br>
+Por que você precisa deste acesso? Como será usado no seu trabalho?</p>
+
+<p><strong>📅 Período de Acesso:</strong></p>
+<ul>
+  <li><strong>Data de início:</strong> [Data específica]</li>
+  <li><strong>Data de término:</strong> [Data específica ou "Permanente"]</li>
+  <li><strong>Urgência:</strong> □ Imediato □ Esta semana □ Não há pressa</li>
+</ul>
+
+<p><strong>✅ Aprovações Necessárias:</strong><br>
+□ Aprovação do gestor direto<br>
+□ Aprovação do departamento de TI<br>
+□ Aprovação de segurança<br>
+□ Outra: ___________</p>
+
+</div>`,
+        category: null,
+        priority: 'media',
+        tags: 'acesso, permissão, sistema'
+    }
+};
+
+// SLA estimates baseado em categoria e prioridade
+const slaEstimates = {
+    'baixa': '24-48 horas',
+    'media': '8-12 horas',  
+    'alta': '2-4 horas',
+    'critica': '30 minutos - 1 hora'
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Dados dos clientes para autocomplete
+    const clientes = [
+        {% for cliente in clientes %}
+        {
+            id: {{ cliente.id }},
+            nome: "{{ cliente.nome|escapejs }}",
+            email: "{{ cliente.email|escapejs }}"
+        },
+        {% endfor %}
+    ];
+
+    // Auto-complete para clientes
+    const clienteSearch = document.getElementById('clienteSearch');
+    const clienteSuggestions = document.getElementById('clienteSuggestions');
+    const clienteId = document.getElementById('clienteId');
+
+    if (clienteSearch) {
+        clienteSearch.addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            if (query.length < 2) {
+                clienteSuggestions.style.display = 'none';
+                return;
+            }
+
+            const filtered = clientes.filter(cliente => 
+                cliente.nome.toLowerCase().includes(query) ||
+                cliente.email.toLowerCase().includes(query)
+            );
+
+            if (filtered.length > 0) {
+                clienteSuggestions.innerHTML = filtered.map(cliente => 
+                    `<div class="client-suggestion" data-id="${cliente.id}">
+                        <div class="suggestion-name">${cliente.nome}</div>
+                        <div class="suggestion-email">${cliente.email}</div>
+                    </div>`
+                ).join('');
+                clienteSuggestions.style.display = 'block';
+            } else {
+                clienteSuggestions.style.display = 'none';
+            }
+        });
+
+        clienteSuggestions.addEventListener('click', function(e) {
+            const suggestion = e.target.closest('.client-suggestion');
+            if (suggestion) {
+                const id = suggestion.dataset.id;
+                const cliente = clientes.find(c => c.id == id);
+                clienteSearch.value = `${cliente.nome} (${cliente.email})`;
+                clienteId.value = id;
+                clienteSuggestions.style.display = 'none';
+                
+                // Carregar histórico do cliente
+                loadClientHistory(id);
+            }
+        });
+
+        // Esconder sugestões ao clicar fora
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.client-autocomplete')) {
+                clienteSuggestions.style.display = 'none';
+            }
+        });
+    }
+
+    // Templates de ticket (debug otimizado)
+    console.log('=== DEBUG TEMPLATES ===');
+    
+    // Garantir que os templates estão disponíveis
+    if (typeof ticketTemplates === 'undefined') {
+        console.error('ticketTemplates não está definido!');
+        return;
+    }
+    
+    console.log('Templates disponíveis:', Object.keys(ticketTemplates));
+    
+    // Aguardar DOM estar completamente carregado
+    setTimeout(() => {
+        const templateOptions = document.querySelectorAll('.template-option');
+        console.log('Elementos .template-option encontrados:', templateOptions.length);
+        
+        templateOptions.forEach((option, index) => {
+            const templateKey = option.dataset.template;
+            console.log(`Template ${index + 1}:`, templateKey);
+            
+            // Remover listeners antigos (se existirem)
+            option.replaceWith(option.cloneNode(true));
+        });
+        
+        // Re-selecionar os elementos após clonagem
+        document.querySelectorAll('.template-option').forEach((option) => {
+            const templateKey = option.dataset.template;
+            
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                console.log('=== TEMPLATE CLICADO ===');
+                console.log('Template key:', templateKey);
+                console.log('Template data:', ticketTemplates[templateKey]);
+                
+                if (!ticketTemplates[templateKey]) {
+                    console.error('Template não encontrado:', templateKey);
+                    return;
+                }
+                
+                const template = ticketTemplates[templateKey];
+                
+                try {
+                    // Visual feedback
+                    document.querySelectorAll('.template-option').forEach(opt => {
+                        opt.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    // Aplicar título
+                    const tituloInput = document.getElementById('tituloInput');
+                    if (tituloInput) {
+                        tituloInput.value = template.title;
+                        console.log('✓ Título aplicado');
+                    } else {
+                        console.error('✗ Campo título não encontrado');
+                    }
+                    
+                    // Aplicar descrição
+                    const editorContent = document.getElementById('editorContent');
+                    const descricaoHidden = document.getElementById('descricaoHidden');
+                    
+                    if (editorContent && descricaoHidden) {
+                        editorContent.innerHTML = template.description;
+                        descricaoHidden.value = template.description;
+                        editorContent.classList.remove('empty');
+                        editorContent.classList.add('has-content');
+                        console.log('✓ Descrição aplicada');
+                    } else {
+                        console.error('✗ Editor não encontrado');
+                    }
+                    
+                    // Aplicar prioridade
+                    const prioridadeSelect = document.getElementById('prioridadeSelect');
+                    if (prioridadeSelect) {
+                        prioridadeSelect.value = template.priority;
+                        console.log('✓ Prioridade aplicada:', template.priority);
+                    }
+                    
+                    // Aplicar tags
+                    if (template.tags) {
+                        const tagsInput = document.getElementById('tagsInput');
+                        if (tagsInput) {
+                            tagsInput.value = template.tags;
+                            console.log('✓ Tags aplicadas:', template.tags);
+                        }
+                    }
+                    
+                    // Feedback visual de sucesso
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 150);
+                    
+                    console.log('✓ Template aplicado com sucesso!');
+                    
+                } catch (error) {
+                    console.error('Erro ao aplicar template:', error);
+                }
+            });
+            
+            console.log(`Event listener adicionado para: ${templateKey}`);
+        });
+        
+        console.log('=== TEMPLATES INICIADOS ===');
+    }, 500);
+    
+                    
+                    console.log('✓ Template aplicado com sucesso!');
+                    
+                } catch (error) {
+                    console.error('Erro ao aplicar template:', error);
+                }
+            });
+            
+            console.log(`Event listener adicionado para: ${templateKey}`);
+        });
+        
+        console.log('=== TEMPLATES INICIADOS ===');
+    }, 500);
+                            setTimeout(() => tagsGroup.classList.remove('template-filled'), 1200);
+                        }
+                        
+                        // Atualizar estado da prioridade
+                        const prioridadeGroup = prioridadeSelect ? prioridadeSelect.closest('.input-group-outline') : null;
+                        if (prioridadeGroup && prioridadeSelect.value) {
+                            prioridadeGroup.classList.add('has-value', 'is-filled', 'template-filled');
+                            setTimeout(() => prioridadeGroup.classList.remove('template-filled'), 1200);
+                        }
+                    }, 100);
+                    
+                    // Atualizar SLA
+                    if (typeof updateSLAEstimate === 'function') {
+                        updateSLAEstimate();
+                    }
+                    
+                    // Mostrar notificação com detalhes
+                    const templateName = this.textContent.trim();
+                    if (typeof showNotification === 'function') {
+                        showNotification(`✅ Template "${templateName}" aplicado com sucesso!\n📝 Título, descrição, prioridade e tags foram preenchidos automaticamente.`, 'success', 4000);
+                    } else {
+                        console.log(`Template "${templateName}" aplicado com sucesso!`);
+                        alert(`Template "${templateName}" aplicado com sucesso!`);
+                    }
+                    
+                    // Focar no primeiro campo vazio importante
+                    setTimeout(() => {
+                        const clienteSearch = document.getElementById('clienteSearch');
+                        const categoriaSelect = document.getElementById('categoriaSelect');
+                        
+                        if (clienteSearch && !clienteSearch.value) {
+                            clienteSearch.focus();
+                        } else if (categoriaSelect && !categoriaSelect.value) {
+                            categoriaSelect.focus();
+                        } else {
+                            // Se campos básicos estão preenchidos, focar no editor para personalização
+                            if (editorContent) {
+                                editorContent.focus();
+                                // Posicionar cursor no final do conteúdo
+                                const range = document.createRange();
+                                const sel = window.getSelection();
+                                range.selectNodeContents(editorContent);
+                                range.collapse(false);
+                                sel.removeAllRanges();
+                                sel.addRange(range);
+                            }
+                        }
+                    }, 200);
+                    
+                } else {
+                    console.error('Template não encontrado para a chave:', templateKey);
+                }
+            } catch (error) {
+                console.error('Erro ao aplicar template:', error);
+                alert('Erro ao aplicar template: ' + error.message);
+            }
+        });
+    });
+    
+    console.log('Templates inicializados. Total encontrados:', document.querySelectorAll('.template-option').length);
+    
+    // Função de notificação simples se não existir
+    function showNotification(message, type = 'info', duration = 3000) {
+        // Remover notificações existentes
+        const existingNotification = document.querySelector('.template-notification');
+        if (existingNotification) {
+            existingNotification.remove();
+        }
+        
+        const notification = document.createElement('div');
+        notification.className = 'template-notification alert alert-' + type;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            border: none;
+        `;
+        
+        const icons = {
+            'success': '✅',
+            'warning': '⚠️',
+            'danger': '❌',
+            'info': 'ℹ️'
+        };
+        
+        notification.innerHTML = `
+            <div class="d-flex align-items-center">
+                <span style="margin-right: 8px; font-size: 16px;">${icons[type] || icons.info}</span>
+                <span>${message}</span>
+                <button type="button" class="btn-close ms-auto" onclick="this.closest('.template-notification').remove()"></button>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animação de entrada
+        setTimeout(() => {
+            notification.style.opacity = '1';
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+        
+        // Auto-remove
+        if (duration > 0) {
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.style.opacity = '0';
+                    notification.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.remove();
+                        }
+                    }, 300);
+                }
+            }, duration);
+        }
+    }
+
+    // Indicador visual de prioridade
+    const prioridadeSelect = document.getElementById('prioridadeSelect');
+    const priorityIndicator = document.getElementById('priorityIndicator');
+
+    function updatePriorityIndicator(priority) {
+        const indicators = {
+            'baixa': { text: 'Baixa', class: 'priority-baixa', icon: 'flag' },
+            'media': { text: 'Média', class: 'priority-media', icon: 'flag' },
+            'alta': { text: 'Alta', class: 'priority-alta', icon: 'priority_high' },
+            'critica': { text: 'Crítica', class: 'priority-critica', icon: 'warning' }
+        };
+
+        const indicator = indicators[priority];
+        priorityIndicator.className = `priority-indicator ${indicator.class}`;
+        priorityIndicator.innerHTML = `<i class="material-symbols-rounded me-1">${indicator.icon}</i>${indicator.text}`;
+    }
+
+    prioridadeSelect.addEventListener('change', function() {
+        updatePriorityIndicator(this.value);
+        updateSLAEstimate();
+    });
+
+    // Editor de texto rico
+    function formatText(command) {
+        document.execCommand(command, false, null);
+        document.getElementById('editorContent').focus();
+    }
+    window.formatText = formatText;
+
+    // Sincronizar editor com textarea oculta
+    const editorContent = document.getElementById('editorContent');
+    const descricaoHidden = document.getElementById('descricaoHidden');
+
+    editorContent.addEventListener('input', function() {
+        descricaoHidden.value = this.innerHTML;
+    });
+
+    // Upload de arquivos
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const fileList = document.getElementById('fileList');
+    let selectedFiles = [];
+
+    fileUploadArea.addEventListener('click', () => fileInput.click());
+
+    fileUploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#2196f3';
+        this.style.background = '#f8f9ff';
+    });
+
+    fileUploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#ddd';
+        this.style.background = 'transparent';
+    });
+
+    fileUploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#ddd';
+        this.style.background = 'transparent';
+        handleFiles(e.dataTransfer.files);
+    });
+
+    fileInput.addEventListener('change', function() {
+        handleFiles(this.files);
+    });
+
+    function handleFiles(files) {
+        const uploadProgress = document.getElementById('uploadProgress');
+        const progressBar = uploadProgress.querySelector('.progress-bar');
+        const progressText = uploadProgress.querySelector('small');
+        
+        uploadProgress.style.display = 'block';
+        progressBar.style.width = '20%';
+        progressText.textContent = 'Validando arquivos...';
+        
+        let validFiles = [];
+        let errors = [];
+        
+        Array.from(files).forEach(file => {
+            // Validações detalhadas
+            if (selectedFiles.length >= 5) {
+                errors.push(`Máximo de 5 arquivos permitidos`);
+                return;
+            }
+            
+            if (file.size > 10 * 1024 * 1024) {
+                errors.push(`${file.name}: arquivo muito grande (máx. 10MB)`);
+                return;
+            }
+            
+            const allowedTypes = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.txt'];
+            const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+            if (!allowedTypes.includes(fileExt)) {
+                errors.push(`${file.name}: tipo de arquivo não permitido`);
+                return;
+            }
+            
+            // Verificar duplicatas
+            if (selectedFiles.some(existing => existing.name === file.name)) {
+                errors.push(`${file.name}: arquivo já adicionado`);
+                return;
+            }
+            
+            validFiles.push(file);
+        });
+        
+        progressBar.style.width = '60%';
+        progressText.textContent = 'Processando arquivos válidos...';
+        
+        // Adicionar arquivos válidos
+        setTimeout(() => {
+            validFiles.forEach(file => {
+                selectedFiles.push(file);
+                displayFile(file);
+            });
+            
+            progressBar.style.width = '100%';
+            progressText.textContent = 'Concluído!';
+            
+            // Mostrar erros se houver
+            if (errors.length > 0) {
+                showNotification('Alguns arquivos não puderam ser adicionados:\n' + errors.join('\n'), 'warning');
+            } else if (validFiles.length > 0) {
+                showNotification(`${validFiles.length} arquivo(s) adicionado(s) com sucesso!`, 'success');
+            }
+            
+            // Esconder progress
+            setTimeout(() => {
+                uploadProgress.style.display = 'none';
+                progressBar.style.width = '0%';
+            }, 1500);
+        }, 800);
+    }
+
+    function displayFile(file) {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.innerHTML = `
+            <i class="material-symbols-rounded me-2">description</i>
+            <span>${file.name} (${formatFileSize(file.size)})</span>
+            <i class="material-symbols-rendered file-remove ms-auto" onclick="removeFile('${file.name}')">delete</i>
+        `;
+        fileList.appendChild(fileItem);
+    }
+
+    function removeFile(fileName) {
+        selectedFiles = selectedFiles.filter(file => file.name !== fileName);
+        updateFileList();
+    }
+    window.removeFile = removeFile;
+
+    function updateFileList() {
+        fileList.innerHTML = '';
+        selectedFiles.forEach(file => displayFile(file));
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Estimativa de SLA
+    function updateSLAEstimate() {
+        const priority = document.getElementById('prioridadeSelect').value;
+        const slaEstimate = document.getElementById('slaEstimate');
+        const slaText = document.getElementById('slaText');
+
+        if (priority && slaEstimates[priority]) {
+            slaText.textContent = `Tempo estimado de resposta: ${slaEstimates[priority]}`;
+            slaEstimate.style.display = 'block';
+        }
+    }
+
+    // Preview do ticket
+    document.getElementById('previewBtn').addEventListener('click', function() {
+        const preview = document.getElementById('ticketPreview');
+        const content = document.getElementById('previewContent');
+        
+        const titulo = document.getElementById('tituloInput').value;
+        const descricao = document.getElementById('editorContent').innerHTML;
+        const prioridade = document.getElementById('prioridadeSelect').value;
+        
+        content.innerHTML = `
+            <h6><strong>Título:</strong> ${titulo || '[Não preenchido]'}</h6>
+            <p><strong>Prioridade:</strong> <span class="priority-indicator priority-${prioridade}">${prioridade}</span></p>
+            <div><strong>Descrição:</strong></div>
+            <div class="border p-3 mt-2">${descricao || '[Não preenchida]'}</div>
+            ${selectedFiles.length > 0 ? `<p class="mt-3"><strong>Anexos:</strong> ${selectedFiles.length} arquivo(s)</p>` : ''}
+        `;
+        
+        preview.style.display = preview.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // Sistema de notificações melhorado
+    function showNotification(message, type = 'info', duration = 4000) {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} alert-dismissible notification-toast`;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            max-width: 500px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            border: none;
+        `;
+        
+        const icons = {
+            'success': 'check_circle',
+            'warning': 'warning',
+            'danger': 'error',
+            'info': 'info'
+        };
+        
+        notification.innerHTML = `
+            <div class="d-flex align-items-start">
+                <i class="material-symbols-rounded me-2" style="margin-top: 2px;">${icons[type] || 'info'}</i>
+                <div class="flex-grow-1">
+                    <div style="white-space: pre-line;">${message}</div>
+                </div>
+                <button type="button" class="btn-close ms-2" onclick="this.closest('.notification-toast').remove()"></button>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animação de entrada
+        setTimeout(() => {
+            notification.style.opacity = '1';
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+        
+        // Auto-remove
+        if (duration > 0) {
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            }, duration);
+        }
+    }
+        // Simulação - em produção faria requisição AJAX
+        const clientHistory = document.getElementById('clientHistory');
+        const historyContent = document.getElementById('historyContent');
+        
+        historyContent.innerHTML = `
+            <div class="d-flex justify-content-center py-3">
+                <div class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+                <span class="ms-2">Carregando histórico...</span>
+            </div>
+        `;
+        clientHistory.style.display = 'block';
+        
+        // Simulação de delay de carregamento
+        setTimeout(() => {
+            historyContent.innerHTML = `
+                <div class="row">
+                    <div class="col-12">
+                        <p class="text-muted">Últimos 3 tickets deste cliente:</p>
+                        <div class="list-group">
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">#12345 - Problema com login</h6>
+                                    <small>Há 3 dias</small>
+                                </div>
+                                <p class="mb-1">Status: <span class="badge bg-success">Resolvido</span></p>
+                            </div>
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">#12298 - Solicitação de acesso</h6>
+                                    <small class="text-muted">Há 1 semana</small>
+                                </div>
+                                <p class="mb-1">Status: <span class="badge bg-info">Fechado</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }, 1500);
+    }
+
+    // Atalhos de teclado e melhorias de acessibilidade
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + S para salvar rascunho
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            document.getElementById('saveDraftBtn').click();
+            showNotification('Rascunho salvo! (Ctrl/⌘ + S)', 'success', 2000);
+        }
+        
+        // Ctrl/Cmd + Enter para enviar
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            if (!document.getElementById('submitBtn').disabled) {
+                document.getElementById('submitBtn').click();
+            }
+        }
+        
+        // Ctrl/Cmd + P para preview
+        if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+            e.preventDefault();
+            document.getElementById('previewBtn').click();
+        }
+        
+        // ESC para fechar sugestões
+        if (e.key === 'Escape') {
+            const suggestions = document.getElementById('clienteSuggestions');
+            if (suggestions && suggestions.style.display === 'block') {
+                suggestions.style.display = 'none';
+            }
+        }
+    });
+    
+    // Melhorias de acessibilidade
+    function improveAccessibility() {
+        // Adicionar role e aria-labels
+        const fileUploadArea = document.getElementById('fileUploadArea');
+        fileUploadArea.setAttribute('role', 'button');
+        fileUploadArea.setAttribute('tabindex', '0');
+        fileUploadArea.setAttribute('aria-label', 'Área para upload de arquivos. Pressione Enter ou Espaço para selecionar arquivos');
+        
+        // Suporte a teclado para upload
+        fileUploadArea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                document.getElementById('fileInput').click();
+            }
+        });
+        
+        // Adicionar tooltips informativos
+        const templates = document.querySelectorAll('.template-option');
+        templates.forEach(template => {
+            template.setAttribute('title', 'Clique para aplicar este template');
+            template.setAttribute('role', 'button');
+            template.setAttribute('tabindex', '0');
+        });
+        
+        // Navegação por teclado nos templates
+        templates.forEach((template, index) => {
+            template.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.click();
+                }
+                
+                if (e.key === 'ArrowRight' && index < templates.length - 1) {
+                    templates[index + 1].focus();
+                }
+                
+                if (e.key === 'ArrowLeft' && index > 0) {
+                    templates[index - 1].focus();
+                }
+            });
+        });
+    }
+
+    // Auto-save (rascunho)
+    let autoSaveTimeout;
+    function autoSave() {
+        clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = setTimeout(() => {
+            const formData = new FormData(document.getElementById('ticketForm'));
+            
+            // Simulação de salvamento
+            const indicator = document.getElementById('autoSaveIndicator');
+            indicator.style.display = 'block';
+            setTimeout(() => {
+                indicator.style.display = 'none';
+            }, 2000);
+            
+            console.log('Rascunho salvo automaticamente');
+        }, 3000);
+    }
+
+    // Detectar mudanças nos campos para auto-save
+    document.querySelectorAll('#ticketForm input, #ticketForm select, #ticketForm textarea').forEach(field => {
+        field.addEventListener('input', autoSave);
+    });
+
+    document.getElementById('editorContent').addEventListener('input', autoSave);
+
+    // Inicializar indicador de prioridade
+    updatePriorityIndicator('media');
+    updateSLAEstimate();
+
+    // Validações em tempo real melhoradas
+    const form = document.getElementById('ticketForm');
+    
+    // Validação de campos obrigatórios
+    function validateField(field) {
+        const group = field.closest('.input-group-outline') || field.closest('.mb-3') || field.closest('.mb-4');
+        let isValid = true;
+        let message = '';
+        
+        // Remove validações anteriores
+        const existingError = group.querySelector('.field-error');
+        if (existingError) existingError.remove();
+        group.classList.remove('is-invalid', 'is-valid');
+        
+        if (field.hasAttribute('required') && (!field.value || field.value.trim() === '')) {
+            isValid = false;
+            message = 'Este campo é obrigatório';
+        } else if (field.id === 'tituloInput' && field.value.length < 5) {
+            isValid = false;
+            message = 'O título deve ter pelo menos 5 caracteres';
+        } else if (field.id === 'clienteId' && !field.value) {
+            isValid = false;
+            message = 'Selecione um cliente válido';
+        }
+        
+        // Aplicar estilos de validação
+        if (!isValid) {
+            group.classList.add('is-invalid');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'field-error';
+            errorDiv.style.cssText = 'color: #dc3545; font-size: 12px; margin-top: 4px;';
+            errorDiv.innerHTML = `<i class="material-symbols-rounded" style="font-size: 14px; vertical-align: text-top;">error</i> ${message}`;
+            group.appendChild(errorDiv);
+        } else if (field.value) {
+            group.classList.add('is-valid');
+        }
+        
+        return isValid;
+    }
+    
+    // Validação do editor rico
+    function validateEditor() {
+        const editorContent = document.getElementById('editorContent');
+        const editorContainer = editorContent.closest('.mb-3');
+        const existingError = editorContainer.querySelector('.field-error');
+        if (existingError) existingError.remove();
+        
+        const content = editorContent.innerHTML.replace(/<[^>]*>/g, '').trim();
+        if (!content || content === '') {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'field-error';
+            errorDiv.style.cssText = 'color: #dc3545; font-size: 12px; margin-top: 4px;';
+            errorDiv.innerHTML = '<i class="material-symbols-rounded" style="font-size: 14px; vertical-align: text-top;">error</i> A descrição é obrigatória';
+            editorContainer.appendChild(errorDiv);
+            return false;
+        }
+        
+        if (content.length < 10) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'field-error';
+            errorDiv.style.cssText = 'color: #dc3545; font-size: 12px; margin-top: 4px;';
+            errorDiv.innerHTML = '<i class="material-symbols-rounded" style="font-size: 14px; vertical-align: text-top;">error</i> A descrição deve ter pelo menos 10 caracteres';
+            editorContainer.appendChild(errorDiv);
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // Validação em tempo real
+    document.querySelectorAll('#ticketForm input[required], #ticketForm select[required]').forEach(field => {
+        field.addEventListener('blur', () => validateField(field));
+        field.addEventListener('input', () => {
+            if (field.classList.contains('was-validated')) {
+                setTimeout(() => validateField(field), 100);
+            }
+        });
+    });
+    
+    // Validação do editor em tempo real
+    document.getElementById('editorContent').addEventListener('blur', validateEditor);
+    
+    form.addEventListener('submit', function(e) {
+        let isFormValid = true;
+        
+        // Sincronizar editor com campo oculto
+        const editorContent = document.getElementById('editorContent');
+        const descricaoHidden = document.getElementById('descricaoHidden');
+        descricaoHidden.value = editorContent.innerHTML;
+        
+        // Marcar como validado
+        form.classList.add('was-validated');
+        
+        // Validar todos os campos obrigatórios
+        document.querySelectorAll('#ticketForm input[required], #ticketForm select[required]').forEach(field => {
+            if (!validateField(field)) {
+                isFormValid = false;
+            }
+        });
+        
+        // Validar editor
+        if (!validateEditor()) {
+            isFormValid = false;
+        }
+        
+        if (!isFormValid) {
+            e.preventDefault();
+            showNotification('Por favor, corrija os erros destacados no formulário.', 'danger');
+            
+            // Focar no primeiro campo com erro
+            const firstError = form.querySelector('.is-invalid input, .is-invalid select');
+            if (firstError) {
+                firstError.focus();
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            
+            return false;
+        }
+        
+        // Mostrar feedback de envio
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Criando ticket...';
+        submitBtn.disabled = true;
+        
+        showNotification('Criando ticket...', 'info', 0);
+    });
+    
+    // Sistema de gerenciamento de labels simplificado e organizado
+    function initInputLabels() {
+        const inputGroups = document.querySelectorAll('.input-group-outline');
+        
+        inputGroups.forEach(group => {
+            const input = group.querySelector('.form-control');
+            
+            if (input) {
+                
+                // Função para verificar se há valor no campo
+                function hasValue() {
+                    if (input.tagName.toLowerCase() === 'select') {
+                        return input.value !== '' && input.selectedIndex > 0;
+                    }
+                    return input.value && input.value.trim() !== '';
+                }
+                
+                // Função para atualizar classes
+                function updateClasses() {
+                    const isFocused = document.activeElement === input;
+                    const hasVal = hasValue();
+                    const isDisabled = input.disabled;
+                    
+                    // Remover todas as classes
+                    group.classList.remove('is-focused', 'is-filled', 'has-value');
+                    
+                    // Adicionar classes conforme estado
+                    if (isFocused) {
+                        group.classList.add('is-focused', 'is-filled');
+                    } else if (hasVal || isDisabled) {
+                        group.classList.add('has-value', 'is-filled');
+                    }
+                }
+                
+                // Event listeners
+                input.addEventListener('focus', () => {
+                    group.classList.add('is-focused', 'is-filled');
+                });
+                
+                input.addEventListener('blur', () => {
+                    setTimeout(updateClasses, 50);
+                });
+                
+                input.addEventListener('input', updateClasses);
+                input.addEventListener('change', updateClasses);
+                
+                // Estado inicial
+                updateClasses();
+                
+                // Verificação especial para campos preenchidos
+                if (hasValue() || input.disabled) {
+                    group.classList.add('has-value', 'is-filled');
+                }
+            }
+        });
+        
+        // Verificação adicional para campos preenchidos via JavaScript
+        setTimeout(() => {
+            inputGroups.forEach(group => {
+                const input = group.querySelector('.form-control');
+                if (input && input.value && input.value.trim() !== '') {
+                    group.classList.add('has-value', 'is-filled');
+                }
+            });
+        }, 200);
+    }
+    
+    // Inicializar labels quando a página carrega
+    initInputLabels();
+    
+    // Inicializar melhorias de acessibilidade
+    improveAccessibility();
+    
+    // Re-inicializar se novos elementos forem adicionados dinamicamente
+    const observer = new MutationObserver(() => {
+        initInputLabels();
+    });
+    
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+});
+</script>
+{% endblock %}

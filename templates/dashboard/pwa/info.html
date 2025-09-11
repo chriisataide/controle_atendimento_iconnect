@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-flex align-items-center">
+                        <p class="mb-0">{{ title }}</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h5 class="mb-3">📱 O que é um PWA (Progressive Web App)?</h5>
+                            <p class="text-muted">
+                                PWA (Progressive Web App) é uma aplicação web que funciona como um aplicativo nativo. 
+                                Você pode instalar nosso sistema diretamente no seu dispositivo e usar offline.
+                            </p>
+                            
+                            <div class="mt-4">
+                                <h6>🚀 Vantagens do PWA:</h6>
+                                <ul class="text-muted">
+                                    <li><strong>Instalação rápida:</strong> Sem precisar da App Store</li>
+                                    <li><strong>Funciona offline:</strong> Acesse dados mesmo sem internet</li>
+                                    <li><strong>Notificações:</strong> Receba alertas importantes</li>
+                                    <li><strong>Atualizações automáticas:</strong> Sempre na versão mais recente</li>
+                                    <li><strong>Economia de espaço:</strong> Menor que apps nativos</li>
+                                </ul>
+                            </div>
+
+                            <div class="mt-4">
+                                <h6>📲 Como instalar:</h6>
+                                <div class="row mt-3">
+                                    <div class="col-md-6">
+                                        <div class="card bg-gradient-light">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-desktop text-primary text-3xl mb-2"></i>
+                                                <h6>Desktop (Chrome/Edge)</h6>
+                                                <p class="text-sm mb-0">
+                                                    Procure o ícone de "instalar" na barra de endereços ou no menu ⋮
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card bg-gradient-light">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-mobile-alt text-success text-3xl mb-2"></i>
+                                                <h6>Mobile (Android/iOS)</h6>
+                                                <p class="text-sm mb-0">
+                                                    Toque no menu do navegador e selecione "Adicionar à tela inicial"
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <h6>🛠️ Status do PWA:</h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="card text-center">
+                                            <div class="card-body">
+                                                <span class="badge bg-gradient-success" id="pwa-installable">
+                                                    ✅ Instalável
+                                                </span>
+                                                <p class="text-xs mt-1 mb-0">Manifest configurado</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card text-center">
+                                            <div class="card-body">
+                                                <span class="badge bg-gradient-success" id="pwa-service-worker">
+                                                    ✅ Offline Ready
+                                                </span>
+                                                <p class="text-xs mt-1 mb-0">Service Worker ativo</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card text-center">
+                                            <div class="card-body">
+                                                <span class="badge bg-gradient-info" id="pwa-notifications">
+                                                    🔔 Notificações
+                                                </span>
+                                                <p class="text-xs mt-1 mb-0">Push habilitado</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 text-center">
+                                <button class="btn bg-gradient-primary" id="install-pwa" style="display: none;">
+                                    <i class="fas fa-download me-2"></i>
+                                    Instalar PWA
+                                </button>
+                                
+                                <div class="mt-3">
+                                    <a href="{% url 'dashboard:pwa_install_guide' %}" class="btn bg-gradient-info btn-sm">
+                                        <i class="fas fa-book me-2"></i>
+                                        Guia Detalhado de Instalação
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// PWA Installation
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    console.log('PWA: beforeinstallprompt event fired');
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('install-pwa').style.display = 'inline-block';
+});
+
+document.getElementById('install-pwa').addEventListener('click', async () => {
+    console.log('PWA: install button clicked');
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`PWA: User response to the install prompt: ${outcome}`);
+        deferredPrompt = null;
+        document.getElementById('install-pwa').style.display = 'none';
+    }
+});
+
+window.addEventListener('appinstalled', (evt) => {
+    console.log('PWA: app installed successfully');
+    document.getElementById('install-pwa').style.display = 'none';
+});
+
+// Check PWA status
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if running as PWA
+    if (window.matchMedia('(display-mode: standalone)').matches || 
+        window.navigator.standalone === true) {
+        document.body.classList.add('pwa-mode');
+    }
+    
+    // Check Service Worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration().then(function(registration) {
+            if (registration) {
+                document.getElementById('pwa-service-worker').textContent = '✅ Service Worker Ativo';
+                document.getElementById('pwa-service-worker').className = 'badge bg-gradient-success';
+            } else {
+                document.getElementById('pwa-service-worker').textContent = '⚠️ Service Worker Inativo';
+                document.getElementById('pwa-service-worker').className = 'badge bg-gradient-warning';
+            }
+        });
+    }
+    
+    // Check Notification permission
+    if ('Notification' in window) {
+        if (Notification.permission === 'granted') {
+            document.getElementById('pwa-notifications').textContent = '🔔 Notificações Ativadas';
+            document.getElementById('pwa-notifications').className = 'badge bg-gradient-success';
+        } else if (Notification.permission === 'denied') {
+            document.getElementById('pwa-notifications').textContent = '🔕 Notificações Bloqueadas';
+            document.getElementById('pwa-notifications').className = 'badge bg-gradient-danger';
+        } else {
+            document.getElementById('pwa-notifications').textContent = '⚠️ Pedir Permissão';
+            document.getElementById('pwa-notifications').className = 'badge bg-gradient-warning';
+            document.getElementById('pwa-notifications').style.cursor = 'pointer';
+            document.getElementById('pwa-notifications').addEventListener('click', function() {
+                Notification.requestPermission().then(function(permission) {
+                    location.reload();
+                });
+            });
+        }
+    }
+});
+</script>
+{% endblock %}

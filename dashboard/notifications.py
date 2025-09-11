@@ -1,12 +1,14 @@
 """
 Sistema de notificações do iConnect.
-Suporte para email, Slack e WhatsApp.
+Suporte para email, Slack, WhatsApp e notificações em tempo real.
 """
 import logging
 from django.conf import settings
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from django.utils import timezone
+from django.contrib.auth.models import User
 import requests
 import json
 
@@ -19,6 +21,33 @@ class NotificationService:
     def __init__(self):
         self.slack_config = getattr(settings, 'SLACK_CONFIG', {})
         self.whatsapp_config = getattr(settings, 'WHATSAPP_CONFIG', {})
+        self.notification_types = {
+            'new_ticket': {
+                'title': 'Novo Ticket Criado',
+                'icon': 'add_circle',
+                'color': 'primary'
+            },
+            'ticket_assigned': {
+                'title': 'Ticket Atribuído',
+                'icon': 'assignment',
+                'color': 'info'
+            },
+            'ticket_status_change': {
+                'title': 'Status do Ticket Alterado',
+                'icon': 'update',
+                'color': 'warning'
+            },
+            'sla_warning': {
+                'title': 'Alerta de SLA',
+                'icon': 'warning',
+                'color': 'danger'
+            },
+            'new_interaction': {
+                'title': 'Nova Interação',
+                'icon': 'chat',
+                'color': 'success'
+            }
+        }
     
     def send_ticket_notification(self, ticket, event_type, recipient_email=None, extra_context=None):
         """Envia notificação relacionada a tickets"""
