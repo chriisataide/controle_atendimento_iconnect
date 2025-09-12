@@ -7,6 +7,7 @@ djangorestframework==3.16.1
 # WebSocket & Real-time
 channels==4.0.0
 channels-redis==4.2.0
+daphne==4.0.0
 
 # Security & Production
 python-decouple==3.8

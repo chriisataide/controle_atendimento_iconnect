@@ -97,6 +97,88 @@
     </div>
 </div>
 
+<!-- ========== SLA QUICK ACCESS SECTION ========== -->
+<div class="row mt-4">
+    <div class="col-12">
+        <h6 class="ms-2 mt-4 mb-3">SLA & Qualidade de Serviço</h6>
+    </div>
+    
+    <!-- SLA Dashboard Card -->
+    <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
+        <div class="card cursor-pointer hover-lift" onclick="window.location.href='{% url 'dashboard:sla_dashboard' %}'">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Dashboard SLA</p>
+                        <h4 class="mb-0">Gerenciar</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">schedule</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">
+                    <span class="text-warning font-weight-bolder">
+                        <i class="material-symbols-rounded text-sm">visibility</i> Visualizar SLA
+                    </span>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- SLA Policies Card -->
+    <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
+        <div class="card cursor-pointer hover-lift" onclick="window.location.href='{% url 'dashboard:sla_policies' %}'">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Políticas SLA</p>
+                        <h4 class="mb-0">8 Ativas</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">policy</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">
+                    <span class="text-info font-weight-bolder">
+                        <i class="material-symbols-rounded text-sm">settings</i> Configurar
+                    </span>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- SLA Alerts Card -->
+    <div class="col-xl-4 col-sm-6">
+        <div class="card cursor-pointer hover-lift" onclick="window.location.href='{% url 'dashboard:sla_alerts' %}'">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Alertas SLA</p>
+                        <h4 class="mb-0">329 Ativos</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">warning</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">
+                    <span class="text-danger font-weight-bolder">
+                        <i class="material-symbols-rounded text-sm">notifications</i> Verificar
+                    </span>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Analytics Dashboard Section -->
 <div class="row mt-4">
     <div class="col-12">
@@ -1283,4 +1365,24 @@
         container.innerHTML = heatmapHTML;
     }
 </script>
+
+<!-- CSS para efeitos SLA cards -->
+<style>
+    .cursor-pointer {
+        cursor: pointer;
+    }
+    
+    .hover-lift {
+        transition: all 0.3s ease;
+    }
+    
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
+    
+    .hover-lift:hover .icon {
+        transform: scale(1.1);
+    }
+</style>
 {% endblock %}

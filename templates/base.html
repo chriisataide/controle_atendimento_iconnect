@@ -41,6 +41,8 @@
     <link id="pagestyle" href="{% static 'css/material-dashboard.css' %}?v=3.2.0" rel="stylesheet" />
     <!-- Dashboard Enhanced Colors -->
     <link href="{% static 'css/dashboard-colors.css' %}" rel="stylesheet" />
+    <!-- PWA Mobile Styles -->
+    <link href="{% static 'css/mobile.css' %}" rel="stylesheet" />
     <!-- Chart.js for Analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Socket.IO for Real-time notifications -->
@@ -133,6 +135,63 @@
                     <a class="nav-link text-dark {% if 'search' in request.resolver_match.url_name %}active bg-gradient-primary text-white{% endif %}" href="{% url 'dashboard:search' %}">
                         <i class="material-icons opacity-5">search</i>
                         <span class="nav-link-text ms-1">Busca Avançada</span>
+                    </a>
+                </li>
+
+                <!-- ========== SISTEMA DE CHAT ========== -->
+                <li class="nav-item mt-3">
+                    <h6 class="ps-4 ms-2 text-uppercase text-xs text-dark font-weight-bolder opacity-8">Comunicação</h6>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-dark {% if 'chat_dashboard' in request.resolver_match.url_name %}active bg-gradient-success text-white{% endif %}" href="{% url 'dashboard:chat_dashboard' %}">
+                        <i class="material-icons opacity-5">forum</i>
+                        <span class="nav-link-text ms-1">Chat Avançado</span>
+                        <span class="badge badge-sm bg-gradient-success ms-auto">Novo</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-dark {% if 'create_chat_room' in request.resolver_match.url_name %}active bg-gradient-info text-white{% endif %}" href="{% url 'dashboard:create_chat_room' %}">
+                        <i class="material-icons opacity-5">add_comment</i>
+                        <span class="nav-link-text ms-1">Nova Conversa</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-dark {% if 'chatbot_settings' in request.resolver_match.url_name %}active bg-gradient-warning text-white{% endif %}" href="{% url 'dashboard:chatbot_settings' %}">
+                        <i class="material-icons opacity-5">smart_toy</i>
+                        <span class="nav-link-text ms-1">ChatBot Config</span>
+                    </a>
+                </li>
+
+                <!-- ========== SLA MANAGEMENT ========== -->
+                <li class="nav-item mt-3">
+                    <h6 class="ps-4 ms-2 text-uppercase text-xs text-dark font-weight-bolder opacity-8">SLA & Qualidade</h6>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-dark {% if 'sla_dashboard' in request.resolver_match.url_name %}active bg-gradient-warning text-white{% endif %}" href="{% url 'dashboard:sla_dashboard' %}">
+                        <i class="material-icons opacity-5">schedule</i>
+                        <span class="nav-link-text ms-1">Dashboard SLA</span>
+                        <span class="badge badge-sm bg-gradient-warning ms-auto">SLA</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-dark {% if 'sla_policies' in request.resolver_match.url_name %}active bg-gradient-info text-white{% endif %}" href="{% url 'dashboard:sla_policies' %}">
+                        <i class="material-icons opacity-5">policy</i>
+                        <span class="nav-link-text ms-1">Políticas SLA</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-dark {% if 'sla_alerts' in request.resolver_match.url_name %}active bg-gradient-danger text-white{% endif %}" href="{% url 'dashboard:sla_alerts' %}">
+                        <i class="material-icons opacity-5">warning</i>
+                        <span class="nav-link-text ms-1">Alertas SLA</span>
+                        {% if sla_alerts_count > 0 %}
+                        <span class="badge badge-sm bg-gradient-danger ms-auto">{{ sla_alerts_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-dark {% if 'sla_reports' in request.resolver_match.url_name %}active bg-gradient-success text-white{% endif %}" href="{% url 'dashboard:sla_reports' %}">
+                        <i class="material-icons opacity-5">analytics</i>
+                        <span class="nav-link-text ms-1">Relatórios SLA</span>
                     </a>
                 </li>
 
@@ -1054,5 +1113,158 @@
             }, 150);
         }
     </script>
+    
+    <!-- PWA Scripts -->
+    <script src="{% static 'js/mobile.js' %}"></script>
+    <script src="{% static 'js/push-notifications.js' %}"></script>
+    <script src="{% static 'js/cache.js' %}"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('{% static "js/sw.js" %}')
+                    .then((registration) => {
+                        console.log('Service Worker registrado com sucesso:', registration);
+                        
+                        // Verifica por atualizações do service worker
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // Nova versão disponível
+                                    showUpdateAvailableNotification();
+                                }
+                            });
+                        });
+                    })
+                    .catch((error) => {
+                        console.log('Falha ao registrar Service Worker:', error);
+                    });
+            });
+        }
+        
+        function showUpdateAvailableNotification() {
+            if (window.mobileManager) {
+                const updateBanner = document.createElement('div');
+                updateBanner.className = 'update-banner';
+                updateBanner.innerHTML = `
+                    <div class="update-banner-content">
+                        <div class="update-banner-info">
+                            <i class="material-icons">system_update</i>
+                            <div>
+                                <strong>Atualização disponível</strong>
+                                <small>Nova versão do app disponível</small>
+                            </div>
+                        </div>
+                        <div class="update-banner-actions">
+                            <button class="btn-update">Atualizar</button>
+                            <button class="btn-dismiss">×</button>
+                        </div>
+                    </div>
+                `;
+                
+                updateBanner.style.cssText = `
+                    position: fixed;
+                    top: 16px;
+                    left: 16px;
+                    right: 16px;
+                    background: #2196F3;
+                    color: white;
+                    border-radius: 12px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    z-index: 1060;
+                    transform: translateY(-100%);
+                    transition: transform 0.3s ease;
+                `;
+                
+                document.body.appendChild(updateBanner);
+                
+                // Anima entrada
+                requestAnimationFrame(() => {
+                    updateBanner.style.transform = 'translateY(0)';
+                });
+                
+                // Event listeners
+                updateBanner.querySelector('.btn-update').addEventListener('click', () => {
+                    if (navigator.serviceWorker.controller) {
+                        navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+                        window.location.reload();
+                    }
+                });
+                
+                updateBanner.querySelector('.btn-dismiss').addEventListener('click', () => {
+                    updateBanner.style.transform = 'translateY(-100%)';
+                    setTimeout(() => updateBanner.remove(), 300);
+                });
+            }
+        }
+        
+        // Handle service worker messages
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                if (event.data && event.data.type === 'SW_UPDATED') {
+                    window.location.reload();
+                }
+            });
+        }
+    </script>
+    
+    <!-- PWA Banner Styles -->
+    <style>
+        .update-banner-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+        }
+        
+        .update-banner-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .update-banner-info i {
+            font-size: 24px;
+        }
+        
+        .update-banner-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-update {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .btn-update:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .btn-dismiss {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: white;
+            padding: 4px 8px;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+        
+        .btn-dismiss:hover {
+            opacity: 1;
+        }
+    </style>
 </body>
 </html>

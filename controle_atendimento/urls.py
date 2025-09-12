@@ -28,6 +28,7 @@ urlpatterns = [
     path('logout/', views.custom_logout, name='logout'),
     path('health/', HealthCheckView.as_view(), name='health_check'),  # Health check na raiz
     path('dashboard/', include('dashboard.urls')),
+    path('cliente/', include('dashboard.cliente_urls')),  # Portal Self-Service
     
     # APIs Avançadas (API temporariamente desabilitada - funcionará com sistema base)
     # path('api/', include('dashboard.api_urls')),

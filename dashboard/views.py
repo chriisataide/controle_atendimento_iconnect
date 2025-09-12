@@ -10,9 +10,11 @@ from django.urls import reverse_lazy, reverse
 from django.core.paginator import Paginator
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django.db.models import Q, Count, Case, When, IntegerField
 from datetime import datetime, timedelta
 import json
-from .models import Cliente, Ticket, PerfilUsuario, CategoriaTicket, InteracaoTicket, PerfilAgente, StatusTicket, PrioridadeTicket, TicketAnexo
+from .models import Cliente, Ticket, PerfilUsuario, CategoriaTicket, InteracaoTicket, PerfilAgente, StatusTicket, PrioridadeTicket, TicketAnexo, Notification
 
 User = get_user_model()
 
@@ -1214,3 +1216,182 @@ def tickets_chart_api(request):
         'labels': labels,
         'data': data
     })
+
+
+# ========== VIEWS DE API PARA NOTIFICAÇÕES ==========
+
+@login_required
+@require_http_methods(["GET"])
+def api_notifications_recent(request):
+    """
+    API para buscar notificações recentes do usuário
+    """
+    try:
+        # Buscar últimas 20 notificações do usuário
+        notifications = Notification.objects.filter(
+            user=request.user
+        ).select_related('ticket').order_by('-created_at')[:20]
+        
+        # Converter para formato JSON
+        notifications_data = []
+        for notification in notifications:
+            notifications_data.append({
+                'id': notification.id,
+                'title': notification.title,
+                'message': notification.message,
+                'type': notification.type,
+                'is_read': notification.read,
+                'created_at': notification.created_at.isoformat(),
+                'ticket_id': notification.ticket.id if notification.ticket else None,
+                'ticket_numero': notification.ticket.numero if notification.ticket else None
+            })
+        
+        # Contar não lidas
+        unread_count = Notification.objects.filter(
+            user=request.user,
+            read=False
+        ).count()
+        
+        return JsonResponse({
+            'success': True,
+            'notifications': notifications_data,
+            'unread_count': unread_count
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_notification_mark_read(request, notification_id):
+    """
+    API para marcar uma notificação como lida
+    """
+    try:
+        notification = get_object_or_404(
+            Notification, 
+            id=notification_id, 
+            user=request.user
+        )
+        
+        notification.mark_as_read()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Notificação marcada como lida'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required  
+@require_http_methods(["POST"])
+def api_notifications_mark_all_read(request):
+    """
+    API para marcar todas as notificações como lidas
+    """
+    try:
+        updated_count = Notification.objects.filter(
+            user=request.user,
+            read=False
+        ).update(
+            read=True,
+            read_at=timezone.now()
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'{updated_count} notificações marcadas como lidas'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+def notifications_list(request):
+    """
+    Página completa de notificações
+    """
+    # Filtros
+    filter_type = request.GET.get('type', '')
+    filter_read = request.GET.get('read', '')
+    filter_period = request.GET.get('period', '')
+    search_query = request.GET.get('search', '')
+    
+    notifications = Notification.objects.filter(user=request.user)
+    
+    # Filtro por tipo
+    if filter_type:
+        notifications = notifications.filter(type=filter_type)
+    
+    # Filtro por status de leitura
+    if filter_read == 'unread':
+        notifications = notifications.filter(read=False)
+    elif filter_read == 'read':
+        notifications = notifications.filter(read=True)
+    
+    # Filtro por período
+    if filter_period == 'today':
+        notifications = notifications.filter(created_at__date=timezone.now().date())
+    elif filter_period == 'week':
+        week_ago = timezone.now() - timedelta(days=7)
+        notifications = notifications.filter(created_at__gte=week_ago)
+    elif filter_period == 'month':
+        month_ago = timezone.now() - timedelta(days=30)
+        notifications = notifications.filter(created_at__gte=month_ago)
+    
+    # Busca por texto
+    if search_query:
+        from django.db.models import Q
+        notifications = notifications.filter(
+            Q(title__icontains=search_query) |
+            Q(message__icontains=search_query) |
+            Q(type__icontains=search_query)
+        )
+    
+    notifications = notifications.select_related('ticket').order_by('-created_at')
+    
+    # Paginação
+    paginator = Paginator(notifications, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Estatísticas
+    stats = {
+        'total': Notification.objects.filter(user=request.user).count(),
+        'unread': Notification.objects.filter(user=request.user, read=False).count(),
+        'today': Notification.objects.filter(
+            user=request.user,
+            created_at__date=timezone.now().date()
+        ).count()
+    }
+    
+    # Tipos disponíveis
+    tipos_disponiveis = Notification.objects.filter(
+        user=request.user
+    ).values_list('type', flat=True).distinct()
+    
+    context = {
+        'notifications': page_obj,
+        'stats': stats,
+        'tipos_disponiveis': tipos_disponiveis,
+        'filter_type': filter_type,
+        'filter_read': filter_read,
+        'filter_period': filter_period,
+        'search_query': search_query,
+        'page_obj': page_obj
+    }
+    
+    return render(request, 'dashboard/notifications.html', context)

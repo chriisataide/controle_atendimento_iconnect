@@ -40,12 +40,14 @@ ALLOWED_HOSTS = ['*', 'testserver', 'localhost', '127.0.0.1']
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',  # Django Channels ASGI
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',  # WebSocket support
     'rest_framework',
     'rest_framework.authtoken',
     'dashboard',
@@ -173,6 +175,18 @@ REST_FRAMEWORK = {
         'anon': '100/hour',
         'user': '1000/hour'
     }
+}
+
+# Django Channels Configuration
+ASGI_APPLICATION = 'controle_atendimento.asgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

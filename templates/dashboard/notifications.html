@@ -1,0 +1,699 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notificações - iConnect{% endblock %}
+
+{% block extra_css %}
+<style>
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+/* Estilos para filtros melhorados */
+.form-label {
+    font-weight: 600;
+    color: #344767;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.form-select {
+    border: 1px solid #d2d6da;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    background-color: #fff;
+}
+
+.form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    outline: none;
+}
+
+.badge {
+    transition: all 0.3s ease;
+}
+
+.badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.filter-tag {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    margin: 0 0.25rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-1">Central de Notificações</h4>
+                    <p class="text-muted mb-0">Acompanhe todas as suas notificações em tempo real</p>
+                </div>
+                
+                {% if stats.unread > 0 %}
+                <button class="btn btn-primary" onclick="markAllAsRead()">
+                    <i class="material-icons">done_all</i>
+                    Marcar todas como lidas
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary text-center border-radius-xl mt-n4 position-absolute">
+                        <i class="material-icons opacity-10">notifications</i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0 text-capitalize">Total de Notificações</p>
+                        <h4 class="mb-0">{{ stats.total }}</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0">
+                <div class="card-footer p-3">
+                    <p class="mb-0"><span class="text-info text-sm font-weight-bolder">{{ stats.total }} </span>notificações registradas</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute">
+                        <i class="material-icons opacity-10">mark_email_unread</i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0 text-capitalize">Não Lidas</p>
+                        <h4 class="mb-0">{{ stats.unread }}</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0">
+                <div class="card-footer p-3">
+                    <p class="mb-0"><span class="text-warning text-sm font-weight-bolder">{{ stats.unread }} </span>aguardando leitura</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
+                        <i class="material-icons opacity-10">today</i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0 text-capitalize">Recebidas Hoje</p>
+                        <h4 class="mb-0">{{ stats.today }}</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0">
+                <div class="card-footer p-3">
+                    <p class="mb-0"><span class="text-success text-sm font-weight-bolder">{{ stats.today }} </span>notificações hoje</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filtros Avançados -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-flex align-items-center">
+                        <div class="icon icon-shape bg-gradient-info shadow-info text-center border-radius-md me-3">
+                            <i class="material-icons opacity-10">tune</i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Filtros de Pesquisa</h6>
+                            <p class="text-sm mb-0">Personalize a exibição das suas notificações</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="GET" id="filterForm">
+                        <div class="row g-4">
+                            <!-- Filtro por Tipo -->
+                            <div class="col-lg-4 col-md-6">
+                                <label class="form-label">
+                                    <i class="material-icons text-sm me-1" style="vertical-align: middle;">category</i>
+                                    Tipo de Notificação
+                                </label>
+                                <select name="type" class="form-select" onchange="updateFilterPreview()">
+                                    <option value="">🔍 Todos os tipos</option>
+                                    {% for tipo in tipos_disponiveis %}
+                                        <option value="{{ tipo }}" {% if filter_type == tipo %}selected{% endif %}>
+                                            {% if tipo == 'new_ticket' %}🎫 Novo Ticket
+                                            {% elif tipo == 'sla_warning' %}⚠️ Alerta SLA
+                                            {% elif tipo == 'sla_breach' %}🚨 SLA Vencido
+                                            {% elif tipo == 'new_message' %}💬 Nova Mensagem
+                                            {% elif tipo == 'ticket_updated' %}🔄 Ticket Atualizado
+                                            {% else %}📋 {{ tipo|title }}
+                                            {% endif %}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Filtro por Status -->
+                            <div class="col-lg-4 col-md-6">
+                                <label class="form-label">
+                                    <i class="material-icons text-sm me-1" style="vertical-align: middle;">visibility</i>
+                                    Status de Leitura
+                                </label>
+                                <select name="read" class="form-select" onchange="updateFilterPreview()">
+                                    <option value="">👁️ Todas as notificações</option>
+                                    <option value="unread" {% if filter_read == 'unread' %}selected{% endif %}>🔴 Não lidas</option>
+                                    <option value="read" {% if filter_read == 'read' %}selected{% endif %}>✅ Já lidas</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Filtro por Data -->
+                            <div class="col-lg-4 col-md-12">
+                                <label class="form-label">
+                                    <i class="material-icons text-sm me-1" style="vertical-align: middle;">date_range</i>
+                                    Período
+                                </label>
+                                <select name="period" class="form-select" onchange="updateFilterPreview()">
+                                    <option value="">📅 Qualquer período</option>
+                                    <option value="today" {% if request.GET.period == 'today' %}selected{% endif %}>📍 Hoje</option>
+                                    <option value="week" {% if request.GET.period == 'week' %}selected{% endif %}>📊 Esta semana</option>
+                                    <option value="month" {% if request.GET.period == 'month' %}selected{% endif %}>📈 Este mês</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Preview dos Filtros Ativos -->
+                        <div class="row mt-3" id="filterPreview" style="display: none;">
+                            <div class="col-12">
+                                <div class="alert alert-info border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                    <div class="d-flex align-items-center text-white">
+                                        <i class="material-icons me-2">filter_list</i>
+                                        <span>Filtros ativos: </span>
+                                        <div class="ms-2" id="activeFilters"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Botões de Ação -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary btn-lg">
+                                            <i class="material-icons me-2">search</i>
+                                            Aplicar Filtros
+                                        </button>
+                                        <a href="{% url 'dashboard:notifications' %}" class="btn btn-outline-secondary btn-lg">
+                                            <i class="material-icons me-2">clear</i>
+                                            Limpar Tudo
+                                        </a>
+                                    </div>
+                                    
+                                    <!-- Filtros Rápidos -->
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <span class="text-sm text-muted me-2">Filtros rápidos:</span>
+                                        <a href="?read=unread" class="badge bg-gradient-warning text-decoration-none">
+                                            🔴 Não lidas
+                                        </a>
+                                        <a href="?type=new_ticket" class="badge bg-gradient-primary text-decoration-none">
+                                            🎫 Novos Tickets
+                                        </a>
+                                        <a href="?type=sla_warning" class="badge bg-gradient-danger text-decoration-none">
+                                            ⚠️ Alertas SLA
+                                        </a>
+                                        <a href="?period=today" class="badge bg-gradient-success text-decoration-none">
+                                            📍 Hoje
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Lista de Notificações -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>Notificações</h6>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    {% if notifications %}
+                        <div class="notifications-list">
+                            {% for notification in notifications %}
+                                <div class="notification-item-full {% if not notification.lida %}unread{% endif %}" 
+                                     data-notification-id="{{ notification.id }}">
+                                    <div class="notification-icon-wrapper">
+                                        <div class="notification-icon {{ notification.tipo }}">
+                                            {% if notification.tipo == 'new_ticket' %}
+                                                <i class="material-icons">assignment</i>
+                                            {% elif notification.tipo == 'sla_warning' %}
+                                                <i class="material-icons">warning</i>
+                                            {% elif notification.tipo == 'sla_breach' %}
+                                                <i class="material-icons">error</i>
+                                            {% elif notification.tipo == 'new_message' %}
+                                                <i class="material-icons">message</i>
+                                            {% elif notification.tipo == 'ticket_updated' %}
+                                                <i class="material-icons">update</i>
+                                            {% else %}
+                                                <i class="material-icons">notifications</i>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="notification-content-full">
+                                        <div class="notification-header-full">
+                                            <h6 class="notification-title-full">{{ notification.titulo }}</h6>
+                                            <span class="notification-time-full">{{ notification.criado_em|timesince }} atrás</span>
+                                        </div>
+                                        
+                                        <p class="notification-message-full">{{ notification.mensagem }}</p>
+                                        
+                                        {% if notification.ticket %}
+                                            <div class="notification-ticket-info">
+                                                <span class="badge bg-gradient-primary">
+                                                    Ticket #{{ notification.ticket.numero }}
+                                                </span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="notification-actions-full">
+                                        {% if not notification.lida %}
+                                            <button class="btn btn-sm btn-outline-primary" 
+                                                    onclick="markAsRead({{ notification.id }})">
+                                                <i class="material-icons">done</i>
+                                                Marcar como lida
+                                            </button>
+                                        {% endif %}
+                                        
+                                        {% if notification.ticket %}
+                                            <a href="{% url 'dashboard:ticket_detail' notification.ticket.id %}" 
+                                               class="btn btn-sm btn-primary">
+                                                <i class="material-icons">open_in_new</i>
+                                                Ver Ticket
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Paginação -->
+                        {% if page_obj.has_other_pages %}
+                            <div class="d-flex justify-content-center mt-4">
+                                <nav aria-label="Navegação de notificações">
+                                    <ul class="pagination">
+                                        {% if page_obj.has_previous %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if filter_type %}&type={{ filter_type }}{% endif %}{% if filter_read %}&read={{ filter_read }}{% endif %}">
+                                                    <i class="material-icons">chevron_left</i>
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                        
+                                        {% for num in page_obj.paginator.page_range %}
+                                            {% if page_obj.number == num %}
+                                                <li class="page-item active">
+                                                    <span class="page-link">{{ num }}</span>
+                                                </li>
+                                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?page={{ num }}{% if filter_type %}&type={{ filter_type }}{% endif %}{% if filter_read %}&read={{ filter_read }}{% endif %}">{{ num }}</a>
+                                                </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        {% if page_obj.has_next %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if filter_type %}&type={{ filter_type }}{% endif %}{% if filter_read %}&read={{ filter_read }}{% endif %}">
+                                                    <i class="material-icons">chevron_right</i>
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+                        {% endif %}
+                        
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="material-icons text-muted" style="font-size: 64px;">notifications_none</i>
+                            <h5 class="text-muted mt-3">Nenhuma notificação encontrada</h5>
+                            <p class="text-muted">{% if filter_type or filter_read %}Tente ajustar os filtros{% else %}Você não tem notificações no momento{% endif %}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Estilos específicos para a página de notificações */
+.notifications-list {
+    padding: 0 24px;
+}
+
+.notification-item-full {
+    display: flex;
+    align-items: flex-start;
+    padding: 20px 0;
+    border-bottom: 1px solid #f0f2f5;
+    transition: background-color 0.2s;
+    gap: 16px;
+}
+
+.notification-item-full:hover {
+    background-color: #f8f9fa;
+    margin: 0 -24px;
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+.notification-item-full.unread {
+    background-color: #f0f9ff;
+    border-left: 4px solid #007bff;
+    margin-left: -24px;
+    padding-left: 20px;
+}
+
+.notification-icon-wrapper {
+    flex-shrink: 0;
+}
+
+.notification-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.notification-icon.new_ticket {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.notification-icon.sla_warning {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.notification-icon.sla_breach {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+.notification-icon.new_message {
+    background: #e8f5e8;
+    color: #388e3c;
+}
+
+.notification-icon.ticket_updated {
+    background: #f3e5f5;
+    color: #7b1fa2;
+}
+
+.notification-content-full {
+    flex: 1;
+    min-width: 0;
+}
+
+.notification-header-full {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.notification-title-full {
+    font-weight: 600;
+    font-size: 16px;
+    color: #344767;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.notification-time-full {
+    font-size: 12px;
+    color: #a0aec0;
+    white-space: nowrap;
+    margin-left: 16px;
+}
+
+.notification-message-full {
+    color: #67748e;
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0 0 12px 0;
+}
+
+.notification-ticket-info {
+    margin-bottom: 12px;
+}
+
+.notification-actions-full {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .notification-item-full {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .notification-actions-full {
+        flex-direction: row;
+        align-self: stretch;
+    }
+    
+    .notification-header-full {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .notification-time-full {
+        margin-left: 0;
+    }
+}
+</style>
+
+<script>
+// Funções específicas da página de notificações
+function markAsRead(notificationId) {
+    fetch(`/api/notifications/${notificationId}/mark-read/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+        }
+    }).then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const item = document.querySelector(`[data-notification-id="${notificationId}"]`);
+            if (item) {
+                item.classList.remove('unread');
+                const button = item.querySelector('button[onclick*="markAsRead"]');
+                if (button) {
+                    button.remove();
+                }
+            }
+            
+            // Atualizar contador na página
+            updatePageStats();
+        }
+    });
+}
+
+function markAllAsRead() {
+    if (!confirm('Marcar todas as notificações como lidas?')) return;
+    
+    fetch('/api/notifications/mark-all-read/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+        }
+    }).then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remover classe unread de todos os itens
+            document.querySelectorAll('.notification-item-full.unread').forEach(item => {
+                item.classList.remove('unread');
+            });
+            
+            // Remover todos os botões "marcar como lida"
+            document.querySelectorAll('button[onclick*="markAsRead"]').forEach(button => {
+                button.remove();
+            });
+            
+            // Recarregar página para atualizar estatísticas
+            location.reload();
+        }
+    });
+}
+
+function updatePageStats() {
+    // Contar itens não lidos na página atual
+    const unreadCount = document.querySelectorAll('.notification-item-full.unread').length;
+    
+    // Se não há mais não lidas na página, esconder botão "marcar todas"
+    if (unreadCount === 0) {
+        const markAllButton = document.querySelector('button[onclick="markAllAsRead()"]');
+        if (markAllButton) {
+            markAllButton.style.display = 'none';
+        }
+    }
+}
+
+// Funcionalidades dos filtros melhorados
+function updateFilterPreview() {
+    const typeSelect = document.querySelector('select[name="type"]');
+    const readSelect = document.querySelector('select[name="read"]');
+    const periodSelect = document.querySelector('select[name="period"]');
+    const preview = document.getElementById('filterPreview');
+    const activeFilters = document.getElementById('activeFilters');
+    
+    let filters = [];
+    
+    // Verificar filtros ativos
+    if (typeSelect.value) {
+        const typeText = typeSelect.options[typeSelect.selectedIndex].text;
+        filters.push(`<span class="filter-tag">${typeText}</span>`);
+    }
+    
+    if (readSelect.value) {
+        const readText = readSelect.options[readSelect.selectedIndex].text;
+        filters.push(`<span class="filter-tag">${readText}</span>`);
+    }
+    
+    if (periodSelect.value) {
+        const periodText = periodSelect.options[periodSelect.selectedIndex].text;
+        filters.push(`<span class="filter-tag">${periodText}</span>`);
+    }
+    
+    // Mostrar/esconder preview
+    if (filters.length > 0) {
+        activeFilters.innerHTML = filters.join('');
+        preview.style.display = 'block';
+        preview.style.animation = 'fadeIn 0.3s ease';
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+// Aplicar filtros automaticamente quando mudança nos selects
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar preview se já há filtros
+    updateFilterPreview();
+    
+    // Auto-submit form quando filtros mudam (opcional)
+    const autoSubmitCheckbox = document.getElementById('autoSubmit');
+    if (autoSubmitCheckbox && autoSubmitCheckbox.checked) {
+        document.querySelectorAll('select[name]').forEach(select => {
+            select.addEventListener('change', function() {
+                setTimeout(() => {
+                    document.getElementById('filterForm').submit();
+                }, 300);
+            });
+        });
+    }
+    
+    // Smooth scroll para resultados após filtrar
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('type') || urlParams.has('read') || urlParams.has('period')) {
+        setTimeout(() => {
+            const resultsList = document.querySelector('.notifications-list');
+            if (resultsList) {
+                resultsList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 500);
+    }
+});
+
+// Função para limpar filtros com animação
+function clearFiltersAnimated() {
+    const form = document.getElementById('filterForm');
+    const selects = form.querySelectorAll('select');
+    
+    selects.forEach((select, index) => {
+        setTimeout(() => {
+            select.value = '';
+            select.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                select.style.transform = 'scale(1)';
+            }, 100);
+        }, index * 100);
+    });
+    
+    setTimeout(() => {
+        updateFilterPreview();
+    }, selects.length * 100);
+}
+
+// Salvar preferências de filtro no localStorage
+function saveFilterPreferences() {
+    const typeSelect = document.querySelector('select[name="type"]');
+    const readSelect = document.querySelector('select[name="read"]');
+    const periodSelect = document.querySelector('select[name="period"]');
+    
+    const preferences = {
+        type: typeSelect.value,
+        read: readSelect.value,
+        period: periodSelect.value,
+        timestamp: Date.now()
+    };
+    
+    localStorage.setItem('notificationFilters', JSON.stringify(preferences));
+}
+
+// Carregar preferências salvas (se menos de 1 hora)
+function loadFilterPreferences() {
+    const saved = localStorage.getItem('notificationFilters');
+    if (saved) {
+        const preferences = JSON.parse(saved);
+        const hourAgo = Date.now() - (60 * 60 * 1000);
+        
+        if (preferences.timestamp > hourAgo) {
+            if (preferences.type) document.querySelector('select[name="type"]').value = preferences.type;
+            if (preferences.read) document.querySelector('select[name="read"]').value = preferences.read;
+            if (preferences.period) document.querySelector('select[name="period"]').value = preferences.period;
+            updateFilterPreview();
+        }
+    }
+}
+</script>
+{% endblock %}

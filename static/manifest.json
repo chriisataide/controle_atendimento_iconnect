@@ -1,10 +1,11 @@
 {
-  "name": "iConnect Mobile",
+  "name": "iConnect - Sistema de Controle de Atendimento",
   "short_name": "iConnect",
-  "description": "Sistema de Atendimento iConnect - Versão Mobile",
-  "start_url": "/mobile/",
+  "description": "Sistema completo de controle de atendimento com chat integrado e gestão de tickets",
+  "version": "1.0.0",
+  "start_url": "/dashboard/",
   "display": "standalone",
-  "background_color": "#e91e63",
+  "background_color": "#ffffff",
   "theme_color": "#e91e63",
   "orientation": "portrait-primary",
   "scope": "/",
@@ -78,7 +79,6 @@
   "features": [
     "cross-origin-isolated"
   ],
-  "prefer_related_applications": false,
   "edge_side_panel": {
     "preferred_width": 400
   },
@@ -87,53 +87,87 @@
   },
   "shortcuts": [
     {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Acesso rápido ao dashboard principal",
+      "url": "/dashboard/",
+      "icons": [
+        {
+          "src": "/static/img/icons/dashboard-shortcut.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "short_name": "Chat",
+      "description": "Acesso direto ao sistema de chat",
+      "url": "/dashboard/chat/",
+      "icons": [
+        {
+          "src": "/static/img/icons/chat-shortcut.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Tickets",
+      "short_name": "Tickets",
+      "description": "Gestão de tickets de atendimento",
+      "url": "/dashboard/tickets/",
+      "icons": [
+        {
+          "src": "/static/img/icons/tickets-shortcut.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
       "name": "Novo Ticket",
-      "description": "Criar um novo ticket de suporte",
-      "url": "/mobile/ticket/new/",
+      "short_name": "Novo",
+      "description": "Criar novo ticket rapidamente",
+      "url": "/dashboard/tickets/new/",
       "icons": [
         {
-          "src": "/static/img/icons/add-ticket.png",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
-      "name": "Meus Tickets",
-      "description": "Ver meus tickets de suporte", 
-      "url": "/mobile/tickets/",
-      "icons": [
-        {
-          "src": "/static/img/icons/my-tickets.png",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
-      "name": "Chat Suporte",
-      "description": "Conversar com o suporte",
-      "url": "/mobile/chat/",
-      "icons": [
-        {
-          "src": "/static/img/icons/chat.png",
+          "src": "/static/img/icons/new-ticket-shortcut.png",
           "sizes": "96x96"
         }
       ]
     }
   ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "handle_links": "preferred",
+  "protocol_handlers": [
+    {
+      "protocol": "web+iconnect",
+      "url": "/dashboard/?ticket=%s"
+    }
+  ],
   "share_target": {
-    "action": "/mobile/share/",
+    "action": "/dashboard/tickets/new/",
     "method": "POST",
     "enctype": "multipart/form-data",
     "params": {
       "title": "title",
-      "text": "text",
+      "text": "description",
       "url": "url",
       "files": [
         {
-          "name": "files",
-          "accept": ["image/*", ".pdf", ".doc", ".docx", ".txt"]
+          "name": "attachment",
+          "accept": ["image/*", "application/pdf", ".doc", ".docx", ".txt"]
         }
       ]
     }
-  }
+  },
+  "file_handlers": [
+    {
+      "action": "/dashboard/tickets/import/",
+      "accept": {
+        "text/csv": [".csv"],
+        "application/vnd.ms-excel": [".xls"],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"]
+      }
+    }
+  ]
 }

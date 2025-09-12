@@ -1,0 +1,666 @@
+/* PWA Mobile Optimization - iConnect */
+/* Estilos específicos para dispositivos móveis e PWA */
+
+/* ===== GLOBAL MOBILE STYLES ===== */
+@media screen and (max-width: 768px) {
+    body {
+        font-size: 14px;
+        line-height: 1.5;
+        overflow-x: hidden;
+    }
+    
+    /* Touch targets mínimos de 44px */
+    .btn, .form-control, .nav-link, [role="button"] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Espaçamento melhorado para touch */
+    .btn {
+        padding: 12px 20px;
+        margin: 4px;
+    }
+    
+    /* Cards responsivos */
+    .card {
+        margin-bottom: 16px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .card-body {
+        padding: 16px;
+    }
+}
+
+/* ===== NAVIGATION MOBILE ===== */
+@media screen and (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        left: -100%;
+        top: 0;
+        height: 100vh;
+        transition: all 0.3s ease;
+        z-index: 1050;
+        width: 280px;
+    }
+    
+    .sidebar.active {
+        left: 0;
+    }
+    
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+        padding: 16px;
+    }
+    
+    /* Mobile navigation bar */
+    .mobile-nav {
+        display: flex;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: #e91e63;
+        color: white;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px;
+        z-index: 1040;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .mobile-nav .menu-toggle {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        padding: 8px;
+        border-radius: 8px;
+        transition: background-color 0.3s ease;
+    }
+    
+    .mobile-nav .menu-toggle:hover {
+        background: rgba(255,255,255,0.1);
+    }
+    
+    .mobile-nav .logo {
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    .mobile-nav .notifications {
+        position: relative;
+    }
+    
+    .mobile-nav .notification-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        width: 20px;
+        height: 20px;
+        background: #ff4444;
+        border-radius: 50%;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+    
+    /* Ajusta conteúdo para navigation bar */
+    .main-content {
+        margin-top: 60px;
+        padding-top: 16px;
+    }
+}
+
+/* ===== FORMS MOBILE ===== */
+@media screen and (max-width: 768px) {
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-control {
+        padding: 12px 16px;
+        font-size: 16px; /* Evita zoom no iOS */
+        border-radius: 8px;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    /* Select melhorado */
+    select.form-control {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 12px center;
+        background-repeat: no-repeat;
+        background-size: 16px;
+        padding-right: 40px;
+    }
+    
+    /* Textarea responsivo */
+    textarea.form-control {
+        min-height: 120px;
+        resize: vertical;
+    }
+    
+    /* Input groups */
+    .input-group {
+        margin-bottom: 16px;
+    }
+    
+    .input-group-text {
+        padding: 12px 16px;
+        background: #f8f9fa;
+        border-color: #dee2e6;
+    }
+}
+
+/* ===== TABLES MOBILE ===== */
+@media screen and (max-width: 768px) {
+    .table-responsive {
+        border: none;
+    }
+    
+    .table {
+        font-size: 14px;
+    }
+    
+    .table td, .table th {
+        padding: 12px 8px;
+        vertical-align: middle;
+    }
+    
+    /* Stack table columns */
+    .table-mobile-stack {
+        display: block;
+    }
+    
+    .table-mobile-stack thead,
+    .table-mobile-stack tbody,
+    .table-mobile-stack th,
+    .table-mobile-stack td,
+    .table-mobile-stack tr {
+        display: block;
+    }
+    
+    .table-mobile-stack thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+    
+    .table-mobile-stack tr {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        padding: 16px;
+        position: relative;
+    }
+    
+    .table-mobile-stack td {
+        border: none;
+        padding: 8px 0;
+        position: relative;
+        padding-left: 50%;
+    }
+    
+    .table-mobile-stack td:before {
+        content: attr(data-label) ": ";
+        position: absolute;
+        left: 6px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        font-weight: 600;
+        color: #6c757d;
+    }
+}
+
+/* ===== MODALS MOBILE ===== */
+@media screen and (max-width: 768px) {
+    .modal-dialog {
+        margin: 8px;
+        width: calc(100% - 16px);
+        max-width: none;
+    }
+    
+    .modal-content {
+        border-radius: 12px;
+        max-height: calc(100vh - 32px);
+        overflow-y: auto;
+    }
+    
+    .modal-header {
+        padding: 20px;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .modal-body {
+        padding: 20px;
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+    
+    .modal-footer {
+        padding: 20px;
+        border-top: 1px solid #dee2e6;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .modal-footer .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ===== CHAT MOBILE ===== */
+@media screen and (max-width: 768px) {
+    .chat-container {
+        height: calc(100vh - 120px);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .chat-sidebar {
+        display: none;
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        background: white;
+        z-index: 1030;
+        width: 300px;
+        box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+    }
+    
+    .chat-sidebar.active {
+        display: block;
+    }
+    
+    .chat-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+    
+    .chat-messages {
+        flex: 1;
+        padding: 16px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .chat-input-container {
+        padding: 16px;
+        background: white;
+        border-top: 1px solid #dee2e6;
+        position: sticky;
+        bottom: 0;
+    }
+    
+    .chat-input {
+        display: flex;
+        gap: 8px;
+        align-items: flex-end;
+    }
+    
+    .chat-input .form-control {
+        flex: 1;
+        min-height: 44px;
+        max-height: 120px;
+        resize: none;
+        border-radius: 22px;
+        padding: 12px 16px;
+    }
+    
+    .chat-input .btn {
+        border-radius: 50%;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Message bubbles */
+    .message {
+        margin-bottom: 16px;
+        max-width: 80%;
+    }
+    
+    .message.own {
+        margin-left: auto;
+        text-align: right;
+    }
+    
+    .message-bubble {
+        background: #f8f9fa;
+        padding: 12px 16px;
+        border-radius: 16px;
+        display: inline-block;
+        max-width: 100%;
+        word-wrap: break-word;
+    }
+    
+    .message.own .message-bubble {
+        background: #e91e63;
+        color: white;
+    }
+    
+    .message-info {
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 4px;
+    }
+}
+
+/* ===== DASHBOARD MOBILE ===== */
+@media screen and (max-width: 768px) {
+    .dashboard-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    
+    .stat-card .icon {
+        font-size: 32px;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .stat-card .value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #e91e63;
+        display: block;
+    }
+    
+    .stat-card .label {
+        font-size: 12px;
+        color: #6c757d;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+    
+    .chart-container {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 24px;
+    }
+    
+    .recent-tickets {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .recent-tickets .header {
+        padding: 20px;
+        border-bottom: 1px solid #dee2e6;
+        background: #f8f9fa;
+    }
+    
+    .recent-tickets .list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .ticket-item {
+        padding: 16px 20px;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .ticket-item:last-child {
+        border-bottom: none;
+    }
+    
+    .ticket-item .info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .ticket-item .title {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .ticket-item .meta {
+        font-size: 12px;
+        color: #6c757d;
+    }
+    
+    .ticket-item .status {
+        margin-left: 12px;
+        flex-shrink: 0;
+    }
+}
+
+/* ===== UTILITY CLASSES ===== */
+@media screen and (max-width: 768px) {
+    .mobile-hidden {
+        display: none !important;
+    }
+    
+    .mobile-only {
+        display: block !important;
+    }
+    
+    .mobile-full-width {
+        width: 100% !important;
+    }
+    
+    .mobile-text-center {
+        text-align: center !important;
+    }
+    
+    .mobile-no-padding {
+        padding: 0 !important;
+    }
+    
+    .mobile-small-padding {
+        padding: 8px !important;
+    }
+    
+    .mobile-large-padding {
+        padding: 24px !important;
+    }
+}
+
+/* ===== PWA SPECIFIC STYLES ===== */
+/* Oculta elementos quando executando como PWA */
+@media all and (display-mode: standalone) {
+    .pwa-hide {
+        display: none !important;
+    }
+    
+    .main-content {
+        padding-top: 16px;
+    }
+    
+    /* Remove elementos específicos do browser */
+    .browser-only {
+        display: none !important;
+    }
+}
+
+/* ===== LOADING STATES ===== */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #e91e63;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-overlay .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #e91e63;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ===== OFFLINE INDICATOR ===== */
+.offline-indicator {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    background: #ff9800;
+    color: white;
+    padding: 8px 16px;
+    text-align: center;
+    font-size: 14px;
+    z-index: 1035;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+}
+
+.offline-indicator.show {
+    transform: translateY(0);
+}
+
+/* ===== SWIPE GESTURES ===== */
+.swipe-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.swipe-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    background: #dc3545;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+}
+
+.swipe-container.swiped .swipe-actions {
+    transform: translateX(0);
+}
+
+.swipe-action {
+    padding: 16px;
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+    height: 100%;
+    transition: background-color 0.3s ease;
+}
+
+.swipe-action:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: white;
+    text-decoration: none;
+}
+
+/* ===== PULL TO REFRESH ===== */
+.pull-to-refresh {
+    position: relative;
+    overflow: hidden;
+}
+
+.pull-indicator {
+    position: absolute;
+    top: -60px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+}
+
+.pull-to-refresh.pulling .pull-indicator {
+    top: 10px;
+}
+
+.pull-to-refresh.refreshing .pull-indicator {
+    top: 10px;
+}
+
+.pull-indicator .icon {
+    font-size: 20px;
+    color: #e91e63;
+    transition: transform 0.3s ease;
+}
+
+.pull-to-refresh.refreshing .pull-indicator .icon {
+    animation: spin 1s linear infinite;
+}
+
+/* ===== RESPONSIVE IMAGES ===== */
+@media screen and (max-width: 768px) {
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    .img-responsive {
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+    }
+}

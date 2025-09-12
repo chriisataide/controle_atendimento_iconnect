@@ -52,18 +52,38 @@ class SLAPolicy(models.Model):
     name = models.CharField(max_length=100)
     categoria = models.ForeignKey(CategoriaTicket, on_delete=models.CASCADE, null=True, blank=True)
     prioridade = models.CharField(max_length=10, choices=PrioridadeTicket.choices)
-    response_time_hours = models.IntegerField(help_text="Tempo de resposta em horas")
-    resolution_time_hours = models.IntegerField(help_text="Tempo de resolução em horas", null=True, blank=True)
+    
+    # Tempos de SLA em minutos para maior flexibilidade
+    first_response_time = models.IntegerField(default=240, help_text="Tempo primeira resposta em minutos")
+    resolution_time = models.IntegerField(default=1440, help_text="Tempo de resolução em minutos")
+    escalation_time = models.IntegerField(default=480, help_text="Tempo para escalação em minutos")
+    
+    # Configurações de horário
     business_hours_only = models.BooleanField(default=True)
+    start_hour = models.TimeField(default='08:00', help_text="Início do horário comercial")
+    end_hour = models.TimeField(default='18:00', help_text="Fim do horário comercial")
+    work_days = models.CharField(max_length=7, default='1234567', help_text="Dias da semana (1=Seg, 7=Dom)")
+    
+    # Configurações de alerta
+    warning_percentage = models.IntegerField(default=80, help_text="% do tempo SLA para enviar alerta")
+    escalation_enabled = models.BooleanField(default=True)
+    escalation_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, 
+                                    related_name='sla_escalations', help_text="Supervisor para escalação")
+    
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         verbose_name = "Política de SLA"
         verbose_name_plural = "Políticas de SLA"
+        unique_together = ['categoria', 'prioridade']
     
     def __str__(self):
         return self.name
+
+
+
 
 
 class WorkflowRule(models.Model):
@@ -111,8 +131,13 @@ class Ticket(models.Model):
     origem = models.CharField(max_length=20, default='web', help_text="web, email, whatsapp, slack")
     
     # Campos relacionados ao SLA
+    sla_policy = models.ForeignKey(SLAPolicy, on_delete=models.SET_NULL, null=True, blank=True)
     sla_deadline = models.DateTimeField(null=True, blank=True, help_text="Prazo de resposta SLA")
+    sla_resolution_deadline = models.DateTimeField(null=True, blank=True, help_text="Prazo de resolução SLA")
     first_response_at = models.DateTimeField(null=True, blank=True)
+    is_escalated = models.BooleanField(default=False)
+    escalated_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='escalated_tickets')
+    escalated_at = models.DateTimeField(null=True, blank=True)
     
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
@@ -168,6 +193,79 @@ class TicketAnexo(models.Model):
         
     def __str__(self):
         return f"Anexo: {self.nome_original} - Ticket #{self.ticket.numero}"
+
+
+class SLAHistory(models.Model):
+    """Histórico de SLA dos tickets"""
+    STATUS_CHOICES = [
+        ('on_track', 'No Prazo'),
+        ('warning', 'Alerta'),
+        ('breached', 'Violado'),
+        ('escalated', 'Escalado'),
+        ('completed', 'Concluído'),
+    ]
+    
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='sla_history')
+    sla_policy = models.ForeignKey(SLAPolicy, on_delete=models.CASCADE)
+    
+    # Prazos calculados
+    first_response_deadline = models.DateTimeField()
+    resolution_deadline = models.DateTimeField()
+    escalation_deadline = models.DateTimeField()
+    
+    # Status atual
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='on_track')
+    warning_sent = models.BooleanField(default=False)
+    escalated = models.BooleanField(default=False)
+    escalated_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    escalated_at = models.DateTimeField(null=True, blank=True)
+    
+    # Métricas de cumprimento
+    first_response_time = models.DurationField(null=True, blank=True)
+    resolution_time = models.DurationField(null=True, blank=True)
+    sla_compliance = models.BooleanField(null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Histórico de SLA"
+        verbose_name_plural = "Históricos de SLA"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"SLA #{self.ticket.numero} - {self.status}"
+
+
+class SLAAlert(models.Model):
+    """Alertas de SLA"""
+    ALERT_TYPES = [
+        ('warning', 'Alerta de Prazo'),
+        ('breach', 'Violação de SLA'),
+        ('escalation', 'Escalação Necessária'),
+        ('resolved', 'SLA Cumprido'),
+    ]
+    
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='sla_alerts')
+    sla_history = models.ForeignKey(SLAHistory, on_delete=models.CASCADE)
+    alert_type = models.CharField(max_length=15, choices=ALERT_TYPES)
+    message = models.TextField()
+    
+    # Destinatários
+    sent_to_agent = models.BooleanField(default=False)
+    sent_to_supervisor = models.BooleanField(default=False)
+    sent_to_client = models.BooleanField(default=False)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        verbose_name = "Alerta de SLA"
+        verbose_name_plural = "Alertas de SLA"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Alerta SLA - Ticket #{self.ticket.numero}"
 
 
 class InteracaoTicket(models.Model):
@@ -478,3 +576,10 @@ class Notification(models.Model):
             self.read = True
             self.read_at = timezone.now()
             self.save(update_fields=['read', 'read_at'])
+
+
+# ========== IMPORTAR MODELOS DE CHAT ==========
+from .models_chat import (
+    ChatRoom, ChatParticipant, ChatMessage, ChatMessageReadReceipt,
+    ChatReaction, ChatSettings, ChatBot
+)

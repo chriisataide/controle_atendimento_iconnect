@@ -1,0 +1,542 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - iConnect{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/emoji-js/8.0.0/emoji.min.css">
+<style>
+    .chat-dashboard {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+    
+    .chat-sidebar {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        height: calc(100vh - 120px);
+        overflow-y: auto;
+    }
+    
+    .chat-room-item {
+        padding: 15px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .chat-room-item:hover {
+        background: #f8f9ff;
+        transform: translateX(5px);
+    }
+    
+    .chat-room-item.active {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+    }
+    
+    .room-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        font-size: 18px;
+    }
+    
+    .room-avatar.support { background: linear-gradient(45deg, #667eea, #764ba2); }
+    .room-avatar.sales { background: linear-gradient(45deg, #f093fb, #f5576c); }
+    .room-avatar.general { background: linear-gradient(45deg, #4facfe, #00f2fe); }
+    .room-avatar.group { background: linear-gradient(45deg, #43e97b, #38f9d7); }
+    .room-avatar.private { background: linear-gradient(45deg, #fa709a, #fee140); }
+    
+    .unread-badge {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        background: #ff4757;
+        color: white;
+        border-radius: 12px;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: bold;
+        min-width: 18px;
+        text-align: center;
+    }
+    
+    .room-last-message {
+        color: #666;
+        font-size: 13px;
+        margin-top: 5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .chat-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        text-align: center;
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-number {
+        font-size: 2.5em;
+        font-weight: bold;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .stat-label {
+        color: #666;
+        font-size: 14px;
+        margin-top: 10px;
+    }
+    
+    .floating-chat-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+    
+    .floating-chat-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+    }
+    
+    .search-chat {
+        margin-bottom: 20px;
+    }
+    
+    .search-chat input {
+        width: 100%;
+        padding: 12px 20px;
+        border: 1px solid #e0e0e0;
+        border-radius: 25px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+    
+    .search-chat input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+    
+    .online-indicator {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        width: 12px;
+        height: 12px;
+        background: #2ed573;
+        border: 2px solid white;
+        border-radius: 50%;
+    }
+    
+    .quick-actions {
+        padding: 20px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .quick-actions .btn {
+        margin-right: 10px;
+        margin-bottom: 10px;
+        border-radius: 20px;
+        padding: 8px 16px;
+        font-size: 12px;
+    }
+    
+    @media (max-width: 768px) {
+        .chat-stats {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .chat-sidebar {
+            height: 60vh;
+        }
+        
+        .floating-chat-btn {
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-dashboard">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0">💬 Sistema de Chat</h2>
+                        <p class="text-muted">Comunicação em tempo real com clientes e equipe</p>
+                    </div>
+                    <div>
+                        <a href="{% url 'dashboard:create_chat_room' %}" class="btn btn-primary">
+                            <i class="material-symbols-rounded me-2">add</i>
+                            Nova Conversa
+                        </a>
+                        <a href="{% url 'dashboard:chat_settings' %}" class="btn btn-outline-secondary ms-2">
+                            <i class="material-symbols-rounded me-2">settings</i>
+                            Configurações
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Estatísticas -->
+        <div class="chat-stats">
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.total_rooms }}</div>
+                <div class="stat-label">Total de Conversas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.active_conversations }}</div>
+                <div class="stat-label">Conversas Ativas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.unread_messages }}</div>
+                <div class="stat-label">Mensagens Não Lidas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.today_messages }}</div>
+                <div class="stat-label">Mensagens Hoje</div>
+            </div>
+        </div>
+        
+        <!-- Lista de Conversas -->
+        <div class="row">
+            <div class="col-md-4 col-lg-3">
+                <div class="chat-sidebar">
+                    <div class="quick-actions">
+                        <h6 class="mb-3">Ações Rápidas</h6>
+                        <a href="{% url 'dashboard:create_chat_room' %}" class="btn btn-primary btn-sm">
+                            <i class="material-symbols-rounded me-1">add</i> Nova Conversa
+                        </a>
+                        <button class="btn btn-outline-primary btn-sm" onclick="refreshRooms()">
+                            <i class="material-symbols-rounded me-1">refresh</i> Atualizar
+                        </button>
+                    </div>
+                    
+                    <div class="search-chat px-3">
+                        <input type="text" placeholder="Buscar conversas..." id="searchRooms">
+                    </div>
+                    
+                    <div class="rooms-list" id="roomsList">
+                        {% for room in active_rooms %}
+                        <div class="chat-room-item" onclick="openRoom('{{ room.id }}')">
+                            {% if room.unread_count %}
+                            <div class="unread-badge">{{ room.unread_count }}</div>
+                            {% endif %}
+                            
+                            <div class="d-flex align-items-center">
+                                <div class="room-avatar {{ room.room_type }} position-relative">
+                                    {{ room.name|slice:":2"|upper }}
+                                    {% if room.participants.count > 0 %}
+                                    <div class="online-indicator"></div>
+                                    {% endif %}
+                                </div>
+                                <div class="ms-3 flex-grow-1">
+                                    <h6 class="mb-1">{{ room.name }}</h6>
+                                    <small class="text-muted">{{ room.get_room_type_display }}</small>
+                                    {% if room.last_message_time %}
+                                    <div class="room-last-message">
+                                        {{ room.last_message_time|timesince }} atrás
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center p-4">
+                            <i class="material-symbols-rounded text-muted" style="font-size: 48px;">chat</i>
+                            <p class="text-muted mt-2">Nenhuma conversa ativa</p>
+                            <a href="{% url 'dashboard:create_chat_room' %}" class="btn btn-primary btn-sm">
+                                Iniciar Conversa
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-8 col-lg-9">
+                <div class="chat-main bg-white rounded-3 shadow" style="height: calc(100vh - 300px);">
+                    <div class="d-flex align-items-center justify-content-center h-100">
+                        <div class="text-center">
+                            <i class="material-symbols-rounded text-muted mb-3" style="font-size: 72px;">forum</i>
+                            <h4 class="text-muted">Selecione uma conversa</h4>
+                            <p class="text-muted">Escolha uma conversa da lista ao lado para começar</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Botão Flutuante -->
+    <div class="floating-chat-btn" onclick="window.location.href='{% url 'dashboard:create_chat_room' %}'">
+        <i class="material-symbols-rounded">add</i>
+    </div>
+</div>
+
+<!-- Modal de Nova Conversa Rápida -->
+<div class="modal fade" id="quickChatModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nova Conversa Rápida</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quickChatForm">
+                    <div class="mb-3">
+                        <label class="form-label">Nome da Conversa</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tipo</label>
+                        <select class="form-select" name="room_type">
+                            <option value="support">Suporte</option>
+                            <option value="sales">Vendas</option>
+                            <option value="general">Geral</option>
+                            <option value="private">Privado</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Participantes</label>
+                        <select class="form-select" name="participants" multiple>
+                            <!-- Carregado via AJAX -->
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="createQuickChat()">Criar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentUserId = {{ user_id }};
+
+// Conectar WebSocket para notificações
+let notificationSocket = new WebSocket(
+    'ws://' + window.location.host + '/ws/notifications/'
+);
+
+notificationSocket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    
+    if (data.type === 'chat_notification') {
+        // Atualizar contador de mensagens não lidas
+        updateUnreadCount(data.room_id, data.unread_count);
+        
+        // Mostrar notificação
+        if (Notification.permission === 'granted') {
+            new Notification('Nova mensagem', {
+                body: data.message,
+                icon: '/static/img/logo-ct.png'
+            });
+        }
+        
+        // Som de notificação
+        playNotificationSound();
+    }
+};
+
+function openRoom(roomId) {
+    window.location.href = `/dashboard/chat/${roomId}/`;
+}
+
+function updateUnreadCount(roomId, count) {
+    const roomItem = document.querySelector(`[onclick="openRoom('${roomId}')"]`);
+    if (roomItem) {
+        let badge = roomItem.querySelector('.unread-badge');
+        if (count > 0) {
+            if (!badge) {
+                badge = document.createElement('div');
+                badge.className = 'unread-badge';
+                roomItem.appendChild(badge);
+            }
+            badge.textContent = count;
+        } else {
+            if (badge) {
+                badge.remove();
+            }
+        }
+    }
+}
+
+function playNotificationSound() {
+    const audio = new Audio('/static/sounds/notification.mp3');
+    audio.play().catch(e => console.log('Could not play sound'));
+}
+
+function refreshRooms() {
+    fetch('/dashboard/api/recent-rooms/')
+        .then(response => response.json())
+        .then(data => {
+            const roomsList = document.getElementById('roomsList');
+            roomsList.innerHTML = '';
+            
+            data.rooms.forEach(room => {
+                const roomItem = createRoomItem(room);
+                roomsList.appendChild(roomItem);
+            });
+        })
+        .catch(error => console.error('Error refreshing rooms:', error));
+}
+
+function createRoomItem(room) {
+    const div = document.createElement('div');
+    div.className = 'chat-room-item';
+    div.onclick = () => openRoom(room.id);
+    
+    let unreadBadge = '';
+    if (room.unread_count > 0) {
+        unreadBadge = `<div class="unread-badge">${room.unread_count}</div>`;
+    }
+    
+    div.innerHTML = `
+        ${unreadBadge}
+        <div class="d-flex align-items-center">
+            <div class="room-avatar ${room.type} position-relative">
+                ${room.name.slice(0, 2).toUpperCase()}
+                <div class="online-indicator"></div>
+            </div>
+            <div class="ms-3 flex-grow-1">
+                <h6 class="mb-1">${room.name}</h6>
+                <small class="text-muted">${room.type}</small>
+                ${room.last_activity ? `<div class="room-last-message">Há ${formatTimeAgo(room.last_activity)}</div>` : ''}
+            </div>
+        </div>
+    `;
+    
+    return div;
+}
+
+function formatTimeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - date) / 1000);
+    
+    if (diffInSeconds < 60) return 'poucos segundos';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} min`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} h`;
+    return `${Math.floor(diffInSeconds / 86400)} dias`;
+}
+
+// Busca em tempo real
+document.getElementById('searchRooms').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const roomItems = document.querySelectorAll('.chat-room-item');
+    
+    roomItems.forEach(item => {
+        const roomName = item.querySelector('h6').textContent.toLowerCase();
+        if (roomName.includes(searchTerm)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+});
+
+// Solicitar permissão para notificações
+if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+}
+
+// Auto-refresh a cada 30 segundos
+setInterval(refreshRooms, 30000);
+
+// Criar conversa rápida
+function createQuickChat() {
+    const form = document.getElementById('quickChatForm');
+    const formData = new FormData(form);
+    
+    fetch('/dashboard/chat/create/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.json();
+        }
+        throw new Error('Network response was not ok');
+    })
+    .then(data => {
+        if (data.success) {
+            window.location.href = `/dashboard/chat/${data.room_id}/`;
+        }
+    })
+    .catch(error => {
+        console.error('Error creating chat:', error);
+        alert('Erro ao criar conversa');
+    });
+}
+
+// Carregar usuários para seleção
+fetch('/api/users/')
+    .then(response => response.json())
+    .then(data => {
+        const select = document.querySelector('select[name="participants"]');
+        data.users.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user.id;
+            option.textContent = user.full_name || user.username;
+            select.appendChild(option);
+        });
+    })
+    .catch(error => console.error('Error loading users:', error));
+</script>
+{% endblock %}
