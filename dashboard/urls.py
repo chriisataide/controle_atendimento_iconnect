@@ -21,6 +21,9 @@ urlpatterns = [
     path('health/', HealthCheckView.as_view(), name='health_check'),
     path('metrics/', MetricsView.as_view(), name='metrics'),
     
+    # API para filtros
+    path('api/tickets-chart/', views.tickets_chart_api, name='tickets_chart_api'),
+    
     # Dashboard do Agente
     path('agente/', views.AgenteDashboardView.as_view(), name='agente_dashboard'),
     path('agente/tickets/', views.AgenteTicketsView.as_view(), name='agente_tickets'),
@@ -41,9 +44,7 @@ urlpatterns = [
     
     # ========== FUNCIONALIDADES AVANÇADAS ==========
     
-    # Analytics Dashboard
-    path('analytics/', views.analytics_dashboard, name='analytics'),
-    path('analytics/data/', views.analytics_data_view, name='analytics_data'),
+
     
     # Real-time Notifications
     path('notifications/', views.notifications_center, name='notifications'),

@@ -9,7 +9,9 @@ from django.http import JsonResponse
 from django.urls import reverse_lazy, reverse
 from django.core.paginator import Paginator
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime, timedelta
+import json
 from .models import Cliente, Ticket, PerfilUsuario, CategoriaTicket, InteracaoTicket, PerfilAgente, StatusTicket, PrioridadeTicket, TicketAnexo
 
 User = get_user_model()
@@ -101,32 +103,31 @@ def custom_login(request):
     """
     View personalizada para login com template customizado
     """
+    from .forms import CustomLoginForm
+    
     if request.user.is_authenticated:
         # Se já estiver logado, redireciona para dashboard
         return redirect('dashboard:index')
     
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        
-        if username and password:
-            user = authenticate(request, username=username, password=password)
-            if user is not None:
-                login(request, user)
-                messages.success(request, f'Bem-vindo, {user.get_full_name() or user.username}!')
-                
-                # Redireciona baseado no tipo de usuário
-                next_url = request.GET.get('next')
-                if next_url:
-                    return redirect(next_url)
-                else:
-                    return redirect('dashboard:index')
-            else:
-                messages.error(request, 'Nome de usuário ou senha incorretos.')
-        else:
-            messages.error(request, 'Por favor, preencha todos os campos.')
+    form = CustomLoginForm()
     
-    return render(request, 'registration/login.html')
+    if request.method == 'POST':
+        form = CustomLoginForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            messages.success(request, f'Bem-vindo, {user.get_full_name() or user.username}!')
+            
+            # Redireciona baseado no tipo de usuário
+            next_url = request.GET.get('next')
+            if next_url:
+                return redirect(next_url)
+            else:
+                return redirect('dashboard:index')
+        else:
+            messages.error(request, 'Nome de usuário ou senha incorretos.')
+    
+    return render(request, 'registration/login.html', {'form': form})
 
 def custom_logout(request):
     """
@@ -160,21 +161,87 @@ class DashboardView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Importar view helpers
-        from .views_helpers import get_dashboard_metrics, get_analytics_data
-        
-        # Obter métricas básicas
-        metrics = get_dashboard_metrics()
-        context.update(metrics)
-        
-        # Obter dados de analytics
-        analytics = get_analytics_data()
-        context.update(analytics)
+        # === IMPORTAÇÕES ===
+        from django.utils import timezone
+        from datetime import timedelta, datetime
+        from django.db.models import Count, Q
+        from django.db.models.functions import TruncDate, TruncHour
         
         # Dados legados (manter compatibilidade)
         hoje = timezone.now().date()
         ontem = hoje - timedelta(days=1)
         mes_atual = hoje.replace(day=1)
+        
+        # 1. Tickets por mês (gráfico de linha) - Últimos 12 meses
+        tickets_por_mes = []
+        now = timezone.now()
+        
+        for i in range(12):
+            # Calcular o mês (i meses atrás)
+            year = now.year
+            month = now.month - i
+            
+            # Ajustar para anos anteriores se necessário
+            while month <= 0:
+                month += 12
+                year -= 1
+            
+            # Contar tickets do mês
+            count = Ticket.objects.filter(
+                criado_em__year=year,
+                criado_em__month=month
+            ).count()
+            
+            tickets_por_mes.insert(0, count)
+        
+        # 2. Distribuição por status (gráfico pizza)
+        status_data = {
+            'aberto': Ticket.objects.filter(status=StatusTicket.ABERTO).count(),
+            'em_andamento': Ticket.objects.filter(status=StatusTicket.EM_ANDAMENTO).count(),
+            'resolvido': Ticket.objects.filter(status=StatusTicket.RESOLVIDO).count(),
+            'fechado': Ticket.objects.filter(status=StatusTicket.FECHADO).count(),
+        }
+        
+        # 3. Performance por agente (gráfico barras)
+        agent_performance = []
+        agentes = User.objects.filter(is_staff=True)[:5]
+        for agente in agentes:
+            count = Ticket.objects.filter(agente=agente, status=StatusTicket.RESOLVIDO).count()
+            agent_performance.append({
+                'agente__username': agente.username,
+                'count': count
+            })
+        
+        # 4. Heatmap de horários (tabela)
+        # Matriz 7x12 (dias da semana x horários de 2 em 2h)
+        heatmap_data = []
+        for dia in range(7):  # 0=domingo, 6=sábado
+            linha = []
+            for hora in range(0, 24, 2):  # de 2 em 2 horas
+                count = Ticket.objects.filter(
+                    criado_em__week_day=(dia + 1),  # Django: 1=domingo
+                    criado_em__hour__range=(hora, hora + 1)
+                ).count()
+                linha.append(count)
+            heatmap_data.append(linha)
+        
+        # 5. Atendimentos por hora (gráfico existente)
+        atendimentos_por_hora = []
+        for hora in range(24):
+            count = Ticket.objects.filter(criado_em__hour=hora).count()
+            atendimentos_por_hora.append(count)
+        
+        # Serializar dados para JSON
+        import json
+        
+        # Adicionar dados dos gráficos ao contexto
+        context.update({
+            'tickets_por_mes': json.dumps(tickets_por_mes),
+            'status_data': json.dumps(status_data),
+            'agent_performance': json.dumps(agent_performance),
+            'heatmap_data': json.dumps(heatmap_data),
+            'atendimentos_por_hora': json.dumps(atendimentos_por_hora),
+        })
         
         # Atendimentos hoje vs ontem
         atendimentos_hoje = Ticket.objects.filter(criado_em__date=hoje).count()
@@ -232,9 +299,7 @@ class DashboardView(TemplateView):
             {'user': {'get_full_name': lambda: 'Carlos Lima'}, 'status': 'online', 'tickets_ativos': 1},
         ]
         
-        # Dados para gráficos (em formato JSON-ready)
-        context['atendimentos_por_hora'] = [12, 19, 15, 23, 18, 25, 10]
-        context['tickets_por_mes'] = [50, 40, 300, 320, 500, 350, 200, 230, 500]
+        # Dados para gráficos (em formato JSON-ready) são gerados acima
         
         # Dados legados mantidos para compatibilidade
         context['total_clientes'] = Cliente.objects.count()
@@ -781,20 +846,77 @@ def export_tickets(request):
 
 # ========== FUNCIONALIDADES AVANÇADAS ==========
 
-@login_required
-def analytics_dashboard(request):
-    """Dashboard de Analytics Avançados"""
-    return render(request, 'dashboard/analytics/dashboard.html', {
-        'title': 'Analytics Dashboard',
-        'current_page': 'analytics'
-    })
+# @login_required
+# def analytics_dashboard(request):
+#     """Dashboard de Analytics Avançados - DESABILITADO: Integrado ao dashboard principal"""
+#     from django.utils import timezone
+#     from datetime import timedelta, datetime
+#     from django.db.models import Count, Avg, Q
+#     from django.db.models.functions import TruncDate, TruncHour
+#     
+#     # Obter dados dos últimos 30 dias
+#     thirty_days_ago = timezone.now() - timedelta(days=30)
+#     seven_days_ago = timezone.now() - timedelta(days=7)
+#     
+#     # Estatísticas gerais
+#     total_tickets = Ticket.objects.count()
+#     tickets_last_month = Ticket.objects.filter(criado_em__gte=thirty_days_ago).count()
+#     active_agents = User.objects.filter(is_staff=True, is_active=True).count()
+#     
+#     # Tickets por status
+#     tickets_por_status = {
+#         'aberto': Ticket.objects.filter(status=StatusTicket.ABERTO).count(),
+#         'em_andamento': Ticket.objects.filter(status=StatusTicket.EM_ANDAMENTO).count(),
+#         'resolvido': Ticket.objects.filter(status=StatusTicket.RESOLVIDO).count(),
+#         'fechado': Ticket.objects.filter(status=StatusTicket.FECHADO).count(),
+#     }
+#     
+#     # Tickets ao longo do tempo (últimos 7 dias)
+#     tickets_timeline = []
+#     for i in range(7):
+#         date = timezone.now().date() - timedelta(days=6-i)
+#         count = Ticket.objects.filter(criado_em__date=date).count()
+#         tickets_timeline.append({
+#             'date': date.strftime('%d/%m'),
+#             'count': count
+#         })
+#     
+#     # Performance por agente
+#     agentes_performance = User.objects.filter(
+#         is_staff=True, 
+#         tickets_agente__isnull=False
+#     ).annotate(
+#         tickets_resolvidos=Count('tickets_agente', filter=Q(tickets_agente__status=StatusTicket.RESOLVIDO))
+#     ).values('first_name', 'last_name', 'tickets_resolvidos')[:5]
+#     
+#     # Horários de maior demanda (por hora do dia)
+#     horarios_demanda = []
+#     for hour in range(24):
+#         count = Ticket.objects.filter(criado_em__hour=hour).count()
+#         horarios_demanda.append({
+#             'hour': f'{hour:02d}:00',
+#             'count': count
+#         })
+#     
+#     context = {
+#         'title': 'Analytics Dashboard',
+#         'current_page': 'analytics',
+#         'total_tickets': total_tickets,
+#         'active_agents': active_agents,
+#         'tickets_por_status': tickets_por_status,
+#         'tickets_timeline': tickets_timeline,
+#         'agentes_performance': list(agentes_performance),
+#         'horarios_demanda': horarios_demanda,
+#     }
+#     
+#     return render(request, 'dashboard/analytics/dashboard.html', context)
 
-@login_required
-def analytics_data_view(request):
-    """Endpoint para dados do analytics"""
-    from .views_helpers import get_dashboard_metrics
-    data = get_dashboard_metrics()
-    return JsonResponse(data)
+# @login_required
+# def analytics_data_view(request):
+#     """Endpoint para dados do analytics - DESABILITADO: Integrado ao dashboard principal"""
+#     from .views_helpers import get_dashboard_metrics
+#     data = get_dashboard_metrics()
+#     return JsonResponse(data)
 
 @login_required
 def notifications_center(request):
@@ -1031,3 +1153,64 @@ self.addEventListener('fetch', event => {
     
     response = HttpResponse(sw_content, content_type='application/javascript')
     return response
+
+@login_required
+@csrf_exempt
+def tickets_chart_api(request):
+    """
+    API para filtrar dados do gráfico de tickets por período
+    """
+    period = request.GET.get('period', '30days')
+    
+    now = timezone.now()
+    
+    if period == '7days':
+        # Últimos 7 dias
+        labels = []
+        data = []
+        for i in range(7):
+            date = now.date() - timedelta(days=i)
+            count = Ticket.objects.filter(criado_em__date=date).count()
+            labels.insert(0, date.strftime('%d/%m'))
+            data.insert(0, count)
+            
+    elif period == '30days':
+        # Últimos 30 dias (agrupado por semana)
+        labels = []
+        data = []
+        for i in range(4):  # 4 semanas
+            end_date = now.date() - timedelta(days=i*7)
+            start_date = end_date - timedelta(days=6)
+            count = Ticket.objects.filter(
+                criado_em__date__range=[start_date, end_date]
+            ).count()
+            labels.insert(0, f'{start_date.strftime("%d/%m")} - {end_date.strftime("%d/%m")}')
+            data.insert(0, count)
+            
+    elif period == '90days':
+        # Últimos 90 dias (agrupado por mês)
+        labels = []
+        data = []
+        for i in range(3):  # 3 meses
+            year = now.year
+            month = now.month - i
+            
+            # Ajustar para anos anteriores se necessário
+            while month <= 0:
+                month += 12
+                year -= 1
+                
+            count = Ticket.objects.filter(
+                criado_em__year=year,
+                criado_em__month=month
+            ).count()
+            
+            month_names = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
+                          'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+            labels.insert(0, f'{month_names[month-1]} {year}')
+            data.insert(0, count)
+    
+    return JsonResponse({
+        'labels': labels,
+        'data': data
+    })

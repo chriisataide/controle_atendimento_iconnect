@@ -286,6 +286,10 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-6">
+                        <!-- Gráfico de Status -->
+                        <canvas id="statusChart" width="200" height="200" style="max-height: 200px;"></canvas>
+                    </div>
+                    <div class="col-6">
                         <div class="d-flex align-items-center mb-3">
                             <div class="icon icon-shape bg-gradient-danger shadow text-center border-radius-sm me-3">
                                 <i class="material-symbols-rounded opacity-10 text-sm">priority_high</i>
@@ -295,17 +299,6 @@
                                 <p class="text-sm mb-0 text-capitalize">Abertos</p>
                             </div>
                         </div>
-                        <div class="d-flex align-items-center">
-                            <div class="icon icon-shape bg-gradient-info shadow text-center border-radius-sm me-3">
-                                <i class="material-symbols-rounded opacity-10 text-sm">pending</i>
-                            </div>
-                            <div>
-                                <h6 class="mb-0">{{ tickets_resolvidos }}</h6>
-                                <p class="text-sm mb-0 text-capitalize">Resolvidos</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6">
                         <div class="d-flex align-items-center mb-3">
                             <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-sm me-3">
                                 <i class="material-symbols-rounded opacity-10 text-sm">hourglass_empty</i>
@@ -313,6 +306,15 @@
                             <div>
                                 <h6 class="mb-0">{{ tickets_andamento }}</h6>
                                 <p class="text-sm mb-0 text-capitalize">Em Andamento</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="icon icon-shape bg-gradient-info shadow text-center border-radius-sm me-3">
+                                <i class="material-symbols-rounded opacity-10 text-sm">pending</i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">{{ tickets_resolvidos }}</h6>
+                                <p class="text-sm mb-0 text-capitalize">Resolvidos</p>
                             </div>
                         </div>
                         <div class="d-flex align-items-center">
@@ -340,26 +342,26 @@
                 </div>
             </div>
             <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-4">
-                        <div class="d-flex align-items-center justify-content-center flex-column">
+                <div class="row">
+                    <div class="col-6">
+                        <!-- Gráfico de Prioridade -->
+                        <canvas id="prioridadeChart" width="200" height="200" style="max-height: 200px;"></canvas>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex align-items-center justify-content-center flex-column mb-3">
                             <div class="icon icon-shape bg-gradient-danger shadow text-center border-radius-sm mb-2">
                                 <i class="material-symbols-rounded opacity-10">priority_high</i>
                             </div>
                             <h4 class="mb-0">{{ tickets_alta }}</h4>
                             <p class="text-sm mb-0 text-capitalize">Alta</p>
                         </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="d-flex align-items-center justify-content-center flex-column">
+                        <div class="d-flex align-items-center justify-content-center flex-column mb-3">
                             <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-sm mb-2">
                                 <i class="material-symbols-rounded opacity-10">remove</i>
                             </div>
                             <h4 class="mb-0">{{ tickets_media }}</h4>
                             <p class="text-sm mb-0 text-capitalize">Média</p>
                         </div>
-                    </div>
-                    <div class="col-4">
                         <div class="d-flex align-items-center justify-content-center flex-column">
                             <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-sm mb-2">
                                 <i class="material-symbols-rounded opacity-10">keyboard_arrow_down</i>
@@ -559,4 +561,168 @@
         </div>
     </div>
 </div>
+
+<!-- Gráfico de Tendências -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card z-index-2">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
+                <div class="bg-gradient-info shadow-info border-radius-lg py-3 pe-1">
+                    <div class="chart">
+                        <h6 class="text-white ms-4 mt-2 mb-0">Tendências de Tickets (Últimos 7 dias)</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="tendenciasChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Configuração dos gráficos
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Gráfico de Status (Doughnut)
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    const statusChart = new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Abertos', 'Em Andamento', 'Resolvidos', 'Fechados'],
+            datasets: [{
+                data: [{{ tickets_abertos }}, {{ tickets_andamento }}, {{ tickets_resolvidos }}, {{ tickets_fechados }}],
+                backgroundColor: [
+                    '#e91e63', // Rosa para abertos
+                    '#ff9800', // Laranja para em andamento  
+                    '#2196f3', // Azul para resolvidos
+                    '#4caf50'  // Verde para fechados
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            cutout: '60%'
+        }
+    });
+
+    // Gráfico de Prioridade (Doughnut)
+    const prioridadeCtx = document.getElementById('prioridadeChart').getContext('2d');
+    const prioridadeChart = new Chart(prioridadeCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Alta', 'Média', 'Baixa'],
+            datasets: [{
+                data: [{{ tickets_alta }}, {{ tickets_media }}, {{ tickets_baixa }}],
+                backgroundColor: [
+                    '#f44336', // Vermelho para alta
+                    '#ff9800', // Laranja para média
+                    '#4caf50'  // Verde para baixa
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            cutout: '60%'
+        }
+    });
+
+    // Gráfico de Tendências (Line)
+    const tendenciasCtx = document.getElementById('tendenciasChart').getContext('2d');
+    
+    // Simular dados dos últimos 7 dias (idealmente viriam do backend)
+    const hoje = new Date();
+    const labels = [];
+    const dadosAbertos = [];
+    const dadosResolvidos = [];
+    
+    for (let i = 6; i >= 0; i--) {
+        const data = new Date(hoje);
+        data.setDate(data.getDate() - i);
+        labels.push(data.toLocaleDateString('pt-BR', { month: 'short', day: 'numeric' }));
+        
+        // Simular dados (em produção, estes dados viriam do backend)
+        dadosAbertos.push(Math.floor(Math.random() * 10) + 2);
+        dadosResolvidos.push(Math.floor(Math.random() * 8) + 1);
+    }
+    
+    const tendenciasChart = new Chart(tendenciasCtx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Tickets Abertos',
+                    data: dadosAbertos,
+                    borderColor: '#e91e63',
+                    backgroundColor: 'rgba(233, 30, 99, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'Tickets Resolvidos',
+                    data: dadosResolvidos,
+                    borderColor: '#4caf50',
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0,0,0,0.1)'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(0,0,0,0.1)'
+                    }
+                }
+            },
+            elements: {
+                point: {
+                    radius: 5,
+                    hoverRadius: 8
+                }
+            }
+        }
+    });
+});
+</script>
 {% endblock %}

@@ -29,8 +29,8 @@ urlpatterns = [
     path('health/', HealthCheckView.as_view(), name='health_check'),  # Health check na raiz
     path('dashboard/', include('dashboard.urls')),
     
-    # APIs Avançadas
-    path('api/', include('dashboard.api_urls')),
+    # APIs Avançadas (API temporariamente desabilitada - funcionará com sistema base)
+    # path('api/', include('dashboard.api_urls')),
     path('api/user-info/', views.get_user_info, name='user_info'),
     
     # Mobile Interface

@@ -892,7 +892,10 @@
             minute: '2-digit'
         });
         
-        const updateElements = document.querySelectorAll('.text-sm:contains("atualizados"), .text-sm:contains("atualização")');
+        // Encontrar elementos que contêm texto específico
+        const updateElements = Array.from(document.querySelectorAll('.text-sm')).filter(el => 
+            el.textContent.includes('atualizados') || el.textContent.includes('atualização')
+        );
         if (updateElements.length > 0) {
             updateElements[0].textContent = `Dados atualizados às ${timeString}`;
         }
@@ -983,53 +986,149 @@
     }
     
     // Gráfico de Tickets ao Longo do Tempo
+    let ticketsChart = null; // Variável global para armazenar instância do gráfico
+    
     function initTicketsChart() {
-        const ctx = document.getElementById('ticketsChart').getContext('2d');
-        const chartData = {{ tickets_por_mes|safe }};
+        const ctx = document.getElementById('ticketsChart');
+        if (!ctx) {
+            console.error('❌ Canvas ticketsChart não encontrado!');
+            return;
+        }
         
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
-                datasets: [{
-                    label: 'Tickets Criados',
-                    data: chartData,
-                    borderColor: 'rgb(102, 126, 234)',
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4
-                }]
+        // Dados iniciais (30 dias por padrão)
+        loadTicketsChart('30days');
+        
+        // Adicionar listener ao select de período
+        const periodSelect = document.getElementById('chart-period');
+        if (periodSelect) {
+            periodSelect.addEventListener('change', function() {
+                loadTicketsChart(this.value);
+            });
+        }
+    }
+    
+    function loadTicketsChart(period) {
+        console.log('📊 Carregando dados para período:', period);
+        
+        // Mostrar loading
+        const ctx = document.getElementById('ticketsChart');
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = 'chart-loading';
+        loadingDiv.className = 'text-center p-4';
+        loadingDiv.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Carregando...</span></div>';
+        
+        // Inserir loading antes do canvas
+        if (!document.getElementById('chart-loading')) {
+            ctx.parentNode.insertBefore(loadingDiv, ctx);
+        }
+        
+        // Obter CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                         document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                         '{{ csrf_token }}';
+        
+        // Fazer requisição AJAX
+        const url = `/dashboard/api/tickets-chart/?period=${period}`;
+        console.log('🌐 Fazendo requisição para:', url);
+        
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json',
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0,0,0,0.1)'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
+            credentials: 'same-origin'
+        })
+            .then(response => {
+                console.log('📡 Status da resposta:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-            }
-        });
+                return response.json();
+            })
+            .then(data => {
+                console.log('📊 Dados recebidos:', data);
+                
+                // Remover loading
+                const loading = document.getElementById('chart-loading');
+                if (loading) loading.remove();
+                
+                // Destruir gráfico anterior se existir
+                if (ticketsChart) {
+                    ticketsChart.destroy();
+                }
+                
+                // Criar novo gráfico
+                ticketsChart = new Chart(ctx.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'Tickets Criados',
+                            data: data.data,
+                            borderColor: 'rgb(102, 126, 234)',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                console.log('✅ Tickets Chart atualizado para período:', period);
+            })
+            .catch(error => {
+                console.error('❌ Erro ao carregar dados do gráfico:', error);
+                
+                // Remover loading
+                const loading = document.getElementById('chart-loading');
+                if (loading) loading.remove();
+                
+                // Mostrar erro
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger text-center';
+                errorDiv.innerHTML = '⚠️ Erro ao carregar dados do gráfico. Tente novamente.';
+                ctx.parentNode.insertBefore(errorDiv, ctx);
+            });
     }
     
     // Gráfico de Status (Pizza)
     function initStatusChart() {
-        const ctx = document.getElementById('statusChart').getContext('2d');
-        const statusData = {{ status_data|safe }};
+        const ctx = document.getElementById('statusChart');
+        if (!ctx) {
+            console.error('❌ Canvas statusChart não encontrado!');
+            return;
+        }
+        
+        const statusData = JSON.parse('{{ status_data|escapejs }}');
+        console.log('📊 Dados status_data:', statusData);
+        
+        if (!statusData || typeof statusData !== 'object') {
+            console.error('❌ Dados inválidos para statusChart:', statusData);
+            return;
+        }
         
         // Converter dados para formato Chart.js
         const labels = Object.keys(statusData).map(key => {
@@ -1052,7 +1151,7 @@
             'rgba(103, 58, 183, 0.8)'
         ];
         
-        new Chart(ctx, {
+        new Chart(ctx.getContext('2d'), {
             type: 'doughnut',
             data: {
                 labels: labels,
@@ -1081,13 +1180,24 @@
     
     // Gráfico de Performance por Agente
     function initAgentChart() {
-        const ctx = document.getElementById('agentChart').getContext('2d');
-        const agentData = {{ agent_performance|safe }};
+        const ctx = document.getElementById('agentChart');
+        if (!ctx) {
+            console.error('❌ Canvas agentChart não encontrado!');
+            return;
+        }
+        
+        const agentData = JSON.parse('{{ agent_performance|escapejs }}');
+        console.log('📊 Dados agent_performance:', agentData);
+        
+        if (!Array.isArray(agentData) || agentData.length === 0) {
+            console.error('❌ Dados inválidos para agentChart:', agentData);
+            return;
+        }
         
         const labels = agentData.map(item => item.agente__username || 'N/A');
         const data = agentData.map(item => item.count);
         
-        new Chart(ctx, {
+        new Chart(ctx.getContext('2d'), {
             type: 'bar',
             data: {
                 labels: labels,
@@ -1133,11 +1243,23 @@
     // Heatmap de Horários
     function initHeatmap() {
         const container = document.getElementById('heatmapContainer');
+        if (!container) {
+            console.error('❌ Container heatmapContainer não encontrado!');
+            return;
+        }
+        
         const hours = ['00h', '02h', '04h', '06h', '08h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'];
         const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
         
         // Dados reais do heatmap
-        const heatmapData = {{ heatmap_data|safe }};
+        const heatmapData = JSON.parse('{{ heatmap_data|escapejs }}');
+        console.log('📊 Dados heatmap_data:', heatmapData);
+        
+        if (!Array.isArray(heatmapData) || heatmapData.length === 0) {
+            console.error('❌ Dados inválidos para heatmap:', heatmapData);
+            container.innerHTML = '<p class="text-center text-muted">Dados não disponíveis</p>';
+            return;
+        }
         
         let heatmapHTML = '<table class="table table-borderless" style="font-size: 12px;">';
         heatmapHTML += '<thead><tr><th></th>';
