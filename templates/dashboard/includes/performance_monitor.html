@@ -1,0 +1,147 @@
+{% if debug or performance_enabled %}
+<!-- Performance Monitor -->
+<div id="performance-monitor" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; display: none;">
+    <div class="card bg-dark text-white" style="min-width: 250px; font-size: 0.8rem;">
+        <div class="card-header py-2">
+            <strong>📊 Performance</strong>
+            <button type="button" class="btn-close btn-close-white float-end" onclick="document.getElementById('performance-monitor').style.display='none'"></button>
+        </div>
+        <div class="card-body py-2">
+            <div class="row g-1">
+                <div class="col-12">
+                    <small><strong>Page Load:</strong> <span id="perf-page-load">-</span>ms</small>
+                </div>
+                <div class="col-12">
+                    <small><strong>DOM Ready:</strong> <span id="perf-dom-ready">-</span>ms</small>
+                </div>
+                <div class="col-12">
+                    <small><strong>FCP:</strong> <span id="perf-fcp">-</span>ms</small>
+                </div>
+                <div class="col-12">
+                    <small><strong>LCP:</strong> <span id="perf-lcp">-</span>ms</small>
+                </div>
+                <div class="col-12">
+                    <small><strong>Memory:</strong> <span id="perf-memory">-</span>MB</small>
+                </div>
+                <div class="col-12">
+                    <small><strong>Connection:</strong> <span id="perf-connection">-</span></small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Monitor Script -->
+<script>
+(function() {
+    'use strict';
+    
+    class PerformanceMonitor {
+        constructor() {
+            this.monitor = document.getElementById('performance-monitor');
+            this.init();
+        }
+        
+        init() {
+            // Mostrar monitor após um delay
+            setTimeout(() => {
+                if (this.monitor) {
+                    this.monitor.style.display = 'block';
+                    this.updateMetrics();
+                    
+                    // Atualizar métricas periodicamente
+                    setInterval(() => this.updateMetrics(), 2000);
+                }
+            }, 1000);
+        }
+        
+        updateMetrics() {
+            // Page Load Time
+            const navigation = performance.getEntriesByType('navigation')[0];
+            if (navigation) {
+                const pageLoad = navigation.loadEventEnd - navigation.fetchStart;
+                this.updateElement('perf-page-load', Math.round(pageLoad));
+                
+                const domReady = navigation.domContentLoadedEventEnd - navigation.fetchStart;
+                this.updateElement('perf-dom-ready', Math.round(domReady));
+            }
+            
+            // First Contentful Paint
+            const paintEntries = performance.getEntriesByType('paint');
+            const fcp = paintEntries.find(entry => entry.name === 'first-contentful-paint');
+            if (fcp) {
+                this.updateElement('perf-fcp', Math.round(fcp.startTime));
+            }
+            
+            // Largest Contentful Paint
+            if ('PerformanceObserver' in window) {
+                try {
+                    new PerformanceObserver((list) => {
+                        const entries = list.getEntries();
+                        const lastEntry = entries[entries.length - 1];
+                        this.updateElement('perf-lcp', Math.round(lastEntry.startTime));
+                    }).observe({entryTypes: ['largest-contentful-paint']});
+                } catch (e) {
+                    // Observer not supported
+                }
+            }
+            
+            // Memory Usage
+            if (performance.memory) {
+                const memoryMB = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
+                this.updateElement('perf-memory', memoryMB);
+            }
+            
+            // Connection Info
+            if (navigator.connection) {
+                const conn = navigator.connection;
+                const connInfo = `${conn.effectiveType || 'unknown'} (${Math.round(conn.downlink || 0)}Mbps)`;
+                this.updateElement('perf-connection', connInfo);
+            }
+        }
+        
+        updateElement(elementId, value) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = value;
+                
+                // Color coding for performance
+                if (elementId.includes('load') || elementId.includes('fcp') || elementId.includes('lcp')) {
+                    const numValue = parseInt(value);
+                    if (numValue < 1000) {
+                        element.style.color = '#28a745'; // Green - Good
+                    } else if (numValue < 2500) {
+                        element.style.color = '#ffc107'; // Yellow - Needs improvement
+                    } else {
+                        element.style.color = '#dc3545'; // Red - Poor
+                    }
+                }
+            }
+        }
+    }
+    
+    // Inicializar quando DOM estiver pronto
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            new PerformanceMonitor();
+        });
+    } else {
+        new PerformanceMonitor();
+    }
+})();
+</script>
+
+<!-- Performance Hints -->
+{% if debug %}
+<script>
+// Development hints
+console.group('🚀 iConnect Performance Hints');
+console.log('• Enable asset optimization: python manage.py optimize_assets');
+console.log('• Use lazy loading for images: {% optimized_image "img/photo.jpg" lazy=True %}');
+console.log('• Bundle critical CSS: {% critical_css_bundle %}');
+console.log('• Load non-critical JS asynchronously: {% optimized_js "js/app.js" async=True %}');
+console.groupEnd();
+</script>
+{% endif %}
+
+{% endif %}

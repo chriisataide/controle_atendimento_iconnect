@@ -1,0 +1,106 @@
+ANÁLISE DE USO DE IMAGENS - iConnect
+==================================================
+
+Total de imagens: 72
+Imagens em uso: 5
+Imagens não utilizadas: 67
+Tamanho não utilizado: 11850.8 KB
+
+IMAGENS NÃO UTILIZADAS:
+------------------------------
+img/bg-pricing.jpg
+img/bg-smart-home-1.jpg
+img/bg-smart-home-2.jpg
+img/bruce-mars.jpg
+img/down-arrow-dark.svg
+img/down-arrow-white.svg
+img/down-arrow.svg
+img/drake.jpg
+img/home-decor-1.jpg
+img/home-decor-2.jpg
+img/home-decor-3.jpg
+img/icodev-logo-full.png
+img/icodev-logo-full.svg
+img/icodev-logo.png
+img/icodev-logo.svg
+img/icons/flags/AU.png
+img/icons/flags/BR.png
+img/icons/flags/DE.png
+img/icons/flags/GB.png
+img/icons/flags/US.png
+img/illustrations/chat.png
+img/illustrations/danger-chat-ill.png
+img/illustrations/dark-lock-ill.png
+img/illustrations/error-404.png
+img/illustrations/error-500.png
+img/illustrations/illustration-lock.jpg
+img/illustrations/illustration-reset.jpg
+img/illustrations/illustration-signin.jpg
+img/illustrations/illustration-signup.jpg
+img/illustrations/illustration-verification.jpg
+img/illustrations/lock.png
+img/illustrations/pattern-tree.svg
+img/illustrations/rocket-white.png
+img/ivana-square.jpg
+img/ivana-squares.jpg
+img/ivancik.jpg
+img/kal-visuals-square.jpg
+img/logos/gray-logos/logo-coinbase.svg
+img/logos/gray-logos/logo-nasa.svg
+img/logos/gray-logos/logo-netflix.svg
+img/logos/gray-logos/logo-pinterest.svg
+img/logos/gray-logos/logo-spotify.svg
+img/logos/gray-logos/logo-vodafone.svg
+img/marie.jpg
+img/meeting.jpg
+img/office-dark.jpg
+img/product-12.jpg
+img/small-logos/bootstrap.svg
+img/small-logos/devto.svg
+img/small-logos/github.svg
+img/small-logos/google-webdev.svg
+img/small-logos/icon-bulb.svg
+img/small-logos/icon-sun-cloud.png
+img/small-logos/iconnect-logo.svg
+img/small-logos/logo-asana.svg
+img/small-logos/logo-atlassian.svg
+img/small-logos/logo-invision.svg
+img/small-logos/logo-jira.svg
+img/small-logos/logo-slack.svg
+img/small-logos/logo-spotify.svg
+img/small-logos/logo-xd.svg
+img/team-1.jpg
+img/team-2.jpg
+img/team-3.jpg
+img/team-4.jpg
+img/team-5.jpg
+img/vr-bg.jpg
+
+IMAGENS EM USO:
+------------------------------
+fonts/nucleo-icons.svg
+  -> assets/css/nucleo-icons.css
+img/apple-icon.png
+  -> templates/base.html
+  -> templates/registration/login.html
+  -> templates/mobile/base.html
+img/favicon.png
+  -> static/js/cache.js
+  -> static/js/push-notifications.js
+  -> static/js/sw.js
+  -> templates/base.html
+  -> templates/registration/login.html
+  -> assets/js/sw.js
+img/logo-ct-dark.png
+  -> static/sw.js
+  -> templates/base.html
+  -> assets/js/material-dashboard.min.js
+  -> assets/js/material-dashboard.js
+  -> assets/js/sw.js
+img/logo-ct.png
+  -> static/js/cache.js
+  -> static/js/push-notifications.js
+  -> static/js/sw.js
+  -> templates/dashboard/chat/dashboard.html
+  -> assets/js/material-dashboard.min.js
+  -> assets/js/material-dashboard.js

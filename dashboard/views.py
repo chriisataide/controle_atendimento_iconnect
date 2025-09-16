@@ -15,6 +15,9 @@ from django.db.models import Q, Count, Case, When, IntegerField
 from datetime import datetime, timedelta
 import json
 from .models import Cliente, Ticket, PerfilUsuario, CategoriaTicket, InteracaoTicket, PerfilAgente, StatusTicket, PrioridadeTicket, TicketAnexo, Notification
+from .security import rate_limit, log_suspicious_activity
+from .api_versioning import api_version, APIResponseTransformer
+from .audit_system import audit_action, audit_model_changes, audit_sensitive_data_access
 
 User = get_user_model()
 
@@ -60,16 +63,26 @@ def admin_dashboard(request):
     total_tickets = Ticket.objects.count()
     total_categorias = CategoriaTicket.objects.count()
     
-    # Tickets por status
-    tickets_abertos = Ticket.objects.filter(status='aberto').count()
-    tickets_andamento = Ticket.objects.filter(status='em_andamento').count()
-    tickets_resolvidos = Ticket.objects.filter(status='resolvido').count()
-    tickets_fechados = Ticket.objects.filter(status='fechado').count()
+    # Tickets por status (otimizado com uma query)
+    from django.db.models import Count, Q
+    ticket_stats = Ticket.objects.aggregate(
+        abertos=Count('id', filter=Q(status='aberto')),
+        andamento=Count('id', filter=Q(status='em_andamento')),
+        resolvidos=Count('id', filter=Q(status='resolvido')),
+        fechados=Count('id', filter=Q(status='fechado')),
+        alta=Count('id', filter=Q(prioridade='alta')),
+        media=Count('id', filter=Q(prioridade='media')),
+        baixa=Count('id', filter=Q(prioridade='baixa'))
+    )
     
-    # Tickets por prioridade
-    tickets_alta = Ticket.objects.filter(prioridade='alta').count()
-    tickets_media = Ticket.objects.filter(prioridade='media').count()
-    tickets_baixa = Ticket.objects.filter(prioridade='baixa').count()
+    # Extrair valores das estatísticas
+    tickets_abertos = ticket_stats['abertos']
+    tickets_andamento = ticket_stats['andamento']
+    tickets_resolvidos = ticket_stats['resolvidos']
+    tickets_fechados = ticket_stats['fechados']
+    tickets_alta = ticket_stats['alta']
+    tickets_media = ticket_stats['media']
+    tickets_baixa = ticket_stats['baixa']
     
     # Tickets recentes
     tickets_recentes = Ticket.objects.select_related('cliente', 'categoria').order_by('-criado_em')[:10]
@@ -141,20 +154,34 @@ def custom_logout(request):
     return redirect('login')
 
 @login_required
+@rate_limit(max_requests=60, window_seconds=3600)  # 60 requests per hour
+@log_suspicious_activity
+@api_version(supported_versions=['v1', 'v2'])
 def get_user_info(request):
     """
     API para informações do usuário logado
+    Suporta versões v1 e v2 com diferentes formatos de resposta
     """
     user_data = {
+        'id': request.user.id,
         'username': request.user.username,
         'full_name': request.user.get_full_name(),
+        'first_name': request.user.first_name,
+        'last_name': request.user.last_name,
         'email': request.user.email,
         'is_superuser': request.user.is_superuser,
         'is_staff': request.user.is_staff,
-        'user_type': 'admin' if request.user.is_superuser else 'user'
+        'is_active': request.user.is_active,
+        'user_type': 'admin' if request.user.is_superuser else 'user',
+        'date_joined': request.user.date_joined.isoformat() if request.user.date_joined else None,
+        'last_login': request.user.last_login.isoformat() if request.user.last_login else None,
     }
     
-    return JsonResponse(user_data)
+    # Transformar dados baseado na versão da API
+    version = getattr(request, 'api_version', 'v2')
+    transformed_data = APIResponseTransformer.transform_user_data(user_data, version)
+    
+    return JsonResponse(transformed_data)
 
 @method_decorator(login_required, name='dispatch')
 class DashboardView(TemplateView):
@@ -196,23 +223,25 @@ class DashboardView(TemplateView):
             
             tickets_por_mes.insert(0, count)
         
-        # 2. Distribuição por status (gráfico pizza)
-        status_data = {
-            'aberto': Ticket.objects.filter(status=StatusTicket.ABERTO).count(),
-            'em_andamento': Ticket.objects.filter(status=StatusTicket.EM_ANDAMENTO).count(),
-            'resolvido': Ticket.objects.filter(status=StatusTicket.RESOLVIDO).count(),
-            'fechado': Ticket.objects.filter(status=StatusTicket.FECHADO).count(),
-        }
+        # 2. Distribuição por status (gráfico pizza) - otimizado
+        status_stats = Ticket.objects.aggregate(
+            aberto=Count('id', filter=Q(status=StatusTicket.ABERTO)),
+            em_andamento=Count('id', filter=Q(status=StatusTicket.EM_ANDAMENTO)),
+            resolvido=Count('id', filter=Q(status=StatusTicket.RESOLVIDO)),
+            fechado=Count('id', filter=Q(status=StatusTicket.FECHADO))
+        )
+        status_data = status_stats
         
-        # 3. Performance por agente (gráfico barras)
-        agent_performance = []
-        agentes = User.objects.filter(is_staff=True)[:5]
-        for agente in agentes:
-            count = Ticket.objects.filter(agente=agente, status=StatusTicket.RESOLVIDO).count()
-            agent_performance.append({
-                'agente__username': agente.username,
-                'count': count
-            })
+        # 3. Performance por agente (gráfico barras) - otimizado
+        agent_performance_qs = Ticket.objects.filter(
+            status=StatusTicket.RESOLVIDO,
+            agente__is_staff=True
+        ).values('agente__username').annotate(
+            count=Count('id')
+        ).order_by('-count')[:5]
+        
+        # Converter QuerySet para lista
+        agent_performance = list(agent_performance_qs)
         
         # 4. Heatmap de horários (tabela)
         # Matriz 7x12 (dias da semana x horários de 2 em 2h)
@@ -633,29 +662,65 @@ class ClienteTicketsView(ListView):
 # ========== APIs AJAX ==========
 
 @login_required
+@rate_limit(max_requests=120, window_seconds=3600)  # 120 requests per hour for stats
+@api_version(supported_versions=['v1', 'v2'])
 def cliente_stats_ajax(request):
-    """API para estatísticas do cliente em tempo real"""
+    """
+    API para estatísticas do cliente em tempo real
+    Suporta versões v1 (formato legado) e v2 (formato estruturado)
+    """
     try:
         cliente = Cliente.objects.get(email=request.user.email)
         tickets_cliente = Ticket.objects.filter(cliente=cliente)
         
-        stats = {
-            'total_tickets': tickets_cliente.count(),
-            'tickets_abertos': tickets_cliente.filter(status='aberto').count(),
-            'tickets_em_andamento': tickets_cliente.filter(status='em_andamento').count(),
-            'tickets_resolvidos': tickets_cliente.filter(status='resolvido').count(),
-            'tickets_fechados': tickets_cliente.filter(status='fechado').count(),
-            'ultimo_update': timezone.now().strftime('%H:%M:%S'),
-            'tickets_alta_prioridade': tickets_cliente.filter(prioridade='alta').count(),
-            'tickets_media_prioridade': tickets_cliente.filter(prioridade='media').count(),
-            'tickets_baixa_prioridade': tickets_cliente.filter(prioridade='baixa').count(),
-        }
+        version = getattr(request, 'api_version', 'v2')
+        
+        if version == 'v1':
+            # Formato legado (v1)
+            stats = {
+                'total_tickets': tickets_cliente.count(),
+                'tickets_abertos': tickets_cliente.filter(status='aberto').count(),
+                'tickets_em_andamento': tickets_cliente.filter(status='em_andamento').count(),
+                'tickets_resolvidos': tickets_cliente.filter(status='resolvido').count(),
+                'tickets_fechados': tickets_cliente.filter(status='fechado').count(),
+                'ultimo_update': timezone.now().strftime('%H:%M:%S'),
+                'tickets_alta_prioridade': tickets_cliente.filter(prioridade='alta').count(),
+                'tickets_media_prioridade': tickets_cliente.filter(prioridade='media').count(),
+                'tickets_baixa_prioridade': tickets_cliente.filter(prioridade='baixa').count(),
+            }
+        else:
+            # Formato estruturado (v2)
+            stats = {
+                'summary': {
+                    'total_tickets': tickets_cliente.count(),
+                    'last_updated': timezone.now().isoformat()
+                },
+                'status_breakdown': {
+                    'open': tickets_cliente.filter(status='aberto').count(),
+                    'in_progress': tickets_cliente.filter(status='em_andamento').count(),
+                    'resolved': tickets_cliente.filter(status='resolvido').count(),
+                    'closed': tickets_cliente.filter(status='fechado').count()
+                },
+                'priority_breakdown': {
+                    'high': tickets_cliente.filter(prioridade='alta').count(),
+                    'medium': tickets_cliente.filter(prioridade='media').count(),
+                    'low': tickets_cliente.filter(prioridade='baixa').count()
+                },
+                'client_info': {
+                    'id': cliente.id,
+                    'name': cliente.nome,
+                    'email': cliente.email
+                }
+            }
         
         return JsonResponse(stats)
     except Cliente.DoesNotExist:
         return JsonResponse({'error': 'Cliente não encontrado'}, status=404)
 
 @login_required
+@rate_limit(max_requests=50, window_seconds=3600)  # 50 status updates per hour
+@log_suspicious_activity
+@audit_action(action='UPDATE', description='Ticket status update', severity='MEDIUM', module='tickets')
 def update_ticket_status(request):
     """API para atualizar status do ticket via AJAX"""
     if request.method == 'POST':
@@ -682,6 +747,8 @@ def update_ticket_status(request):
 
 
 @login_required
+@rate_limit(max_requests=30, window_seconds=3600)  # 30 agent status updates per hour
+@log_suspicious_activity
 def update_agent_status(request):
     """API para atualizar status do agente"""
     if request.method == 'POST':
@@ -760,6 +827,7 @@ class ProfileView(TemplateView):
 # ========== VIEWS DE MÉTRICAS E AJAX ==========
 
 @login_required
+@rate_limit(max_requests=100, window_seconds=3600)  # 100 metrics requests per hour
 def ajax_metrics(request):
     """
     Endpoint AJAX para atualização das métricas em tempo real

@@ -1,0 +1,436 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Criar Sala de Chat - iConnect{% endblock %}
+
+{% block extra_css %}
+<style>
+  .create-room-container {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .create-room-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 1px, transparent 1px),
+                radial-gradient(circle at 75% 75%, rgba(255,255,255,0.1) 1px, transparent 1px),
+                radial-gradient(circle at 50% 10%, rgba(255,255,255,0.08) 0.5px, transparent 0.5px);
+    background-size: 100px 100px, 100px 100px, 100px 100px;
+    opacity: 0.3;
+    z-index: 0;
+  }
+
+  .create-room-container h6 {
+    color: white;
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    position: relative;
+    z-index: 1;
+    margin-bottom: 0;
+  }
+
+  .room-type-option {
+    padding: 1.2rem;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: center;
+    border: 2px solid transparent;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .room-type-option:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    border-color: #667eea;
+  }
+
+  .room-type-option.selected {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
+  }
+
+  .room-type-option i {
+    font-size: 2.5rem;
+    margin-bottom: 0.8rem;
+    display: block;
+    color: #667eea;
+  }
+
+  .room-type-option h6 {
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .room-type-option p {
+    color: #666;
+    font-size: 0.85rem;
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  .form-section {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .participant-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+  }
+
+  .participant-item .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #667eea;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    margin-right: 0.75rem;
+  }
+
+  .participant-item .info {
+    flex: 1;
+  }
+
+  .participant-item .info .name {
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+  }
+
+  .participant-item .info .email {
+    color: #666;
+    font-size: 0.85rem;
+    margin: 0;
+  }
+
+  .remove-participant {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+  }
+
+  .remove-participant:hover {
+    background: rgba(220, 53, 69, 0.1);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+  <!-- Page Header -->
+  <div class="ms-3">
+    <h3 class="mb-0 h4 font-weight-bolder">Criar Sala de Chat</h3>
+    <p class="mb-4">Configure uma nova sala de conversa para sua equipe ou clientes</p>
+  </div>
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card my-4">
+        <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+          <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+            <h6 class="text-white text-capitalize ps-3">
+              <i class="material-symbols-rounded me-2">add_comment</i>
+              Nova Sala de Chat
+            </h6>
+          </div>
+        </div>
+        
+        <div class="card-body">
+          <div class="create-room-container">
+            <h6 class="mb-0">
+              <i class="material-symbols-rounded me-2">chat</i>
+              Configuração da Sala
+            </h6>
+            
+            <div class="form-section">
+              <form method="post" id="createRoomForm">
+                {% csrf_token %}
+                
+                <!-- Tipo da Sala -->
+                <div class="row mb-4">
+                  <div class="col-12">
+                    <h6 class="text-primary mb-3">
+                      <i class="material-symbols-rounded me-2">category</i>
+                      Tipo da Sala
+                    </h6>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="room-type-option" data-type="support">
+                      <i class="material-symbols-rounded">support_agent</i>
+                      <h6>Suporte Técnico</h6>
+                      <p>Para atendimento ao cliente e suporte técnico especializado</p>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="room-type-option" data-type="team">
+                      <i class="material-symbols-rounded">groups</i>
+                      <h6>Equipe Interna</h6>
+                      <p>Comunicação entre membros da equipe e colaboradores</p>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="room-type-option" data-type="project">
+                      <i class="material-symbols-rounded">work</i>
+                      <h6>Projeto Específico</h6>
+                      <p>Discussões focadas em projetos e tarefas específicas</p>
+                    </div>
+                  </div>
+                </div>
+
+                <input type="hidden" name="room_type" id="roomType" required>
+
+                <!-- Informações Básicas -->
+                <div class="row mb-4">
+                  <div class="col-12">
+                    <h6 class="text-primary mb-3">
+                      <i class="material-symbols-rounded me-2">info</i>
+                      Informações Básicas
+                    </h6>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="input-group input-group-outline mb-3">
+                      <label class="form-label">Nome da Sala</label>
+                      <input type="text" class="form-control" name="name" required>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="input-group input-group-outline mb-3">
+                      <label class="form-label">Ticket Relacionado (opcional)</label>
+                      <select class="form-control" name="ticket">
+                        <option value="">Nenhum ticket</option>
+                        {% for ticket in available_tickets %}
+                          <option value="{{ ticket.id }}">
+                            #{{ ticket.numero }} - {{ ticket.titulo }}
+                          </option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <div class="input-group input-group-outline mb-3">
+                      <label class="form-label">Descrição da Sala</label>
+                      <textarea class="form-control" rows="3" name="description"></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Configurações -->
+                <div class="row mb-4">
+                  <div class="col-12">
+                    <h6 class="text-primary mb-3">
+                      <i class="material-symbols-rounded me-2">settings</i>
+                      Configurações
+                    </h6>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-check form-switch mb-3">
+                      <input class="form-check-input" type="checkbox" name="is_private" id="isPrivate">
+                      <label class="form-check-label" for="isPrivate">
+                        Sala Privada
+                      </label>
+                      <small class="text-muted d-block">Apenas participantes convidados podem entrar</small>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-check form-switch mb-3">
+                      <input class="form-check-input" type="checkbox" name="enable_notifications" id="enableNotifications" checked>
+                      <label class="form-check-label" for="enableNotifications">
+                        Notificações Ativadas
+                      </label>
+                      <small class="text-muted d-block">Enviar notificações para novos membros</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Participantes -->
+                <div class="row mb-4">
+                  <div class="col-12">
+                    <h6 class="text-primary mb-3">
+                      <i class="material-symbols-rounded me-2">person_add</i>
+                      Adicionar Participantes
+                    </h6>
+                  </div>
+                  <div class="col-md-8">
+                    <div class="input-group input-group-outline mb-3">
+                      <label class="form-label">Buscar usuários</label>
+                      <input type="text" class="form-control" id="userSearch" placeholder="Digite nome ou email...">
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <button type="button" class="btn btn-outline-primary w-100" id="addParticipant">
+                      <i class="material-symbols-rounded me-1">add</i>
+                      Adicionar
+                    </button>
+                  </div>
+                  
+                  <!-- Lista de Participantes -->
+                  <div class="col-12">
+                    <div id="participantsList">
+                      <div class="participant-item">
+                        <div class="avatar">{{ user.first_name.0|default:user.username.0 }}</div>
+                        <div class="info">
+                          <p class="name">{{ user.get_full_name|default:user.username }} (Você)</p>
+                          <p class="email">{{ user.email }}</p>
+                        </div>
+                        <span class="badge bg-primary">Administrador</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="row">
+                  <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <a href="{% url 'dashboard:chat_dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="material-symbols-rounded me-1">arrow_back</i>
+                        Voltar para Chat
+                      </a>
+                      <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-light" onclick="window.history.back()">
+                          <i class="material-symbols-rounded me-1">close</i>
+                          Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                          <i class="material-symbols-rounded me-1">add_comment</i>
+                          Criar Sala
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Seleção do tipo de sala
+    const roomTypeOptions = document.querySelectorAll('.room-type-option');
+    const roomTypeInput = document.getElementById('roomType');
+    
+    roomTypeOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            // Remove seleção anterior
+            roomTypeOptions.forEach(opt => opt.classList.remove('selected'));
+            
+            // Adiciona seleção atual
+            this.classList.add('selected');
+            roomTypeInput.value = this.dataset.type;
+        });
+    });
+
+    // Adicionar participantes
+    const userSearch = document.getElementById('userSearch');
+    const addButton = document.getElementById('addParticipant');
+    const participantsList = document.getElementById('participantsList');
+    let selectedParticipants = [{{ user.id }}]; // ID do usuário atual
+
+    addButton.addEventListener('click', function() {
+        const searchTerm = userSearch.value.trim();
+        if (searchTerm) {
+            // Aqui você faria uma busca AJAX real
+            // Por enquanto, vamos simular
+            console.log('Buscando usuário:', searchTerm);
+            
+            // Exemplo de adição
+            addParticipant({
+                id: Math.random(),
+                name: searchTerm,
+                email: searchTerm + '@exemplo.com'
+            });
+            
+            userSearch.value = '';
+        }
+    });
+
+    function addParticipant(user) {
+        if (selectedParticipants.includes(user.id)) {
+            alert('Usuário já foi adicionado!');
+            return;
+        }
+
+        selectedParticipants.push(user.id);
+
+        const participantHtml = `
+            <div class="participant-item" data-user-id="${user.id}">
+                <div class="avatar">${user.name.charAt(0).toUpperCase()}</div>
+                <div class="info">
+                    <p class="name">${user.name}</p>
+                    <p class="email">${user.email}</p>
+                </div>
+                <button type="button" class="remove-participant" onclick="removeParticipant(${user.id})">
+                    <i class="material-symbols-rounded">close</i>
+                </button>
+            </div>
+        `;
+
+        participantsList.insertAdjacentHTML('beforeend', participantHtml);
+    }
+
+    // Função global para remover participante
+    window.removeParticipant = function(userId) {
+        const participantElement = document.querySelector(`[data-user-id="${userId}"]`);
+        if (participantElement) {
+            participantElement.remove();
+            selectedParticipants = selectedParticipants.filter(id => id !== userId);
+        }
+    };
+
+    // Validação do formulário
+    const form = document.getElementById('createRoomForm');
+    form.addEventListener('submit', function(e) {
+        if (!roomTypeInput.value) {
+            e.preventDefault();
+            alert('Por favor, selecione um tipo de sala.');
+            return;
+        }
+
+        // Adicionar participantes ao formulário
+        selectedParticipants.forEach((participantId, index) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = `participants[${index}]`;
+            input.value = participantId;
+            form.appendChild(input);
+        });
+    });
+});
+</script>
+{% endblock %}

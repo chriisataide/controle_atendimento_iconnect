@@ -685,16 +685,23 @@
 {% endblock %}
 
 {% block content %}
-<div class="profile-page-content">
-  <!-- Notification Area -->
-  <div id="notification" class="notification">
-    <div class="d-flex align-items-center">
-      <i class="material-symbols-rounded me-2">check_circle</i>
-      <span id="notification-text">Perfil atualizado com sucesso!</span>
-    </div>
+<div class="container-fluid py-2">
+  <!-- Page Header -->
+  <div class="ms-3">
+    <h3 class="mb-0 h4 font-weight-bolder">Meu Perfil</h3>
+    <p class="mb-4">Gerencie suas informações pessoais e configurações da conta</p>
   </div>
 
-  <!-- Profile Header -->
+  <div class="profile-page-content">
+    <!-- Notification Area -->
+    <div id="notification" class="notification">
+      <div class="d-flex align-items-center">
+        <i class="material-symbols-rounded me-2">check_circle</i>
+        <span id="notification-text">Perfil atualizado com sucesso!</span>
+      </div>
+    </div>
+
+    <!-- Profile Header -->
   <div class="profile-header text-center">
     <div class="row align-items-center">
       <div class="col-md-3">
@@ -1343,5 +1350,6 @@
     }, 1500);
   });
 </script>
+</div>
 
 {% endblock %}

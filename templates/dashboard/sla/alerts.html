@@ -1,0 +1,483 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Alertas SLA - iConnect{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="ms-3">
+        <h3 class="mb-0 h4 font-weight-bolder">Alertas SLA</h3>
+        <p class="mb-4">Monitore e gerencie os alertas de violação de SLA em tempo real</p>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon icon-lg icon-shape bg-gradient-danger shadow-danger text-center border-radius-xl mt-n4 position-absolute">
+                        <i class="material-icons opacity-10">warning</i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0 text-capitalize">Alertas Críticos</p>
+                        <h4 class="mb-0">8</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0">
+                <div class="card-footer p-3">
+                    <p class="mb-0"><span class="text-success text-sm font-weight-bolder">+12% </span>nas últimas 24h</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute">
+                        <i class="material-icons opacity-10">error_outline</i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0 text-capitalize">Alertas Médios</p>
+                        <h4 class="mb-0">23</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0">
+                <div class="card-footer p-3">
+                    <p class="mb-0"><span class="text-danger text-sm font-weight-bolder">-2% </span>nas últimas 24h</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
+                        <i class="material-icons opacity-10">info</i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0 text-capitalize">Alertas Baixos</p>
+                        <h4 class="mb-0">45</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0">
+                <div class="card-footer p-3">
+                    <p class="mb-0"><span class="text-success text-sm font-weight-bolder">+5% </span>nas últimas 24h</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
+                        <i class="material-icons opacity-10">check_circle</i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0 text-capitalize">SLAs Cumpridos</p>
+                        <h4 class="mb-0">892</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0">
+                <div class="card-footer p-3">
+                    <p class="mb-0"><span class="text-success text-sm font-weight-bolder">+15% </span>nas últimas 24h</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts Filter and Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card my-4">
+                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                    <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+                        <h6 class="text-white text-capitalize ps-3">Alertas Ativos</h6>
+                    </div>
+                </div>
+                
+                <!-- Filters Section -->
+                <div class="card-body px-0 pb-2">
+                    <div class="row px-3 mb-3">
+                        <div class="col-md-3">
+                            <div class="input-group input-group-outline">
+                                <label class="form-label">Buscar alertas...</label>
+                                <input type="text" class="form-control" id="searchAlerts">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="priorityFilter">
+                                <option value="">Todas as Prioridades</option>
+                                <option value="critical">Crítico</option>
+                                <option value="high">Alto</option>
+                                <option value="medium">Médio</option>
+                                <option value="low">Baixo</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="statusFilter">
+                                <option value="">Todos os Status</option>
+                                <option value="active">Ativo</option>
+                                <option value="acknowledged">Reconhecido</option>
+                                <option value="resolved">Resolvido</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="policyFilter">
+                                <option value="">Todas as Políticas</option>
+                                <option value="1">Suporte Técnico - Crítico</option>
+                                <option value="2">Suporte Comercial - Alto</option>
+                                <option value="3">Suporte Geral - Médio</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary btn-sm">
+                                    <i class="material-icons text-sm">search</i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm">
+                                    <i class="material-icons text-sm">clear</i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alerts Table -->
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Alerta</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Ticket</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Prioridade</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tempo Violação</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Política SLA</th>
+                                    <th class="text-secondary opacity-7">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Critical Alerts -->
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-2 py-1">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">#SLA-2025-001</h6>
+                                                <p class="text-xs text-secondary mb-0">Tempo de resposta excedido</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p class="text-xs font-weight-bold mb-0">#TCK-2025-15478</p>
+                                        <p class="text-xs text-secondary mb-0">Sistema indisponível</p>
+                                    </td>
+                                    <td class="align-middle text-center text-sm">
+                                        <span class="badge badge-sm bg-gradient-danger">Crítico</span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <span class="text-secondary text-xs font-weight-bold">Ativo</span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <span class="text-secondary text-xs font-weight-bold">2h 35min</span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <span class="text-secondary text-xs font-weight-bold">Suporte Técnico - Crítico</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <div class="d-flex align-items-center">
+                                            <button class="btn btn-link text-dark px-2 mb-0" 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top" 
+                                                    title="Reconhecer Alerta"
+                                                    onclick="acknowledgeAlert(1)">
+                                                <i class="material-icons text-sm">done</i>
+                                            </button>
+                                            <button class="btn btn-link text-info px-2 mb-0" 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top" 
+                                                    title="Ver Detalhes"
+                                                    onclick="viewAlertDetails(1)">
+                                                <i class="material-icons text-sm">visibility</i>
+                                            </button>
+                                            <button class="btn btn-link text-warning px-2 mb-0" 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top" 
+                                                    title="Escalar Alerta"
+                                                    onclick="escalateAlert(1)">
+                                                <i class="material-icons text-sm">trending_up</i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- High Priority Alert -->
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-2 py-1">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">#SLA-2025-002</h6>
+                                                <p class="text-xs text-secondary mb-0">Tempo de resolução excedido</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p class="text-xs font-weight-bold mb-0">#TCK-2025-15465</p>
+                                        <p class="text-xs text-secondary mb-0">Erro de integração</p>
+                                    </td>
+                                    <td class="align-middle text-center text-sm">
+                                        <span class="badge badge-sm bg-gradient-warning">Alto</span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <span class="text-secondary text-xs font-weight-bold">Reconhecido</span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <span class="text-secondary text-xs font-weight-bold">45min</span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <span class="text-secondary text-xs font-weight-bold">Suporte Comercial - Alto</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <div class="d-flex align-items-center">
+                                            <button class="btn btn-link text-success px-2 mb-0" 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top" 
+                                                    title="Resolver Alerta"
+                                                    onclick="resolveAlert(2)">
+                                                <i class="material-icons text-sm">check_circle</i>
+                                            </button>
+                                            <button class="btn btn-link text-info px-2 mb-0" 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top" 
+                                                    title="Ver Detalhes"
+                                                    onclick="viewAlertDetails(2)">
+                                                <i class="material-icons text-sm">visibility</i>
+                                            </button>
+                                            <button class="btn btn-link text-warning px-2 mb-0" 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top" 
+                                                    title="Escalar Alerta"
+                                                    onclick="escalateAlert(2)">
+                                                <i class="material-icons text-sm">trending_up</i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- Medium Priority Alert -->
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-2 py-1">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">#SLA-2025-003</h6>
+                                                <p class="text-xs text-secondary mb-0">Tempo de primeira resposta excedido</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p class="text-xs font-weight-bold mb-0">#TCK-2025-15432</p>
+                                        <p class="text-xs text-secondary mb-0">Dúvida sobre funcionalidade</p>
+                                    </td>
+                                    <td class="align-middle text-center text-sm">
+                                        <span class="badge badge-sm bg-gradient-info">Médio</span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <span class="text-secondary text-xs font-weight-bold">Ativo</span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <span class="text-secondary text-xs font-weight-bold">15min</span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <span class="text-secondary text-xs font-weight-bold">Suporte Geral - Médio</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <div class="d-flex align-items-center">
+                                            <button class="btn btn-link text-dark px-2 mb-0" 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top" 
+                                                    title="Reconhecer Alerta"
+                                                    onclick="acknowledgeAlert(3)">
+                                                <i class="material-icons text-sm">done</i>
+                                            </button>
+                                            <button class="btn btn-link text-info px-2 mb-0" 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top" 
+                                                    title="Ver Detalhes"
+                                                    onclick="viewAlertDetails(3)">
+                                                <i class="material-icons text-sm">visibility</i>
+                                            </button>
+                                            <button class="btn btn-link text-secondary px-2 mb-0" 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top" 
+                                                    title="Silenciar por 1h"
+                                                    onclick="snoozeAlert(3)">
+                                                <i class="material-icons text-sm">snooze</i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="d-flex justify-content-between align-items-center px-3 py-2">
+                        <div class="text-sm text-secondary">
+                            Mostrando 1 a 3 de 76 alertas
+                        </div>
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" tabindex="-1">Anterior</a>
+                                </li>
+                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">Próximo</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Details Modal -->
+    <div class="modal fade" id="alertDetailsModal" tabindex="-1" role="dialog" aria-labelledby="alertDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="alertDetailsModalLabel">Detalhes do Alerta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label">ID do Alerta</label>
+                                <input type="text" class="form-control" id="alertId" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label">Ticket Relacionado</label>
+                                <input type="text" class="form-control" id="alertTicket" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label">Prioridade</label>
+                                <input type="text" class="form-control" id="alertPriority" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label">Status</label>
+                                <input type="text" class="form-control" id="alertStatus" readonly>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label">Descrição</label>
+                                <textarea class="form-control" rows="3" id="alertDescription" readonly></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label">Tempo de Violação</label>
+                                <input type="text" class="form-control" id="alertViolationTime" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-3">
+                                <label class="form-label">Política SLA</label>
+                                <input type="text" class="form-control" id="alertSlaPolicy" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-primary" onclick="acknowledgeAlert()">Reconhecer</button>
+                    <button type="button" class="btn btn-success" onclick="resolveAlert()">Resolver</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function acknowledgeAlert(alertId) {
+        // Implementar lógica para reconhecer alerta
+        console.log('Reconhecendo alerta:', alertId);
+        // Aqui você faria uma requisição AJAX para o backend
+        alert('Alerta reconhecido com sucesso!');
+    }
+
+    function resolveAlert(alertId) {
+        // Implementar lógica para resolver alerta
+        console.log('Resolvendo alerta:', alertId);
+        // Aqui você faria uma requisição AJAX para o backend
+        alert('Alerta resolvido com sucesso!');
+    }
+
+    function escalateAlert(alertId) {
+        // Implementar lógica para escalar alerta
+        console.log('Escalando alerta:', alertId);
+        // Aqui você faria uma requisição AJAX para o backend
+        alert('Alerta escalado com sucesso!');
+    }
+
+    function snoozeAlert(alertId) {
+        // Implementar lógica para adiar alerta
+        console.log('Adiando alerta:', alertId);
+        // Aqui você faria uma requisição AJAX para o backend
+        alert('Alerta adiado por 1 hora!');
+    }
+
+    function viewAlertDetails(alertId) {
+        // Implementar lógica para carregar detalhes do alerta
+        console.log('Carregando detalhes do alerta:', alertId);
+        
+        // Exemplo de dados (em produção, viria do backend)
+        const alertData = {
+            id: '#SLA-2025-' + String(alertId).padStart(3, '0'),
+            ticket: '#TCK-2025-1547' + alertId,
+            priority: alertId === 1 ? 'Crítico' : alertId === 2 ? 'Alto' : 'Médio',
+            status: alertId === 2 ? 'Reconhecido' : 'Ativo',
+            description: 'Descrição detalhada do alerta #' + alertId,
+            violationTime: alertId === 1 ? '2h 35min' : alertId === 2 ? '45min' : '15min',
+            slaPolicy: alertId === 1 ? 'Suporte Técnico - Crítico' : alertId === 2 ? 'Suporte Comercial - Alto' : 'Suporte Geral - Médio'
+        };
+        
+        // Preencher modal com os dados
+        document.getElementById('alertId').value = alertData.id;
+        document.getElementById('alertTicket').value = alertData.ticket;
+        document.getElementById('alertPriority').value = alertData.priority;
+        document.getElementById('alertStatus').value = alertData.status;
+        document.getElementById('alertDescription').value = alertData.description;
+        document.getElementById('alertViolationTime').value = alertData.violationTime;
+        document.getElementById('alertSlaPolicy').value = alertData.slaPolicy;
+        
+        // Adicionar classe is-filled para todos os campos preenchidos
+        const fieldIds = ['alertId', 'alertTicket', 'alertPriority', 'alertStatus', 'alertDescription', 'alertViolationTime', 'alertSlaPolicy'];
+        fieldIds.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            const inputGroup = field.closest('.input-group');
+            if (inputGroup && field.value) {
+                inputGroup.classList.add('is-filled');
+            }
+        });
+        
+        // Mostrar modal
+        const modal = new bootstrap.Modal(document.getElementById('alertDetailsModal'));
+        modal.show();
+    }
+
+    // Inicializar tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

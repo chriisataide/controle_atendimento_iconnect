@@ -1,0 +1,40 @@
+<!-- Performance Monitor Simplificado -->
+<div id="performance-indicator" style="position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 8px 12px; border-radius: 20px; font-size: 12px; z-index: 9999; display: none;">
+    <span id="perf-status">OK</span>
+    <span id="perf-time"></span>
+</div>
+
+<script>
+// Monitor de Performance Simplificado
+(function() {
+    const indicator = document.getElementById('performance-indicator');
+    const status = document.getElementById('perf-status');
+    const timeSpan = document.getElementById('perf-time');
+    
+    window.addEventListener('load', function() {
+        const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+        
+        if (loadTime > 0) {
+            timeSpan.textContent = `${Math.round(loadTime)}ms`;
+            
+            if (loadTime < 2000) {
+                status.textContent = 'Rápido';
+                status.style.color = '#4CAF50';
+            } else if (loadTime < 4000) {
+                status.textContent = 'Normal';
+                status.style.color = '#FF9800';
+            } else {
+                status.textContent = 'Lento';
+                status.style.color = '#F44336';
+            }
+            
+            indicator.style.display = 'block';
+            
+            // Esconder após 5 segundos
+            setTimeout(() => {
+                indicator.style.display = 'none';
+            }, 5000);
+        }
+    });
+})();
+</script>

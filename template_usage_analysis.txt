@@ -1,0 +1,55 @@
+ANÁLISE DE USO DE TEMPLATES - iConnect
+==================================================
+
+Total de templates: 43
+Templates em uso: 32
+Templates não utilizados: 11
+
+TEMPLATES NÃO UTILIZADOS:
+------------------------------
+cliente/dashboard_avancado.html
+dashboard/automation/workflow_engine.html
+dashboard/customer_portal.html
+dashboard/includes/performance_monitor.html
+dashboard/index_backup.html
+dashboard/index_new.html
+dashboard/performance_monitor_simple.html
+dashboard/pwa_install.html
+dashboard/tickets/create_backup.html
+dashboard/tickets/create_old.html
+integration_example.html
+
+TEMPLATES EM USO:
+------------------------------
+base.html
+components/notifications.html
+dashboard/admin/dashboard.html
+dashboard/agente/dashboard.html
+dashboard/agente/tickets.html
+dashboard/analytics/dashboard.html
+dashboard/automation/dashboard.html
+dashboard/chat/chatbot_settings.html
+dashboard/chat/create_room.html
+dashboard/chat/dashboard.html
+dashboard/chatbot/interface.html
+dashboard/cliente/portal.html
+dashboard/cliente/tickets.html
+dashboard/index.html
+dashboard/notifications.html
+dashboard/notifications/center.html
+dashboard/profile.html
+dashboard/pwa/info.html
+dashboard/pwa/install.html
+dashboard/reports/advanced.html
+dashboard/search/advanced.html
+dashboard/sla/alerts.html
+dashboard/sla/dashboard.html
+dashboard/sla/policies.html
+dashboard/tickets/create.html
+dashboard/tickets/detail.html
+dashboard/tickets/list.html
+dashboard/tickets/update.html
+mobile/base.html
+mobile/dashboard.html
+portal_cliente/base.html
+registration/login.html

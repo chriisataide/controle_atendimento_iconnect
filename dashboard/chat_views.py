@@ -27,8 +27,8 @@ def chat_dashboard(request):
     """Dashboard principal do sistema de chat"""
     user = request.user
     
-    # Salas ativas do usuário
-    active_rooms = ChatRoom.objects.filter(
+    # Salas ativas do usuário (query base sem slice)
+    active_rooms_query = ChatRoom.objects.filter(
         participants__user=user,
         participants__is_active=True,
         status='active'
@@ -37,12 +37,15 @@ def chat_dashboard(request):
         unread_count=Count('messages', filter=Q(
             messages__created_at__gt=F('participants__last_read_message__created_at')
         ) & ~Q(messages__sender=user))
-    ).order_by('-last_activity')[:10]
+    ).order_by('-last_activity')
     
-    # Estatísticas
+    # Aplicar slice para limitar resultados
+    active_rooms = active_rooms_query[:10]
+    
+    # Estatísticas (usar query base para contagem)
     stats = {
         'total_rooms': ChatRoom.objects.filter(participants__user=user).count(),
-        'active_conversations': active_rooms.filter(status='active').count(),
+        'active_conversations': active_rooms_query.count(),
         'unread_messages': sum(room.unread_count or 0 for room in active_rooms),
         'today_messages': ChatMessage.objects.filter(
             room__participants__user=user,
