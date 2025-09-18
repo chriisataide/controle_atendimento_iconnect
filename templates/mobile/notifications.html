@@ -1,0 +1,134 @@
+{% extends 'mobile/base.html' %}
+{% load static %}
+
+{% block title %}Notificações - iConnect{% endblock %}
+
+{% block extra_css %}
+<style>
+.notification-item {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    box-shadow: var(--card-shadow);
+    border-left: 4px solid var(--primary-color);
+}
+
+.notification-item.unread {
+    background: linear-gradient(145deg, #fff, #f0f4ff);
+    border-left-color: var(--warning-color);
+}
+
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.notification-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.notification-time {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.notification-content {
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-secondary);
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 py-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h1 class="h4 mb-0 fw-bold">
+                    <i class="material-symbols-rounded me-2">notifications</i>
+                    Notificações
+                </h1>
+                
+                {% if notifications %}
+                <button class="btn btn-outline-primary btn-sm">
+                    <i class="material-symbols-rounded me-1">done_all</i>
+                    Marcar todas como lidas
+                </button>
+                {% endif %}
+            </div>
+            
+            <!-- Notificações -->
+            {% if notifications %}
+                {% for notification in notifications %}
+                <div class="notification-item {% if not notification.read %}unread{% endif %}">
+                    <div class="notification-header">
+                        <h6 class="notification-title">{{ notification.title }}</h6>
+                        <span class="notification-time">{{ notification.created_at|timesince }} atrás</span>
+                    </div>
+                    <div class="notification-content">
+                        {{ notification.content }}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <!-- Estado vazio -->
+                <div class="empty-state">
+                    <i class="material-symbols-rounded">notifications_none</i>
+                    <h5>Nenhuma notificação</h5>
+                    <p>Quando você receber notificações, elas aparecerão aqui.</p>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'mobile:mobile_ticket_list' %}" class="btn btn-primary">
+                            <i class="material-symbols-rounded me-2">list_alt</i>
+                            Ver Tickets
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Marcar notificação como lida ao clicar
+    document.querySelectorAll('.notification-item.unread').forEach(item => {
+        item.addEventListener('click', function() {
+            this.classList.remove('unread');
+            // Aqui você implementaria a chamada AJAX para marcar como lida
+        });
+    });
+    
+    // Marcar todas como lidas
+    const markAllBtn = document.querySelector('.btn[data-action="mark-all"]');
+    if (markAllBtn) {
+        markAllBtn.addEventListener('click', function() {
+            document.querySelectorAll('.notification-item.unread').forEach(item => {
+                item.classList.remove('unread');
+            });
+            // Aqui você implementaria a chamada AJAX para marcar todas como lidas
+        });
+    }
+});
+</script>
+{% endblock %}

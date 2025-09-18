@@ -1,0 +1,894 @@
+{% extends 'mobile/base.html' %}
+{% load static %}
+
+{% block title %}{{ ticket.numero }} - {{ ticket.titulo }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ticket-header-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        margin: -0.5rem -0.5rem 1.5rem -0.5rem;
+        padding: 1.5rem;
+        border-radius: 0 0 20px 20px;
+    }
+    
+    .ticket-number-display {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .ticket-title-display {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        opacity: 0.95;
+    }
+    
+    .ticket-status-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+    
+    .priority-display {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .priority-icon {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+    
+    .priority-alta .priority-icon { background: #ff4757; }
+    .priority-media .priority-icon { background: #ffa502; }
+    .priority-baixa .priority-icon { background: #2ed573; }
+    
+    .info-section {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+    }
+    
+    .info-section h6 {
+        color: #2d3748;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        color: #64748b;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .info-value {
+        color: #1e293b;
+        font-weight: 600;
+        text-align: right;
+    }
+    
+    .description-section {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+    }
+    
+    .description-text {
+        color: #475569;
+        line-height: 1.6;
+        white-space: pre-wrap;
+    }
+    
+    .action-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .action-btn {
+        padding: 1rem;
+        border-radius: 12px;
+        border: 2px solid;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+    
+    .action-btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+        color: white;
+    }
+    
+    .action-btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+    
+    .action-btn-secondary {
+        background: white;
+        border-color: #e2e8f0;
+        color: #64748b;
+    }
+    
+    .action-btn-secondary:hover {
+        background: #f8fafc;
+        border-color: #cbd5e0;
+        color: #64748b;
+    }
+    
+    .action-btn-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-color: #10b981;
+        color: white;
+    }
+    
+    .action-btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        color: white;
+    }
+    
+    .action-btn-warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        border-color: #f59e0b;
+        color: white;
+    }
+    
+    .action-btn-warning:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+        color: white;
+    }
+    
+    .comments-section {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+    }
+    
+    .comment-item {
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+    
+    .comment-user {
+        background: #f8fafc;
+        border-left: 4px solid #667eea;
+    }
+    
+    .comment-system {
+        background: #fef3c7;
+        border-left: 4px solid #f59e0b;
+    }
+    
+    .comment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .comment-author {
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 0.875rem;
+    }
+    
+    .comment-time {
+        color: #64748b;
+        font-size: 0.75rem;
+    }
+    
+    .comment-content {
+        color: #475569;
+        line-height: 1.5;
+        white-space: pre-wrap;
+    }
+    
+    .add-comment-section {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 5rem;
+        box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+    }
+    
+    .comment-input {
+        width: 100%;
+        min-height: 100px;
+        padding: 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        resize: vertical;
+        font-family: inherit;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .comment-input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .submit-comment-btn {
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        margin-top: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .submit-comment-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+    
+    .submit-comment-btn:disabled {
+        opacity: 0.6;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .timeline-progress {
+        position: relative;
+        padding: 1rem 0;
+    }
+    
+    .timeline-steps {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+    }
+    
+    .timeline-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        flex: 1;
+    }
+    
+    .timeline-step-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .timeline-step.completed .timeline-step-icon {
+        background: #10b981;
+        color: white;
+    }
+    
+    .timeline-step.current .timeline-step-icon {
+        background: #667eea;
+        color: white;
+    }
+    
+    .timeline-step.pending .timeline-step-icon {
+        background: #e2e8f0;
+        color: #64748b;
+    }
+    
+    .timeline-step-label {
+        font-size: 0.75rem;
+        color: #64748b;
+        text-align: center;
+        font-weight: 500;
+    }
+    
+    .timeline-progress-bar {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        right: 20px;
+        height: 2px;
+        background: #e2e8f0;
+        z-index: 1;
+    }
+    
+    .timeline-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #10b981, #667eea);
+        transition: width 0.5s ease;
+    }
+    
+    .field-actions {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        padding: 1rem;
+        border-top: 1px solid #e2e8f0;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .quick-status-buttons {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .quick-status-btn {
+        flex: 1;
+        padding: 0.75rem;
+        border: 2px solid;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    
+    .location-info {
+        background: #f0f9ff;
+        border: 1px solid #0ea5e9;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .location-info h6 {
+        color: #0369a1;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .photos-section {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+    }
+    
+    .photo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .photo-item {
+        aspect-ratio: 1;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+    
+    .photo-item:hover {
+        transform: scale(1.05);
+    }
+    
+    .photo-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .add-photo-btn {
+        border: 2px dashed #cbd5e0;
+        color: #64748b;
+    }
+    
+    .add-photo-btn:hover {
+        border-color: #667eea;
+        color: #667eea;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ticket-header-section">
+    <div class="ticket-number-display">#{{ ticket.numero }}</div>
+    <div class="ticket-title-display">{{ ticket.titulo }}</div>
+    
+    <div class="ticket-status-row">
+        <div class="status-badge">{{ ticket.get_status_display }}</div>
+        <div class="priority-display priority-{{ ticket.prioridade }}">
+            <div class="priority-icon"></div>
+            {{ ticket.get_prioridade_display }}
+        </div>
+    </div>
+</div>
+
+<!-- Progress Timeline -->
+<div class="info-section">
+    <h6><i class="fas fa-route"></i> Progresso do Atendimento</h6>
+    <div class="timeline-progress">
+        <div class="timeline-progress-bar">
+            <div class="timeline-progress-fill" style="width: {% if ticket.status == 'aberto' %}25%{% elif ticket.status == 'em_andamento' %}50%{% elif ticket.status == 'resolvido' %}75%{% else %}100%{% endif %}"></div>
+        </div>
+        <div class="timeline-steps">
+            <div class="timeline-step {% if ticket.status != 'aberto' %}completed{% else %}current{% endif %}">
+                <div class="timeline-step-icon">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="timeline-step-label">Aberto</div>
+            </div>
+            <div class="timeline-step {% if ticket.status == 'em_andamento' %}current{% elif ticket.status == 'resolvido' or ticket.status == 'fechado' %}completed{% else %}pending{% endif %}">
+                <div class="timeline-step-icon">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="timeline-step-label">Em Andamento</div>
+            </div>
+            <div class="timeline-step {% if ticket.status == 'resolvido' %}current{% elif ticket.status == 'fechado' %}completed{% else %}pending{% endif %}">
+                <div class="timeline-step-icon">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="timeline-step-label">Resolvido</div>
+            </div>
+            <div class="timeline-step {% if ticket.status == 'fechado' %}completed current{% else %}pending{% endif %}">
+                <div class="timeline-step-icon">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <div class="timeline-step-label">Fechado</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Informações do Cliente -->
+<div class="info-section">
+    <h6><i class="fas fa-user"></i> Informações do Cliente</h6>
+    <div class="info-row">
+        <span class="info-label">Nome</span>
+        <span class="info-value">{{ ticket.cliente.nome }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Email</span>
+        <span class="info-value">{{ ticket.cliente.email }}</span>
+    </div>
+    {% if ticket.cliente.telefone %}
+    <div class="info-row">
+        <span class="info-label">Telefone</span>
+        <span class="info-value">
+            <a href="tel:{{ ticket.cliente.telefone }}" class="text-decoration-none">
+                {{ ticket.cliente.telefone }}
+                <i class="fas fa-phone ms-1"></i>
+            </a>
+        </span>
+    </div>
+    {% endif %}
+    {% if ticket.categoria %}
+    <div class="info-row">
+        <span class="info-label">Categoria</span>
+        <span class="info-value">{{ ticket.categoria.nome }}</span>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Localização (se disponível) -->
+{% if is_agent %}
+<div class="location-info">
+    <h6><i class="fas fa-map-marker-alt"></i> Localização do Atendimento</h6>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <small class="text-muted">Endereço do cliente</small><br>
+            <span id="addressText">Carregando localização...</span>
+        </div>
+        <button class="btn btn-sm btn-outline-primary" id="getDirectionsBtn">
+            <i class="fas fa-directions"></i> Rotas
+        </button>
+    </div>
+</div>
+{% endif %}
+
+<!-- Descrição -->
+<div class="description-section">
+    <h6><i class="fas fa-file-alt"></i> Descrição do Problema</h6>
+    <div class="description-text">{{ ticket.descricao }}</div>
+</div>
+
+<!-- Fotos do Atendimento -->
+{% if is_agent %}
+<div class="photos-section">
+    <h6><i class="fas fa-camera"></i> Fotos do Atendimento</h6>
+    <div class="photo-grid">
+        <div class="photo-item add-photo-btn" id="addPhotoBtn">
+            <i class="fas fa-plus"></i>
+        </div>
+        <!-- Fotos serão carregadas dinamicamente -->
+    </div>
+    <input type="file" id="photoInput" accept="image/*" capture="environment" style="display: none;">
+</div>
+{% endif %}
+
+<!-- Informações Técnicas -->
+<div class="info-section">
+    <h6><i class="fas fa-info-circle"></i> Informações do Ticket</h6>
+    <div class="info-row">
+        <span class="info-label">Criado em</span>
+        <span class="info-value">{{ ticket.criado_em|date:"d/m/Y H:i" }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Atualizado em</span>
+        <span class="info-value">{{ ticket.atualizado_em|date:"d/m/Y H:i" }}</span>
+    </div>
+    {% if ticket.agente %}
+    <div class="info-row">
+        <span class="info-label">Responsável</span>
+        <span class="info-value">{{ ticket.agente.get_full_name|default:ticket.agente.username }}</span>
+    </div>
+    {% endif %}
+    {% if ticket.sla_deadline %}
+    <div class="info-row">
+        <span class="info-label">SLA</span>
+        <span class="info-value text-warning">
+            {{ ticket.sla_deadline|date:"d/m/Y H:i" }}
+        </span>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Ações Rápidas para Campo -->
+{% if is_agent %}
+<div class="action-buttons">
+    {% if ticket.status == 'aberto' %}
+        <form method="post" class="action-form">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="em_andamento">
+            <button type="submit" class="action-btn action-btn-primary">
+                <i class="fas fa-play"></i>
+                Iniciar Atendimento
+            </button>
+        </form>
+    {% elif ticket.status == 'em_andamento' %}
+        <form method="post" class="action-form">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="resolvido">
+            <button type="submit" class="action-btn action-btn-success">
+                <i class="fas fa-check"></i>
+                Marcar como Resolvido
+            </button>
+        </form>
+    {% endif %}
+    
+    <a href="tel:{{ ticket.cliente.telefone }}" class="action-btn action-btn-secondary">
+        <i class="fas fa-phone"></i>
+        Ligar para Cliente
+    </a>
+</div>
+{% endif %}
+
+<!-- Comentários -->
+<div class="comments-section">
+    <h6><i class="fas fa-comments"></i> Histórico de Interações</h6>
+    
+    {% if comments %}
+        {% for comment in comments %}
+        <div class="comment-item comment-{{ comment.tipo }}">
+            <div class="comment-header">
+                <span class="comment-author">
+                    {% if comment.tipo == 'sistema' %}
+                        <i class="fas fa-cog"></i> Sistema
+                    {% else %}
+                        <i class="fas fa-user"></i> {{ comment.usuario.get_full_name|default:comment.usuario.username }}
+                    {% endif %}
+                </span>
+                <span class="comment-time">{{ comment.criado_em|timesince }} atrás</span>
+            </div>
+            <div class="comment-content">{{ comment.conteudo }}</div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="text-center text-muted py-3">
+            <i class="fas fa-comment-slash fa-2x mb-2"></i>
+            <p>Nenhuma interação registrada ainda</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Adicionar Comentário -->
+<div class="add-comment-section">
+    <h6><i class="fas fa-plus-circle"></i> Adicionar Comentário</h6>
+    <form method="post" id="commentForm">
+        {% csrf_token %}
+        <textarea name="comment" 
+                  class="comment-input" 
+                  placeholder="Descreva o que foi feito, problemas encontrados ou próximos passos..."
+                  required></textarea>
+        <button type="submit" class="submit-comment-btn" id="submitBtn">
+            <span class="btn-text">Adicionar Comentário</span>
+            <span class="btn-loading d-none">
+                <span class="loading-spinner"></span> Enviando...
+            </span>
+        </button>
+    </form>
+</div>
+
+<!-- Barra de ações fixas para técnicos de campo -->
+{% if is_agent %}
+<div class="field-actions">
+    <div class="quick-status-buttons">
+        {% if ticket.status == 'aberto' %}
+            <button class="quick-status-btn btn-primary" onclick="updateStatus('em_andamento')">
+                Iniciar
+            </button>
+        {% elif ticket.status == 'em_andamento' %}
+            <button class="quick-status-btn btn-success" onclick="updateStatus('resolvido')">
+                Resolver
+            </button>
+            <button class="quick-status-btn btn-warning" onclick="updateStatus('aberto')">
+                Pausar
+            </button>
+        {% elif ticket.status == 'resolvido' %}
+            <button class="quick-status-btn btn-secondary" onclick="updateStatus('fechado')">
+                Fechar
+            </button>
+            <button class="quick-status-btn btn-warning" onclick="updateStatus('em_andamento')">
+                Reabrir
+            </button>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Envio do formulário de comentário
+document.getElementById('commentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const btn = document.getElementById('submitBtn');
+    const btnText = btn.querySelector('.btn-text');
+    const btnLoading = btn.querySelector('.btn-loading');
+    
+    // Mostrar loading
+    btnText.classList.add('d-none');
+    btnLoading.classList.remove('d-none');
+    btn.disabled = true;
+    
+    // Enviar formulário
+    fetch(window.location.href, {
+        method: 'POST',
+        body: new FormData(this),
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            // Recarregar a página para mostrar o novo comentário
+            window.location.reload();
+        } else {
+            throw new Error('Erro ao enviar comentário');
+        }
+    })
+    .catch(error => {
+        alert('Erro ao enviar comentário: ' + error.message);
+        
+        // Restaurar botão
+        btnText.classList.remove('d-none');
+        btnLoading.classList.add('d-none');
+        btn.disabled = false;
+    });
+});
+
+// Atualizar status do ticket
+function updateStatus(newStatus) {
+    if (!confirm('Confirma a alteração do status do ticket?')) {
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('status', newStatus);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            throw new Error('Erro ao atualizar status');
+        }
+    })
+    .catch(error => {
+        alert('Erro ao atualizar status: ' + error.message);
+    });
+}
+
+// Geolocalização e endereço
+{% if is_agent %}
+if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            // Aqui você pode integrar com uma API de mapas (Google Maps, OpenStreetMap, etc.)
+            document.getElementById('addressText').textContent = `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
+            
+            // Configurar botão de direções
+            document.getElementById('getDirectionsBtn').onclick = function() {
+                const mapsUrl = `https://www.google.com/maps/dir/${lat},${lng}/{{ ticket.cliente.endereco|default:"" }}`;
+                window.open(mapsUrl, '_blank');
+            };
+        },
+        function(error) {
+            document.getElementById('addressText').textContent = 'Localização não disponível';
+            console.error('Erro de geolocalização:', error);
+        }
+    );
+} else {
+    document.getElementById('addressText').textContent = 'Geolocalização não suportada';
+}
+
+// Upload de fotos
+document.getElementById('addPhotoBtn').addEventListener('click', function() {
+    document.getElementById('photoInput').click();
+});
+
+document.getElementById('photoInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        // Aqui você pode implementar o upload da foto
+        // Por enquanto, vamos apenas mostrar uma prévia
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const photoGrid = document.querySelector('.photo-grid');
+            const photoItem = document.createElement('div');
+            photoItem.className = 'photo-item';
+            photoItem.innerHTML = `<img src="${e.target.result}" alt="Foto do atendimento">`;
+            
+            // Inserir antes do botão de adicionar
+            photoGrid.insertBefore(photoItem, document.getElementById('addPhotoBtn'));
+        };
+        reader.readAsDataURL(file);
+        
+        // Implementar upload real aqui
+        uploadPhoto(file);
+    }
+});
+
+function uploadPhoto(file) {
+    const formData = new FormData();
+    formData.append('photo', file);
+    formData.append('ticket_id', {{ ticket.id }});
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch('/mobile/ticket/{{ ticket.id }}/upload-photo/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Foto enviada com sucesso');
+        } else {
+            alert('Erro ao enviar foto');
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao enviar foto');
+    });
+}
+{% endif %}
+
+// Auto-save do comentário
+let commentText = '';
+const commentTextarea = document.querySelector('[name="comment"]');
+
+commentTextarea.addEventListener('input', function() {
+    commentText = this.value;
+    localStorage.setItem('ticket_{{ ticket.id }}_comment', commentText);
+});
+
+// Restaurar comentário salvo
+const savedComment = localStorage.getItem('ticket_{{ ticket.id }}_comment');
+if (savedComment) {
+    commentTextarea.value = savedComment;
+}
+
+// Limpar comentário salvo após envio bem-sucedido
+document.getElementById('commentForm').addEventListener('submit', function() {
+    localStorage.removeItem('ticket_{{ ticket.id }}_comment');
+});
+
+// Notificações push (se suportado)
+if ('serviceWorker' in navigator && 'PushManager' in window) {
+    // Configurar notificações para atualizações do ticket
+    // Implementação dependeria do service worker já configurado
+}
+
+// Vibração para feedback tátil (dispositivos móveis)
+function vibrate() {
+    if (navigator.vibrate) {
+        navigator.vibrate(100);
+    }
+}
+
+// Adicionar vibração aos botões importantes
+document.querySelectorAll('.quick-status-btn, .action-btn').forEach(btn => {
+    btn.addEventListener('click', vibrate);
+});
+</script>
+{% endblock %}

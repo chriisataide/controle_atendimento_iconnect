@@ -131,6 +131,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'assets',
+    BASE_DIR / 'static',
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
@@ -177,16 +178,116 @@ REST_FRAMEWORK = {
     }
 }
 
+# Cache Configuration
+import socket
+
+def test_redis_connection():
+    """Testa se o Redis está disponível"""
+    # Configurações para tentar
+    redis_configs = [
+        {'host': 'redis', 'port': 6379, 'password': 'redis_password'},  # Docker com senha
+        {'host': 'redis', 'port': 6379, 'password': None},              # Docker sem senha
+        {'host': '127.0.0.1', 'port': 6379, 'password': None},          # Local sem senha
+        {'host': 'localhost', 'port': 6379, 'password': None},          # Local sem senha
+    ]
+    
+    for config in redis_configs:
+        try:
+            import redis
+            r = redis.Redis(
+                host=config['host'], 
+                port=config['port'], 
+                password=config['password'],
+                socket_timeout=2, 
+                socket_connect_timeout=2
+            )
+            r.ping()
+            print(f"✅ Redis conectado em {config['host']}:{config['port']} (senha: {'sim' if config['password'] else 'não'})")
+            return True, config
+        except Exception as e:
+            print(f"❌ Falha ao conectar Redis em {config['host']}:{config['port']} - {e}")
+            continue
+    
+    print("❌ Redis não disponível em nenhuma configuração")
+    return False, None
+
+redis_available, redis_config = test_redis_connection()
+
+if redis_available:
+    # Construir URL do Redis
+    if redis_config['password']:
+        redis_url = f"redis://:{redis_config['password']}@{redis_config['host']}:{redis_config['port']}/1"
+    else:
+        redis_url = f"redis://{redis_config['host']}:{redis_config['port']}/1"
+    
+    # Tentar usar django-redis primeiro, fallback para backend nativo
+    try:
+        import django_redis
+        CACHES = {
+            'default': {
+                'BACKEND': 'django_redis.cache.RedisCache',
+                'LOCATION': redis_url,
+                'OPTIONS': {
+                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                    'CONNECTION_POOL_KWARGS': {
+                        'socket_timeout': 5,
+                        'socket_connect_timeout': 5,
+                        'retry_on_timeout': True,
+                    },
+                }
+            }
+        }
+        print("✅ Usando django-redis backend")
+    except ImportError:
+        # Fallback para backend nativo do Django (mais simples)
+        CACHES = {
+            'default': {
+                'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+                'LOCATION': redis_url,
+                'TIMEOUT': 300,
+            }
+        }
+        print("✅ Usando backend Redis nativo do Django")
+    print(f"✅ Cache configurado para Redis em {redis_config['host']}:{redis_config['port']}")
+else:
+    # Fallback para cache local
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
+            'OPTIONS': {
+                'MAX_ENTRIES': 10000,
+                'CULL_FREQUENCY': 4,
+            }
+        }
+    }
+    print("⚠️  Redis não disponível, usando cache local")
+
 # Django Channels Configuration
 ASGI_APPLICATION = 'controle_atendimento.asgi.application'
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
+if redis_available:
+    # Configuração do Channels
+    channel_config = {
+        "hosts": [(redis_config['host'], redis_config['port'])],
+    }
+    if redis_config['password']:
+        channel_config["hosts"] = [f"redis://:{redis_config['password']}@{redis_config['host']}:{redis_config['port']}/0"]
+    
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": channel_config,
         },
-    },
-}
+    }
+    print(f"✅ Channels configurado para Redis em {redis_config['host']}:{redis_config['port']}")
+else:
+    # Fallback para in-memory channel layer
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer"
+        },
+    }
+    print("⚠️  Channels usando camada em memória (apenas para desenvolvimento)")
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

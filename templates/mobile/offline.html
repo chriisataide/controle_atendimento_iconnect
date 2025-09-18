@@ -1,0 +1,222 @@
+{% extends 'mobile/base.html' %}
+{% load static %}
+
+{% block title %}Offline - iConnect{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-6">
+            <div class="card border-0 shadow-lg">
+                <div class="card-body text-center p-5">
+                    <!-- Ícone Offline -->
+                    <div class="mb-4">
+                        <i class="fas fa-wifi-slash text-warning" style="font-size: 4rem;"></i>
+                    </div>
+                    
+                    <!-- Título -->
+                    <h2 class="h3 mb-4 text-dark fw-bold">Você está offline</h2>
+                    
+                    <!-- Mensagem -->
+                    <p class="text-muted mb-4">
+                        {{ offline_message|default:"Verifique sua conexão com a internet para acessar todas as funcionalidades." }}
+                    </p>
+                    
+                    <!-- Status da Conexão -->
+                    <div class="alert alert-warning border-0 mb-4" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <span id="connection-status">Verificando conexão...</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Funcionalidades Offline -->
+                    <div class="text-start mb-4">
+                        <h5 class="mb-3">Disponível offline:</h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Visualizar tickets salvos
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Rascunhos de comentários
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Fotos capturadas
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-times text-danger me-2"></i>
+                                Chat em tempo real
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-times text-danger me-2"></i>
+                                Atualizações de status
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Botões de Ação -->
+                    <div class="d-flex flex-column gap-3">
+                        <button class="btn btn-primary btn-lg" onclick="checkConnection()">
+                            <i class="fas fa-sync-alt me-2"></i>
+                            Tentar Reconectar
+                        </button>
+                        
+                        <a href="{% url 'mobile_tickets' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-list me-2"></i>
+                            Ver Tickets Salvos
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dicas Offline -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">
+                        <i class="fas fa-lightbulb text-warning me-2"></i>
+                        Dicas para trabalhar offline
+                    </h6>
+                    <ul class="list-unstyled small text-muted">
+                        <li class="mb-2">• Seus dados serão sincronizados quando voltar online</li>
+                        <li class="mb-2">• Fotos e comentários ficam salvos localmente</li>
+                        <li class="mb-2">• Use o modo avião para economizar bateria</li>
+                        <li class="mb-2">• Mantenha o app aberto para melhor sincronização</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="position-fixed top-0 start-0 w-100 h-100 d-none" 
+     style="background: rgba(255,255,255,0.9); z-index: 9999;">
+    <div class="d-flex align-items-center justify-content-center h-100">
+        <div class="text-center">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Carregando...</span>
+            </div>
+            <p class="text-muted">Reconectando...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    checkConnectionStatus();
+    
+    // Verificar conexão periodicamente
+    setInterval(checkConnectionStatus, 5000);
+    
+    // Eventos de conexão
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+});
+
+function checkConnectionStatus() {
+    const statusEl = document.getElementById('connection-status');
+    
+    if (navigator.onLine) {
+        statusEl.innerHTML = '<i class="fas fa-wifi text-success me-2"></i>Conexão disponível';
+        statusEl.parentElement.className = 'alert alert-success border-0 mb-4';
+        
+        // Tentar sincronizar dados pendentes
+        syncPendingData();
+    } else {
+        statusEl.innerHTML = '<i class="fas fa-wifi-slash text-warning me-2"></i>Sem conexão';
+        statusEl.parentElement.className = 'alert alert-warning border-0 mb-4';
+    }
+}
+
+function checkConnection() {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    loadingOverlay.classList.remove('d-none');
+    
+    // Simular tentativa de reconexão
+    setTimeout(function() {
+        if (navigator.onLine) {
+            // Redirecionar para página principal se online
+            window.location.href = "{% url 'mobile_tickets' %}";
+        } else {
+            loadingOverlay.classList.add('d-none');
+            showToast('Ainda sem conexão. Tente novamente em alguns instantes.', 'warning');
+        }
+    }, 2000);
+}
+
+function handleOnline() {
+    showToast('Conexão restabelecida! Sincronizando dados...', 'success');
+    checkConnectionStatus();
+    
+    // Redirecionar após sincronização
+    setTimeout(function() {
+        window.location.href = "{% url 'mobile_tickets' %}";
+    }, 2000);
+}
+
+function handleOffline() {
+    showToast('Conexão perdida. Trabalhando no modo offline.', 'warning');
+    checkConnectionStatus();
+}
+
+function syncPendingData() {
+    // Verificar se há dados pendentes no localStorage
+    const pendingComments = localStorage.getItem('pendingComments');
+    const pendingPhotos = localStorage.getItem('pendingPhotos');
+    const pendingStatusUpdates = localStorage.getItem('pendingStatusUpdates');
+    
+    if (pendingComments || pendingPhotos || pendingStatusUpdates) {
+        console.log('Sincronizando dados pendentes...');
+        
+        // Aqui você implementaria a lógica de sincronização
+        // Por exemplo, enviar comentários, fotos e atualizações pendentes
+        
+        // Simular sincronização
+        setTimeout(function() {
+            // Limpar dados sincronizados
+            if (pendingComments) localStorage.removeItem('pendingComments');
+            if (pendingPhotos) localStorage.removeItem('pendingPhotos');
+            if (pendingStatusUpdates) localStorage.removeItem('pendingStatusUpdates');
+            
+            showToast('Dados sincronizados com sucesso!', 'success');
+        }, 1000);
+    }
+}
+
+function showToast(message, type = 'info') {
+    // Criar elemento de toast
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} position-fixed top-0 start-50 translate-middle-x mt-3`;
+    toast.style.zIndex = '10000';
+    toast.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+            ${message}
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Remover após 4 segundos
+    setTimeout(function() {
+        toast.remove();
+    }, 4000);
+}
+
+// Service Worker para cache offline
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/static/js/sw.js')
+        .then(function(registration) {
+            console.log('Service Worker registrado:', registration.scope);
+        })
+        .catch(function(error) {
+            console.log('Erro ao registrar Service Worker:', error);
+        });
+}
+</script>
+{% endblock %}

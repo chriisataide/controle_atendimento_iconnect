@@ -20,7 +20,7 @@
     <!-- Agent Dashboard -->
     
     <!-- Quick Stats -->
-    <div class="row g-2 mb-3">
+    <div class="row g-3 mb-4">
         <div class="col-6">
             <div class="stat-card">
                 <div class="stat-number">{{ pending_count }}</div>
@@ -36,18 +36,36 @@
     </div>
     
     <!-- Quick Actions -->
-    <div class="mobile-card">
-        <h6 class="fw-semibold mb-3">
-            <span class="material-symbols-rounded me-2" style="vertical-align: middle;">flash_on</span>
-            Ações Rápidas
-        </h6>
-        
-        <div class="row g-2">
-            <div class="col-6">
-                <button class="btn btn-outline-primary btn-sm w-100" onclick="takeNextTicket()">
-                    <span class="material-symbols-rounded me-1" style="font-size: 16px;">assignment_add</span>
-                    <small>Pegar Próximo</small>
-                </button>
+    <div class="quick-actions mb-4">
+        <a href="#" class="quick-action" onclick="takeNextTicket()">
+            <span class="icon material-symbols-rounded">assignment_add</span>
+            <span class="label">Pegar Próximo</span>
+        </a>
+        <a href="{% url 'mobile:mobile_ticket_list' %}" class="quick-action">
+            <span class="icon material-symbols-rounded">list_alt</span>
+            <span class="label">Meus Tickets</span>
+        </a>
+        <a href="{% url 'mobile:mobile_create_ticket' %}" class="quick-action">
+            <span class="icon material-symbols-rounded">add_circle</span>
+            <span class="label">Criar Ticket</span>
+        </a>
+        <a href="#" class="quick-action" onclick="showSearch()">
+            <span class="icon material-symbols-rounded">search</span>
+            <span class="label">Buscar</span>
+        </a>
+    </div>
+    
+    <!-- Status Card -->
+    <div class="mobile-card mb-3">
+        <div class="card-header">
+            <div class="card-icon">
+                <span class="material-symbols-rounded">person</span>
+            </div>
+            <div>
+                <h3 class="card-title">Status do Agente</h3>
+                <p class="card-subtitle">Gerencie sua disponibilidade</p>
+            </div>
+        </div>
             </div>
             <div class="col-6">
                 <button class="btn btn-outline-success btn-sm w-100" onclick="location.href='/mobile/tickets/?status=EM_ANDAMENTO'">

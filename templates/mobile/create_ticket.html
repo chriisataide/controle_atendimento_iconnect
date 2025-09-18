@@ -1,0 +1,973 @@
+{% extends 'mobile/base.html' %}
+{% load static %}
+
+{% block title %}Novo Ticket{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-ticket-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        margin: -0.5rem -0.5rem 1.5rem -0.5rem;
+        padding: 1.5rem;
+        border-radius: 0 0 20px 20px;
+    }
+    
+    .form-section {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+    }
+    
+    .form-section h6 {
+        color: #2d3748;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-floating {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-floating .form-control {
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 1rem;
+        padding-top: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-floating .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .form-floating label {
+        color: #64748b;
+        font-weight: 500;
+    }
+    
+    .form-select {
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 1rem;
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .priority-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .priority-option {
+        position: relative;
+    }
+    
+    .priority-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+    
+    .priority-label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem 0.5rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .priority-option input:checked + .priority-label {
+        border-color: #667eea;
+        background: #f7fafc;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    }
+    
+    .priority-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 0.5rem;
+        color: white;
+        font-size: 1.2rem;
+    }
+    
+    .priority-baixa .priority-icon { background: #10b981; }
+    .priority-media .priority-icon { background: #f59e0b; }
+    .priority-alta .priority-icon { background: #ef4444; }
+    
+    .priority-text {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #374151;
+    }
+    
+    .photo-section {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+    }
+    
+    .photo-upload-area {
+        border: 2px dashed #cbd5e0;
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: #f8fafc;
+    }
+    
+    .photo-upload-area:hover {
+        border-color: #667eea;
+        background: #f0f4ff;
+    }
+    
+    .photo-upload-area.dragover {
+        border-color: #667eea;
+        background: #e0e7ff;
+    }
+    
+    .upload-icon {
+        font-size: 3rem;
+        color: #9ca3af;
+        margin-bottom: 1rem;
+    }
+    
+    .upload-text {
+        color: #6b7280;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .upload-hint {
+        color: #9ca3af;
+        font-size: 0.875rem;
+    }
+    
+    .photo-preview {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .photo-item {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #f1f5f9;
+    }
+    
+    .photo-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .photo-remove {
+        position: absolute;
+        top: 0.25rem;
+        right: 0.25rem;
+        width: 24px;
+        height: 24px;
+        background: rgba(239, 68, 68, 0.9);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        cursor: pointer;
+    }
+    
+    .location-section {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+    }
+    
+    .location-button {
+        width: 100%;
+        padding: 1rem;
+        border: 2px dashed #cbd5e0;
+        background: #f8fafc;
+        border-radius: 12px;
+        color: #6b7280;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .location-button:hover {
+        border-color: #667eea;
+        background: #f0f4ff;
+        color: #667eea;
+    }
+    
+    .location-button.active {
+        border-color: #10b981;
+        background: #ecfdf5;
+        color: #059669;
+    }
+    
+    .location-info {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        color: #166534;
+    }
+    
+    .submit-section {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        padding: 1rem;
+        border-top: 1px solid #e2e8f0;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .submit-btn {
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .submit-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+    
+    .submit-btn:disabled {
+        opacity: 0.6;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .form-validation {
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+        color: #ef4444;
+    }
+    
+    .form-floating .form-control:invalid {
+        border-color: #ef4444;
+    }
+    
+    .form-floating .form-control:valid {
+        border-color: #10b981;
+    }
+    
+    .quick-templates {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .template-btn {
+        padding: 0.5rem;
+        border: 1px solid #e2e8f0;
+        background: white;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        color: #64748b;
+        transition: all 0.2s ease;
+    }
+    
+    .template-btn:hover {
+        background: #f8fafc;
+        border-color: #cbd5e0;
+        color: #475569;
+    }
+    
+    .voice-input-btn {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #9ca3af;
+        font-size: 1.25rem;
+        cursor: pointer;
+        z-index: 10;
+    }
+    
+    .voice-input-btn:hover {
+        color: #667eea;
+    }
+    
+    .voice-input-btn.recording {
+        color: #ef4444;
+        animation: pulse 1s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .character-count {
+        text-align: right;
+        font-size: 0.75rem;
+        color: #9ca3af;
+        margin-top: 0.25rem;
+    }
+    
+    .category-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .category-option {
+        position: relative;
+    }
+    
+    .category-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+    
+    .category-label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: white;
+        text-align: center;
+    }
+    
+    .category-option input:checked + .category-label {
+        border-color: #667eea;
+        background: #f7fafc;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    }
+    
+    .category-icon {
+        font-size: 1.5rem;
+        color: #667eea;
+        margin-bottom: 0.5rem;
+    }
+    
+    .category-text {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #374151;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="create-ticket-header">
+    <h5 class="mb-0">
+        <i class="fas fa-plus-circle me-2"></i>
+        Novo Ticket de Atendimento
+    </h5>
+    <p class="mb-0 opacity-75">Registre um novo chamado para atendimento</p>
+</div>
+
+<form method="post" id="createTicketForm" enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    <!-- Informações Básicas -->
+    <div class="form-section">
+        <h6><i class="fas fa-info-circle"></i> Informações Básicas</h6>
+        
+        <div class="form-floating">
+            <input type="text" 
+                   class="form-control" 
+                   id="titulo" 
+                   name="titulo" 
+                   placeholder="Título do ticket"
+                   required
+                   maxlength="200">
+            <label for="titulo">Título do Problema *</label>
+            <div class="character-count">
+                <span id="tituloCount">0</span>/200
+            </div>
+        </div>
+        
+        <div class="quick-templates">
+            <button type="button" class="template-btn" data-template="Sem conexão com internet">
+                <i class="fas fa-wifi me-1"></i> Sem Internet
+            </button>
+            <button type="button" class="template-btn" data-template="Equipamento não funciona">
+                <i class="fas fa-tools me-1"></i> Equipamento
+            </button>
+            <button type="button" class="template-btn" data-template="Instalação de novo sistema">
+                <i class="fas fa-download me-1"></i> Instalação
+            </button>
+            <button type="button" class="template-btn" data-template="Manutenção preventiva">
+                <i class="fas fa-wrench me-1"></i> Manutenção
+            </button>
+        </div>
+        
+        <div class="form-floating position-relative">
+            <textarea class="form-control" 
+                      id="descricao" 
+                      name="descricao" 
+                      placeholder="Descrição detalhada"
+                      style="height: 120px;"
+                      required
+                      maxlength="1000"></textarea>
+            <label for="descricao">Descrição Detalhada *</label>
+            <button type="button" class="voice-input-btn" id="voiceBtn" title="Gravação de voz">
+                <i class="fas fa-microphone"></i>
+            </button>
+            <div class="character-count">
+                <span id="descricaoCount">0</span>/1000
+            </div>
+        </div>
+    </div>
+    
+    <!-- Categoria -->
+    <div class="form-section">
+        <h6><i class="fas fa-tags"></i> Categoria do Atendimento</h6>
+        
+        <div class="category-grid">
+            {% for categoria in categorias %}
+            <div class="category-option">
+                <input type="radio" 
+                       id="categoria_{{ categoria.id }}" 
+                       name="categoria" 
+                       value="{{ categoria.id }}">
+                <label for="categoria_{{ categoria.id }}" class="category-label">
+                    <div class="category-icon">
+                        <i class="fas fa-{{ categoria.icone|default:'folder' }}"></i>
+                    </div>
+                    <div class="category-text">{{ categoria.nome }}</div>
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Prioridade -->
+    <div class="form-section">
+        <h6><i class="fas fa-flag"></i> Prioridade</h6>
+        
+        <div class="priority-options">
+            <div class="priority-option priority-baixa">
+                <input type="radio" id="priority_baixa" name="prioridade" value="baixa" checked>
+                <label for="priority_baixa" class="priority-label">
+                    <div class="priority-icon">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                    <div class="priority-text">Baixa</div>
+                </label>
+            </div>
+            
+            <div class="priority-option priority-media">
+                <input type="radio" id="priority_media" name="prioridade" value="media">
+                <label for="priority_media" class="priority-label">
+                    <div class="priority-icon">
+                        <i class="fas fa-minus"></i>
+                    </div>
+                    <div class="priority-text">Média</div>
+                </label>
+            </div>
+            
+            <div class="priority-option priority-alta">
+                <input type="radio" id="priority_alta" name="prioridade" value="alta">
+                <label for="priority_alta" class="priority-label">
+                    <div class="priority-icon">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
+                    <div class="priority-text">Alta</div>
+                </label>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Localização -->
+    <div class="location-section">
+        <h6><i class="fas fa-map-marker-alt"></i> Localização do Atendimento</h6>
+        
+        <button type="button" class="location-button" id="getLocationBtn">
+            <i class="fas fa-crosshairs"></i>
+            Obter Localização Atual
+        </button>
+        
+        <div id="locationInfo" class="location-info d-none">
+            <div><strong>Localização capturada:</strong></div>
+            <div id="locationText">Aguardando...</div>
+            <div class="mt-2">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle"></i>
+                    Esta informação ajuda no planejamento da visita técnica
+                </small>
+            </div>
+        </div>
+        
+        <input type="hidden" id="latitude" name="latitude">
+        <input type="hidden" id="longitude" name="longitude">
+    </div>
+    
+    <!-- Fotos -->
+    <div class="photo-section">
+        <h6><i class="fas fa-camera"></i> Fotos do Problema</h6>
+        
+        <div class="photo-upload-area" id="photoUploadArea">
+            <div class="upload-icon">
+                <i class="fas fa-camera"></i>
+            </div>
+            <div class="upload-text">Adicionar fotos do problema</div>
+            <div class="upload-hint">Toque para selecionar ou arraste as imagens</div>
+        </div>
+        
+        <input type="file" 
+               id="photoInput" 
+               name="photos" 
+               accept="image/*" 
+               capture="environment" 
+               multiple 
+               style="display: none;">
+        
+        <div id="photoPreview" class="photo-preview"></div>
+    </div>
+</form>
+
+<!-- Barra de envio fixa -->
+<div class="submit-section">
+    <button type="submit" form="createTicketForm" class="submit-btn" id="submitBtn">
+        <span class="btn-text">
+            <i class="fas fa-paper-plane"></i>
+            Criar Ticket
+        </span>
+        <span class="btn-loading d-none">
+            <span class="loading-spinner"></span>
+            Criando...
+        </span>
+    </button>
+</div>
+
+<!-- Espaçador para a barra fixa -->
+<div style="height: 100px;"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedPhotos = [];
+let currentLocation = null;
+
+// Contadores de caracteres
+document.getElementById('titulo').addEventListener('input', function() {
+    document.getElementById('tituloCount').textContent = this.value.length;
+});
+
+document.getElementById('descricao').addEventListener('input', function() {
+    document.getElementById('descricaoCount').textContent = this.value.length;
+});
+
+// Templates rápidos
+document.querySelectorAll('.template-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const template = this.dataset.template;
+        document.getElementById('titulo').value = template;
+        document.getElementById('tituloCount').textContent = template.length;
+        
+        // Focar na descrição
+        document.getElementById('descricao').focus();
+    });
+});
+
+// Gravação de voz (se suportado)
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'pt-BR';
+
+    document.getElementById('voiceBtn').addEventListener('click', function() {
+        const btn = this;
+        const icon = btn.querySelector('i');
+        
+        if (btn.classList.contains('recording')) {
+            recognition.stop();
+            return;
+        }
+        
+        btn.classList.add('recording');
+        icon.className = 'fas fa-stop';
+        
+        recognition.start();
+        
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            const descricaoField = document.getElementById('descricao');
+            
+            if (descricaoField.value) {
+                descricaoField.value += ' ' + transcript;
+            } else {
+                descricaoField.value = transcript;
+            }
+            
+            // Atualizar contador
+            document.getElementById('descricaoCount').textContent = descricaoField.value.length;
+        };
+        
+        recognition.onend = function() {
+            btn.classList.remove('recording');
+            icon.className = 'fas fa-microphone';
+        };
+        
+        recognition.onerror = function() {
+            btn.classList.remove('recording');
+            icon.className = 'fas fa-microphone';
+            alert('Erro na gravação de voz');
+        };
+    });
+} else {
+    document.getElementById('voiceBtn').style.display = 'none';
+}
+
+// Geolocalização
+document.getElementById('getLocationBtn').addEventListener('click', function() {
+    const btn = this;
+    const originalContent = btn.innerHTML;
+    
+    btn.innerHTML = '<span class="loading-spinner"></span> Obtendo localização...';
+    btn.disabled = true;
+    
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                currentLocation = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
+                };
+                
+                document.getElementById('latitude').value = currentLocation.latitude;
+                document.getElementById('longitude').value = currentLocation.longitude;
+                
+                // Mostrar informações da localização
+                const locationInfo = document.getElementById('locationInfo');
+                const locationText = document.getElementById('locationText');
+                
+                locationText.innerHTML = `
+                    Latitude: ${currentLocation.latitude.toFixed(6)}<br>
+                    Longitude: ${currentLocation.longitude.toFixed(6)}<br>
+                    <small class="text-muted">Precisão: ±${Math.round(position.coords.accuracy)}m</small>
+                `;
+                
+                locationInfo.classList.remove('d-none');
+                btn.classList.add('active');
+                btn.innerHTML = '<i class="fas fa-check"></i> Localização Capturada';
+                
+                // Vibração de feedback
+                if (navigator.vibrate) {
+                    navigator.vibrate(100);
+                }
+            },
+            function(error) {
+                console.error('Erro de geolocalização:', error);
+                alert('Não foi possível obter a localização. Verifique as permissões.');
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000
+            }
+        );
+    } else {
+        alert('Geolocalização não é suportada neste dispositivo');
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+    }
+});
+
+// Upload de fotos
+document.getElementById('photoUploadArea').addEventListener('click', function() {
+    document.getElementById('photoInput').click();
+});
+
+// Drag and drop para fotos
+const uploadArea = document.getElementById('photoUploadArea');
+
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+['dragenter', 'dragover'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, highlight, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, unhighlight, false);
+});
+
+function highlight() {
+    uploadArea.classList.add('dragover');
+}
+
+function unhighlight() {
+    uploadArea.classList.remove('dragover');
+}
+
+uploadArea.addEventListener('drop', handleDrop, false);
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    
+    handleFiles(files);
+}
+
+document.getElementById('photoInput').addEventListener('change', function(e) {
+    handleFiles(e.target.files);
+});
+
+function handleFiles(files) {
+    [...files].forEach(file => {
+        if (file.type.startsWith('image/')) {
+            if (selectedPhotos.length < 5) { // Limite de 5 fotos
+                selectedPhotos.push(file);
+                displayPhoto(file);
+            } else {
+                alert('Máximo de 5 fotos permitido');
+            }
+        }
+    });
+}
+
+function displayPhoto(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const photoPreview = document.getElementById('photoPreview');
+        const photoItem = document.createElement('div');
+        photoItem.className = 'photo-item';
+        photoItem.innerHTML = `
+            <img src="${e.target.result}" alt="Foto">
+            <button type="button" class="photo-remove" onclick="removePhoto(${selectedPhotos.length - 1})">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        photoPreview.appendChild(photoItem);
+    };
+    reader.readAsDataURL(file);
+}
+
+function removePhoto(index) {
+    selectedPhotos.splice(index, 1);
+    updatePhotoPreview();
+}
+
+function updatePhotoPreview() {
+    const photoPreview = document.getElementById('photoPreview');
+    photoPreview.innerHTML = '';
+    selectedPhotos.forEach((file, index) => {
+        displayPhoto(file);
+    });
+}
+
+// Envio do formulário
+document.getElementById('createTicketForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const btn = document.getElementById('submitBtn');
+    const btnText = btn.querySelector('.btn-text');
+    const btnLoading = btn.querySelector('.btn-loading');
+    
+    // Validação básica
+    const titulo = document.getElementById('titulo').value.trim();
+    const descricao = document.getElementById('descricao').value.trim();
+    
+    if (!titulo || !descricao) {
+        alert('Por favor, preencha o título e a descrição');
+        return;
+    }
+    
+    // Mostrar loading
+    btnText.classList.add('d-none');
+    btnLoading.classList.remove('d-none');
+    btn.disabled = true;
+    
+    // Preparar FormData
+    const formData = new FormData(this);
+    
+    // Adicionar fotos
+    selectedPhotos.forEach((file, index) => {
+        formData.append(`photo_${index}`, file);
+    });
+    
+    // Enviar formulário
+    fetch(this.action || window.location.href, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.json();
+        }
+        throw new Error('Erro na resposta do servidor');
+    })
+    .then(data => {
+        if (data.success) {
+            // Sucesso - redirecionar
+            window.location.href = data.redirect_url || '/mobile/tickets/';
+        } else {
+            throw new Error(data.error || 'Erro desconhecido');
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao criar ticket: ' + error.message);
+        
+        // Restaurar botão
+        btnText.classList.remove('d-none');
+        btnLoading.classList.add('d-none');
+        btn.disabled = false;
+    });
+});
+
+// Auto-save do formulário
+let saveTimeout;
+function autoSave() {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        const formData = {
+            titulo: document.getElementById('titulo').value,
+            descricao: document.getElementById('descricao').value,
+            prioridade: document.querySelector('input[name="prioridade"]:checked')?.value,
+            categoria: document.querySelector('input[name="categoria"]:checked')?.value
+        };
+        
+        localStorage.setItem('ticket_draft', JSON.stringify(formData));
+    }, 1000);
+}
+
+// Eventos para auto-save
+document.getElementById('titulo').addEventListener('input', autoSave);
+document.getElementById('descricao').addEventListener('input', autoSave);
+document.querySelectorAll('input[name="prioridade"], input[name="categoria"]').forEach(input => {
+    input.addEventListener('change', autoSave);
+});
+
+// Restaurar rascunho
+function restoreDraft() {
+    const draft = localStorage.getItem('ticket_draft');
+    if (draft) {
+        try {
+            const data = JSON.parse(draft);
+            
+            if (data.titulo) {
+                document.getElementById('titulo').value = data.titulo;
+                document.getElementById('tituloCount').textContent = data.titulo.length;
+            }
+            
+            if (data.descricao) {
+                document.getElementById('descricao').value = data.descricao;
+                document.getElementById('descricaoCount').textContent = data.descricao.length;
+            }
+            
+            if (data.prioridade) {
+                document.getElementById(`priority_${data.prioridade}`).checked = true;
+            }
+            
+            if (data.categoria) {
+                document.getElementById(`categoria_${data.categoria}`).checked = true;
+            }
+            
+            // Mostrar notificação de rascunho restaurado
+            setTimeout(() => {
+                if (confirm('Rascunho encontrado. Deseja continuar de onde parou?')) {
+                    // Já restaurou acima
+                } else {
+                    localStorage.removeItem('ticket_draft');
+                    document.getElementById('createTicketForm').reset();
+                }
+            }, 500);
+        } catch (e) {
+            localStorage.removeItem('ticket_draft');
+        }
+    }
+}
+
+// Restaurar rascunho ao carregar
+document.addEventListener('DOMContentLoaded', restoreDraft);
+
+// Limpar rascunho após envio bem-sucedido
+document.getElementById('createTicketForm').addEventListener('submit', function() {
+    localStorage.removeItem('ticket_draft');
+});
+</script>
+{% endblock %}

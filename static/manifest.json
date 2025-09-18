@@ -1,9 +1,9 @@
 {
   "name": "iConnect - Sistema de Controle de Atendimento",
   "short_name": "iConnect",
-  "description": "Sistema completo de controle de atendimento com chat integrado e gestão de tickets",
+  "description": "Sistema completo de controle de atendimento com chat integrado e gestão de tickets - Otimizado para técnicos de campo",
   "version": "1.0.0",
-  "start_url": "/dashboard/",
+  "start_url": "/mobile/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#e91e63",
@@ -131,6 +131,30 @@
         {
           "src": "/static/img/icons/new-ticket-shortcut.png",
           "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Mobile - Tickets",
+      "short_name": "Mobile",
+      "description": "Interface mobile para técnicos de campo",
+      "url": "/mobile/tickets/",
+      "icons": [
+        {
+          "src": "/static/img/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Mobile - Chat",
+      "short_name": "Chat Mobile",
+      "description": "Chat móvel para suporte",
+      "url": "/mobile/chat/",
+      "icons": [
+        {
+          "src": "/static/img/icons/icon-192x192.png",
+          "sizes": "192x192"
         }
       ]
     }

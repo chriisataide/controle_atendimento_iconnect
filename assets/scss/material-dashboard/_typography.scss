@@ -55,8 +55,8 @@ h5, .h5 {
 }
 
 h6, .h6 {
-  font-size: $h6-font-size;
-  line-height: $h6-line-height;
+  font-size: $font-size-xs !important;
+  line-height: 1.2 !important;
 }
 
 p, .p {

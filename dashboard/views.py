@@ -18,8 +18,41 @@ from .models import Cliente, Ticket, PerfilUsuario, CategoriaTicket, InteracaoTi
 from .security import rate_limit, log_suspicious_activity
 from .api_versioning import api_version, APIResponseTransformer
 from .audit_system import audit_action, audit_model_changes, audit_sensitive_data_access
+from .forms import DashboardUserCreationForm
 
 User = get_user_model()
+
+@method_decorator([login_required], name='dispatch')
+class UserListView(ListView):
+    model = User
+    template_name = 'dashboard/user_list.html'
+    context_object_name = 'users'
+    paginate_by = 25
+
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_staff or request.user.is_superuser):
+            messages.error(request, 'Acesso negado. Você não tem permissão para ver usuários.')
+            return redirect('dashboard:index')
+        return super().dispatch(request, *args, **kwargs)
+
+
+@method_decorator([login_required], name='dispatch')
+class UserCreateView(CreateView):
+    model = User
+    template_name = 'dashboard/user_form.html'
+    form_class = DashboardUserCreationForm
+    success_url = reverse_lazy('dashboard:user_list')
+
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_staff or request.user.is_superuser):
+            messages.error(request, 'Acesso negado. Você não tem permissão para criar usuários.')
+            return redirect('dashboard:index')
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        user = form.save()
+        messages.success(self.request, f'Usuário {user.username} criado com sucesso.')
+        return super().form_valid(form)
 
 # ========== REDIRECIONAMENTO INTELIGENTE ==========
 
@@ -522,12 +555,17 @@ class AgenteDashboardView(TemplateView):
         # Tickets recentes do agente
         context['tickets_recentes'] = tickets_agente.order_by('-atualizado_em')[:5]
         
-        # Status do agente
+        # Status do agente - criar perfil se não existir
         try:
             perfil_agente = PerfilAgente.objects.get(user=user)
             context['status_agente'] = perfil_agente.status
         except PerfilAgente.DoesNotExist:
-            context['status_agente'] = 'offline'
+            # Criar perfil automaticamente para agentes
+            if user.is_staff or user.groups.filter(name='Agentes').exists():
+                perfil_agente = PerfilAgente.objects.create(user=user, status='offline')
+                context['status_agente'] = perfil_agente.status
+            else:
+                context['status_agente'] = 'offline'
         
         return context
 
@@ -748,13 +786,25 @@ def update_ticket_status(request):
 
 @login_required
 @rate_limit(max_requests=30, window_seconds=3600)  # 30 agent status updates per hour
-@log_suspicious_activity
+@log_suspicious_activity("Agent status update")
 def update_agent_status(request):
     """API para atualizar status do agente"""
+    print(f"DEBUG: update_agent_status called by {request.user.username}, method: {request.method}")
+    
     if request.method == 'POST':
-        new_status = request.POST.get('status')
+        new_status = request.POST.get('status', '').lower().strip()
+        print(f"DEBUG: Novo status solicitado: '{new_status}'")
+        
+        # Validar status
+        valid_statuses = ['online', 'ocupado', 'ausente', 'offline']
+        if new_status not in valid_statuses:
+            return JsonResponse({
+                'success': False,
+                'message': f'Status inválido. Use: {", ".join(valid_statuses)}'
+            })
         
         try:
+            # Criar ou atualizar perfil do agente
             perfil_agente, created = PerfilAgente.objects.get_or_create(
                 user=request.user,
                 defaults={'status': new_status}
@@ -763,15 +813,25 @@ def update_agent_status(request):
                 perfil_agente.status = new_status
                 perfil_agente.save()
             
+            # Log da mudança de status
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f'Agente {request.user.username} mudou status para {new_status}')
+            
             return JsonResponse({
                 'success': True,
                 'message': f'Status alterado para {perfil_agente.get_status_display()}',
-                'new_status': perfil_agente.get_status_display()
+                'new_status': perfil_agente.get_status_display(),
+                'status_value': new_status
             })
         except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f'Erro ao atualizar status do agente {request.user.username}: {str(e)}')
+            
             return JsonResponse({
                 'success': False,
-                'message': f'Erro: {str(e)}'
+                'message': f'Erro interno do servidor'
             })
     
     return JsonResponse({'success': False, 'message': 'Método não permitido!'})

@@ -92,6 +92,10 @@ urlpatterns = [
     path('automation/', views.automation_dashboard, name='automation'),
     path('automation/rules/', views.automation_rules, name='automation_rules'),
     path('automation/workflows/', views.automation_workflows, name='automation_workflows'),
+
+    # User management (admin/staff)
+    path('users/', views.UserListView.as_view(), name='user_list'),
+    path('users/novo/', views.UserCreateView.as_view(), name='user_create'),
     
     # Advanced Reports
     path('reports/', views.reports_dashboard, name='reports'),
@@ -117,4 +121,19 @@ urlpatterns = [
     # Webhooks para Integrações
     path('webhooks/whatsapp/', integrations.whatsapp_webhook, name='whatsapp_webhook'),
     path('webhooks/slack/', integrations.slack_webhook, name='slack_webhook'),
+]
+
+# URLs Mobile - Namespace separado
+from . import mobile_views
+
+mobile_urlpatterns = [
+    path('', mobile_views.mobile_dashboard, name='dashboard'),
+    path('tickets/', mobile_views.mobile_ticket_list, name='ticket_list'),
+    path('tickets/novo/', mobile_views.mobile_create_ticket, name='create_ticket'),
+    path('ticket/<int:ticket_id>/', mobile_views.mobile_ticket_detail, name='ticket_detail'),
+    path('ticket/<int:ticket_id>/status/', mobile_views.mobile_ticket_status_update, name='ticket_status_update'),
+    path('ticket/<int:ticket_id>/comment/', mobile_views.mobile_ticket_comment, name='ticket_comment'),
+    path('ticket/<int:ticket_id>/upload-photo/', mobile_views.mobile_ticket_upload_photo, name='ticket_upload_photo'),
+    path('tickets/check-updates/', mobile_views.mobile_tickets_check_updates, name='tickets_check_updates'),
+    path('chat/', mobile_views.mobile_chat, name='chat'),
 ]

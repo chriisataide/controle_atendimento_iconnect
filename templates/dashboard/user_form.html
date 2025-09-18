@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Criar Usuário{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Pequenas alterações para o formulário de criação seguir o estilo do perfil */
+  .create-user-card { border-radius: 12px; padding: 1.5rem; }
+  .create-user-avatar { width: 100px; height: 100px; border-radius: 50%; display:flex; align-items:center; justify-content:center; font-size:2rem; background:linear-gradient(135deg,#ff6b6b,#4ecdc4); color:white; }
+  .form-section-title { font-weight:700; margin-bottom:1rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+  <div class="row">
+    <div class="col-md-8">
+      <div class="profile-card card create-user-card">
+        <div class="card-body">
+          <h4 class="mb-3">Criar Usuário</h4>
+          <form method="post">
+            {% csrf_token %}
+            <div class="row">
+              <div class="col-md-4 text-center">
+                <div class="create-user-avatar mb-3">U</div>
+                <p class="text-muted small">Avatar gerado automaticamente</p>
+              </div>
+              <div class="col-md-8">
+                <div class="mb-3">
+                  <label class="form-label">Nome de usuário</label>
+                  {{ form.username }}
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Primeiro nome</label>
+                    {{ form.first_name }}
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Último nome</label>
+                    {{ form.last_name }}
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Email</label>
+                  {{ form.email }}
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Senha</label>
+                    {{ form.password1 }}
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Confirmar Senha</label>
+                    {{ form.password2 }}
+                  </div>
+                </div>
+                <div class="mb-3 form-check">
+                  {{ form.is_staff }} <label class="form-check-label ms-2">Staff (agente)</label>
+                </div>
+                <div class="mb-3 form-check">
+                  {{ form.is_superuser }} <label class="form-check-label ms-2">Administrador</label>
+                </div>
+                <div class="mb-3 form-check">
+                  {{ form.is_active }} <label class="form-check-label ms-2">Conta ativa</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-3">
+              <a href="{% url 'dashboard:user_list' %}" class="btn btn-outline-secondary">Voltar</a>
+              <button type="submit" class="btn btn-primary">Criar Usuário</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

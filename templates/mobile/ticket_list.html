@@ -1,0 +1,737 @@
+{% extends 'mobile/base.html' %}
+{% load static %}
+
+{% block title %}Tickets{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filter-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem;
+        margin: -0.5rem -0.5rem 1rem -0.5rem;
+        border-radius: 0 0 20px 20px;
+    }
+    
+    .filter-chips {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+        flex-wrap: wrap;
+    }
+    
+    .filter-chip {
+        background: rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.3);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+    
+    .filter-chip.active,
+    .filter-chip:hover {
+        background: rgba(255,255,255,0.3);
+        border-color: rgba(255,255,255,0.5);
+        transform: translateY(-1px);
+    }
+    
+    .ticket-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid;
+        box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .ticket-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 30px rgba(0,0,0,0.12);
+    }
+    
+    .ticket-card.priority-alta {
+        border-left-color: #ff4757;
+    }
+    
+    .ticket-card.priority-media {
+        border-left-color: #ffa502;
+    }
+    
+    .ticket-card.priority-baixa {
+        border-left-color: #2ed573;
+    }
+    
+    .ticket-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+    }
+    
+    .ticket-number {
+        font-weight: 700;
+        color: #2c3e50;
+        font-size: 1.1rem;
+    }
+    
+    .ticket-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-aberto {
+        background: #fff5f5;
+        color: #e53e3e;
+        border: 1px solid #fed7d7;
+    }
+    
+    .status-em_andamento {
+        background: #fffbeb;
+        color: #d69e2e;
+        border: 1px solid #fbd38d;
+    }
+    
+    .status-resolvido {
+        background: #f0fff4;
+        color: #38a169;
+        border: 1px solid #9ae6b4;
+    }
+    
+    .status-fechado {
+        background: #edf2f7;
+        color: #4a5568;
+        border: 1px solid #cbd5e0;
+    }
+    
+    .ticket-title {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+        line-height: 1.4;
+    }
+    
+    .ticket-client {
+        color: #718096;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .ticket-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .ticket-time {
+        color: #a0aec0;
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .priority-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 8px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .priority-alta {
+        background: #fed7d7;
+        color: #c53030;
+    }
+    
+    .priority-media {
+        background: #fbd38d;
+        color: #d69e2e;
+    }
+    
+    .priority-baixa {
+        background: #9ae6b4;
+        color: #2f855a;
+    }
+    
+    .search-container {
+        position: sticky;
+        top: 60px;
+        background: white;
+        z-index: 10;
+        padding: 1rem 0;
+        margin: 0 -0.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: #f7fafc;
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: #667eea;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #a0aec0;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #718096;
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+        color: #e2e8f0;
+        margin-bottom: 1rem;
+    }
+    
+    .create-ticket-fab {
+        position: fixed;
+        bottom: 80px;
+        right: 1rem;
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        transition: all 0.3s ease;
+        z-index: 100;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+    }
+    
+    .create-ticket-fab:hover {
+        transform: scale(1.1) translateY(-2px);
+        box-shadow: 0 12px 40px rgba(102, 126, 234, 0.4);
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #e2e8f0;
+        border-radius: 50%;
+        border-top-color: #667eea;
+        animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .category-badge {
+        background: #edf2f7;
+        color: #4a5568;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 500;
+    }
+    
+    .ticket-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+    }
+    
+    .quick-action-btn {
+        flex: 1;
+        padding: 0.5rem;
+        border: 1px solid #e2e8f0;
+        background: white;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        color: #4a5568;
+        transition: all 0.2s ease;
+    }
+    
+    .quick-action-btn:hover {
+        background: #f7fafc;
+        border-color: #cbd5e0;
+    }
+    
+    .ticket-progress {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        transition: width 0.3s ease;
+    }
+    
+    .progress-0 { width: 0%; }
+    .progress-25 { width: 25%; }
+    .progress-50 { width: 50%; }
+    .progress-75 { width: 75%; }
+    .progress-100 { width: 100%; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="filter-section">
+    <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Meus Tickets</h5>
+        <div class="text-white-50">
+            {{ tickets.count }} ticket{{ tickets.count|pluralize }}
+        </div>
+    </div>
+    
+    <div class="filter-chips">
+        <a href="{% url 'mobile:mobile_ticket_list' %}" class="filter-chip {% if not status_filter %}active{% endif %}">
+            Todos
+        </a>
+        <a href="?status=aberto" class="filter-chip {% if status_filter == 'aberto' %}active{% endif %}">
+            Abertos
+        </a>
+        <a href="?status=em_andamento" class="filter-chip {% if status_filter == 'em_andamento' %}active{% endif %}">
+            Em Andamento
+        </a>
+        <a href="?status=resolvido" class="filter-chip {% if status_filter == 'resolvido' %}active{% endif %}">
+            Resolvidos
+        </a>
+    </div>
+</div>
+
+<div class="search-container">
+    <div class="position-relative">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" 
+               class="search-input" 
+               placeholder="Buscar tickets..." 
+               value="{{ search }}"
+               id="searchInput">
+    </div>
+</div>
+
+<div class="tickets-container">
+    {% if tickets %}
+        {% for ticket in tickets %}
+        <div class="ticket-card priority-{{ ticket.prioridade }}" data-ticket-url="{% url 'mobile:mobile_ticket_detail' ticket.id %}"
+            <div class="ticket-header">
+                <div class="ticket-number">#{{ ticket.numero }}</div>
+                <span class="ticket-status status-{{ ticket.status }}">
+                    {{ ticket.get_status_display }}
+                </span>
+            </div>
+            
+            <div class="ticket-title">{{ ticket.titulo }}</div>
+            
+            <div class="ticket-client">
+                <i class="fas fa-user"></i>
+                {{ ticket.cliente.nome }}
+                {% if ticket.categoria %}
+                    <span class="category-badge">{{ ticket.categoria.nome }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="ticket-meta">
+                <div class="ticket-time">
+                    <i class="far fa-clock"></i>
+                    {{ ticket.criado_em|timesince }} atrás
+                </div>
+                <span class="priority-badge priority-{{ ticket.prioridade }}">
+                    {{ ticket.get_prioridade_display }}
+                </span>
+            </div>
+            
+            {% if is_agent %}
+            <div class="ticket-actions">
+                {% if ticket.status == 'aberto' %}
+                    <button class="quick-action-btn" data-ticket-id="{{ ticket.id }}" data-status="em_andamento"
+                        <i class="fas fa-play"></i> Iniciar
+                    </button>
+                {% elif ticket.status == 'em_andamento' %}
+                    <button class="quick-action-btn" data-ticket-id="{{ ticket.id }}" data-status="resolvido"
+                        <i class="fas fa-check"></i> Resolver
+                    </button>
+                {% endif %}
+                <button class="quick-action-btn" data-ticket-id="{{ ticket.id }}" data-action="comment"
+                    <i class="fas fa-comment"></i> Comentar
+                </button>
+            </div>
+            {% endif %}
+            
+            <div class="ticket-progress 
+                {% if ticket.status == 'aberto' %}progress-0
+                {% elif ticket.status == 'em_andamento' %}progress-50
+                {% elif ticket.status == 'resolvido' %}progress-75
+                {% else %}progress-100{% endif %}"></div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-ticket-alt"></i>
+            </div>
+            <h6>Nenhum ticket encontrado</h6>
+            <p class="text-muted">
+                {% if search %}
+                    Nenhum ticket encontrado para "{{ search }}"
+                {% else %}
+                    Você não possui tickets no momento
+                {% endif %}
+            </p>
+        </div>
+    {% endif %}
+</div>
+
+{% if is_agent %}
+<button class="create-ticket-fab" data-url="{% url 'mobile:mobile_create_ticket' %}"
+    <i class="fas fa-plus"></i>
+</button>
+{% endif %}
+
+<!-- Modal para comentário rápido -->
+<div class="modal fade" id="commentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title">Adicionar Comentário</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="commentForm">
+                    <textarea class="form-control" 
+                              id="commentText" 
+                              rows="3" 
+                              placeholder="Digite seu comentário..."></textarea>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="submitComment()">
+                    <span class="comment-loading d-none">
+                        <span class="loading-spinner"></span>
+                    </span>
+                    Enviar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentTicketId = null;
+
+// Busca em tempo real
+document.getElementById('searchInput').addEventListener('input', function(e) {
+    const searchTerm = e.target.value;
+    const url = new URL(window.location);
+    
+    if (searchTerm) {
+        url.searchParams.set('search', searchTerm);
+    } else {
+        url.searchParams.delete('search');
+    }
+    
+    // Debounce
+    clearTimeout(window.searchTimeout);
+    window.searchTimeout = setTimeout(() => {
+        window.location = url;
+    }, 500);
+});
+
+// Event delegation para botões
+document.addEventListener('click', function(e) {
+    // Navegação para ticket
+    if (e.target.closest('.ticket-card[data-ticket-url]')) {
+        const ticketCard = e.target.closest('.ticket-card[data-ticket-url]');
+        const url = ticketCard.dataset.ticketUrl;
+        if (url && !e.target.closest('button')) {
+            window.location.href = url;
+        }
+    }
+    
+    // Botão FAB
+    if (e.target.closest('.create-ticket-fab[data-url]')) {
+        const fab = e.target.closest('.create-ticket-fab[data-url]');
+        const url = fab.dataset.url;
+        if (url) {
+            window.location.href = url;
+        }
+    }
+    
+    // Botões de ação rápida
+    if (e.target.closest('.quick-action-btn[data-ticket-id]')) {
+        e.stopPropagation();
+        const btn = e.target.closest('.quick-action-btn[data-ticket-id]');
+        const ticketId = btn.dataset.ticketId;
+        const status = btn.dataset.status;
+        const action = btn.dataset.action;
+        
+        if (status) {
+            updateTicketStatus(ticketId, status, btn);
+        } else if (action === 'comment') {
+            openCommentModal(ticketId);
+        }
+    }
+});
+
+// Atualizar status do ticket
+function updateTicketStatus(ticketId, newStatus, btn) {
+    const originalContent = btn.innerHTML;
+    btn.innerHTML = '<span class="loading-spinner"></span>';
+    btn.disabled = true;
+    
+    fetch(`/mobile/ticket/${ticketId}/status/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            status: newStatus
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Atualizar a interface
+            location.reload();
+        } else {
+            alert('Erro ao atualizar status');
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao atualizar status');
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+    });
+}
+
+// Abrir modal de comentário
+function openCommentModal(ticketId) {
+    currentTicketId = ticketId;
+    
+    const modal = new bootstrap.Modal(document.getElementById('commentModal'));
+    modal.show();
+    
+    // Focar no textarea quando o modal abrir
+    setTimeout(() => {
+        document.getElementById('commentText').focus();
+    }, 300);
+}
+
+// Enviar comentário
+function submitComment() {
+    const commentText = document.getElementById('commentText').value.trim();
+    
+    if (!commentText) {
+        alert('Por favor, digite um comentário');
+        return;
+    }
+    
+    const btn = event.target;
+    const loading = btn.querySelector('.comment-loading');
+    loading.classList.remove('d-none');
+    btn.disabled = true;
+    
+    fetch(`/mobile/ticket/${currentTicketId}/comment/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            comment: commentText
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('commentModal')).hide();
+            document.getElementById('commentText').value = '';
+            
+            // Mostrar feedback
+            showToast('Comentário adicionado com sucesso!', 'success');
+        } else {
+            alert('Erro ao adicionar comentário');
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao adicionar comentário');
+    })
+    .finally(() => {
+        loading.classList.add('d-none');
+        btn.disabled = false;
+    });
+}
+
+// Toast notification
+function showToast(message, type = 'info') {
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type} border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+    
+    const toastContainer = document.querySelector('.toast-container') || 
+                          document.body.appendChild(document.createElement('div'));
+    toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+    toastContainer.innerHTML = toastHtml;
+    
+    const toast = new bootstrap.Toast(toastContainer.querySelector('.toast'));
+    toast.show();
+}
+
+// Atualização automática da lista
+setInterval(() => {
+    // Verificar se há novos tickets apenas se a página estiver visível
+    if (!document.hidden) {
+        checkForUpdates();
+    }
+}, 30000); // 30 segundos
+
+function checkForUpdates() {
+    fetch('/mobile/tickets/check-updates/', {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.hasUpdates) {
+            showUpdateNotification();
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao verificar atualizações:', error);
+    });
+}
+
+function showUpdateNotification() {
+    const notification = document.createElement('div');
+    notification.className = 'alert alert-info position-fixed top-50 start-50 translate-middle';
+    notification.style.zIndex = '9999';
+    notification.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-info-circle me-2"></i>
+            Há atualizações disponíveis
+            <button class="btn btn-sm btn-outline-info ms-auto" onclick="location.reload()">
+                Atualizar
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
+// Swipe para atualizar (Pull to refresh)
+let startY = 0;
+let pullDistance = 0;
+const pullThreshold = 100;
+
+document.addEventListener('touchstart', (e) => {
+    if (window.scrollY === 0) {
+        startY = e.touches[0].clientY;
+    }
+});
+
+document.addEventListener('touchmove', (e) => {
+    if (window.scrollY === 0 && startY > 0) {
+        pullDistance = e.touches[0].clientY - startY;
+        
+        if (pullDistance > 0) {
+            e.preventDefault();
+            
+            // Visual feedback
+            const refreshIndicator = document.getElementById('refreshIndicator') || createRefreshIndicator();
+            const progress = Math.min(pullDistance / pullThreshold, 1);
+            refreshIndicator.style.opacity = progress;
+            refreshIndicator.style.transform = `translateY(${pullDistance * 0.5}px) rotate(${progress * 360}deg)`;
+        }
+    }
+});
+
+document.addEventListener('touchend', () => {
+    if (pullDistance > pullThreshold) {
+        location.reload();
+    }
+    
+    const refreshIndicator = document.getElementById('refreshIndicator');
+    if (refreshIndicator) {
+        refreshIndicator.style.opacity = '0';
+        refreshIndicator.style.transform = 'translateY(-50px) rotate(0deg)';
+    }
+    
+    startY = 0;
+    pullDistance = 0;
+});
+
+function createRefreshIndicator() {
+    const indicator = document.createElement('div');
+    indicator.id = 'refreshIndicator';
+    indicator.innerHTML = '<i class="fas fa-sync-alt"></i>';
+    indicator.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-50px);
+        background: white;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        opacity: 0;
+        transition: all 0.3s ease;
+        z-index: 1000;
+        color: #667eea;
+    `;
+    document.body.appendChild(indicator);
+    return indicator;
+}
+</script>
+{% endblock %}

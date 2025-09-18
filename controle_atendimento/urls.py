@@ -29,6 +29,7 @@ urlpatterns = [
     path('health/', HealthCheckView.as_view(), name='health_check'),  # Health check na raiz
     path('dashboard/', include('dashboard.urls')),
     path('cliente/', include('dashboard.cliente_urls')),  # Portal Self-Service
+    path('financeiro/', include('dashboard.financeiro_urls')),  # Módulo Financeiro
     
     # APIs Avançadas (API temporariamente desabilitada - funcionará com sistema base)
     # path('api/', include('dashboard.api_urls')),

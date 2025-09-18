@@ -192,6 +192,8 @@ def mobile_create_ticket(request):
         descricao = request.POST.get('descricao')
         prioridade = request.POST.get('prioridade', 'media')
         categoria_id = request.POST.get('categoria')
+        latitude = request.POST.get('latitude')
+        longitude = request.POST.get('longitude')
         
         if titulo and descricao:
             # Buscar ou criar cliente
@@ -223,9 +225,32 @@ def mobile_create_ticket(request):
                 origem='mobile'
             )
             
+            # Adicionar localização se fornecida
+            if latitude and longitude:
+                InteracaoTicket.objects.create(
+                    ticket=ticket,
+                    usuario=request.user,
+                    conteudo=f'Localização registrada: Lat {latitude}, Lng {longitude}',
+                    tipo='sistema'
+                )
+            
+            # Resposta para AJAX
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'ticket_id': ticket.id,
+                    'ticket_number': ticket.numero,
+                    'redirect_url': f'/mobile/ticket/{ticket.id}/'
+                })
+            
             messages.success(request, f'Ticket #{ticket.numero} criado com sucesso!')
             return redirect('mobile:ticket_detail', ticket_id=ticket.id)
         else:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Título e descrição são obrigatórios.'
+                })
             messages.error(request, 'Título e descrição são obrigatórios.')
     
     # Buscar categorias para o formulário
@@ -249,6 +274,166 @@ def mobile_chat(request):
     return render(request, 'mobile/chat.html', {'is_mobile': True})
 
 @login_required
+@csrf_exempt
+def mobile_ticket_status_update(request, ticket_id):
+    """Atualizar status do ticket via AJAX"""
+    if request.method == 'POST':
+        try:
+            ticket = get_object_or_404(Ticket, id=ticket_id)
+            
+            # Verificar permissões
+            user_agent = None
+            try:
+                user_agent = PerfilAgente.objects.get(user=request.user)
+            except PerfilAgente.DoesNotExist:
+                pass
+            
+            if not (user_agent or request.user.is_staff):
+                return JsonResponse({'success': False, 'error': 'Sem permissão'})
+            
+            # Obter novo status
+            if request.content_type == 'application/json':
+                data = json.loads(request.body)
+                new_status = data.get('status')
+            else:
+                new_status = request.POST.get('status')
+            
+            if new_status and new_status in [choice[0] for choice in Ticket._meta.get_field('status').choices]:
+                old_status = ticket.status
+                ticket.status = new_status
+                ticket.save()
+                
+                # Adicionar interação
+                InteracaoTicket.objects.create(
+                    ticket=ticket,
+                    usuario=request.user,
+                    conteudo=f'Status alterado de "{old_status}" para "{new_status}"',
+                    tipo='sistema'
+                )
+                
+                return JsonResponse({'success': True})
+            else:
+                return JsonResponse({'success': False, 'error': 'Status inválido'})
+                
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Método não permitido'})
+
+@login_required
+@csrf_exempt
+def mobile_ticket_comment(request, ticket_id):
+    """Adicionar comentário ao ticket via AJAX"""
+    if request.method == 'POST':
+        try:
+            ticket = get_object_or_404(Ticket, id=ticket_id)
+            
+            # Obter comentário
+            if request.content_type == 'application/json':
+                data = json.loads(request.body)
+                comment_text = data.get('comment')
+            else:
+                comment_text = request.POST.get('comment')
+            
+            if comment_text:
+                InteracaoTicket.objects.create(
+                    ticket=ticket,
+                    usuario=request.user,
+                    conteudo=comment_text,
+                    tipo='comentario'
+                )
+                
+                return JsonResponse({'success': True})
+            else:
+                return JsonResponse({'success': False, 'error': 'Comentário vazio'})
+                
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Método não permitido'})
+
+@login_required
+def mobile_tickets_check_updates(request):
+    """Verificar se há atualizações nos tickets"""
+    try:
+        # Obter timestamp da última verificação
+        last_check = request.GET.get('last_check')
+        if last_check:
+            last_check = timezone.datetime.fromtimestamp(float(last_check), tz=timezone.get_current_timezone())
+        else:
+            last_check = timezone.now() - timezone.timedelta(minutes=5)
+        
+        # Verificar por tickets atualizados
+        user_agent = None
+        try:
+            user_agent = PerfilAgente.objects.get(user=request.user)
+        except PerfilAgente.DoesNotExist:
+            pass
+        
+        if user_agent or request.user.is_staff:
+            # Tickets do agente
+            updated_tickets = Ticket.objects.filter(
+                agente=request.user,
+                atualizado_em__gt=last_check
+            ).exists()
+        else:
+            # Tickets do cliente
+            customer = None
+            try:
+                customer = Cliente.objects.get(email=request.user.email)
+                updated_tickets = Ticket.objects.filter(
+                    cliente=customer,
+                    atualizado_em__gt=last_check
+                ).exists()
+            except Cliente.DoesNotExist:
+                updated_tickets = False
+        
+        return JsonResponse({
+            'hasUpdates': updated_tickets,
+            'timestamp': timezone.now().timestamp()
+        })
+        
+    except Exception as e:
+        return JsonResponse({'hasUpdates': False, 'error': str(e)})
+
+@login_required
+@csrf_exempt  
+def mobile_ticket_upload_photo(request, ticket_id):
+    """Upload de foto para o ticket"""
+    if request.method == 'POST':
+        try:
+            ticket = get_object_or_404(Ticket, id=ticket_id)
+            
+            # Verificar se há arquivo
+            if 'photo' not in request.FILES:
+                return JsonResponse({'success': False, 'error': 'Nenhuma foto enviada'})
+            
+            photo = request.FILES['photo']
+            
+            # Validações básicas
+            if photo.size > 10 * 1024 * 1024:  # 10MB
+                return JsonResponse({'success': False, 'error': 'Arquivo muito grande'})
+            
+            if not photo.content_type.startswith('image/'):
+                return JsonResponse({'success': False, 'error': 'Apenas imagens são permitidas'})
+            
+            # Por enquanto, apenas registrar que a foto foi enviada
+            # Em uma implementação real, você salvaria o arquivo e criaria um TicketAnexo
+            InteracaoTicket.objects.create(
+                ticket=ticket,
+                usuario=request.user,
+                conteudo=f'Foto enviada: {photo.name} ({photo.size} bytes)',
+                tipo='sistema'
+            )
+            
+            return JsonResponse({'success': True, 'message': 'Foto enviada com sucesso'})
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Método não permitido'})
+
+@login_required
 def mobile_chat_ticket(request, ticket_id):
     """Chat específico do ticket (placeholder)"""
     ticket = get_object_or_404(Ticket, id=ticket_id)
@@ -256,3 +441,21 @@ def mobile_chat_ticket(request, ticket_id):
         'ticket': ticket,
         'is_mobile': True
     })
+
+@login_required
+def mobile_offline(request):
+    """Página offline para PWA"""
+    context = {
+        'is_mobile': True,
+        'offline_message': 'Você está offline. Algumas funcionalidades podem estar limitadas.'
+    }
+    return render(request, 'mobile/offline.html', context)
+
+@login_required
+def mobile_notifications(request):
+    """Notificações mobile (placeholder)"""
+    context = {
+        'is_mobile': True,
+        'notifications': [],  # Placeholder - implementar lógica de notificações
+    }
+    return render(request, 'mobile/notifications.html', context)

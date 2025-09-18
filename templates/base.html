@@ -1,3 +1,4 @@
+<!-- CSS corrigido para sidebar dentro da tag <style> -->
 <!DOCTYPE html>
 {% load static %}
 <html lang="pt-br">
@@ -125,6 +126,89 @@
         #dropdownMenuButton:hover {
             color: #0d6efd !important;
         }
+        
+        /* Sidebar Dropdown Styles */
+        .sidebar-dropdown {
+            position: relative;
+        }
+        
+        .sidebar-dropdown-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar-dropdown-toggle:hover {
+            background-color: rgba(0,0,0,0.05) !important;
+        }
+        
+        .sidebar-dropdown-toggle .dropdown-arrow {
+            transition: transform 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .sidebar-dropdown-toggle.expanded .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+        
+        .sidebar-dropdown-menu {
+            max-height: 0 !important;
+            overflow: hidden !important;
+            transition: max-height 0.3s ease !important;
+            background: rgba(0,0,0,0.02) !important;
+            border-radius: 8px !important;
+            margin: 4px 0 !important;
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .sidebar-dropdown-menu.show {
+            max-height: 500px !important;
+            padding: 8px 0 !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+        
+        .sidebar-dropdown-menu .nav-item {
+            margin: 0;
+        }
+        
+        .sidebar-dropdown-menu .nav-link {
+            /* Opções alinhadas mais à esquerda para aproveitar espaço */
+            padding: 8px 12px 8px 20px !important; /* reduzido de 45px para 20px */
+            font-size: 13px;
+            border-radius: 6px;
+            margin: 2px 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar-dropdown-menu .nav-link:hover {
+            background-color: rgba(0,0,0,0.05) !important;
+        }
+
+        /* Ajustes do ícone das opções para ficar colado à esquerda do texto */
+        .sidebar-dropdown-menu .nav-link i.material-icons {
+            margin-right: 8px;
+            font-size: 16px;
+            opacity: 0.6;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-dropdown-header {
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+            margin: 4px 4px;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-dropdown-header:hover {
+            background-color: rgba(0,0,0,0.05);
+        }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -146,195 +230,388 @@
         {% block sidebar %}
         <div class="collapse navbar-collapse w-auto" id="sidenav-collapse-main">
             <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link text-dark {% if request.resolver_match.url_name == 'index' %}active bg-gradient-dark text-white{% endif %}" href="{% url 'dashboard:index' %}">
-                        <i class="material-icons opacity-5">dashboard</i>
-                        <span class="nav-link-text ms-1">Dashboard</span>
-                    </a>
+                
+                <!-- ========== PAINEL DASHBOARD'S ========== -->
+                <li class="nav-item sidebar-dropdown mt-3">
+                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="dashboards" onclick="toggleSidebarDropdown(event,this,'dashboards')">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <span class="d-flex align-items-center">
+                                <i class="material-icons opacity-5 me-2">dashboard</i>
+                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Painel Dashboard's</h6>
+                            </span>
+                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                        </div>
+                    </div>
+                    <div class="sidebar-dropdown-menu" id="dropdown-dashboards">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'index' %}active bg-gradient-primary text-white{% endif %}" href="{% url 'dashboard:index' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">view_quilt</i>
+                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Dashboard Tickets</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'agente_dashboard' %}active bg-gradient-info text-white{% endif %}" href="{% url 'dashboard:agente_dashboard' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">headset_mic</i>
+                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Dashboard Agente</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'sla_dashboard' in request.resolver_match.url_name %}active bg-gradient-warning text-white{% endif %}" href="{% url 'dashboard:sla_dashboard' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">schedule</i>
+                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Dashboard SLA</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'dashboard_financeiro' in request.resolver_match.url_name %}active bg-gradient-success text-white{% endif %}" href="{% url 'financeiro:dashboard_financeiro' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">account_balance</i>
+                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Dashboard Financeiro</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
-                <li class="nav-item mt-3">
-                    <h6 class="ps-4 ms-2 text-uppercase text-xs text-dark font-weight-bolder opacity-8">Tickets</h6>
+
+                <!-- ========== TICKETS ========== -->
+                <li class="nav-item sidebar-dropdown mt-3">
+                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="tickets" onclick="toggleSidebarDropdown(event,this,'tickets')">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <span class="d-flex align-items-center">
+                                <i class="material-icons opacity-5 me-2">confirmation_number</i>
+                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Tickets</h6>
+                            </span>
+                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                        </div>
+                    </div>
+                    <div class="sidebar-dropdown-menu" id="dropdown-tickets">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'ticket_create' %}active bg-gradient-success text-white{% endif %}" href="{% url 'dashboard:ticket_create' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">add_circle</i>
+                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Criar Ticket</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'ticket_list' %}active bg-gradient-info text-white{% endif %}" href="{% url 'dashboard:ticket_list' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">list_alt</i>
+                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Todos os Tickets</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'agente_tickets' %}active bg-gradient-warning text-white{% endif %}" href="{% url 'dashboard:agente_tickets' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">assignment_ind</i>
+                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Meus Tickets - Agente</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'cliente_tickets' %}active bg-gradient-secondary text-white{% endif %}" href="{% url 'dashboard:cliente_tickets' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">person_pin</i>
+                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Meus Tickets - Cliente</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link text-dark {% if request.resolver_match.url_name == 'ticket_list' %}active bg-gradient-dark text-white{% endif %}" href="{% url 'dashboard:ticket_list' %}">
-                        <i class="material-icons opacity-5">local_activity</i>
-                        <span class="nav-link-text ms-1">Todos os Tickets</span>
-                    </a>
+
+                <!-- ========== CLIENTE ========== -->
+                <li class="nav-item sidebar-dropdown mt-3">
+                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="cliente" onclick="toggleSidebarDropdown(event,this,'cliente')">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <span class="d-flex align-items-center">
+                                <i class="material-icons opacity-5 me-2">account_circle</i>
+                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Cliente</h6>
+                            </span>
+                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                        </div>
+                    </div>
+                    <div class="sidebar-dropdown-menu" id="dropdown-cliente">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'cliente_portal' %}active bg-gradient-primary text-white{% endif %}" href="{% url 'dashboard:cliente_portal' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">dashboard</i>
+                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Portal Cliente</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link text-dark {% if request.resolver_match.url_name == 'ticket_create' %}active bg-gradient-dark text-white{% endif %}" href="{% url 'dashboard:ticket_create' %}">
-                        <i class="material-icons opacity-5">add</i>
-                        <span class="nav-link-text ms-1">Criar Ticket</span>
-                    </a>
+
+                <!-- ========== SLA & QUALIDADE ========== -->
+                <li class="nav-item sidebar-dropdown mt-3">
+                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="sla" onclick="toggleSidebarDropdown(event,this,'sla')">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <span class="d-flex align-items-center">
+                                <i class="material-icons opacity-5 me-2">high_quality</i>
+                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">SLA & Qualidade</h6>
+                            </span>
+                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                        </div>
+                    </div>
+                    <div class="sidebar-dropdown-menu" id="dropdown-sla">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'sla_policies' in request.resolver_match.url_name %}active bg-gradient-info text-white{% endif %}" href="{% url 'dashboard:sla_policies' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">policy</i>
+                                    <span class="nav-link-text ms-1">Políticas SLA</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'sla_alerts' in request.resolver_match.url_name %}active bg-gradient-danger text-white{% endif %}" href="{% url 'dashboard:sla_alerts' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">warning</i>
+                                    <span class="nav-link-text ms-1">Alertas SLA</span>
+                                    {% if sla_alerts_count and sla_alerts_count > 0 %}
+                                    <span class="badge badge-sm bg-gradient-danger ms-auto">{{ sla_alerts_count }}</span>
+                                    {% endif %}
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'sla_reports' in request.resolver_match.url_name %}active bg-gradient-success text-white{% endif %}" href="{% url 'dashboard:sla_reports' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">analytics</i>
+                                    <span class="nav-link-text ms-1">Relatórios SLA</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
-                <li class="nav-item mt-3">
-                    <h6 class="ps-4 ms-2 text-uppercase text-xs text-dark font-weight-bolder opacity-8">Agente</h6>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-dark {% if request.resolver_match.url_name == 'agente_dashboard' %}active bg-gradient-dark text-white{% endif %}" href="{% url 'dashboard:agente_dashboard' %}">
-                        <i class="material-icons opacity-5">headset_mic</i>
-                        <span class="nav-link-text ms-1">Dashboard Agente</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-dark {% if request.resolver_match.url_name == 'agente_tickets' %}active bg-gradient-dark text-white{% endif %}" href="{% url 'dashboard:agente_tickets' %}">
-                        <i class="material-icons opacity-5">assignment</i>
-                        <span class="nav-link-text ms-1">Meus Tickets</span>
-                    </a>
-                </li>
-                <li class="nav-item mt-3">
-                    <h6 class="ps-4 ms-2 text-uppercase text-xs text-dark font-weight-bolder opacity-8">Cliente</h6>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-dark {% if request.resolver_match.url_name == 'cliente_portal' %}active bg-gradient-dark text-white{% endif %}" href="{% url 'dashboard:cliente_portal' %}">
-                        <i class="material-icons opacity-5">person</i>
-                        <span class="nav-link-text ms-1">Portal Cliente</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-dark {% if request.resolver_match.url_name == 'cliente_tickets' %}active bg-gradient-dark text-white{% endif %}" href="{% url 'dashboard:cliente_tickets' %}">
-                        <i class="material-icons opacity-5">receipt</i>
-                        <span class="nav-link-text ms-1">Meus Tickets</span>
-                    </a>
+
+                <!-- ========== FINANCEIRO ========== -->
+                <li class="nav-item sidebar-dropdown mt-3">
+                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="financeiro" onclick="toggleSidebarDropdown(event,this,'financeiro')">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <span class="d-flex align-items-center">
+                                <i class="material-icons opacity-5 me-2">account_balance_wallet</i>
+                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Financeiro</h6>
+                            </span>
+                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                        </div>
+                    </div>
+                    <div class="sidebar-dropdown-menu" id="dropdown-financeiro">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'contratos_lista' in request.resolver_match.url_name %}active bg-gradient-primary text-white{% endif %}" href="{% url 'financeiro:contratos_lista' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">description</i>
+                                    <span class="nav-link-text ms-1">Contratos</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'faturas_lista' in request.resolver_match.url_name %}active bg-gradient-info text-white{% endif %}" href="{% url 'financeiro:faturas_lista' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">receipt_long</i>
+                                    <span class="nav-link-text ms-1">Faturas</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'movimentacoes_lista' in request.resolver_match.url_name %}active bg-gradient-warning text-white{% endif %}" href="{% url 'financeiro:movimentacoes_lista' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">sync_alt</i>
+                                    <span class="nav-link-text ms-1">Movimentações</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'relatorios' in request.resolver_match.url_name %}active bg-gradient-danger text-white{% endif %}" href="{% url 'financeiro:relatorios_financeiros' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">assessment</i>
+                                    <span class="nav-link-text ms-1">Relatórios Financeiros</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
                 
-                <!-- ========== FUNCIONALIDADES AVANÇADAS ========== -->
-                <li class="nav-item mt-3">
-                    <h6 class="ps-4 ms-2 text-uppercase text-xs text-dark font-weight-bolder opacity-8">Analytics & IA</h6>
+                <!-- ========== ANALÍTICOS ========== -->
+                <li class="nav-item sidebar-dropdown mt-3">
+                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="analiticos" onclick="toggleSidebarDropdown(event,this,'analiticos')">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <span class="d-flex align-items-center">
+                                <i class="material-icons opacity-5 me-2">analytics</i>
+                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Analíticos</h6>
+                            </span>
+                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                        </div>
+                    </div>
+                    <div class="sidebar-dropdown-menu" id="dropdown-analiticos">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'search' in request.resolver_match.url_name %}active bg-gradient-primary text-white{% endif %}" href="{% url 'dashboard:search' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">search</i>
+                                    <span class="nav-link-text ms-1">Busca Avançada</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'reports' in request.resolver_match.url_name %}active bg-gradient-info text-white{% endif %}" href="{% url 'dashboard:reports' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">assessment</i>
+                                    <span class="nav-link-text ms-1">Relatórios Avançados</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
 
-                <li class="nav-item">
-                    <a class="nav-link text-dark {% if 'chatbot' in request.resolver_match.url_name %}active bg-gradient-success text-white{% endif %}" href="{% url 'dashboard:chatbot' %}">
-                        <i class="material-icons opacity-5">smart_toy</i>
-                        <span class="nav-link-text ms-1">Chatbot AI</span>
-                        <span class="badge badge-sm bg-gradient-info ms-auto">AI</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-dark {% if 'search' in request.resolver_match.url_name %}active bg-gradient-primary text-white{% endif %}" href="{% url 'dashboard:search' %}">
-                        <i class="material-icons opacity-5">search</i>
-                        <span class="nav-link-text ms-1">Busca Avançada</span>
-                    </a>
-                </li>
-
-                <!-- ========== SISTEMA DE CHAT ========== -->
-                <li class="nav-item mt-3">
-                    <h6 class="ps-4 ms-2 text-uppercase text-xs text-dark font-weight-bolder opacity-8">Comunicação</h6>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-dark {% if 'chat_dashboard' in request.resolver_match.url_name %}active bg-gradient-success text-white{% endif %}" href="{% url 'dashboard:chat_dashboard' %}">
-                        <i class="material-icons opacity-5">forum</i>
-                        <span class="nav-link-text ms-1">Chat Avançado</span>
-                        <span class="badge badge-sm bg-gradient-success ms-auto">Novo</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-dark {% if 'create_chat_room' in request.resolver_match.url_name %}active bg-gradient-info text-white{% endif %}" href="{% url 'dashboard:create_chat_room' %}">
-                        <i class="material-icons opacity-5">add_comment</i>
-                        <span class="nav-link-text ms-1">Nova Conversa</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-dark {% if 'chatbot_settings' in request.resolver_match.url_name %}active bg-gradient-warning text-white{% endif %}" href="{% url 'dashboard:chatbot_settings' %}">
-                        <i class="material-icons opacity-5">smart_toy</i>
-                        <span class="nav-link-text ms-1">ChatBot Config</span>
-                    </a>
-                </li>
-
-                <!-- ========== SLA MANAGEMENT ========== -->
-                <li class="nav-item mt-3">
-                    <h6 class="ps-4 ms-2 text-uppercase text-xs text-dark font-weight-bolder opacity-8">SLA & Qualidade</h6>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-dark {% if 'sla_dashboard' in request.resolver_match.url_name %}active bg-gradient-warning text-white{% endif %}" href="{% url 'dashboard:sla_dashboard' %}">
-                        <i class="material-icons opacity-5">schedule</i>
-                        <span class="nav-link-text ms-1">Dashboard SLA</span>
-                        <span class="badge badge-sm bg-gradient-warning ms-auto">SLA</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-dark {% if 'sla_policies' in request.resolver_match.url_name %}active bg-gradient-info text-white{% endif %}" href="{% url 'dashboard:sla_policies' %}">
-                        <i class="material-icons opacity-5">policy</i>
-                        <span class="nav-link-text ms-1">Políticas SLA</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-dark {% if 'sla_alerts' in request.resolver_match.url_name %}active bg-gradient-danger text-white{% endif %}" href="{% url 'dashboard:sla_alerts' %}">
-                        <i class="material-icons opacity-5">warning</i>
-                        <span class="nav-link-text ms-1">Alertas SLA</span>
-                        {% if sla_alerts_count > 0 %}
-                        <span class="badge badge-sm bg-gradient-danger ms-auto">{{ sla_alerts_count }}</span>
-                        {% endif %}
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-dark {% if 'sla_reports' in request.resolver_match.url_name %}active bg-gradient-success text-white{% endif %}" href="{% url 'dashboard:sla_reports' %}">
-                        <i class="material-icons opacity-5">analytics</i>
-                        <span class="nav-link-text ms-1">Relatórios SLA</span>
-                    </a>
+                <!-- ========== COMUNICAÇÃO ========== -->
+                <li class="nav-item sidebar-dropdown mt-3">
+                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="comunicacao" onclick="toggleSidebarDropdown(event,this,'comunicacao')">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <span class="d-flex align-items-center">
+                                <i class="material-icons opacity-5 me-2">forum</i>
+                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Comunicação</h6>
+                            </span>
+                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                        </div>
+                    </div>
+                    <div class="sidebar-dropdown-menu" id="dropdown-comunicacao">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'chat_dashboard' in request.resolver_match.url_name %}active bg-gradient-success text-white{% endif %}" href="{% url 'dashboard:chat_dashboard' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">chat</i>
+                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Chat Avançado</span>
+                                    <span class="badge badge-sm bg-gradient-success ms-auto">Novo</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'create_chat_room' in request.resolver_match.url_name %}active bg-gradient-info text-white{% endif %}" href="{% url 'dashboard:create_chat_room' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">add_comment</i>
+                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Nova Conversa</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'chatbot' in request.resolver_match.url_name %}active bg-gradient-warning text-white{% endif %}" href="{% url 'dashboard:chatbot' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">smart_toy</i>
+                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Chatbot AI</span>
+                                    <span class="badge badge-sm bg-gradient-info ms-auto">AI</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'chatbot_settings' in request.resolver_match.url_name %}active bg-gradient-secondary text-white{% endif %}" href="{% url 'dashboard:chatbot_settings' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">tune</i>
+                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Chatbot Config</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
 
-                <li class="nav-item mt-3">
-                    <h6 class="ps-4 ms-2 text-uppercase text-xs text-dark font-weight-bolder opacity-8">Automação</h6>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-dark {% if 'automation' in request.resolver_match.url_name %}active bg-gradient-dark text-white{% endif %}" href="{% url 'dashboard:automation' %}">
-                        <i class="material-icons opacity-5">build</i>
-                        <span class="nav-link-text ms-1">Automation Engine</span>
-                        <span class="badge badge-sm bg-gradient-success ms-auto">Pro</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-dark {% if 'reports' in request.resolver_match.url_name %}active bg-gradient-secondary text-white{% endif %}" href="{% url 'dashboard:reports' %}">
-                        <i class="material-icons opacity-5">assessment</i>
-                        <span class="nav-link-text ms-1">Relatórios Avançados</span>
-                    </a>
+                <!-- ========== AUTOMAÇÃO ========== -->
+                <li class="nav-item sidebar-dropdown mt-3">
+                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="automacao" onclick="toggleSidebarDropdown(event,this,'automacao')">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <span class="d-flex align-items-center">
+                                <i class="material-icons opacity-5 me-2">precision_manufacturing</i>
+                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Automação</h6>
+                            </span>
+                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                        </div>
+                    </div>
+                    <div class="sidebar-dropdown-menu" id="dropdown-automacao">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'automation' in request.resolver_match.url_name %}active bg-gradient-dark text-white{% endif %}" href="{% url 'dashboard:automation' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">precision_manufacturing</i>
+                                    <span class="nav-link-text ms-1">Automation Engine</span>
+                                    <span class="badge badge-sm bg-gradient-success ms-auto">Pro</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
 
-                <li class="nav-item mt-3">
-                    <h6 class="ps-4 ms-2 text-uppercase text-xs text-dark font-weight-bolder opacity-8">Mobile & PWA</h6>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-dark" href="{% url 'dashboard:pwa_info' %}">
-                        <i class="material-icons opacity-5">phone_android</i>
-                        <span class="nav-link-text ms-1">App Móvel (PWA)</span>
-                        <span class="badge badge-sm bg-gradient-info ms-auto">PWA</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-dark" href="/mobile/" target="_blank">
-                        <i class="material-icons opacity-5">devices</i>
-                        <span class="nav-link-text ms-1">Interface Mobile</span>
-                    </a>
+                <!-- ========== MOBILE & PWA ========== -->
+                <li class="nav-item sidebar-dropdown mt-3">
+                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="mobile" onclick="toggleSidebarDropdown(event,this,'mobile')">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <span class="d-flex align-items-center">
+                                <i class="material-icons opacity-5 me-2">smartphone</i>
+                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Mobile & PWA</h6>
+                            </span>
+                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                        </div>
+                    </div>
+                    <div class="sidebar-dropdown-menu" id="dropdown-mobile">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" href="{% url 'dashboard:pwa_info' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">phone_android</i>
+                                    <span class="nav-link-text ms-1">App Móvel</span>
+                                    <span class="badge badge-sm bg-gradient-info ms-auto">PWA</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" href="/mobile/" target="_blank" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">tablet_android</i>
+                                    <span class="nav-link-text ms-1">Interface Mobile</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
                 
-                <li class="nav-item mt-3">
-                    <h6 class="ps-4 ms-2 text-uppercase text-xs text-dark font-weight-bolder opacity-8">Sistema</h6>
-                </li>
+                <!-- ========== SISTEMA ========== -->
                 {% if user.is_superuser or user.is_staff %}
-                <li class="nav-item">
-                    <a class="nav-link text-dark {% if request.resolver_match.url_name == 'admin_dashboard' %}active bg-gradient-danger text-white{% endif %}" href="{% url 'dashboard:admin_dashboard' %}">
-                        <i class="material-icons opacity-5">security</i>
-                        <span class="nav-link-text ms-1">Painel Admin</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-dark" href="/admin/" target="_blank">
-                        <i class="material-icons opacity-5">settings</i>
-                        <span class="nav-link-text ms-1">Django Admin</span>
-                    </a>
+                <li class="nav-item sidebar-dropdown mt-3">
+                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="sistema" onclick="toggleSidebarDropdown(event,this,'sistema')">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <span class="d-flex align-items-center">
+                                <i class="material-icons opacity-5 me-2">computer</i>
+                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Sistema</h6>
+                            </span>
+                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                        </div>
+                    </div>
+                    <div class="sidebar-dropdown-menu" id="dropdown-sistema">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'admin_dashboard' %}active bg-gradient-danger text-white{% endif %}" href="{% url 'dashboard:admin_dashboard' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">admin_panel_settings</i>
+                                    <span class="nav-link-text ms-1">Painel Admin</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" href="/admin/" target="_blank" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">settings</i>
+                                    <span class="nav-link-text ms-1">Django Admin</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
                 {% endif %}
-                <li class="nav-item">
-                    <a class="nav-link text-dark {% if request.resolver_match.url_name == 'profile' %}active bg-gradient-dark text-white{% endif %}" href="{% url 'dashboard:profile' %}">
-                        <i class="material-icons opacity-5">person</i>
-                        <span class="nav-link-text ms-1">Perfil</span>
-                    </a>
+
+                <!-- ========== USUÁRIO ========== -->
+                <li class="nav-item sidebar-dropdown mt-3">
+                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="usuario" onclick="toggleSidebarDropdown(event,this,'usuario')">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <span class="d-flex align-items-center">
+                                <i class="material-icons opacity-5 me-2">person</i>
+                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Usuário</h6>
+                            </span>
+                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                        </div>
+                    </div>
+                    <div class="sidebar-dropdown-menu" id="dropdown-usuario">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'user_create' %}active bg-gradient-success text-white{% endif %}" href="{% url 'dashboard:user_create' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">person_add</i>
+                                    <span class="nav-link-text ms-1">Criar Usuário</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'user_list' %}active bg-gradient-info text-white{% endif %}" href="{% url 'dashboard:user_list' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">people</i>
+                                    <span class="nav-link-text ms-1">Lista de Usuários</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'profile' %}active bg-gradient-primary text-white{% endif %}" href="{% url 'dashboard:profile' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">account_circle</i>
+                                    <span class="nav-link-text ms-1">Perfil</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link text-dark" href="{% url 'logout' %}">
-                        <i class="material-icons opacity-5 text-danger">exit_to_app</i>
-                        <span class="nav-link-text ms-1 text-danger">Sair</span>
+                
+                <!-- ========== LOGOUT ========== -->
+                <li class="nav-item mt-4 mb-3">
+                    <a class="nav-link text-danger d-flex align-items-center" href="{% url 'logout' %}">
+                        <i class="material-icons opacity-5 me-2">exit_to_app</i>
+                        <span class="nav-link-text ms-1 font-weight-bold">Sair do Sistema</span>
                     </a>
                 </li>
             </ul>
@@ -1043,29 +1320,25 @@
         
         // Push Notifications
         async function initializePushNotifications() {
-            if ('Notification' in window && 'serviceWorker' in navigator) {
+            if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+
+            try {
                 const permission = await Notification.requestPermission();
-                
-                if (permission === 'granted') {
-                    console.log('✅ Notificações push permitidas');
-                    
-                    // Registrar para push notifications
-                    const registration = await navigator.serviceWorker.ready;
-                    const subscription = await registration.pushManager.subscribe({
-                        userVisibleOnly: true,
-                        applicationServerKey: 'YOUR_VAPID_PUBLIC_KEY' // Substituir pela chave VAPID real
-                    });
-                    
-                    // Enviar subscription para o servidor
-                    await fetch('/api/push-subscription/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value
-                        },
-                        body: JSON.stringify(subscription)
-                    });
-                }
+
+                if (permission !== 'granted') return;
+
+                console.log('✅ Notificações push permitidas');
+
+                // Registrar para push notifications
+                const registration = await navigator.serviceWorker.ready;
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true
+                });
+
+                // Aqui você pode enviar a subscription para o servidor se necessário
+                console.log('Push subscription:', subscription);
+            } catch (err) {
+                console.warn('Falha ao inicializar push notifications:', err);
             }
         }
         
@@ -1110,7 +1383,7 @@
             
             window.addEventListener('online', () => showStatus(true));
             window.addEventListener('offline', () => showStatus(false));
-        }
+    }
         
         // Inicializar funcionalidades PWA
         document.addEventListener('DOMContentLoaded', () => {
@@ -1365,6 +1638,152 @@
             opacity: 1;
         }
     </style>
+
+    <!-- Funcionalidade dos Dropdowns da Sidebar -->
+    <script>
+        // Função para alternar dropdowns da sidebar
+        function toggleSidebarDropdown(e, el, dropdownId) {
+            // e: event, el: the clicked header element, dropdownId: id string
+            if (e && e.stopPropagation) e.stopPropagation();
+            // Fechar todos os outros dropdowns para garantir apenas 1 aberto
+            const allOpenMenus = document.querySelectorAll('.sidebar-dropdown-menu.show');
+            allOpenMenus.forEach(menu => {
+                if (menu.id !== `dropdown-${dropdownId}`) {
+                    menu.classList.remove('show');
+                    const otherToggle = document.querySelector(`.sidebar-dropdown-header[data-dropdown-id="${menu.id.replace('dropdown-', '')}"]`);
+                    if (otherToggle) otherToggle.classList.remove('expanded');
+                }
+            });
+
+            const dropdownMenu = document.getElementById(`dropdown-${dropdownId}`);
+            const dropdownToggle = el || document.querySelector(`.sidebar-dropdown-header[data-dropdown-id="${dropdownId}"]`);
+
+            if (!dropdownMenu) {
+                console.error('Dropdown menu não encontrado:', `dropdown-${dropdownId}`);
+                return;
+            }
+
+            if (!dropdownToggle) {
+                console.error('Dropdown toggle não encontrado para:', dropdownId);
+                return;
+            }
+
+            const isCurrentlyOpen = dropdownMenu.classList.contains('show');
+
+            if (isCurrentlyOpen) {
+                // Se já está aberto, fechamos
+                dropdownMenu.classList.remove('show');
+                dropdownToggle.classList.remove('expanded');
+            } else {
+                // Abrir este (e já fechamos os outros acima)
+                dropdownMenu.classList.add('show');
+                dropdownToggle.classList.add('expanded');
+            }
+
+            // Agora persistimos apenas o dropdown atualmente aberto (ou nenhum)
+            const currentlyOpen = document.querySelector('.sidebar-dropdown-menu.show');
+            const openDropdowns = currentlyOpen ? [currentlyOpen.id.replace('dropdown-', '')] : [];
+            localStorage.setItem('openSidebarDropdowns', JSON.stringify(openDropdowns));
+        }
+        
+        // Restaurar estado dos dropdowns ao carregar a página
+        function restoreSidebarDropdownState() {
+            try {
+                const savedState = localStorage.getItem('openSidebarDropdowns');
+                if (savedState) {
+                    const openDropdowns = JSON.parse(savedState);
+                    openDropdowns.forEach(dropdownId => {
+                        const dropdownMenu = document.getElementById(`dropdown-${dropdownId}`);
+                        const dropdownToggle = document.querySelector(`.sidebar-dropdown-header[data-dropdown-id="${dropdownId}"]`);
+
+                        if (dropdownMenu && dropdownToggle) {
+                            dropdownMenu.classList.add('show');
+                            dropdownToggle.classList.add('expanded');
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao restaurar estado dos dropdowns:', error);
+            }
+        }
+        
+        // Verificar qual dropdown deve estar aberto baseado na página atual
+        function setActiveDropdown() {
+            const currentUrl = window.location.pathname;
+            // Array de pares [padrão, id] do mais específico para o mais genérico
+            const urlToDropdown = [
+                ['/dashboard/ticket/', 'tickets'],
+                ['/dashboard/agente/tickets/', 'tickets'],
+                ['/dashboard/cliente/tickets/', 'tickets'],
+                ['/dashboard/cliente/portal/', 'cliente'],
+                ['/dashboard/agente/', 'dashboards'],
+                ['/dashboard/sla/', 'dashboards'],
+                ['/financeiro/dashboard/', 'dashboards'],
+                ['/dashboard/search/', 'analiticos'],
+                ['/dashboard/reports/', 'analiticos'],
+                ['/dashboard/chat/', 'comunicacao'],
+                ['/dashboard/chatbot/', 'comunicacao'],
+                ['/mobile/', 'mobile'],
+                ['/dashboard/admin/', 'sistema'],
+                ['/dashboard/user/', 'usuario'],
+                ['/dashboard/profile/', 'usuario'],
+                ['/dashboard/', 'dashboards'],
+                ['/financeiro/', 'financeiro'],
+                ['/dashboard/sla/', 'sla']
+            ];
+            for (const [urlPattern, dropdownId] of urlToDropdown) {
+                if (currentUrl.startsWith(urlPattern)) {
+                    const dropdownMenu = document.getElementById(`dropdown-${dropdownId}`);
+                    const dropdownToggle = document.querySelector(`.sidebar-dropdown-header[data-dropdown-id="${dropdownId}"]`);
+                    if (dropdownMenu && dropdownToggle && !dropdownMenu.classList.contains('show')) {
+                        dropdownMenu.classList.add('show');
+                        dropdownToggle.classList.add('expanded');
+                    }
+                    break;
+                }
+            }
+        }
+        
+        // Inicializar dropdowns da sidebar
+        document.addEventListener('DOMContentLoaded', function() {
+            // Garantir que todos os dropdowns iniciem fechados
+            document.querySelectorAll('.sidebar-dropdown-menu').forEach(menu => {
+                menu.classList.remove('show');
+            });
+            document.querySelectorAll('.sidebar-dropdown-header').forEach(toggle => {
+                toggle.classList.remove('expanded');
+            });
+
+            // Restaurar estado salvo (se houver)
+            restoreSidebarDropdownState();
+
+            // Definir dropdown ativo baseado na página atual (apenas na carga da página)
+            setActiveDropdown();
+        });
+        
+        // Função para fechar todos os dropdowns
+        function closeAllSidebarDropdowns() {
+            const allDropdowns = document.querySelectorAll('.sidebar-dropdown-menu.show');
+            const allToggles = document.querySelectorAll('.sidebar-dropdown-toggle.expanded');
+            
+            allDropdowns.forEach(menu => {
+                menu.classList.remove('show');
+            });
+            
+            allToggles.forEach(toggle => {
+                toggle.classList.remove('expanded');
+            });
+            
+            localStorage.removeItem('openSidebarDropdowns');
+        }
+        
+        // Adicionar atalho de teclado para fechar dropdowns (ESC)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeAllSidebarDropdowns();
+            }
+        });
+    </script>
 
     <!-- Inicialização dos Dropdowns Bootstrap -->
     <script>

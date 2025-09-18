@@ -1,23 +1,34 @@
 // Service Worker para PWA - Sistema de Controle de Atendimento iConnect
-// Versão: 1.0.0
+// Versão: 1.0.0 - Mobile Enhanced
 // Data: 2024
 
 const CACHE_NAME = 'iconnect-v1.0.0';
 const STATIC_CACHE = 'iconnect-static-v1.0.0';
 const DYNAMIC_CACHE = 'iconnect-dynamic-v1.0.0';
+const MOBILE_CACHE = 'iconnect-mobile-v1.0.0';
+const OFFLINE_URL = '/mobile/offline/';
 
 // Recursos essenciais para cache offline
 const STATIC_ASSETS = [
     '/',
     '/dashboard/',
     '/dashboard/chat/',
+    '/mobile/',
+    '/mobile/tickets/',
+    '/mobile/offline/',
     '/static/css/dashboard.css',
+    '/static/css/material-dashboard.min.css',
     '/static/js/dashboard.js',
+    '/static/js/material-dashboard.min.js',
     '/static/js/chat.js',
+    '/static/js/core/bootstrap.bundle.min.js',
     '/static/img/logo-ct.png',
     '/static/img/favicon.png',
+    '/static/assets/fonts/nucleo-icons.woff2',
+    '/static/assets/fonts/nucleo.woff2',
     'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap',
-    'https://fonts.googleapis.com/icon?family=Material+Icons'
+    'https://fonts.googleapis.com/icon?family=Material+Icons',
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css'
 ];
 
 // URLs que sempre devem buscar da rede
@@ -333,5 +344,159 @@ async function removePendingData(id) {
     return true;
 }
 
+// Funcionalidades específicas para Mobile
+
+// Lidar com requisições mobile offline
+function handleMobileOffline(request) {
+    const url = new URL(request.url);
+    
+    // Se é uma requisição mobile e estamos offline
+    if (url.pathname.startsWith('/mobile/')) {
+        // Para páginas HTML, redirecionar para página offline
+        if (request.headers.get('accept').includes('text/html')) {
+            return caches.match(OFFLINE_URL) || 
+                   caches.match('/mobile/') ||
+                   new Response('Offline', { status: 503 });
+        }
+        
+        // Para APIs, retornar resposta JSON offline
+        return new Response(JSON.stringify({
+            offline: true,
+            message: 'Dados não disponíveis offline',
+            timestamp: Date.now()
+        }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+    
+    return new Response('Not Found', { status: 404 });
+}
+
+// Estratégia específica para dados de tickets mobile
+async function handleMobileTicketData(request) {
+    const cache = await caches.open(MOBILE_CACHE);
+    const cachedResponse = await cache.match(request);
+    
+    try {
+        // Network first para dados atualizados
+        const networkResponse = await fetch(request);
+        
+        if (networkResponse.ok) {
+            cache.put(request, networkResponse.clone());
+            return networkResponse;
+        }
+        
+        // Se network falha mas temos cache, usar cache
+        if (cachedResponse) {
+            return cachedResponse;
+        }
+        
+        return handleMobileOffline(request);
+        
+    } catch (error) {
+        // Offline - usar cache se disponível
+        if (cachedResponse) {
+            return cachedResponse;
+        }
+        
+        return handleMobileOffline(request);
+    }
+}
+
+// Armazenar dados mobile para sincronização posterior
+async function storeMobilePendingData(request, data) {
+    try {
+        // Usar IndexedDB para armazenamento persistente
+        // Implementação simplificada aqui
+        const pendingKey = `mobile_pending_${Date.now()}`;
+        
+        // Em implementação real, usar IndexedDB
+        console.log('[SW] Storing mobile pending data:', pendingKey, data);
+        
+        // Agendar sincronização
+        if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
+            await self.registration.sync.register('mobile-sync');
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('[SW] Error storing mobile pending data:', error);
+        return false;
+    }
+}
+
+// Sincronização específica para mobile
+self.addEventListener('sync', (event) => {
+    if (event.tag === 'mobile-sync') {
+        console.log('[SW] Mobile background sync triggered');
+        event.waitUntil(syncMobilePendingData());
+    }
+});
+
+async function syncMobilePendingData() {
+    try {
+        console.log('[SW] Syncing mobile pending data...');
+        
+        // Aqui você implementaria a lógica para:
+        // 1. Recuperar dados pendentes do IndexedDB
+        // 2. Tentar enviar para o servidor
+        // 3. Remover dados sincronizados com sucesso
+        
+        // Por agora, apenas log
+        console.log('[SW] Mobile sync completed');
+    } catch (error) {
+        console.error('[SW] Mobile sync failed:', error);
+    }
+}
+
+// Notificações push para mobile
+self.addEventListener('push', (event) => {
+    if (event.data) {
+        const data = event.data.json();
+        
+        const options = {
+            body: data.body || 'Nova atualização no iConnect',
+            icon: '/static/img/logo-ct.png',
+            badge: '/static/img/favicon.png',
+            tag: data.tag || 'iconnect-mobile',
+            vibrate: [200, 100, 200], // Padrão de vibração para mobile
+            actions: [
+                { action: 'open', title: 'Abrir', icon: '/static/img/logo-ct.png' },
+                { action: 'close', title: 'Fechar' }
+            ],
+            data: data.url || '/mobile/'
+        };
+        
+        event.waitUntil(
+            self.registration.showNotification(data.title || 'iConnect', options)
+        );
+    }
+});
+
+// Lidar com cliques em notificações mobile
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    
+    const urlToOpen = event.notification.data || '/mobile/';
+    
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true })
+            .then((clientList) => {
+                // Se já tem uma janela aberta, focar nela
+                for (const client of clientList) {
+                    if (client.url.includes('/mobile/') && 'focus' in client) {
+                        return client.focus();
+                    }
+                }
+                
+                // Senão, abrir nova janela
+                if (clients.openWindow) {
+                    return clients.openWindow(urlToOpen);
+                }
+            })
+    );
+});
+
 // Log de informações do Service Worker
-console.log('[SW] Service Worker loaded successfully');
+console.log('[SW] Service Worker loaded successfully - Mobile Enhanced');

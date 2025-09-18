@@ -1,3 +1,7 @@
+/* Reduz tamanho dos ícones dos cabeçalhos dos dropdowns da sidebar */
+.sidebar-dropdown-header > .material-icons {
+  font-size: 20px;
+}
 @charset "UTF-8";
 
 /*!
@@ -4764,6 +4768,7 @@ fieldset:disabled .btn {
 .nav {
   --bs-nav-link-padding-x: 1rem;
   --bs-nav-link-padding-y: 0.5rem;
+  --bs-nav-link-font-size: 0.92rem;
   --bs-nav-link-font-weight: ;
   --bs-nav-link-color: var(--bs-link-color);
   --bs-nav-link-hover-color: var(--bs-link-hover-color);
@@ -4778,7 +4783,7 @@ fieldset:disabled .btn {
 .nav-link {
   display: block;
   padding: var(--bs-nav-link-padding-y) var(--bs-nav-link-padding-x);
-  font-size: var(--bs-nav-link-font-size);
+  font-size: 0.70rem !important;
   font-weight: var(--bs-nav-link-font-weight);
   color: var(--bs-nav-link-color);
   background: none;
@@ -27369,7 +27374,7 @@ p,
 }
 
 .text-xs {
-  font-size: 0.75rem !important;
+  font-size: 0.70rem !important;
 }
 
 .text-xxs {
