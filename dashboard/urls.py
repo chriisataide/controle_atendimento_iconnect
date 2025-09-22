@@ -34,6 +34,10 @@ urlpatterns = [
     # Portal do Cliente
     path('cliente/', views.ClientePortalView.as_view(), name='cliente_portal'),
     path('cliente/tickets/', views.ClienteTicketsView.as_view(), name='cliente_tickets'),
+
+    # Pontos de Venda
+    path('pontosdevenda/', views.PontoDeVendaListView.as_view(), name='pontodevenda_list'),
+    path('pontosdevenda/novo/', views.PontoDeVendaCreateView.as_view(), name='pontodevenda_create'),
     
     # APIs AJAX
     path('api/tickets/status/', views.update_ticket_status, name='update_ticket_status'),

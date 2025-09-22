@@ -676,6 +676,20 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body class="d-flex flex-column h-100">
+
+        <!-- DEBUG: Status de conexão -->
+        <div style="background:#fff3cd;color:#856404;padding:12px 16px;border-radius:8px;margin:16px 0;font-size:15px;z-index:99999;position:relative;">
+            <b>DEBUG:</b> navigator.onLine = <span id="debug-online-status"></span>
+            <button onclick="location.reload()" style="margin-left:16px;">Recarregar</button>
+        </div>
+        <script>
+            function updateDebugOnlineStatus() {
+                document.getElementById('debug-online-status').textContent = navigator.onLine ? 'true (online)' : 'false (offline)';
+            }
+            updateDebugOnlineStatus();
+            window.addEventListener('online',updateDebugOnlineStatus);
+            window.addEventListener('offline',updateDebugOnlineStatus);
+        </script>
     
     <!-- Mobile Header -->
     <header class="mobile-header">

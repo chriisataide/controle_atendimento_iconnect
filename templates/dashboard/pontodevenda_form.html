@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Novo Ponto de Venda{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+  <div class="row">
+    <div class="col-md-10 col-lg-8 mx-auto">
+      <div class="card create-user-card">
+        <div class="card-body">
+          <h4 class="mb-3">Novo Ponto de Venda</h4>
+          <form method="post">
+            {% csrf_token %}
+            <div class="row">
+              <div class="col-md-12">
+                {% for field in form.visible_fields %}
+                  <div class="mb-3">
+                    <label class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
+                    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a href="{% url 'dashboard:pontodevenda_list' %}" class="btn btn-secondary ms-2">Cancelar</a>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

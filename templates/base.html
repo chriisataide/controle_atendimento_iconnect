@@ -327,9 +327,21 @@
                     <div class="sidebar-dropdown-menu" id="dropdown-cliente">
                         <ul class="navbar-nav">
                             <li class="nav-item">
-                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'cliente_portal' %}active bg-gradient-primary text-white{% endif %}" href="{% url 'dashboard:cliente_portal' %}" onclick="event.stopPropagation()">
+                                <a class="nav-link text-dark {% if request.resolver_match.url_name|default:'' == 'cliente_portal' %}active bg-gradient-primary text-white{% endif %}" href="{% url 'dashboard:cliente_portal' %}" onclick="event.stopPropagation()">
                                     <i class="material-icons opacity-5">dashboard</i>
                                     <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Portal Cliente</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if request.resolver_match and request.resolver_match.url_name|default:'' == 'pontodevenda_create' %}active bg-gradient-success text-white{% endif %}" href="{% url 'dashboard:pontodevenda_create' %}">
+                                    <i class="material-icons opacity-5">add_business</i>
+                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Novo Ponto de Venda</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if request.resolver_match and request.resolver_match.url_name|default:'' == 'pontodevenda_list' %}active bg-gradient-info text-white{% endif %}" href="{% url 'dashboard:pontodevenda_list' %}">
+                                    <i class="material-icons opacity-5">store</i>
+                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Lista de Pontos de Venda</span>
                                 </a>
                             </li>
                         </ul>
@@ -1344,6 +1356,9 @@
         
         // Offline/Online status
         function handleOnlineStatus() {
+            // Só mostra o banner em mobile (user agent simples)
+            const isMobile = /Android|iPhone|iPad|iPod|Mobile|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (!isMobile) return;
             const showStatus = (online) => {
                 const statusDiv = document.createElement('div');
                 statusDiv.innerHTML = `
@@ -1376,7 +1391,6 @@
                         }
                     </style>
                 `;
-                
                 document.body.appendChild(statusDiv);
                 setTimeout(() => statusDiv.remove(), 3000);
             };

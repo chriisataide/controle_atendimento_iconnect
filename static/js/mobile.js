@@ -360,30 +360,43 @@ class MobileManager {
     }
 
     setupOfflineHandling() {
-        const offlineIndicator = this.createOfflineIndicator();
+        // Garante que só um offline-indicator exista
+        let offlineIndicator = this.createOfflineIndicator();
+
+        // Função para mostrar o banner
+        const showOffline = () => {
+            offlineIndicator.classList.add('show');
+        };
+        // Função para esconder/remover o banner
+        const hideOffline = () => {
+            offlineIndicator.classList.remove('show');
+            // Opcional: remove do DOM após 1s (se quiser sumir de vez)
+            // setTimeout(() => { if (offlineIndicator.parentNode) offlineIndicator.parentNode.removeChild(offlineIndicator); }, 1000);
+        };
 
         window.addEventListener('online', () => {
-            offlineIndicator.classList.remove('show');
+            hideOffline();
             this.showToast('Conexão restaurada!', 'success');
-            
             // Sincroniza dados pendentes
             this.syncPendingData();
         });
 
         window.addEventListener('offline', () => {
-            offlineIndicator.classList.add('show');
+            showOffline();
             this.showToast('Você está offline', 'warning');
         });
 
         // Verifica status inicial
         if (!navigator.onLine) {
-            offlineIndicator.classList.add('show');
+            showOffline();
+        } else {
+            hideOffline();
         }
     }
 
     createOfflineIndicator() {
+        // Garante que só um .offline-indicator exista
         let indicator = document.querySelector('.offline-indicator');
-        
         if (!indicator) {
             indicator = document.createElement('div');
             indicator.className = 'offline-indicator';
@@ -393,7 +406,7 @@ class MobileManager {
             `;
             document.body.appendChild(indicator);
         }
-        
+        // Sempre retorna o mesmo elemento
         return indicator;
     }
 
@@ -686,8 +699,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Adiciona CSS necessário para touch feedback
-const style = document.createElement('style');
-style.textContent = `
+const mobileStyle = document.createElement('style');
+mobileStyle.textContent = `
     .touch-active {
         transform: scale(0.98);
         opacity: 0.8;
@@ -736,5 +749,7 @@ style.textContent = `
         padding: 4px 8px;
         cursor: pointer;
     }
+`;
+document.head.appendChild(mobileStyle);
 `;
 document.head.appendChild(style);

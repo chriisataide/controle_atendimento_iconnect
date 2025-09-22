@@ -1,4 +1,49 @@
 from django.db import models
+# ----------------------
+# Modelo de Ponto de Venda
+# ----------------------
+class PontoDeVenda(models.Model):
+    # Dados da Empresa
+    razao_social = models.CharField("Razão Social", max_length=150)
+    nome_fantasia = models.CharField("Nome Fantasia", max_length=150)
+    cnpj = models.CharField("CNPJ", max_length=18, unique=True)
+    inscricao_estadual = models.CharField("Inscrição Estadual", max_length=30, blank=True)
+    inscricao_municipal = models.CharField("Inscrição Municipal", max_length=30, blank=True)
+
+    # Endereço
+    cep = models.CharField("CEP", max_length=9)
+    logradouro = models.CharField("Logradouro", max_length=120)
+    numero = models.CharField("Número", max_length=10)
+    complemento = models.CharField("Complemento", max_length=50, blank=True)
+    bairro = models.CharField("Bairro", max_length=60)
+    cidade = models.CharField("Cidade", max_length=60)
+    estado = models.CharField("Estado", max_length=2)
+    pais = models.CharField("País", max_length=40, default="Brasil")
+
+    # Contatos
+    celular = models.CharField("Celular / WhatsApp", max_length=20)
+    email_principal = models.EmailField("E-mail principal")
+    email_financeiro = models.EmailField("E-mail financeiro", blank=True)
+    website = models.URLField("Website", blank=True)
+
+    # Responsável pela Empresa
+    responsavel_nome = models.CharField("Nome do Responsável", max_length=100)
+    responsavel_cpf = models.CharField("CPF do Responsável", max_length=14)
+    responsavel_cargo = models.CharField("Cargo / Função", max_length=60)
+    responsavel_telefone = models.CharField("Telefone do Responsável", max_length=20)
+    responsavel_email = models.EmailField("E-mail do Responsável")
+
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Ponto de Venda"
+        verbose_name_plural = "Pontos de Venda"
+        ordering = ["-criado_em"]
+
+    def __str__(self):
+        return f"{self.nome_fantasia} ({self.cnpj})"
+from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 import uuid

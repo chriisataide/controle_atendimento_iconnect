@@ -1,0 +1,13 @@
+<div style="background:#fff3cd;color:#856404;padding:12px 16px;border-radius:8px;margin:16px 0;font-size:15px;">
+  <b>DEBUG:</b> navigator.onLine = <span id="debug-online-status"></span>
+  <button onclick="location.reload()" style="margin-left:16px;">Recarregar</button>
+</div>
+<script>
+  document.getElementById('debug-online-status').textContent = navigator.onLine ? 'true (online)' : 'false (offline)';
+  window.addEventListener('online',()=>{
+    document.getElementById('debug-online-status').textContent = 'true (online)';
+  });
+  window.addEventListener('offline',()=>{
+    document.getElementById('debug-online-status').textContent = 'false (offline)';
+  });
+</script>
