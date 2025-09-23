@@ -339,76 +339,20 @@
     </div>
 </div>
 
-<div class="tickets-container">
-    {% if tickets %}
-        {% for ticket in tickets %}
-        <div class="ticket-card priority-{{ ticket.prioridade }}" data-ticket-url="{% url 'mobile:mobile_ticket_detail' ticket.id %}"
-            <div class="ticket-header">
-                <div class="ticket-number">#{{ ticket.numero }}</div>
-                <span class="ticket-status status-{{ ticket.status }}">
-                    {{ ticket.get_status_display }}
-                </span>
-            </div>
-            
-            <div class="ticket-title">{{ ticket.titulo }}</div>
-            
-            <div class="ticket-client">
-                <i class="fas fa-user"></i>
-                {{ ticket.cliente.nome }}
-                {% if ticket.categoria %}
-                    <span class="category-badge">{{ ticket.categoria.nome }}</span>
-                {% endif %}
-            </div>
-            
-            <div class="ticket-meta">
-                <div class="ticket-time">
-                    <i class="far fa-clock"></i>
-                    {{ ticket.criado_em|timesince }} atrás
-                </div>
-                <span class="priority-badge priority-{{ ticket.prioridade }}">
-                    {{ ticket.get_prioridade_display }}
-                </span>
-            </div>
-            
-            {% if is_agent %}
-            <div class="ticket-actions">
-                {% if ticket.status == 'aberto' %}
-                    <button class="quick-action-btn" data-ticket-id="{{ ticket.id }}" data-status="em_andamento"
-                        <i class="fas fa-play"></i> Iniciar
-                    </button>
-                {% elif ticket.status == 'em_andamento' %}
-                    <button class="quick-action-btn" data-ticket-id="{{ ticket.id }}" data-status="resolvido"
-                        <i class="fas fa-check"></i> Resolver
-                    </button>
-                {% endif %}
-                <button class="quick-action-btn" data-ticket-id="{{ ticket.id }}" data-action="comment"
-                    <i class="fas fa-comment"></i> Comentar
-                </button>
-            </div>
-            {% endif %}
-            
-            <div class="ticket-progress 
-                {% if ticket.status == 'aberto' %}progress-0
-                {% elif ticket.status == 'em_andamento' %}progress-50
-                {% elif ticket.status == 'resolvido' %}progress-75
-                {% else %}progress-100{% endif %}"></div>
-        </div>
-        {% endfor %}
-    {% else %}
-        <div class="empty-state">
-            <div class="empty-state-icon">
-                <i class="fas fa-ticket-alt"></i>
-            </div>
-            <h6>Nenhum ticket encontrado</h6>
-            <p class="text-muted">
-                {% if search %}
-                    Nenhum ticket encontrado para "{{ search }}"
-                {% else %}
-                    Você não possui tickets no momento
-                {% endif %}
-            </p>
-        </div>
-    {% endif %}
+<div class="tickets-container" id="ticketsContainer" aria-live="polite">
+    <!-- Tickets serão carregados via AJAX -->
+</div>
+<div id="paginationSummary" class="text-center text-muted small my-2" aria-live="polite"></div>
+<div id="loader" class="text-center my-3" style="display:none;">
+    <span class="loading-spinner" aria-label="Carregando..."></span>
+</div>
+<button id="loadMoreBtn" class="btn btn-outline-primary w-100 my-2" style="display:none; font-size:1.1rem;" aria-label="Carregar mais tickets">Carregar Mais</button>
+<div id="emptyState" class="empty-state" style="display:none;">
+    <div class="empty-state-icon">
+        <i class="fas fa-ticket-alt"></i>
+    </div>
+    <h6>Nenhum ticket encontrado</h6>
+    <p class="text-muted"></p>
 </div>
 
 {% if is_agent %}
@@ -445,33 +389,116 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
 {% block extra_js %}
 <script>
 let currentTicketId = null;
+let currentPage = 1;
+let loading = false;
+let hasNext = true;
+let totalTickets = 0;
+let perPage = 20;
+let searchTerm = '{{ search|default:"" }}';
+
+function renderTickets(html, append = true) {
+    const container = document.getElementById('ticketsContainer');
+    if (append) {
+        container.insertAdjacentHTML('beforeend', html);
+    } else {
+        container.innerHTML = html;
+    }
+}
+
+function showLoader(show) {
+    document.getElementById('loader').style.display = show ? '' : 'none';
+}
+
+function showLoadMore(show) {
+    document.getElementById('loadMoreBtn').style.display = show ? '' : 'none';
+}
+
+function showEmptyState(show, msg = '') {
+    const empty = document.getElementById('emptyState');
+    empty.style.display = show ? '' : 'none';
+    if (msg) empty.querySelector('p').textContent = msg;
+}
+
+function updateSummary(page, total, perPage) {
+    const el = document.getElementById('paginationSummary');
+    if (total > 0) {
+        const showing = Math.min(page * perPage, total);
+        el.textContent = `Mostrando ${showing} de ${total} tickets`;
+    } else {
+        el.textContent = '';
+    }
+}
+
+async function loadTickets(page = 1, append = true) {
+    if (loading || !hasNext) return;
+    loading = true;
+    showLoader(true);
+    showLoadMore(false);
+    showEmptyState(false);
+    try {
+        const params = new URLSearchParams(window.location.search);
+        params.set('page', page);
+        params.set('per_page', perPage);
+        const resp = await fetch(`/mobile/tickets/ajax/?${params}`);
+        const data = await resp.json();
+        if (data.html) {
+            renderTickets(data.html, append);
+        }
+        hasNext = data.has_next;
+        totalTickets = data.total;
+        updateSummary(data.page, data.total, data.per_page);
+        if (!data.html || data.total === 0) {
+            showEmptyState(true, searchTerm ? `Nenhum ticket encontrado para "${searchTerm}"` : 'Você não possui tickets no momento');
+        }
+        showLoadMore(data.has_next);
+    } catch (e) {
+        showEmptyState(true, 'Erro ao carregar tickets');
+    } finally {
+        showLoader(false);
+        loading = false;
+    }
+}
+
+// Scroll infinito
+window.addEventListener('scroll', () => {
+    if (!hasNext || loading) return;
+    const scrollY = window.scrollY || window.pageYOffset;
+    const winH = window.innerHeight;
+    const docH = document.body.offsetHeight;
+    if (scrollY + winH > docH - 200) {
+        currentPage++;
+        loadTickets(currentPage, true);
+    }
+});
+
+// Fallback botão 'Carregar Mais'
+document.getElementById('loadMoreBtn').addEventListener('click', () => {
+    if (hasNext && !loading) {
+        currentPage++;
+        loadTickets(currentPage, true);
+    }
+});
 
 // Busca em tempo real
 document.getElementById('searchInput').addEventListener('input', function(e) {
-    const searchTerm = e.target.value;
+    searchTerm = e.target.value;
     const url = new URL(window.location);
-    
     if (searchTerm) {
         url.searchParams.set('search', searchTerm);
     } else {
         url.searchParams.delete('search');
     }
-    
-    // Debounce
     clearTimeout(window.searchTimeout);
     window.searchTimeout = setTimeout(() => {
         window.location = url;
     }, 500);
 });
 
-// Event delegation para botões
+// Delegação de eventos para tickets e botões
 document.addEventListener('click', function(e) {
-    // Navegação para ticket
     if (e.target.closest('.ticket-card[data-ticket-url]')) {
         const ticketCard = e.target.closest('.ticket-card[data-ticket-url]');
         const url = ticketCard.dataset.ticketUrl;
@@ -479,8 +506,6 @@ document.addEventListener('click', function(e) {
             window.location.href = url;
         }
     }
-    
-    // Botão FAB
     if (e.target.closest('.create-ticket-fab[data-url]')) {
         const fab = e.target.closest('.create-ticket-fab[data-url]');
         const url = fab.dataset.url;
@@ -488,15 +513,12 @@ document.addEventListener('click', function(e) {
             window.location.href = url;
         }
     }
-    
-    // Botões de ação rápida
     if (e.target.closest('.quick-action-btn[data-ticket-id]')) {
         e.stopPropagation();
         const btn = e.target.closest('.quick-action-btn[data-ticket-id]');
         const ticketId = btn.dataset.ticketId;
         const status = btn.dataset.status;
         const action = btn.dataset.action;
-        
         if (status) {
             updateTicketStatus(ticketId, status, btn);
         } else if (action === 'comment') {
@@ -505,26 +527,22 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// Atualizar status do ticket
+// Atualizar status do ticket (mantido igual)
 function updateTicketStatus(ticketId, newStatus, btn) {
     const originalContent = btn.innerHTML;
     btn.innerHTML = '<span class="loading-spinner"></span>';
     btn.disabled = true;
-    
     fetch(`/mobile/ticket/${ticketId}/status/`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
         },
-        body: JSON.stringify({
-            status: newStatus
-        })
+        body: JSON.stringify({ status: newStatus })
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Atualizar a interface
             location.reload();
         } else {
             alert('Erro ao atualizar status');
@@ -533,49 +551,64 @@ function updateTicketStatus(ticketId, newStatus, btn) {
         }
     })
     .catch(error => {
-        console.error('Erro:', error);
         alert('Erro ao atualizar status');
         btn.innerHTML = originalContent;
         btn.disabled = false;
     });
 }
 
-// Abrir modal de comentário
+// Modal de comentário (mantido igual)
 function openCommentModal(ticketId) {
     currentTicketId = ticketId;
-    
     const modal = new bootstrap.Modal(document.getElementById('commentModal'));
     modal.show();
-    
-    // Focar no textarea quando o modal abrir
     setTimeout(() => {
         document.getElementById('commentText').focus();
     }, 300);
 }
-
-// Enviar comentário
 function submitComment() {
     const commentText = document.getElementById('commentText').value.trim();
-    
     if (!commentText) {
         alert('Por favor, digite um comentário');
         return;
     }
-    
     const btn = event.target;
     const loading = btn.querySelector('.comment-loading');
     loading.classList.remove('d-none');
     btn.disabled = true;
-    
     fetch(`/mobile/ticket/${currentTicketId}/comment/`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
         },
-        body: JSON.stringify({
-            comment: commentText
-        })
+        body: JSON.stringify({ comment: commentText })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erro ao enviar comentário');
+        }
+        btn.disabled = false;
+        loading.classList.add('d-none');
+    })
+    .catch(error => {
+        alert('Erro ao enviar comentário');
+        btn.disabled = false;
+        loading.classList.add('d-none');
+    });
+}
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', function() {
+    currentPage = 1;
+    hasNext = true;
+    renderTickets('', false);
+    loadTickets(currentPage, false);
+});
+</script>
     })
     .then(response => response.json())
     .then(data => {

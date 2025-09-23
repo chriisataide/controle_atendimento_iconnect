@@ -431,14 +431,13 @@ class MobileManager {
     }
 
     setupInstallPrompt() {
-        let deferredPrompt = null;
+        this.deferredPrompt = null;
 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
-            deferredPrompt = e;
-            
+            this.deferredPrompt = e;
             // Mostra prompt de instalação personalizado
-            this.showInstallPrompt(deferredPrompt);
+            this.showInstallPrompt();
         });
 
         // Tracked install
@@ -449,7 +448,7 @@ class MobileManager {
         });
     }
 
-    showInstallPrompt(deferredPrompt) {
+    showInstallPrompt() {
         // Cria prompt customizado se não existir
         let installBanner = document.querySelector('.install-banner');
         
@@ -491,17 +490,15 @@ class MobileManager {
 
         // Event listeners
         installBanner.querySelector('.btn-install').addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                
+            if (this.deferredPrompt) {
+                this.deferredPrompt.prompt();
+                const { outcome } = await this.deferredPrompt.userChoice;
                 if (outcome === 'accepted') {
                     console.log('Usuário aceitou instalar PWA');
                 } else {
                     console.log('Usuário rejeitou instalar PWA');
                 }
-                
-                deferredPrompt = null;
+                this.deferredPrompt = null;
             }
             this.hideInstallPrompt();
         });
@@ -751,5 +748,3 @@ mobileStyle.textContent = `
     }
 `;
 document.head.appendChild(mobileStyle);
-`;
-document.head.appendChild(style);

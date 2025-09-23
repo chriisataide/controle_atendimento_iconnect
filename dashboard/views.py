@@ -29,28 +29,28 @@ class PontoDeVendaForm(forms.ModelForm):
         model = PontoDeVenda
         fields = '__all__'
         widgets = {
-            'razao_social': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Razão Social'}),
-            'nome_fantasia': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome Fantasia'}),
-            'cnpj': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'CNPJ'}),
-            'inscricao_estadual': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Inscrição Estadual'}),
-            'inscricao_municipal': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Inscrição Municipal'}),
-            'cep': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'CEP'}),
-            'logradouro': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Logradouro'}),
-            'numero': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Número'}),
-            'complemento': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Complemento'}),
-            'bairro': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Bairro'}),
-            'cidade': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cidade'}),
-            'estado': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Estado'}),
-            'pais': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'País'}),
-            'celular': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Celular / WhatsApp'}),
-            'email_principal': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'E-mail principal'}),
-            'email_financeiro': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'E-mail financeiro'}),
-            'website': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'Website'}),
-            'responsavel_nome': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome do Responsável'}),
-            'responsavel_cpf': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'CPF do Responsável'}),
-            'responsavel_cargo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cargo / Função'}),
-            'responsavel_telefone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Telefone do Responsável'}),
-            'responsavel_email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'E-mail do Responsável'}),
+            'razao_social': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'nome_fantasia': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'cnpj': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'inscricao_estadual': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'inscricao_municipal': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'cep': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'logradouro': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'numero': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'complemento': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'bairro': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'cidade': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'estado': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'pais': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'celular': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'email_principal': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'email_financeiro': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'website': forms.URLInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'responsavel_nome': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'responsavel_cpf': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'responsavel_cargo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'responsavel_telefone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'responsavel_email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': ' '}),
         }
 
 @method_decorator([login_required], name='dispatch')
@@ -82,6 +82,36 @@ class PontoDeVendaCreateView(CreateView):
     def form_valid(self, form):
         obj = form.save()
         messages.success(self.request, f'Ponto de Venda "{obj.nome_fantasia}" cadastrado com sucesso.')
+        return super().form_valid(form)
+
+@method_decorator([login_required], name='dispatch')
+class PontoDeVendaDetailView(DetailView):
+    model = PontoDeVenda
+    template_name = 'dashboard/pontodevenda_detail.html'
+    context_object_name = 'object'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_staff or request.user.is_superuser):
+            messages.error(request, 'Acesso negado. Você não tem permissão para ver detalhes de pontos de venda.')
+            return redirect('dashboard:pontodevenda_list')
+        return super().dispatch(request, *args, **kwargs)
+
+@method_decorator([login_required], name='dispatch')
+class PontoDeVendaUpdateView(UpdateView):
+    model = PontoDeVenda
+    form_class = PontoDeVendaForm
+    template_name = 'dashboard/pontodevenda_form.html'
+    success_url = reverse_lazy('dashboard:pontodevenda_list')
+
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_staff or request.user.is_superuser):
+            messages.error(request, 'Acesso negado. Você não tem permissão para editar pontos de venda.')
+            return redirect('dashboard:pontodevenda_list')
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        obj = form.save()
+        messages.success(self.request, f'Ponto de Venda "{obj.nome_fantasia}" atualizado com sucesso.')
         return super().form_valid(form)
 
 User = get_user_model()

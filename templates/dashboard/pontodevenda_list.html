@@ -1,56 +1,339 @@
 {% extends 'base.html' %}
-{% block title %}Lista de Pontos de Venda{% endblock %}
+{% block page_title %}Lista de Pontos de Venda{% endblock %}
+
 
 {% block content %}
-<div class="card">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h5 class="mb-0">Lista de Pontos de Venda</h5>
-    <a href="{% url 'dashboard:pontodevenda_create' %}" class="btn btn-sm btn-primary">Novo Ponto de Venda</a>
+<div class="container-fluid py-2">
+  <div class="ms-3">
+    <h3 class="mb-0 h4 font-weight-bolder">Gerenciar Pontos de Venda</h3>
+    <p class="mb-4">Visualize e gerencie todos os pontos de venda cadastrados</p>
   </div>
-  <div class="card-body">
-    <div class="table-responsive">
-      <table class="table table-hover">
-        <thead>
-          <tr>
-            <th>Nome Fantasia</th>
-            <th>Razão Social</th>
-            <th>CNPJ</th>
-            <th>Cidade</th>
-            <th>Responsável</th>
-            <th>Email</th>
-            <th>Criado em</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for p in pontosdevenda %}
-          <tr>
-            <td>{{ p.nome_fantasia }}</td>
-            <td>{{ p.razao_social }}</td>
-            <td>{{ p.cnpj }}</td>
-            <td>{{ p.cidade }}</td>
-            <td>{{ p.responsavel_nome }}</td>
-            <td>{{ p.email_principal }}</td>
-            <td>{{ p.criado_em|date:'d/m/Y H:i' }}</td>
-          </tr>
-          {% empty %}
-          <tr><td colspan="7">Nenhum ponto de venda cadastrado.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+  <div class="row">
+    <div class="col-12">
+      <div class="card my-4">
+        <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+          <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="text-white text-capitalize ps-3 mb-0">Lista de Pontos de Venda</h6>
+              <div class="me-3">
+                <a href="{% url 'dashboard:pontodevenda_create' %}" class="btn btn-outline-white btn-sm mb-0" id="novoPdvBtn" title="Novo Ponto de Venda (Ctrl+N)">
+                  <i class="material-symbols-rounded text-sm">add</i>&nbsp;&nbsp;Novo Ponto de Venda
+                </a>
+              </div>
+            </div>
+            <div class="mt-3 px-3">
+              <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="Buscar por nome, CNPJ, cidade... (Ctrl+F)" autocomplete="off">
+            </div>
+          </div>
+        </div>
+        <div class="card-body px-0 pb-2">
+          <div class="table-responsive p-0">
+            <table class="table align-items-center mb-0" id="pdvTable">
+              <thead>
+                <tr>
+                  <th class="sortable" data-sort="nome_fantasia" title="Ordenar">Nome Fantasia <i class="material-icons sort-icon">unfold_more</i></th>
+                  <th class="sortable" data-sort="razao_social" title="Ordenar">Razão Social <i class="material-icons sort-icon">unfold_more</i></th>
+                  <th class="sortable" data-sort="cnpj" title="Ordenar">CNPJ <i class="material-icons sort-icon">unfold_more</i></th>
+                  <th class="sortable" data-sort="cidade" title="Ordenar">Cidade <i class="material-icons sort-icon">unfold_more</i></th>
+                  <th class="sortable" data-sort="responsavel_nome" title="Ordenar">Responsável <i class="material-icons sort-icon">unfold_more</i></th>
+                  <th>Email</th>
+                  <th>Criado em</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="pdvTableBody">
+                {% for p in pontosdevenda %}
+                <tr tabindex="0" class="pdv-row">
+                  <td><span class="material-icons text-primary me-1" title="Ponto de venda">store</span> <strong>{{ p.nome_fantasia }}</strong></td>
+                  <td>{{ p.razao_social }}</td>
+                  <td>
+                    <span class="badge bg-light text-dark">{{ p.cnpj }}</span>
+                    <button class="btn btn-link btn-sm p-0 ms-1 copy-btn" data-copy="{{ p.cnpj }}" title="Copiar CNPJ"><i class="material-icons">content_copy</i></button>
+                  </td>
+                  <td><span class="material-icons text-info me-1" title="Cidade">location_on</span> {{ p.cidade }}</td>
+                  <td><span class="material-icons text-secondary me-1" title="Responsável">person</span> {{ p.responsavel_nome }}</td>
+                  <td>{{ p.email_principal }}</td>
+                  <td>{{ p.criado_em|date:'d/m/Y H:i' }}</td>
+                  <td>
+                    <div class="text-center position-relative">
+                      <button class="btn btn-link px-2 py-1 action-menu-btn" type="button" data-id="{{ p.id }}" data-detail-url="{% url 'dashboard:pontodevenda_detail' p.id %}" data-edit-url="{% url 'dashboard:pontodevenda_update' p.id %}" data-delete-id="{{ p.id }}" title="Mais opções" style="box-shadow:none;">
+                        <i class="material-icons">more_vert</i>
+                      </button>
+                    </div>
+                  </td>
+{% block extra_css %}
+<style>
+  #searchInput {
+    background: linear-gradient(90deg, #f8fafc 60%, #e9f0ff 100%);
+    border: 1.5px solid #bfc9e0;
+    color: #364fc7;
+    font-weight: 500;
+    font-size: 1.04rem;
+    border-radius: 2rem;
+    box-shadow: 0 2px 12px 0 rgba(44,62,80,0.06);
+    padding: 0.55rem 1.2rem;
+    outline: none;
+    transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+    letter-spacing: 0.01em;
+  }
+  #searchInput:focus {
+    border-color: #3b5bdb;
+    background: linear-gradient(90deg, #f4f7fe 60%, #dbeafe 100%);
+    box-shadow: 0 0 0 3px #bac8ff;
+    color: #243a6b;
+  }
+  #searchInput::placeholder {
+    color: #8da2c9;
+    opacity: 1;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+  }
+  /* Removido btn-icon para o botão de opções ficar simples */
+  .action-menu {
+    box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    min-width: 120px;
+    max-width: 200px;
+    width: 150px;
+    padding: 0.35rem 0.15rem;
+    background: #fff;
+    z-index: 3000;
+    animation: fadeInMenu 0.18s;
+  }
+  .action-menu .dropdown-item {
+    font-size: 0.89rem;
+    border-radius: 6px;
+    transition: background 0.15s;
+    color: #222;
+    cursor: pointer;
+    padding-left: 1.1rem;
+    padding-right: 1.1rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+  .action-menu .dropdown-item:hover {
+    background: #f3f6fa;
+    color: #2d3a8c;
+  }
+  .action-menu .dropdown-item.text-danger {
+    color: #c53030 !important;
+  }
+  .action-menu .dropdown-item.text-danger:hover {
+    background: #ffe3e3;
+    color: #a61b1b !important;
+  }
+  @keyframes fadeInMenu {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+{% endblock %}
+
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="8" class="text-center py-4">
+                    <div class="d-flex flex-column align-items-center">
+                      <i class="material-symbols-rounded text-muted" style="font-size: 48px;">inbox</i>
+                      <p class="text-muted mt-2">Nenhum ponto de venda cadastrado.</p>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% if is_paginated %}
+          <div class="d-flex justify-content-between align-items-center px-4 py-3">
+            <div>
+              <p class="text-sm text-secondary mb-0">
+                Mostrando {{ page_obj.start_index }} a {{ page_obj.end_index }} de {{ paginator.count }} pontos de venda
+              </p>
+            </div>
+            <nav>
+              <ul class="pagination pagination-sm mb-0">
+                {% if page_obj.has_previous %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                  </li>
+                {% endif %}
+                {% for num in page_obj.paginator.page_range %}
+                  {% if page_obj.number == num %}
+                    <li class="page-item active">
+                      <span class="page-link">{{ num }}</span>
+                    </li>
+                  {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                  {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Próximo</a>
+                  </li>
+                {% endif %}
+              </ul>
+            </nav>
+          </div>
+          {% endif %}
+        </div>
+      </div>
     </div>
-    {% if is_paginated %}
-    <nav>
-      <ul class="pagination">
-        {% if page_obj.has_previous %}
-        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a></li>
-        {% endif %}
-        <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
-        {% if page_obj.has_next %}
-        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Próxima</a></li>
-        {% endif %}
-      </ul>
-    </nav>
-    {% endif %}
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<div id="globalActionMenu" class="action-menu position-fixed bg-white shadow rounded py-2 px-1" style="display:none; min-width: 180px; z-index: 3000;"></div>
+<script>
+// Garante execução após DOM pronto
+document.addEventListener('DOMContentLoaded', function() {
+  let currentBtn = null;
+  const globalMenu = document.getElementById('globalActionMenu');
+
+  // Função para montar o menu dinamicamente
+  function showActionMenu(btn) {
+    const detailUrl = btn.getAttribute('data-detail-url');
+    const editUrl = btn.getAttribute('data-edit-url');
+    const deleteId = btn.getAttribute('data-delete-id');
+    const rect = btn.getBoundingClientRect();
+    globalMenu.innerHTML = `
+      <a class="dropdown-item py-2" href="${detailUrl}">Visualizar</a>
+      <a class="dropdown-item py-2" href="${editUrl}">Editar</a>
+      <div class="dropdown-divider my-1"></div>
+      <a class="dropdown-item text-danger py-2 delete-btn" href="#" data-id="${deleteId}">Excluir</a>
+    `;
+    // Calcula posição para não sair da tela
+    const menuWidth = 150;
+    const menuHeight = 120;
+    let top = window.scrollY + rect.bottom + 4;
+    let left = window.scrollX + rect.left;
+    // Se ultrapassar a direita, ajusta
+    if (left + menuWidth > window.innerWidth - 8) {
+      left = window.innerWidth - menuWidth - 8;
+    }
+    // Se ultrapassar embaixo, mostra acima
+    if (top + menuHeight > window.scrollY + window.innerHeight - 8) {
+      top = window.scrollY + rect.top - menuHeight - 4;
+    }
+    globalMenu.style.top = top + 'px';
+    globalMenu.style.left = left + 'px';
+    globalMenu.style.display = 'block';
+    currentBtn = btn;
+  }
+
+  // Evento para abrir menu
+  document.querySelectorAll('.action-menu-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (globalMenu.style.display === 'block' && currentBtn === btn) {
+        globalMenu.style.display = 'none';
+        currentBtn = null;
+        return;
+      }
+      showActionMenu(btn);
+    });
+  });
+
+  // Fecha o menu ao clicar fora
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.action-menu-btn') && !e.target.closest('#globalActionMenu')) {
+      globalMenu.style.display = 'none';
+      currentBtn = null;
+    }
+  });
+  // Fecha o menu ao pressionar ESC
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      globalMenu.style.display = 'none';
+      currentBtn = null;
+    }
+  });
+
+  // Delegação para ação de excluir
+  globalMenu.addEventListener('click', function(e) {
+    const delBtn = e.target.closest('.delete-btn');
+    if (delBtn) {
+      e.preventDefault();
+      if (confirm('Tem certeza que deseja excluir este ponto de venda?')) {
+        window.location.href = '/dashboard/pontodevenda/delete/' + delBtn.getAttribute('data-id') + '/';
+      }
+    }
+  });
+
+  // Busca instantânea
+  document.getElementById('searchInput').addEventListener('input', function() {
+    const val = this.value.toLowerCase();
+    document.querySelectorAll('#pdvTableBody tr.pdv-row').forEach(function(row) {
+      let show = false;
+      row.querySelectorAll('td').forEach(function(td) {
+        if (td.textContent.toLowerCase().indexOf(val) !== -1) show = true;
+      });
+      row.style.display = show ? '' : 'none';
+    });
+  });
+
+  // Ordenação de colunas
+  document.querySelectorAll('.sortable').forEach(function(th) {
+    th.addEventListener('click', function() {
+      const sortKey = th.getAttribute('data-sort');
+      const rows = Array.from(document.querySelectorAll('#pdvTableBody tr.pdv-row'));
+      const asc = !th.classList.contains('sorted-asc');
+      rows.sort(function(a, b) {
+        const aVal = a.querySelector('td:nth-child('+(th.cellIndex+1)+')').textContent.trim().toLowerCase();
+        const bVal = b.querySelector('td:nth-child('+(th.cellIndex+1)+')').textContent.trim().toLowerCase();
+        if (aVal < bVal) return asc ? -1 : 1;
+        if (aVal > bVal) return asc ? 1 : -1;
+        return 0;
+      });
+      rows.forEach(row => row.parentNode.appendChild(row));
+      document.querySelectorAll('.sortable').forEach(th2 => th2.classList.remove('sorted-asc','sorted-desc'));
+      th.classList.add(asc ? 'sorted-asc' : 'sorted-desc');
+    });
+  });
+
+  // Copiar CNPJ
+  document.querySelectorAll('.copy-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      navigator.clipboard.writeText(btn.getAttribute('data-copy'));
+      btn.title = 'Copiado!';
+      setTimeout(()=>{btn.title='Copiar CNPJ';}, 1200);
+    });
+  });
+
+  // Destaque de linha ao criar/editar
+  if (window.location.hash === '#novo' || window.location.hash.startsWith('#edit')) {
+    setTimeout(function() {
+      const row = document.querySelector('#pdvTableBody tr.pdv-row');
+      if (row) {
+        row.classList.add('table-success');
+        setTimeout(()=>row.classList.remove('table-success'), 2500);
+      }
+    }, 300);
+  }
+
+  // Atalhos de teclado
+  document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key.toLowerCase() === 'n') {
+      e.preventDefault();
+      document.getElementById('novoPdvBtn').click();
+    }
+    if (e.ctrlKey && e.key.toLowerCase() === 'f') {
+      e.preventDefault();
+      document.getElementById('searchInput').focus();
+    }
+  });
+});
+</script>
 {% endblock %}

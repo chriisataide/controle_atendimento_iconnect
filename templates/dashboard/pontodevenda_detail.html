@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Detalhe do Ponto de Venda{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+      <div class="card shadow">
+        <div class="card-header bg-gradient-primary text-white">
+          <h5 class="mb-0"><i class="material-icons me-2">store</i> Detalhes do Ponto de Venda</h5>
+        </div>
+        <div class="card-body">
+          <dl class="row">
+            <dt class="col-sm-4">Nome Fantasia</dt>
+            <dd class="col-sm-8">{{ object.nome_fantasia }}</dd>
+            <dt class="col-sm-4">Razão Social</dt>
+            <dd class="col-sm-8">{{ object.razao_social }}</dd>
+            <dt class="col-sm-4">CNPJ</dt>
+            <dd class="col-sm-8">{{ object.cnpj }}</dd>
+            <dt class="col-sm-4">Inscrição Estadual</dt>
+            <dd class="col-sm-8">{{ object.inscricao_estadual }}</dd>
+            <dt class="col-sm-4">Inscrição Municipal</dt>
+            <dd class="col-sm-8">{{ object.inscricao_municipal }}</dd>
+            <dt class="col-sm-4">Endereço</dt>
+            <dd class="col-sm-8">{{ object.logradouro }}, {{ object.numero }} {{ object.complemento }}<br>{{ object.bairro }} - {{ object.cidade }}/{{ object.estado }}<br>CEP: {{ object.cep }}<br>{{ object.pais }}</dd>
+            <dt class="col-sm-4">Contato</dt>
+            <dd class="col-sm-8">Celular: {{ object.celular }}<br>Email: {{ object.email_principal }}<br>Email Financeiro: {{ object.email_financeiro }}<br>Website: {{ object.website }}</dd>
+            <dt class="col-sm-4">Responsável</dt>
+            <dd class="col-sm-8">{{ object.responsavel_nome }}<br>CPF: {{ object.responsavel_cpf }}<br>Cargo: {{ object.responsavel_cargo }}<br>Telefone: {{ object.responsavel_telefone }}<br>Email: {{ object.responsavel_email }}</dd>
+            <dt class="col-sm-4">Criado em</dt>
+            <dd class="col-sm-8">{{ object.criado_em|date:'d/m/Y H:i' }}</dd>
+          </dl>
+          <div class="mt-4 text-end">
+            <a href="{% url 'dashboard:pontodevenda_update' object.id %}" class="btn btn-warning"><i class="material-icons me-1">edit</i> Editar</a>
+            <a href="{% url 'dashboard:pontodevenda_list' %}" class="btn btn-light">Voltar</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

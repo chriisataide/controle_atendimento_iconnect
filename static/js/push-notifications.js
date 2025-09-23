@@ -35,7 +35,7 @@ class PushNotificationManager {
 
     async getPublicKey() {
         try {
-            const response = await fetch('/api/push/public-key/');
+            const response = await fetch('/dashboard/api/push/public-key/');
             const data = await response.json();
             this.publicKey = data.public_key;
         } catch (error) {
@@ -151,7 +151,7 @@ class PushNotificationManager {
 
     async syncSubscriptionWithServer(subscription) {
         try {
-            const response = await fetch('/api/push/subscribe/', {
+            const response = await fetch('/dashboard/api/push/subscribe/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -178,7 +178,7 @@ class PushNotificationManager {
 
     async removeSubscriptionFromServer(subscription) {
         try {
-            const response = await fetch('/api/push/unsubscribe/', {
+            const response = await fetch('/dashboard/api/push/unsubscribe/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -222,7 +222,7 @@ class PushNotificationManager {
 
     async updateServerPreferences(preferences) {
         try {
-            await fetch('/api/push/preferences/', {
+            await fetch('/dashboard/api/push/preferences/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -241,7 +241,7 @@ class PushNotificationManager {
         }
 
         try {
-            const response = await fetch('/api/push/test/', {
+            const response = await fetch('/dashboard/api/push/test/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

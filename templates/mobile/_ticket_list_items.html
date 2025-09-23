@@ -1,0 +1,48 @@
+{% for ticket in tickets %}
+<div class="ticket-card priority-{{ ticket.prioridade }}" data-ticket-url="{% url 'mobile:mobile_ticket_detail' ticket.id %}">
+    <div class="ticket-header">
+        <div class="ticket-number">#{{ ticket.numero }}</div>
+        <span class="ticket-status status-{{ ticket.status }}">
+            {{ ticket.get_status_display }}
+        </span>
+    </div>
+    <div class="ticket-title">{{ ticket.titulo }}</div>
+    <div class="ticket-client">
+        <i class="fas fa-user"></i>
+        {{ ticket.cliente.nome }}
+        {% if ticket.categoria %}
+            <span class="category-badge">{{ ticket.categoria.nome }}</span>
+        {% endif %}
+    </div>
+    <div class="ticket-meta">
+        <div class="ticket-time">
+            <i class="far fa-clock"></i>
+            {{ ticket.criado_em|timesince }} atrás
+        </div>
+        <span class="priority-badge priority-{{ ticket.prioridade }}">
+            {{ ticket.get_prioridade_display }}
+        </span>
+    </div>
+    {% if is_agent %}
+    <div class="ticket-actions">
+        {% if ticket.status == 'aberto' %}
+            <button class="quick-action-btn" data-ticket-id="{{ ticket.id }}" data-status="em_andamento">
+                <i class="fas fa-play"></i> Iniciar
+            </button>
+        {% elif ticket.status == 'em_andamento' %}
+            <button class="quick-action-btn" data-ticket-id="{{ ticket.id }}" data-status="resolvido">
+                <i class="fas fa-check"></i> Resolver
+            </button>
+        {% endif %}
+        <button class="quick-action-btn" data-ticket-id="{{ ticket.id }}" data-action="comment">
+            <i class="fas fa-comment"></i> Comentar
+        </button>
+    </div>
+    {% endif %}
+    <div class="ticket-progress 
+        {% if ticket.status == 'aberto' %}progress-0
+        {% elif ticket.status == 'em_andamento' %}progress-50
+        {% elif ticket.status == 'resolvido' %}progress-75
+        {% else %}progress-100{% endif %}"></div>
+</div>
+{% endfor %}

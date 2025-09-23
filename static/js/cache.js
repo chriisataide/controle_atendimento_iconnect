@@ -36,8 +36,6 @@ class CacheManager {
             '/static/js/material-dashboard.min.js',
             '/static/js/mobile.js',
             '/static/js/push-notifications.js',
-            '/static/img/logo-ct.png',
-            '/static/img/favicon.png',
             '/static/manifest.json'
         ];
 

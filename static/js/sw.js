@@ -16,16 +16,10 @@ const STATIC_ASSETS = [
     '/mobile/',
     '/mobile/tickets/',
     '/mobile/offline/',
-    '/static/css/dashboard.css',
-    '/static/css/material-dashboard.min.css',
-    '/static/js/dashboard.js',
-    '/static/js/material-dashboard.min.js',
-    '/static/js/chat.js',
-    '/static/js/core/bootstrap.bundle.min.js',
-    '/static/img/logo-ct.png',
-    '/static/img/favicon.png',
-    '/static/assets/fonts/nucleo-icons.woff2',
-    '/static/assets/fonts/nucleo.woff2',
+    '/assets/css/material-dashboard.min.css',
+    '/assets/js/core/bootstrap.bundle.min.js',
+    '/assets/fonts/nucleo-icons.woff2',
+    '/assets/fonts/nucleo.woff2',
     'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap',
     'https://fonts.googleapis.com/icon?family=Material+Icons',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css'
@@ -241,8 +235,8 @@ self.addEventListener('push', (event) => {
     
     const options = {
         body: 'Você tem novas atualizações!',
-        icon: '/static/img/logo-ct.png',
-        badge: '/static/img/favicon.png',
+    // icon removido (arquivo não existe)
+    // badge removido (arquivo não existe)
         vibrate: [200, 100, 200],
         data: {
             dateOfArrival: Date.now(),
@@ -252,12 +246,12 @@ self.addEventListener('push', (event) => {
             {
                 action: 'explore',
                 title: 'Ver detalhes',
-                icon: '/static/img/logo-ct.png'
+                // icon removido (arquivo não existe)
             },
             {
                 action: 'close',
                 title: 'Fechar',
-                icon: '/static/img/logo-ct.png'
+                // icon removido (arquivo não existe)
             }
         ]
     };
@@ -457,12 +451,12 @@ self.addEventListener('push', (event) => {
         
         const options = {
             body: data.body || 'Nova atualização no iConnect',
-            icon: '/static/img/logo-ct.png',
-            badge: '/static/img/favicon.png',
+            // icon removido (arquivo não existe)
+            // badge removido (arquivo não existe)
             tag: data.tag || 'iconnect-mobile',
             vibrate: [200, 100, 200], // Padrão de vibração para mobile
             actions: [
-                { action: 'open', title: 'Abrir', icon: '/static/img/logo-ct.png' },
+                { action: 'open', title: 'Abrir' },
                 { action: 'close', title: 'Fechar' }
             ],
             data: data.url || '/mobile/'

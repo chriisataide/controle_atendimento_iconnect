@@ -38,6 +38,8 @@ urlpatterns = [
     # Pontos de Venda
     path('pontosdevenda/', views.PontoDeVendaListView.as_view(), name='pontodevenda_list'),
     path('pontosdevenda/novo/', views.PontoDeVendaCreateView.as_view(), name='pontodevenda_create'),
+    path('pontosdevenda/<int:pk>/', views.PontoDeVendaDetailView.as_view(), name='pontodevenda_detail'),
+    path('pontosdevenda/<int:pk>/editar/', views.PontoDeVendaUpdateView.as_view(), name='pontodevenda_update'),
     
     # APIs AJAX
     path('api/tickets/status/', views.update_ticket_status, name='update_ticket_status'),

@@ -1,33 +1,481 @@
 {% extends 'base.html' %}
 {% block title %}Novo Ponto de Venda{% endblock %}
 
+{% block extra_css %}
+<style>
+  .form-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid rgba(0,0,0,0.06);
+    animation: slideInUp 0.6s ease-out;
+  }
+  .input-group-outline {
+    position: relative;
+    margin-bottom: 1.5rem;
+  }
+  .input-group-outline .form-control {
+    background-color: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  .input-group-outline .form-control:focus {
+    background-color: white;
+    border-color: #667eea;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
+    outline: none;
+  }
+  .input-group-outline .form-label {
+    position: absolute;
+    top: 1rem;
+    left: 1.25rem;
+    background: transparent;
+    color: #6c757d;
+    font-size: 0.95rem;
+    font-weight: 400;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .input-group-outline.is-focused .form-label,
+  .input-group-outline.is-filled .form-label {
+    transform: translateY(-2.2rem) scale(0.85);
+    color: #667eea;
+    font-weight: 500;
+    background: white;
+    padding: 0 0.5rem;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .btn {
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+  }
+  .btn-light {
+    background: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+  }
+  .btn-light:hover {
+    background: #e9ecef;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  @media (max-width: 768px) {
+    .form-section {
+      padding: 1.5rem;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid py-2">
+  <!-- Page Header -->
+  <div class="ms-3">
+    <h3 class="mb-0 h4 font-weight-bolder">Criar Novo Ponto de Venda</h3>
+    <p class="mb-4">Crie um novo ponto de venda usando templates pré-configurados</p>
+  </div>
+
   <div class="row">
-    <div class="col-md-10 col-lg-8 mx-auto">
-      <div class="card create-user-card">
+    <div class="col-12 col-md-10 col-lg-12 mx-auto">
+      <div class="card my-4">
+        <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+          <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+            <h6 class="text-white text-capitalize ps-3 mb-0">
+              <i class="material-icons me-2">add_business</i>
+              Novo Ponto de Venda
+            </h6>
+          </div>
+        </div>
         <div class="card-body">
-          <h4 class="mb-3">Novo Ponto de Venda</h4>
-          <form method="post">
+          <form method="post" autocomplete="off" id="pontoDeVendaForm">
             {% csrf_token %}
-            <div class="row">
-              <div class="col-md-12">
-                {% for field in form.visible_fields %}
-                  <div class="mb-3">
-                    <label class="form-label">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
-                    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            <!-- Seção: Dados do Ponto de Venda -->
+            <div class="form-section">
+              <h6 class="mb-4">
+                <i class="material-icons me-2">store</i>
+                Dados do Ponto de Venda
+              </h6>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_nome_fantasia">Nome Fantasia <span class="text-danger">*</span></label>
+                    {{ form.nome_fantasia }}
+                    <span class="invalid-feedback"></span>
                   </div>
-                {% endfor %}
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_razao_social">Razão Social <span class="text-danger">*</span></label>
+                    {{ form.razao_social }}
+                    <span class="invalid-feedback"></span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_cnpj">CNPJ <span class="text-danger">*</span></label>
+                    {{ form.cnpj }}
+                    <span class="invalid-feedback"></span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_inscricao_estadual">Inscrição Estadual</label>
+                    {{ form.inscricao_estadual }}
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_inscricao_municipal">Inscrição Municipal</label>
+                    {{ form.inscricao_municipal }}
+                  </div>
+                </div>
               </div>
             </div>
-            <button type="submit" class="btn btn-primary">Salvar</button>
-            <a href="{% url 'dashboard:pontodevenda_list' %}" class="btn btn-secondary ms-2">Cancelar</a>
+            <!-- Seção: Endereço -->
+            <div class="form-section">
+              <h6 class="mb-4">
+                <i class="material-icons me-2">location_on</i>
+                Endereço
+              </h6>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_cep">CEP <span class="text-danger">*</span></label>
+                    {{ form.cep }}
+                    <span class="invalid-feedback"></span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_logradouro">Logradouro <span class="text-danger">*</span></label>
+                    {{ form.logradouro }}
+                    <span class="invalid-feedback"></span>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_numero">Número <span class="text-danger">*</span></label>
+                    {{ form.numero }}
+                    <span class="invalid-feedback"></span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_complemento">Complemento</label>
+                    {{ form.complemento }}
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_bairro">Bairro <span class="text-danger">*</span></label>
+                    {{ form.bairro }}
+                    <span class="invalid-feedback"></span>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_cidade">Cidade <span class="text-danger">*</span></label>
+                    {{ form.cidade }}
+                    <span class="invalid-feedback"></span>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_estado">Estado <span class="text-danger">*</span></label>
+                    {{ form.estado }}
+                    <span class="invalid-feedback"></span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_pais">País <span class="text-danger">*</span></label>
+                    {{ form.pais }}
+                    <span class="invalid-feedback"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Seção: Contato -->
+            <div class="form-section">
+              <h6 class="mb-4">
+                <i class="material-icons me-2">contact_phone</i>
+                Contato
+              </h6>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_celular">Celular / WhatsApp <span class="text-danger">*</span></label>
+                    {{ form.celular }}
+                    <span class="invalid-feedback"></span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_email_principal">E-mail Principal <span class="text-danger">*</span></label>
+                    {{ form.email_principal }}
+                    <span class="invalid-feedback"></span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_email_financeiro">E-mail Financeiro</label>
+                    {{ form.email_financeiro }}
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_website">Website</label>
+                    {{ form.website }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Seção: Responsável -->
+            <div class="form-section">
+              <h6 class="mb-4">
+                <i class="material-icons me-2">person</i>
+                Responsável pela Empresa
+              </h6>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_responsavel_nome">Nome do Responsável <span class="text-danger">*</span></label>
+                    {{ form.responsavel_nome }}
+                    <span class="invalid-feedback"></span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_responsavel_cpf">CPF do Responsável <span class="text-danger">*</span></label>
+                    {{ form.responsavel_cpf }}
+                    <span class="invalid-feedback"></span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_responsavel_cargo">Cargo / Função</label>
+                    {{ form.responsavel_cargo }}
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_responsavel_telefone">Telefone do Responsável</label>
+                    {{ form.responsavel_telefone }}
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_responsavel_email">E-mail do Responsável</label>
+                    {{ form.responsavel_email }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Botões -->
+            <div class="form-section">
+              <div class="row align-items-center">
+                <div class="col-md-6">
+                  <small class="text-muted">
+                    <i class="material-icons me-1" style="font-size: 16px;">keyboard</i>
+                    <strong>Atalhos:</strong> Ctrl+S (Salvar) • ESC (Cancelar)
+                  </small>
+                </div>
+                <div class="col-md-6 text-end">
+                  <a href="{% url 'dashboard:pontodevenda_list' %}" class="btn btn-light me-2">
+                    <i class="material-icons me-1">cancel</i>
+                    Cancelar
+                  </a>
+                  <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <i class="material-icons me-1">save</i>
+                    Salvar
+                  </button>
+                </div>
+              </div>
+            </div>
           </form>
         </div>
       </div>
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Sistema de Labels Flutuantes Aprimorado
+function initFloatingLabels() {
+    const inputGroups = document.querySelectorAll('.input-group-outline');
+    inputGroups.forEach(group => {
+        const input = group.querySelector('input, select, textarea');
+        const label = group.querySelector('.form-label');
+        if (!input || !label) return;
+        function updateState() {
+            const hasValue = input.value && input.value.trim() !== '';
+            const isFocused = document.activeElement === input;
+            group.classList.remove('is-focused', 'is-filled');
+            if (isFocused) group.classList.add('is-focused');
+            if (hasValue) group.classList.add('is-filled');
+        }
+        input.addEventListener('focus', function() {
+            group.classList.add('is-focused');
+            label.style.transition = 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+        });
+        input.addEventListener('blur', function() {
+            group.classList.remove('is-focused');
+            updateState();
+        });
+        input.addEventListener('input', updateState);
+        input.addEventListener('change', updateState);
+        updateState();
+    });
+}
+
+// Máscaras de input (simples, vanilla JS)
+function maskInput(input, mask) {
+  input.addEventListener('input', function(e) {
+    let value = input.value.replace(/\D/g, '');
+    let newValue = '';
+    let maskIndex = 0, valueIndex = 0;
+    while (maskIndex < mask.length && valueIndex < value.length) {
+      if (mask[maskIndex] === '#') {
+        newValue += value[valueIndex++];
+      } else {
+        newValue += mask[maskIndex];
+      }
+      maskIndex++;
+    }
+    input.value = newValue;
+  });
+}
+
+// Tooltips para campos
+function initTooltips() {
+  const tooltips = {
+    'id_cnpj': 'Digite o CNPJ no formato 00.000.000/0000-00',
+    'id_cep': 'Digite o CEP no formato 00000-000',
+    'id_responsavel_cpf': 'Digite o CPF no formato 000.000.000-00',
+    'id_celular': 'Digite o telefone no formato (00) 00000-0000',
+    'id_email_principal': 'E-mail principal para contato',
+    'id_email_financeiro': 'E-mail para cobranças e financeiro',
+    'id_website': 'Site institucional (opcional)'
+  };
+  Object.keys(tooltips).forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.setAttribute('title', tooltips[id]);
+      el.setAttribute('data-bs-toggle', 'tooltip');
+    }
+  });
+  if (window.bootstrap) {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+      new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    initFloatingLabels();
+    // Atalhos de teclado
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+S para salvar
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            document.getElementById('submitBtn').click();
+        }
+        // ESC para cancelar
+        if (e.key === 'Escape') {
+            if (confirm('Deseja cancelar o cadastro do ponto de venda?')) {
+                window.location.href = "{% url 'dashboard:pontodevenda_list' %}";
+            }
+        }
+    });
+
+    // Validação inline e loading no botão
+    const form = document.getElementById('pontoDeVendaForm');
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        let valid = true;
+        const requiredFields = [
+          'id_nome_fantasia','id_razao_social','id_cnpj','id_cep','id_logradouro','id_numero','id_bairro','id_cidade','id_estado','id_pais','id_celular','id_email_principal','id_responsavel_nome','id_responsavel_cpf'
+        ];
+        requiredFields.forEach(function(id) {
+          const input = document.getElementById(id);
+          if (input && !input.value.trim()) {
+            valid = false;
+            input.classList.add('is-invalid');
+            const feedback = input.parentElement.querySelector('.invalid-feedback');
+            if (feedback) feedback.textContent = 'Campo obrigatório';
+          } else if (input) {
+            input.classList.remove('is-invalid');
+            const feedback = input.parentElement.querySelector('.invalid-feedback');
+            if (feedback) feedback.textContent = '';
+          }
+        });
+        if (!valid) {
+          e.preventDefault();
+          return false;
+        }
+        // Loading no botão
+        let spinner = document.createElement('span');
+        spinner.className = 'spinner-border spinner-border-sm ms-2';
+        spinner.setAttribute('role', 'status');
+        spinner.setAttribute('aria-hidden', 'true');
+        const btn = document.getElementById('submitBtn');
+        if (btn) {
+          btn.appendChild(spinner);
+          btn.setAttribute('disabled', 'disabled');
+        }
+      });
+    }
+
+    // Máscaras
+    const cnpj = document.getElementById('id_cnpj');
+    if (cnpj) maskInput(cnpj, '##.###.###/####-##');
+    const cep = document.getElementById('id_cep');
+    if (cep) maskInput(cep, '#####-###');
+    const cpf = document.getElementById('id_responsavel_cpf');
+    if (cpf) maskInput(cpf, '###.###.###-##');
+    const tel = document.getElementById('id_celular');
+    if (tel) maskInput(tel, '(##) #####-####');
+
+    // Tooltips
+    initTooltips();
+
+    // Botão limpar campos
+    const clearBtn = document.getElementById('clearBtn');
+    if (clearBtn && form) {
+      clearBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        form.reset();
+        document.querySelectorAll('.is-invalid').forEach(function(el){el.classList.remove('is-invalid');});
+        document.querySelectorAll('.invalid-feedback').forEach(function(el){el.textContent = '';});
+      });
+    }
+
+    // Foco automático no primeiro campo
+    const firstInput = document.querySelector('.input-group-outline input, .input-group-outline select, .input-group-outline textarea');
+    if (firstInput) firstInput.focus();
+});
+</script>
 {% endblock %}

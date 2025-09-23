@@ -1,3 +1,64 @@
+
+from django.template.loader import render_to_string
+from django.core.paginator import Paginator
+# API AJAX para scroll infinito/paginação mobile
+from django.views.decorators.http import require_GET
+from django.contrib.auth.decorators import login_required
+
+@login_required
+@require_GET
+def mobile_tickets_ajax(request):
+    """Retorna tickets paginados para scroll infinito (AJAX)"""
+    page = int(request.GET.get('page', 1))
+    per_page = int(request.GET.get('per_page', 20))
+    status_filter = request.GET.get('status')
+    priority_filter = request.GET.get('priority')
+    search = request.GET.get('search')
+
+    user_agent = None
+    try:
+        user_agent = PerfilAgente.objects.get(user=request.user)
+    except PerfilAgente.DoesNotExist:
+        pass
+
+    if user_agent or request.user.is_staff:
+        tickets = Ticket.objects.filter(agente=request.user)
+    else:
+        customer = None
+        try:
+            customer = Cliente.objects.get(email=request.user.email)
+            tickets = Ticket.objects.filter(cliente=customer)
+        except Cliente.DoesNotExist:
+            tickets = Ticket.objects.none()
+
+    if status_filter:
+        tickets = tickets.filter(status=status_filter)
+    if priority_filter:
+        tickets = tickets.filter(prioridade=priority_filter)
+    if search:
+        tickets = tickets.filter(
+            Q(titulo__icontains=search) |
+            Q(descricao__icontains=search) |
+            Q(numero__icontains=search)
+        )
+    tickets = tickets.order_by('-criado_em')
+
+    paginator = Paginator(tickets, per_page)
+    page_obj = paginator.get_page(page)
+    html = render_to_string('mobile/_ticket_list_items.html', {
+        'tickets': page_obj.object_list,
+        'is_agent': bool(user_agent or request.user.is_staff),
+        'is_mobile': True
+    })
+    return JsonResponse({
+        'html': html,
+        'has_next': page_obj.has_next(),
+        'has_previous': page_obj.has_previous(),
+        'num_pages': paginator.num_pages,
+        'total': paginator.count,
+        'page': page_obj.number,
+        'per_page': per_page
+    })
 """
 Sistema Mobile-Friendly para iConnect
 Interface otimizada para dispositivos móveis
