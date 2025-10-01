@@ -1,0 +1,558 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Chatbot IA - Suporte Virtual{% endblock %}
+
+{% block extra_css %}
+<style>
+.chatbot-container {
+    max-width: 800px;
+    margin: 20px auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    height: 600px;
+    overflow: hidden;
+}
+
+.chatbot-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    text-align: center;
+    border-radius: 12px 12px 0 0;
+}
+
+.chatbot-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 300;
+}
+
+.chatbot-subtitle {
+    margin: 5px 0 0 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
+
+.chatbot-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background: #f8f9fa;
+}
+
+.message {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    max-width: 80%;
+}
+
+.message.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.message.bot {
+    align-self: flex-start;
+}
+
+.message-avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.message.user .message-avatar {
+    background: #667eea;
+    color: white;
+}
+
+.message.bot .message-avatar {
+    background: #6c757d;
+    color: white;
+}
+
+.message-content {
+    background: white;
+    padding: 12px 16px;
+    border-radius: 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    position: relative;
+}
+
+.message.user .message-content {
+    background: #667eea;
+    color: white;
+}
+
+.message.bot .message-content {
+    background: white;
+    color: #333;
+    border: 1px solid #e9ecef;
+}
+
+.message-text {
+    margin: 0;
+    line-height: 1.4;
+    white-space: pre-line;
+}
+
+.message-confidence {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    margin-top: 4px;
+}
+
+.suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.suggestion-btn {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.suggestion-btn:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.chatbot-input {
+    padding: 20px;
+    background: white;
+    border-top: 1px solid #e9ecef;
+    border-radius: 0 0 12px 12px;
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.message-input {
+    flex: 1;
+    border: 1px solid #dee2e6;
+    border-radius: 25px;
+    padding: 12px 20px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.message-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.send-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 1.2rem;
+}
+
+.send-btn:hover {
+    background: #5a6fd8;
+}
+
+.send-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.typing-indicator.show {
+    opacity: 1;
+}
+
+.typing-dots {
+    display: flex;
+    gap: 4px;
+}
+
+.typing-dot {
+    width: 8px;
+    height: 8px;
+    background: #6c757d;
+    border-radius: 50%;
+    animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing {
+    0%, 80%, 100% {
+        transform: scale(0);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.feedback-buttons {
+    margin-top: 8px;
+    display: flex;
+    gap: 5px;
+}
+
+.feedback-btn {
+    background: none;
+    border: 1px solid #dee2e6;
+    border-radius: 15px;
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.feedback-btn:hover {
+    background: #f8f9fa;
+}
+
+.feedback-btn.positive {
+    color: #28a745;
+    border-color: #28a745;
+}
+
+.feedback-btn.negative {
+    color: #dc3545;
+    border-color: #dc3545;
+}
+
+@media (max-width: 768px) {
+    .chatbot-container {
+        margin: 10px;
+        height: calc(100vh - 140px);
+        border-radius: 8px;
+    }
+    
+    .message {
+        max-width: 90%;
+    }
+    
+    .chatbot-header {
+        padding: 15px;
+    }
+    
+    .chatbot-messages {
+        padding: 15px;
+    }
+    
+    .chatbot-input {
+        padding: 15px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chatbot-container">
+    <div class="chatbot-header">
+        <h1>🤖 Assistente Virtual iConnect</h1>
+        <p class="chatbot-subtitle">Seu suporte inteligente 24/7</p>
+    </div>
+    
+    <div class="chatbot-messages" id="chatMessages">
+        <div class="message bot">
+            <div class="message-avatar">🤖</div>
+            <div class="message-content">
+                <p class="message-text">Olá! 👋 Sou o assistente virtual da iConnect. Como posso ajudá-lo hoje?</p>
+                <div class="suggestions">
+                    <button class="suggestion-btn" onclick="sendSuggestion('Verificar status do meu ticket')">📋 Status do Ticket</button>
+                    <button class="suggestion-btn" onclick="sendSuggestion('Criar um novo chamado')">📝 Novo Chamado</button>
+                    <button class="suggestion-btn" onclick="sendSuggestion('Falar com um atendente')">👨‍💼 Atendente</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="typing-indicator" id="typingIndicator">
+        <div class="message-avatar">🤖</div>
+        <div>
+            <span>Digitando</span>
+            <div class="typing-dots">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="chatbot-input">
+        <div class="input-group">
+            <input 
+                type="text" 
+                class="message-input" 
+                id="messageInput" 
+                placeholder="Digite sua mensagem..."
+                maxlength="500"
+            >
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                ➤
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+class ChatbotInterface {
+    constructor() {
+        this.sessionId = this.generateSessionId();
+        this.conversationId = null;
+        this.setupEventListeners();
+        this.messageInput = document.getElementById('messageInput');
+        this.sendBtn = document.getElementById('sendBtn');
+        this.messagesContainer = document.getElementById('chatMessages');
+        this.typingIndicator = document.getElementById('typingIndicator');
+    }
+    
+    generateSessionId() {
+        return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+    
+    setupEventListeners() {
+        // Enter para enviar
+        document.getElementById('messageInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.sendMessage();
+            }
+        });
+        
+        // Foco automático
+        document.getElementById('messageInput').focus();
+    }
+    
+    async sendMessage(text = null) {
+        const message = text || this.messageInput.value.trim();
+        
+        if (!message) return;
+        
+        // Limpar input
+        this.messageInput.value = '';
+        this.sendBtn.disabled = true;
+        
+        // Mostrar mensagem do usuário
+        this.addMessage('user', message);
+        
+        // Mostrar indicador de digitação
+        this.showTyping();
+        
+        try {
+            const response = await fetch('/dashboard/api/chatbot/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCsrfToken()
+                },
+                body: JSON.stringify({
+                    message: message,
+                    session_id: this.sessionId
+                })
+            });
+            
+            const data = await response.json();
+            
+            // Esconder indicador de digitação
+            this.hideTyping();
+            
+            if (data.success) {
+                this.conversationId = data.conversation_id;
+                
+                // Mostrar resposta do bot
+                this.addMessage('bot', data.response, {
+                    confidence: data.confidence,
+                    suggestions: data.suggestions,
+                    intent: data.intent
+                });
+                
+                // Se deve transferir para humano
+                if (data.should_transfer) {
+                    setTimeout(() => {
+                        this.addMessage('bot', '🔄 Transferindo você para um atendente humano...');
+                    }, 1000);
+                }
+            } else {
+                this.addMessage('bot', 'Desculpe, ocorreu um erro. Tente novamente.', {
+                    error: true
+                });
+            }
+            
+        } catch (error) {
+            console.error('Erro ao enviar mensagem:', error);
+            this.hideTyping();
+            this.addMessage('bot', 'Erro de conexão. Verifique sua internet e tente novamente.', {
+                error: true
+            });
+        }
+        
+        this.sendBtn.disabled = false;
+        this.messageInput.focus();
+    }
+    
+    addMessage(type, text, options = {}) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}`;
+        
+        const avatar = document.createElement('div');
+        avatar.className = 'message-avatar';
+        avatar.textContent = type === 'user' ? '👤' : '🤖';
+        
+        const content = document.createElement('div');
+        content.className = 'message-content';
+        
+        const messageText = document.createElement('p');
+        messageText.className = 'message-text';
+        messageText.textContent = text;
+        content.appendChild(messageText);
+        
+        // Mostrar confiança para mensagens do bot
+        if (type === 'bot' && options.confidence !== undefined) {
+            const confidence = document.createElement('div');
+            confidence.className = 'message-confidence';
+            confidence.textContent = `Confiança: ${(options.confidence * 100).toFixed(0)}%`;
+            content.appendChild(confidence);
+        }
+        
+        // Adicionar sugestões
+        if (options.suggestions && options.suggestions.length > 0) {
+            const suggestionsDiv = document.createElement('div');
+            suggestionsDiv.className = 'suggestions';
+            
+            options.suggestions.forEach(suggestion => {
+                const btn = document.createElement('button');
+                btn.className = 'suggestion-btn';
+                btn.textContent = suggestion;
+                btn.onclick = () => this.sendMessage(suggestion);
+                suggestionsDiv.appendChild(btn);
+            });
+            
+            content.appendChild(suggestionsDiv);
+        }
+        
+        // Adicionar botões de feedback para mensagens do bot
+        if (type === 'bot' && !options.error) {
+            const feedbackDiv = document.createElement('div');
+            feedbackDiv.className = 'feedback-buttons';
+            
+            const positiveBtn = document.createElement('button');
+            positiveBtn.className = 'feedback-btn positive';
+            positiveBtn.textContent = '👍 Útil';
+            positiveBtn.onclick = () => this.sendFeedback(true);
+            
+            const negativeBtn = document.createElement('button');
+            negativeBtn.className = 'feedback-btn negative';
+            negativeBtn.textContent = '👎 Não útil';
+            negativeBtn.onclick = () => this.sendFeedback(false);
+            
+            feedbackDiv.appendChild(positiveBtn);
+            feedbackDiv.appendChild(negativeBtn);
+            content.appendChild(feedbackDiv);
+        }
+        
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(content);
+        
+        this.messagesContainer.appendChild(messageDiv);
+        this.scrollToBottom();
+    }
+    
+    showTyping() {
+        this.typingIndicator.classList.add('show');
+        this.scrollToBottom();
+    }
+    
+    hideTyping() {
+        this.typingIndicator.classList.remove('show');
+    }
+    
+    scrollToBottom() {
+        setTimeout(() => {
+            this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+        }, 100);
+    }
+    
+    async sendFeedback(positive) {
+        if (!this.conversationId) return;
+        
+        try {
+            await fetch('/dashboard/api/chatbot/feedback/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCsrfToken()
+                },
+                body: JSON.stringify({
+                    conversation_id: this.conversationId,
+                    positive: positive
+                })
+            });
+        } catch (error) {
+            console.error('Erro ao enviar feedback:', error);
+        }
+    }
+    
+    getCsrfToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+    }
+}
+
+// Funções globais para compatibilidade
+function sendMessage() {
+    chatbot.sendMessage();
+}
+
+function sendSuggestion(text) {
+    chatbot.sendMessage(text);
+}
+
+// Inicializar chatbot
+const chatbot = new ChatbotInterface();
+
+// Auto-focus no input quando a página carrega
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('messageInput').focus();
+});
+</script>
+{% endblock %}

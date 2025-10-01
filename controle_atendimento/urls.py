@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from dashboard.api_docs import urlpatterns as api_docs_urlpatterns
 from django.conf import settings
 from django.conf.urls.static import static
 from dashboard import views
@@ -30,6 +31,7 @@ urlpatterns = [
     path('dashboard/', include('dashboard.urls')),
     path('cliente/', include('dashboard.cliente_urls')),  # Portal Self-Service
     path('financeiro/', include('dashboard.financeiro_urls')),  # Módulo Financeiro
+    path('estoque/', include('dashboard.estoque_urls')),  # Módulo de Estoque
     
     # APIs Avançadas (API temporariamente desabilitada - funcionará com sistema base)
     # path('api/', include('dashboard.api_urls')),
@@ -41,6 +43,8 @@ urlpatterns = [
     # PWA Files
     path('manifest.json', views.manifest, name='manifest'),
     path('service-worker.js', views.service_worker, name='service_worker'),
+    # Documentação automática das APIs (Swagger/Redoc)
+    *api_docs_urlpatterns,
 ]
 
 if settings.DEBUG:

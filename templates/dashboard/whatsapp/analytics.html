@@ -1,0 +1,574 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}WhatsApp Business - Analytics{% endblock %}
+
+{% block page_title %}WhatsApp Business - Analytics{% endblock %}
+{% block breadcrumb_title %}WhatsApp Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+.real-time-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #10b981;
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+.whatsapp-card {
+    border-left: 4px solid #25D366;
+}
+
+.metric-card {
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.analytics-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    border-left: 4px solid #25D366;
+}
+
+.analytics-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    display: block;
+}
+
+.analytics-label {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-top: 0.5rem;
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+}
+
+.period-selector {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.period-btn {
+    margin: 0.25rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid #25D366;
+    background: white;
+    color: #25D366;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.period-btn:hover,
+.period-btn.active {
+    background: #25D366;
+    color: white;
+    text-decoration: none;
+}
+
+.account-metrics {
+    border: 1px solid #e3e6f0;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    background: #f8f9fa;
+}
+
+.metric-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.metric-item:last-child {
+    border-bottom: none;
+}
+
+.metric-value {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.trend-up {
+    color: #10b981;
+}
+
+.trend-down {
+    color: #ef4444;
+}
+
+.trend-neutral {
+    color: #6b7280;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">WhatsApp Business Analytics</h3>
+            <p class="mb-4">
+                <span class="real-time-indicator" style="display: inline-block; width: 8px; height: 8px; background-color: rgb(16, 185, 129); border-radius: 50%; margin-right: 8px; animation: 2s ease 0s infinite normal none running pulse;"></span>
+                Análise detalhada das métricas e performance do WhatsApp Business.
+            </p>
+        </div>
+        <div class="col-md-6 d-flex align-items-center justify-content-end">
+            <button class="btn btn-outline-primary btn-sm me-2" onclick="refreshDashboard()">
+                <i class="fas fa-sync-alt me-1"></i>
+                Atualizar
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="exportReport()">
+                <i class="fas fa-download me-1"></i>
+                Exportar
+            </button>
+        </div>
+    </div>
+
+    <!-- Seletor de Período -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="period-selector">
+                <h6 class="mb-3">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    Período de Análise
+                </h6>
+                <div class="d-flex flex-wrap">
+                    <a href="?days=7" class="period-btn {% if days == 7 %}active{% endif %}">
+                        <i class="fas fa-calendar-week me-1"></i>
+                        7 dias
+                    </a>
+                    <a href="?days=30" class="period-btn {% if days == 30 %}active{% endif %}">
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        30 dias
+                    </a>
+                    <a href="?days=90" class="period-btn {% if days == 90 %}active{% endif %}">
+                        <i class="fas fa-calendar me-1"></i>
+                        90 dias
+                    </a>
+                    <a href="?days=365" class="period-btn {% if days == 365 %}active{% endif %}">
+                        <i class="fas fa-calendar-check me-1"></i>
+                        1 ano
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Métricas por Conta -->
+    {% for data in analytics_data %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="account-metrics">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">
+                        <i class="fab fa-whatsapp text-success me-2"></i>
+                        {{ data.account.nome }}
+                        {% if data.account.verificado %}
+                            <span class="badge bg-success ms-2">Verificado</span>
+                        {% endif %}
+                    </h5>
+                    <small class="text-muted">
+                        Última atualização: {{ data.account.atualizado_em|date:"d/m/Y H:i" }}
+                    </small>
+                </div>
+                
+                <div class="row">
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="analytics-card">
+                            <span class="analytics-number">{{ data.metrics.total_mensagens|default:0 }}</span>
+                            <div class="analytics-label">
+                                <i class="fas fa-envelope me-1"></i>
+                                Total de Mensagens
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="analytics-card">
+                            <span class="analytics-number">{{ data.metrics.conversas_ativas|default:0 }}</span>
+                            <div class="analytics-label">
+                                <i class="fas fa-comments me-1"></i>
+                                Conversas Ativas
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="analytics-card">
+                            <span class="analytics-number">{{ data.metrics.taxa_resposta|default:0|floatformat:1 }}%</span>
+                            <div class="analytics-label">
+                                <i class="fas fa-reply me-1"></i>
+                                Taxa de Resposta
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="analytics-card">
+                            <span class="analytics-number">{{ data.metrics.tempo_resposta|default:0|floatformat:1 }}min</span>
+                            <div class="analytics-label">
+                                <i class="fas fa-clock me-1"></i>
+                                Tempo Médio de Resposta
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                <h5>Nenhuma conta do WhatsApp configurada</h5>
+                <p>Configure uma conta do WhatsApp Business para visualizar as analytics.</p>
+                <a href="{% url 'dashboard:whatsapp:dashboard' %}" class="btn btn-primary">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    Voltar ao Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Gráficos -->
+    {% if chart_data %}
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-line me-1"></i>
+                        Evolução de Mensagens ({{ days }} dias)
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="messagesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-area me-1"></i>
+                        Conversas Iniciadas ({{ days }} dias)
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="conversationsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-pie me-1"></i>
+                        Distribuição de Mensagens
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="distributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-bar me-1"></i>
+                        Performance por Conta
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tabela de Detalhes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-table me-1"></i>
+                        Detalhes por Período
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Mensagens Enviadas</th>
+                                    <th>Mensagens Recebidas</th>
+                                    <th>Conversas Iniciadas</th>
+                                    <th>Taxa de Engajamento</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for day in chart_data|slice:":10" %}
+                                <tr>
+                                    <td>{{ day.date }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ day.mensagens_enviadas }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ day.mensagens_recebidas }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">{{ day.conversas_iniciadas }}</span>
+                                    </td>
+                                    <td>
+                                        {% if day.mensagens_enviadas > 0 %}
+                                            {% widthratio day.mensagens_recebidas day.mensagens_enviadas 100 as engagement %}
+                                            <span class="badge {% if engagement > 50 %}bg-success{% elif engagement > 25 %}bg-warning{% else %}bg-danger{% endif %}">
+                                                {{ engagement }}%
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">0%</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">
+                                        Nenhum dado disponível para o período selecionado
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chartData = {{ chart_data|safe }};
+    
+    // Preparar dados para os gráficos
+    const labels = chartData.map(item => item.date);
+    const mensagensEnviadas = chartData.map(item => item.mensagens_enviadas);
+    const mensagensRecebidas = chartData.map(item => item.mensagens_recebidas);
+    const conversasIniciadas = chartData.map(item => item.conversas_iniciadas);
+
+    // Gráfico de Evolução de Mensagens
+    const messagesCtx = document.getElementById('messagesChart');
+    if (messagesCtx) {
+        new Chart(messagesCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Mensagens Enviadas',
+                    data: mensagensEnviadas,
+                    borderColor: '#25D366',
+                    backgroundColor: 'rgba(37, 211, 102, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }, {
+                    label: 'Mensagens Recebidas',
+                    data: mensagensRecebidas,
+                    borderColor: '#128C7E',
+                    backgroundColor: 'rgba(18, 140, 126, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    // Gráfico de Conversas Iniciadas
+    const conversationsCtx = document.getElementById('conversationsChart');
+    if (conversationsCtx) {
+        new Chart(conversationsCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Conversas Iniciadas',
+                    data: conversasIniciadas,
+                    backgroundColor: 'rgba(37, 211, 102, 0.7)',
+                    borderColor: '#25D366',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    // Gráfico de Distribuição
+    const distributionCtx = document.getElementById('distributionChart');
+    if (distributionCtx) {
+        const totalEnviadas = mensagensEnviadas.reduce((a, b) => a + b, 0);
+        const totalRecebidas = mensagensRecebidas.reduce((a, b) => a + b, 0);
+        
+        new Chart(distributionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Mensagens Enviadas', 'Mensagens Recebidas'],
+                datasets: [{
+                    data: [totalEnviadas, totalRecebidas],
+                    backgroundColor: ['#25D366', '#128C7E'],
+                    borderWidth: 3,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    // Gráfico de Performance por Conta
+    const performanceCtx = document.getElementById('performanceChart');
+    if (performanceCtx) {
+        const accountNames = {{ analytics_data|length }} > 0 ? 
+            {{ analytics_data|safe }}.map(item => item.account.nome) : ['Sem dados'];
+        const accountMessages = {{ analytics_data|length }} > 0 ? 
+            {{ analytics_data|safe }}.map(item => item.metrics.total_mensagens || 0) : [0];
+
+        new Chart(performanceCtx, {
+            type: 'bar',
+            data: {
+                labels: accountNames,
+                datasets: [{
+                    label: 'Total de Mensagens',
+                    data: accountMessages,
+                    backgroundColor: 'rgba(37, 211, 102, 0.7)',
+                    borderColor: '#25D366',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+});
+
+// Funções dos botões do header
+function refreshDashboard() {
+    location.reload();
+}
+
+function exportReport() {
+    const data = {
+        timestamp: new Date().toISOString(),
+        period: '{{ days }} dias',
+        analytics: {{ analytics_data|safe }},
+        chart_data: {{ chart_data|safe }}
+    };
+    
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "whatsapp_analytics_report.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
+</script>
+{% endblock %}

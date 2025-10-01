@@ -58,13 +58,24 @@
     <link href="{% static 'css/material-dashboard.css' %}" rel="stylesheet" />
     <link href="{% static 'css/dashboard-colors.css' %}" rel="stylesheet" />
     <link href="{% static 'css/mobile.css' %}" rel="stylesheet" />
+        <!-- Service Worker para PWA -->
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                      navigator.serviceWorker.register("{% static 'service-worker.js' %}")
+                        .then(function(registration) {
+                            console.log('ServiceWorker registrado com sucesso:', registration.scope);
+                        }, function(err) {
+                            console.warn('ServiceWorker falhou:', err);
+                        });
+                });
+            }
+        </script>
     
     <!-- Chart.js for Analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     <!-- Socket.IO for Real-time notifications -->
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js" defer></script>
-    <!-- Bootstrap Bundle JS (dropdowns, modals, tooltips) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous" defer></script>
     
     <!-- Fix para Dropdowns -->
     <style>
@@ -270,6 +281,13 @@
                                     <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Dashboard Financeiro</span>
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'executive_dashboard' in request.resolver_match.url_name %}active bg-gradient-dark text-white{% endif %}" href="{% url 'dashboard:executive_dashboard' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">business_center</i>
+                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Dashboard Executivo</span>
+                                    <span class="badge badge-sm bg-gradient-dark ms-auto">CEO</span>
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </li>
@@ -388,6 +406,60 @@
                     </div>
                 </li>
 
+                <!-- ========== ESTOQUE ========== -->
+                <li class="nav-item sidebar-dropdown mt-3">
+                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="estoque" onclick="toggleSidebarDropdown(event,this,'estoque')">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <span class="d-flex align-items-center">
+                                <i class="material-icons opacity-5 me-2">inventory</i>
+                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Estoque</h6>
+                            </span>
+                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                        </div>
+                    </div>
+                    <div class="sidebar-dropdown-menu" id="dropdown-estoque">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'estoque_dashboard' in request.resolver_match.url_name %}active bg-gradient-primary text-white{% endif %}" href="{% url 'estoque:dashboard' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">dashboard</i>
+                                    <span class="nav-link-text ms-1">Dashboard</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'produto' in request.resolver_match.url_name %}active bg-gradient-success text-white{% endif %}" href="{% url 'estoque:produto_list' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">inventory_2</i>
+                                    <span class="nav-link-text ms-1">Produtos</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'movimentacao' in request.resolver_match.url_name %}active bg-gradient-info text-white{% endif %}" href="{% url 'estoque:movimentacao_list' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">sync</i>
+                                    <span class="nav-link-text ms-1">Movimentações</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" href="{% url 'estoque:movimentacao_create' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">add_circle</i>
+                                    <span class="nav-link-text ms-1">Nova Movimentação</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" href="{% url 'estoque:produto_list' %}?estoque_critico=true" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">warning</i>
+                                    <span class="nav-link-text ms-1">Produtos Críticos</span>
+                                    <span class="badge badge-sm bg-gradient-danger ms-auto">!</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'relatorio' in request.resolver_match.url_name %}active bg-gradient-warning text-white{% endif %}" href="{% url 'estoque:relatorios' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">assessment</i>
+                                    <span class="nav-link-text ms-1">Relatórios</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
                 <!-- ========== FINANCEIRO ========== -->
                 <li class="nav-item sidebar-dropdown mt-3">
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="financeiro" onclick="toggleSidebarDropdown(event,this,'financeiro')">
@@ -417,6 +489,13 @@
                                 <a class="nav-link text-dark {% if 'movimentacoes_lista' in request.resolver_match.url_name %}active bg-gradient-warning text-white{% endif %}" href="{% url 'financeiro:movimentacoes_lista' %}" onclick="event.stopPropagation()">
                                     <i class="material-icons opacity-5">sync_alt</i>
                                     <span class="nav-link-text ms-1">Movimentações</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'centros_custo' in request.resolver_match.url_name %}active bg-gradient-secondary text-white{% endif %}" href="{% url 'financeiro:centros_custo_lista' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">account_balance</i>
+                                    <span class="nav-link-text ms-1">Centros de Custo</span>
+                                    <span class="badge badge-sm bg-gradient-info ms-auto">Novo</span>
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -472,29 +551,17 @@
                     <div class="sidebar-dropdown-menu" id="dropdown-comunicacao">
                         <ul class="navbar-nav">
                             <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'chat_dashboard' in request.resolver_match.url_name %}active bg-gradient-success text-white{% endif %}" href="{% url 'dashboard:chat_dashboard' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">chat</i>
-                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Chat Avançado</span>
+                                <a class="nav-link text-dark {% if 'communication_center' in request.resolver_match.url_name %}active bg-gradient-primary text-white{% endif %}" href="{% url 'dashboard:communication_center' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons opacity-5">forum</i>
+                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Central de Comunicação</span>
+                                    <span class="badge badge-sm bg-gradient-info ms-auto">Unificado</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark {% if 'whatsapp' in request.resolver_match.namespace %}active bg-gradient-success text-white{% endif %}" href="{% url 'dashboard:whatsapp:dashboard' %}" onclick="event.stopPropagation()">
+                                    <i class="fab fa-whatsapp opacity-5" style="font-size: 18px;"></i>
+                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">WhatsApp Business</span>
                                     <span class="badge badge-sm bg-gradient-success ms-auto">Novo</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'create_chat_room' in request.resolver_match.url_name %}active bg-gradient-info text-white{% endif %}" href="{% url 'dashboard:create_chat_room' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">add_comment</i>
-                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Nova Conversa</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'chatbot' in request.resolver_match.url_name %}active bg-gradient-warning text-white{% endif %}" href="{% url 'dashboard:chatbot' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">smart_toy</i>
-                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Chatbot AI</span>
-                                    <span class="badge badge-sm bg-gradient-info ms-auto">AI</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'chatbot_settings' in request.resolver_match.url_name %}active bg-gradient-secondary text-white{% endif %}" href="{% url 'dashboard:chatbot_settings' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">tune</i>
-                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Chatbot Config</span>
                                 </a>
                             </li>
                         </ul>
@@ -1378,8 +1445,13 @@
         }
     </script>
     
+    <!-- Cleanup Script -->
+    <script src="{% static 'js/cleanup-offline.js' %}" defer></script>
+    
     <!-- PWA Scripts otimizados -->
+    {% if is_mobile %}
     <script src="{% static 'js/mobile.js' %}" defer></script>
+    {% endif %}
     <script src="{% static 'js/push-notifications.js' %}" defer></script>
     <script src="{% static 'js/cache.js' %}" defer></script>
     
@@ -1679,88 +1751,27 @@
 
     <!-- Inicialização dos Dropdowns Bootstrap -->
     <script>
-        function initializeDropdowns() {
-            console.log('Inicializando dropdowns...');
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar dropdowns do Bootstrap
+            var dropdownElementList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'));
+            var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+                return new bootstrap.Dropdown(dropdownToggleEl);
+            });
             
-            // Método 1: Tentar usar Bootstrap nativo
-            if (typeof bootstrap !== 'undefined') {
-                const dropdownElements = document.querySelectorAll('[data-bs-toggle="dropdown"]');
-                dropdownElements.forEach(function(element) {
-                    try {
-                        new bootstrap.Dropdown(element);
-                    } catch(e) {
-                        console.warn('Erro Bootstrap nativo:', e);
-                    }
-                });
-            }
+            // Inicializar tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
             
-            // Método 2: Implementação manual para o botão de configuração
-            const configButton = document.getElementById('configDropdownButton');
-            const configMenu = document.querySelector('#configDropdownButton + .dropdown-menu');
-            
-            if (configButton && configMenu) {
-                console.log('Configurando dropdown manual para configurações');
-                
-                configButton.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    // Fechar outros dropdowns
-                    document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
-                        if (menu !== configMenu) {
-                            menu.classList.remove('show');
-                        }
-                    });
-                    
-                    // Toggle o menu de configuração
-                    configMenu.classList.toggle('show');
-                    configButton.setAttribute('aria-expanded', configMenu.classList.contains('show'));
-                });
-            }
-            
-            // Repetir para o dropdown do usuário
-            const userButton = document.getElementById('dropdownMenuButton');
-            const userMenu = document.querySelector('#dropdownMenuButton + .dropdown-menu');
-            
-            if (userButton && userMenu) {
-                userButton.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    // Fechar outros dropdowns
-                    document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
-                        if (menu !== userMenu) {
-                            menu.classList.remove('show');
-                        }
-                    });
-                    
-                    // Toggle o menu do usuário
-                    userMenu.classList.toggle('show');
-                    userButton.setAttribute('aria-expanded', userMenu.classList.contains('show'));
-                });
-            }
-        }
-        
-        // Inicializar quando DOM estiver pronto
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeDropdowns);
-        } else {
-            initializeDropdowns();
-        }
-        
-        // Re-inicializar após um tempo para garantir que Bootstrap carregou
-        setTimeout(initializeDropdowns, 1000);
-        
-        // Fechar dropdowns quando clicar fora
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.dropdown')) {
-                document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
-                    menu.classList.remove('show');
-                });
-                document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(btn => {
-                    btn.setAttribute('aria-expanded', 'false');
-                });
-            }
+            // Auto-fechar mensagens
+            var messages = document.querySelectorAll('.alert-dismissible');
+            messages.forEach(function(message) {
+                setTimeout(function() {
+                    var bsAlert = new bootstrap.Alert(message);
+                    bsAlert.close();
+                }, 5000);
+            });
         });
     </script>
 </body>

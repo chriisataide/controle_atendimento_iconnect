@@ -1,0 +1,545 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}WhatsApp Business - Conversa{% endblock %}
+
+{% block page_title %}Detalhes da Conversa{% endblock %}
+{% block breadcrumb_title %}Conversa WhatsApp{% endblock %}
+
+{% block extra_css %}
+<style>
+.chat-container {
+    height: 600px;
+    border: 1px solid #e3e6f0;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-header {
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+    color: white;
+    padding: 1rem;
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    justify-content: between;
+    align-items: center;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    background: #f8f9fa;
+}
+
+.message {
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: flex-end;
+}
+
+.message.sent {
+    justify-content: flex-end;
+}
+
+.message.received {
+    justify-content: flex-start;
+}
+
+.message-bubble {
+    max-width: 70%;
+    padding: 0.75rem 1rem;
+    border-radius: 18px;
+    position: relative;
+    word-wrap: break-word;
+}
+
+.message.sent .message-bubble {
+    background: #25D366;
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.message.received .message-bubble {
+    background: white;
+    color: #333;
+    border: 1px solid #e3e6f0;
+    border-bottom-left-radius: 4px;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    margin-top: 0.25rem;
+}
+
+.message.sent .message-time {
+    text-align: right;
+}
+
+.message.received .message-time {
+    text-align: left;
+}
+
+.chat-input {
+    border-top: 1px solid #e3e6f0;
+    padding: 1rem;
+    background: white;
+    border-radius: 0 0 10px 10px;
+}
+
+.contact-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.contact-info {
+    flex: 1;
+    margin-left: 1rem;
+}
+
+.contact-name {
+    font-weight: 600;
+    margin: 0;
+}
+
+.contact-status {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin: 0;
+}
+
+.conversation-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.typing-indicator {
+    display: none;
+    padding: 0.5rem 1rem;
+    font-style: italic;
+    color: #6b7280;
+}
+
+.message-status {
+    font-size: 0.7rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
+.message.sent .message-status {
+    text-align: right;
+}
+
+.status-sent {
+    color: #6b7280;
+}
+
+.status-delivered {
+    color: #3b82f6;
+}
+
+.status-read {
+    color: #10b981;
+}
+
+.quick-replies {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.quick-reply {
+    padding: 0.5rem 1rem;
+    background: #e5f3ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+}
+
+.quick-reply:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header da Conversa -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center mb-3">
+                <a href="{% url 'dashboard:whatsapp:conversations' %}" class="btn btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h3 class="mb-0 h4 font-weight-bolder">Detalhes da Conversa</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Chat Principal -->
+        <div class="col-lg-8">
+            <div class="chat-container">
+                <!-- Header do Chat -->
+                <div class="chat-header">
+                    <div class="contact-avatar">
+                        {{ conversation.contato.nome|first|upper }}
+                    </div>
+                    <div class="contact-info">
+                        <h6 class="contact-name">{{ conversation.contato.nome|default:"Contato sem nome" }}</h6>
+                        <p class="contact-status">
+                            {{ conversation.contato.telefone }} • 
+                            <span class="badge bg-light text-dark">{{ conversation.get_estado_display }}</span>
+                        </p>
+                    </div>
+                    <div class="conversation-actions">
+                        <button class="btn btn-light btn-sm" onclick="refreshMessages()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <div class="dropdown">
+                            <button class="btn btn-light btn-sm" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="exportConversation()"><i class="fas fa-download me-2"></i>Exportar</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="archiveConversation()"><i class="fas fa-archive me-2"></i>Arquivar</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="#" onclick="deleteConversation()"><i class="fas fa-trash me-2"></i>Excluir</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Área de Mensagens -->
+                <div class="chat-messages" id="chatMessages">
+                    {% for message in messages %}
+                    <div class="message {% if message.tipo == 'enviada' %}sent{% else %}received{% endif %}">
+                        <div class="message-bubble">
+                            <div class="message-content">
+                                {{ message.conteudo|linebreaks }}
+                            </div>
+                            <div class="message-time">
+                                {{ message.timestamp|date:"H:i" }}
+                            </div>
+                            {% if message.tipo == 'enviada' %}
+                            <div class="message-status">
+                                {% if message.status == 'enviada' %}
+                                    <i class="fas fa-check status-sent"></i>
+                                {% elif message.status == 'entregue' %}
+                                    <i class="fas fa-check-double status-delivered"></i>
+                                {% elif message.status == 'lida' %}
+                                    <i class="fas fa-check-double status-read"></i>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-comments fa-3x mb-3"></i>
+                        <p>Nenhuma mensagem nesta conversa ainda.</p>
+                    </div>
+                    {% endfor %}
+                    
+                    <div class="typing-indicator" id="typingIndicator">
+                        <i class="fas fa-circle"></i>
+                        <i class="fas fa-circle"></i>
+                        <i class="fas fa-circle"></i>
+                        {{ conversation.contato.nome }} está digitando...
+                    </div>
+                </div>
+
+                <!-- Entrada de Mensagem -->
+                <div class="chat-input">
+                    <!-- Respostas Rápidas -->
+                    <div class="quick-replies">
+                        <span class="quick-reply" onclick="insertQuickReply('Olá! Como posso ajudá-lo?')">
+                            Saudação
+                        </span>
+                        <span class="quick-reply" onclick="insertQuickReply('Obrigado pelo contato!')">
+                            Agradecimento
+                        </span>
+                        <span class="quick-reply" onclick="insertQuickReply('Um momento, por favor...')">
+                            Aguarde
+                        </span>
+                        <span class="quick-reply" onclick="insertQuickReply('Posso ajudá-lo com mais alguma coisa?')">
+                            Mais ajuda
+                        </span>
+                    </div>
+
+                    <!-- Form de Envio -->
+                    <form id="messageForm" onsubmit="sendMessage(event)">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="messageInput" 
+                                   placeholder="Digite sua mensagem..." 
+                                   required>
+                            <button class="btn btn-success" type="submit">
+                                <i class="fas fa-paper-plane"></i>
+                                Enviar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar com Informações -->
+        <div class="col-lg-4">
+            <!-- Informações do Contato -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-user me-2"></i>
+                        Informações do Contato
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <div class="contact-avatar mx-auto mb-2" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            {{ conversation.contato.nome|first|upper }}
+                        </div>
+                        <h6>{{ conversation.contato.nome|default:"Contato sem nome" }}</h6>
+                        <small class="text-muted">{{ conversation.contato.telefone }}</small>
+                    </div>
+                    
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="border-end">
+                                <h6 class="mb-0">{{ messages|length }}</h6>
+                                <small class="text-muted">Mensagens</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="border-end">
+                                <h6 class="mb-0">{{ conversation.created_at|timesince }}</h6>
+                                <small class="text-muted">Primeira msg</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <h6 class="mb-0">{{ conversation.atualizada_em|timesince }}</h6>
+                            <small class="text-muted">Última msg</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estatísticas da Conversa -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Estatísticas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Mensagens enviadas:</span>
+                        <strong>{{ messages_sent|default:0 }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Mensagens recebidas:</span>
+                        <strong>{{ messages_received|default:0 }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Taxa de resposta:</span>
+                        <strong>
+                            {% if messages_sent > 0 %}
+                                {% widthratio messages_received messages_sent 100 %}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Status:</span>
+                        <span class="badge bg-{% if conversation.estado == 'ativa' %}success{% elif conversation.estado == 'pendente' %}warning{% else %}secondary{% endif %}">
+                            {{ conversation.get_estado_display }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ações Rápidas -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>
+                        Ações Rápidas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="createTicket()">
+                            <i class="fas fa-ticket-alt me-2"></i>
+                            Criar Ticket
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="addContact()">
+                            <i class="fas fa-user-plus me-2"></i>
+                            Adicionar aos Contatos
+                        </button>
+                        <button class="btn btn-outline-warning btn-sm" onclick="setReminder()">
+                            <i class="fas fa-bell me-2"></i>
+                            Definir Lembrete
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="exportConversation()">
+                            <i class="fas fa-download me-2"></i>
+                            Exportar Conversa
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function sendMessage(event) {
+    event.preventDefault();
+    
+    const messageInput = document.getElementById('messageInput');
+    const message = messageInput.value.trim();
+    
+    if (!message) return;
+    
+    const formData = new FormData();
+    formData.append('message', message);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch('{% url "dashboard:whatsapp:api_send_message" %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            messageInput.value = '';
+            addMessageToChat(message, 'sent');
+            scrollToBottom();
+        } else {
+            alert('Erro ao enviar mensagem: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao enviar mensagem');
+    });
+}
+
+function insertQuickReply(text) {
+    document.getElementById('messageInput').value = text;
+    document.getElementById('messageInput').focus();
+}
+
+function addMessageToChat(content, type) {
+    const chatMessages = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${type}`;
+    
+    const now = new Date();
+    const time = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    
+    messageDiv.innerHTML = `
+        <div class="message-bubble">
+            <div class="message-content">${content}</div>
+            <div class="message-time">${time}</div>
+            ${type === 'sent' ? '<div class="message-status"><i class="fas fa-check status-sent"></i></div>' : ''}
+        </div>
+    `;
+    
+    chatMessages.appendChild(messageDiv);
+}
+
+function scrollToBottom() {
+    const chatMessages = document.getElementById('chatMessages');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function refreshMessages() {
+    location.reload();
+}
+
+function createTicket() {
+    if (confirm('Criar um ticket a partir desta conversa?')) {
+        fetch('{% url "dashboard:whatsapp:api_create_ticket" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                conversation_id: '{{ conversation.uuid }}'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Ticket criado com sucesso!');
+                window.open(data.ticket_url, '_blank');
+            } else {
+                alert('Erro ao criar ticket: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao criar ticket');
+        });
+    }
+}
+
+function exportConversation() {
+    const conversationData = {
+        conversation_id: '{{ conversation.uuid }}',
+        contact: '{{ conversation.contato.nome }}',
+        phone: '{{ conversation.contato.telefone }}',
+        messages: [
+            {% for message in messages %}
+            {
+                type: '{{ message.tipo }}',
+                content: '{{ message.conteudo|escapejs }}',
+                timestamp: '{{ message.timestamp|date:"Y-m-d H:i:s" }}'
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ]
+    };
+    
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(conversationData, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `conversa_${conversationData.contact}_{{ conversation.uuid|slice:":8" }}.json`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
+
+// Auto-scroll para a última mensagem ao carregar
+document.addEventListener('DOMContentLoaded', function() {
+    scrollToBottom();
+    
+    // Simular atualizações em tempo real (opcional)
+    setInterval(function() {
+        // Aqui você pode implementar polling para novas mensagens
+        // ou usar WebSockets para updates em tempo real
+    }, 5000);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,813 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}WhatsApp Business - Respostas Automáticas{% endblock %}
+
+{% block page_title %}WhatsApp Business - Respostas Automáticas{% endblock %}
+{% block breadcrumb_title %}Respostas Automáticas{% endblock %}
+
+{% block extra_css %}
+<style>
+.real-time-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #10b981;
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+.auto-response-card {
+    border: 1px solid #e3e6f0;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.auto-response-card:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.auto-response-card.active {
+    border-left: 4px solid #25D366;
+    background-color: #f8fff8;
+}
+
+.auto-response-card.inactive {
+    border-left: 4px solid #6b7280;
+    background-color: #f9fafb;
+}
+
+.trigger-keywords {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+}
+
+.keyword-tag {
+    background: #e5f3ff;
+    color: #1d4ed8;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    border: 1px solid #bfdbfe;
+}
+
+.response-preview {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.auto-response-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-top: 0.5rem;
+}
+
+.response-type {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 8px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.type-welcome {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.type-keyword {
+    background: #e5f3ff;
+    color: #1d4ed8;
+}
+
+.type-away {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.type-fallback {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #25D366;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.quick-setup-section {
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.response-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.condition-builder {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Respostas Automáticas WhatsApp</h3>
+            <p class="mb-4">
+                <span class="real-time-indicator" style="display: inline-block; width: 8px; height: 8px; background-color: rgb(16, 185, 129); border-radius: 50%; margin-right: 8px; animation: 2s ease 0s infinite normal none running pulse;"></span>
+                Configure respostas automáticas para melhorar o atendimento ao cliente.
+            </p>
+        </div>
+        <div class="col-md-6 d-flex align-items-center justify-content-end">
+            <button class="btn btn-outline-primary btn-sm me-2" onclick="refreshAutoResponses()">
+                <i class="fas fa-sync-alt me-1"></i>
+                Atualizar
+            </button>
+            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#createAutoResponseModal">
+                <i class="fas fa-plus me-1"></i>
+                Nova Resposta Automática
+            </button>
+        </div>
+    </div>
+
+    <!-- Configuração Rápida -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="quick-setup-section">
+                <h5 class="mb-3">
+                    <i class="fas fa-robot me-2"></i>
+                    Configuração Rápida
+                </h5>
+                <p class="mb-4">
+                    Configure respostas automáticas para os cenários mais comuns do seu atendimento.
+                </p>
+                <div class="row justify-content-center">
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-light w-100" onclick="createQuickResponse('welcome')">
+                            <i class="fas fa-hand-wave me-2"></i>
+                            Mensagem de Boas-vindas
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-light w-100" onclick="createQuickResponse('away')">
+                            <i class="fas fa-moon me-2"></i>
+                            Mensagem de Ausência
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-light w-100" onclick="createQuickResponse('hours')">
+                            <i class="fas fa-clock me-2"></i>
+                            Horário de Funcionamento
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-light w-100" onclick="createQuickResponse('fallback')">
+                            <i class="fas fa-question me-2"></i>
+                            Mensagem Padrão
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label">Buscar Respostas</label>
+                            <input type="text" class="form-control" name="search" 
+                                   value="{{ request.GET.search }}" 
+                                   placeholder="Nome ou palavra-chave...">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Tipo</label>
+                            <select class="form-select" name="tipo">
+                                <option value="">Todos</option>
+                                <option value="welcome" {% if request.GET.tipo == 'welcome' %}selected{% endif %}>Boas-vindas</option>
+                                <option value="keyword" {% if request.GET.tipo == 'keyword' %}selected{% endif %}>Palavra-chave</option>
+                                <option value="away" {% if request.GET.tipo == 'away' %}selected{% endif %}>Ausência</option>
+                                <option value="fallback" {% if request.GET.tipo == 'fallback' %}selected{% endif %}>Padrão</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="status">
+                                <option value="">Todos</option>
+                                <option value="ativo" {% if request.GET.status == 'ativo' %}selected{% endif %}>Ativo</option>
+                                <option value="inativo" {% if request.GET.status == 'inativo' %}selected{% endif %}>Inativo</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search me-1"></i>
+                                Buscar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Respostas Automáticas -->
+    <div class="row">
+        <div class="col-12">
+            {% if auto_responses %}
+                {% for response in auto_responses %}
+                <div class="auto-response-card {% if response.ativo %}active{% else %}inactive{% endif %}">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="mb-1">{{ response.nome }}</h6>
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="response-type type-{{ response.tipo }}">
+                                            {{ response.get_tipo_display }}
+                                        </span>
+                                        <small class="text-muted">
+                                            Prioridade: {{ response.prioridade }}
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="toggle{{ response.id }}" 
+                                           {% if response.ativo %}checked{% endif %}
+                                           onchange="toggleAutoResponse('{{ response.id }}', this.checked)">
+                                    <span class="slider"></span>
+                                </div>
+                            </div>
+                            
+                            <!-- Palavras-chave de Gatilho -->
+                            {% if response.palavras_chave %}
+                            <div class="mb-2">
+                                <small class="text-muted">Palavras-chave:</small>
+                                <div class="trigger-keywords">
+                                    {% for keyword in response.palavras_chave %}
+                                        <span class="keyword-tag">{{ keyword }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Condições -->
+                            {% if response.condicoes %}
+                            <div class="mb-2">
+                                <small class="text-muted">Condições:</small>
+                                <div class="mt-1">
+                                    {% for condicao in response.condicoes %}
+                                        <small class="badge bg-info me-1">{{ condicao }}</small>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Preview da Resposta -->
+                            <div class="response-preview">
+                                {% autoescape off %}
+                                    {{ response.mensagem|linebreaks }}
+                                {% endautoescape %}
+                            </div>
+
+                            <!-- Estatísticas -->
+                            <div class="auto-response-stats">
+                                <span>
+                                    <i class="fas fa-paper-plane me-1"></i>
+                                    {{ response.total_disparos|default:0 }} disparos
+                                </span>
+                                <span>
+                                    <i class="fas fa-thumbs-up me-1"></i>
+                                    {{ response.taxa_sucesso|default:0|floatformat:1 }}% sucesso
+                                </span>
+                                <span>
+                                    <i class="fas fa-calendar me-1"></i>
+                                    Criado: {{ response.criado_em|date:"d/m/Y" }}
+                                </span>
+                                <span>
+                                    <i class="fas fa-clock me-1"></i>
+                                    Último disparo: {{ response.ultimo_disparo|timesince|default:"Nunca" }} atrás
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="response-actions">
+                                <button class="btn btn-outline-primary btn-sm" onclick="testAutoResponse('{{ response.id }}')">
+                                    <i class="fas fa-play me-1"></i>
+                                    Testar
+                                </button>
+                                <button class="btn btn-outline-warning btn-sm" onclick="editAutoResponse('{{ response.id }}')">
+                                    <i class="fas fa-edit me-1"></i>
+                                    Editar
+                                </button>
+                                <button class="btn btn-outline-info btn-sm" onclick="duplicateAutoResponse('{{ response.id }}')">
+                                    <i class="fas fa-copy me-1"></i>
+                                    Duplicar
+                                </button>
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#" onclick="viewAnalytics('{{ response.id }}')">
+                                            <i class="fas fa-chart-bar me-2"></i>Analytics
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="exportAutoResponse('{{ response.id }}')">
+                                            <i class="fas fa-download me-2"></i>Exportar
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteAutoResponse('{{ response.id }}')">
+                                            <i class="fas fa-trash me-2"></i>Excluir
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Paginação -->
+                {% if is_paginated %}
+                <div class="d-flex justify-content-center mt-4">
+                    <nav aria-label="Navegação da paginação">
+                        <ul class="pagination">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-robot fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nenhuma resposta automática configurada</h5>
+                    <p class="text-muted">
+                        {% if request.GET.search %}
+                            Não encontramos respostas automáticas com os termos "{{ request.GET.search }}".
+                        {% else %}
+                            Configure respostas automáticas para melhorar a eficiência do seu atendimento.
+                        {% endif %}
+                    </p>
+                    <div class="mt-3">
+                        {% if request.GET.search %}
+                            <a href="{% url 'dashboard:whatsapp:auto_responses' %}" class="btn btn-outline-primary me-2">
+                                <i class="fas fa-times me-1"></i>
+                                Limpar Busca
+                            </a>
+                        {% endif %}
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createAutoResponseModal">
+                            <i class="fas fa-plus me-1"></i>
+                            Criar Primeira Resposta
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal Criar Resposta Automática -->
+<div class="modal fade" id="createAutoResponseModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-robot me-2"></i>
+                    Nova Resposta Automática
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createAutoResponseForm">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Nome *</label>
+                                <input type="text" class="form-control" name="nome" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Tipo *</label>
+                                <select class="form-select" name="tipo" required onchange="updateFormFields(this.value)">
+                                    <option value="">Selecione...</option>
+                                    <option value="welcome">Boas-vindas</option>
+                                    <option value="keyword">Palavra-chave</option>
+                                    <option value="away">Ausência</option>
+                                    <option value="fallback">Padrão</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Prioridade *</label>
+                                <select class="form-select" name="prioridade" required>
+                                    <option value="1">1 - Mais Alta</option>
+                                    <option value="5" selected>5 - Normal</option>
+                                    <option value="10">10 - Mais Baixa</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Status *</label>
+                                <select class="form-select" name="ativo" required>
+                                    <option value="true" selected>Ativo</option>
+                                    <option value="false">Inativo</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Palavras-chave (mostrado apenas para tipo keyword) -->
+                    <div id="keywordsSection" class="mb-3" style="display: none;">
+                        <label class="form-label">Palavras-chave de Gatilho</label>
+                        <input type="text" class="form-control" name="palavras_chave" 
+                               placeholder="Digite as palavras separadas por vírgula">
+                        <div class="form-text">Exemplo: oi, olá, bom dia, boa tarde</div>
+                    </div>
+                    
+                    <!-- Condições Avançadas -->
+                    <div class="mb-3">
+                        <label class="form-label">Condições (Opcional)</label>
+                        <div class="condition-builder">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <select class="form-select form-select-sm" name="condicao_tipo">
+                                        <option value="">Nenhuma condição</option>
+                                        <option value="horario">Horário</option>
+                                        <option value="dia_semana">Dia da semana</option>
+                                        <option value="primeira_msg">Primeira mensagem</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control form-control-sm" 
+                                           name="condicao_valor" placeholder="Valor da condição">
+                                </div>
+                            </div>
+                            <div class="form-text mt-2">
+                                Exemplo: Para horário comercial use "09:00-18:00"
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Mensagem de Resposta *</label>
+                        <textarea class="form-control" name="mensagem" rows="4" required></textarea>
+                        <div class="form-text">
+                            Use {{nome}}, {{telefone}} para personalização automática
+                        </div>
+                    </div>
+                    
+                    <!-- Preview -->
+                    <div class="mb-3">
+                        <label class="form-label">Preview</label>
+                        <div id="responsePreview" class="response-preview">
+                            <div class="text-muted">O preview aparecerá aqui conforme você digita...</div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-outline-primary me-2" onclick="testResponse()">
+                    <i class="fas fa-play me-1"></i>
+                    Testar
+                </button>
+                <button type="button" class="btn btn-success" onclick="saveAutoResponse()">
+                    <i class="fas fa-save me-1"></i>
+                    Salvar Resposta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function refreshAutoResponses() {
+    location.reload();
+}
+
+function createQuickResponse(type) {
+    const responses = {
+        welcome: {
+            nome: 'Boas-vindas',
+            tipo: 'welcome',
+            mensagem: 'Olá {{nome}}! Bem-vindo(a) ao nosso WhatsApp. Como posso ajudá-lo(a) hoje?'
+        },
+        away: {
+            nome: 'Mensagem de Ausência',
+            tipo: 'away',
+            mensagem: 'Obrigado pelo contato! No momento estamos ausentes, mas retornaremos em breve. Seu atendimento é importante para nós!'
+        },
+        hours: {
+            nome: 'Horário de Funcionamento',
+            tipo: 'keyword',
+            palavras_chave: 'horário, funcionamento, atendimento, horario',
+            mensagem: 'Nosso horário de atendimento é de segunda a sexta, das 9h às 18h. Sábados das 9h às 13h.'
+        },
+        fallback: {
+            nome: 'Mensagem Padrão',
+            tipo: 'fallback',
+            mensagem: 'Desculpe, não entendi sua mensagem. Pode reformular sua pergunta? Ou digite "atendimento" para falar com nossa equipe.'
+        }
+    };
+    
+    const response = responses[type];
+    if (response) {
+        document.querySelector('#createAutoResponseForm [name="nome"]').value = response.nome;
+        document.querySelector('#createAutoResponseForm [name="tipo"]').value = response.tipo;
+        document.querySelector('#createAutoResponseForm [name="mensagem"]').value = response.mensagem;
+        if (response.palavras_chave) {
+            document.querySelector('#createAutoResponseForm [name="palavras_chave"]').value = response.palavras_chave;
+        }
+        
+        updateFormFields(response.tipo);
+        updateResponsePreview();
+        
+        const modal = new bootstrap.Modal(document.getElementById('createAutoResponseModal'));
+        modal.show();
+    }
+}
+
+function updateFormFields(tipo) {
+    const keywordsSection = document.getElementById('keywordsSection');
+    if (tipo === 'keyword') {
+        keywordsSection.style.display = 'block';
+        document.querySelector('[name="palavras_chave"]').required = true;
+    } else {
+        keywordsSection.style.display = 'none';
+        document.querySelector('[name="palavras_chave"]').required = false;
+    }
+}
+
+function updateResponsePreview() {
+    const mensagem = document.querySelector('#createAutoResponseForm [name="mensagem"]').value;
+    const preview = mensagem.replace(/\n/g, '<br>').replace(/{{(\w+)}}/g, '<span class="variable-highlight">{{$1}}</span>');
+    
+    document.getElementById('responsePreview').innerHTML = preview || '<div class="text-muted">O preview aparecerá aqui conforme você digita...</div>';
+}
+
+function saveAutoResponse() {
+    const form = document.getElementById('createAutoResponseForm');
+    const formData = new FormData(form);
+    
+    fetch('/dashboard/whatsapp/api/auto-response/create/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erro ao salvar resposta automática: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao salvar resposta automática');
+    });
+}
+
+function toggleAutoResponse(responseId, active) {
+    fetch(`/dashboard/whatsapp/api/auto-response/${responseId}/toggle/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ active: active })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Atualizar visual do card
+            const card = document.querySelector(`#toggle${responseId}`).closest('.auto-response-card');
+            if (active) {
+                card.classList.remove('inactive');
+                card.classList.add('active');
+            } else {
+                card.classList.remove('active');
+                card.classList.add('inactive');
+            }
+        } else {
+            alert('Erro ao alterar status: ' + data.error);
+            // Reverter o toggle
+            document.querySelector(`#toggle${responseId}`).checked = !active;
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao alterar status');
+        // Reverter o toggle
+        document.querySelector(`#toggle${responseId}`).checked = !active;
+    });
+}
+
+function testAutoResponse(responseId) {
+    fetch(`/dashboard/whatsapp/api/auto-response/${responseId}/test/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Teste enviado com sucesso! Verifique seu WhatsApp.');
+        } else {
+            alert('Erro ao testar resposta: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao testar resposta');
+    });
+}
+
+function testResponse() {
+    const mensagem = document.querySelector('#createAutoResponseForm [name="mensagem"]').value;
+    if (mensagem) {
+        const processedMessage = mensagem.replace(/{{nome}}/g, 'João').replace(/{{telefone}}/g, '+55 11 99999-9999');
+        alert(`Teste da mensagem:\n\n${processedMessage}`);
+    } else {
+        alert('Digite uma mensagem primeiro.');
+    }
+}
+
+function editAutoResponse(responseId) {
+    window.location.href = `/dashboard/whatsapp/auto-response/${responseId}/edit/`;
+}
+
+function duplicateAutoResponse(responseId) {
+    if (confirm('Deseja criar uma cópia desta resposta automática?')) {
+        fetch(`/dashboard/whatsapp/api/auto-response/${responseId}/duplicate/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erro ao duplicar resposta: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao duplicar resposta');
+        });
+    }
+}
+
+function deleteAutoResponse(responseId) {
+    if (confirm('Tem certeza que deseja excluir esta resposta automática? Esta ação não pode ser desfeita.')) {
+        fetch(`/dashboard/whatsapp/api/auto-response/${responseId}/delete/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erro ao excluir resposta: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao excluir resposta');
+        });
+    }
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('createAutoResponseForm');
+    if (form) {
+        form.addEventListener('input', updateResponsePreview);
+    }
+});
+</script>
+{% endblock %}

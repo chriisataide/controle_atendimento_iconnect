@@ -1,6 +1,9 @@
 from django.contrib import admin
 from .models import Cliente, CategoriaTicket, Ticket, InteracaoTicket, PerfilAgente, PerfilUsuario
 
+# Importar os admin do WhatsApp
+from .whatsapp_admin import *
+
 
 @admin.register(Cliente)
 class ClienteAdmin(admin.ModelAdmin):

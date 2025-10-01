@@ -361,8 +361,43 @@ class TicketPredictor:
             logger.error(f"❌ Erro ao carregar modelos: {str(e)}")
     
     def _get_satisfaction(self, ticket):
-        """Obtém satisfação do ticket (placeholder)"""
-        # TODO: Implementar quando houver modelo de satisfação
+        """Obtém satisfação do ticket"""
+        try:
+            # Buscar avaliação de satisfação relacionada ao ticket
+            from .models_satisfacao import AvaliacaoSatisfacao
+            avaliacao = AvaliacaoSatisfacao.objects.filter(ticket=ticket).first()
+            
+            if avaliacao:
+                return avaliacao.nota
+            
+            # Se não há avaliação, tentar inferir baseado no tempo de resolução e escalações
+            if ticket.resolvido_em and ticket.criado_em:
+                resolution_time_hours = (ticket.resolvido_em - ticket.criado_em).total_seconds() / 3600
+                
+                # Inferir satisfação baseado em métricas de qualidade
+                satisfaction_score = 5.0  # Começa com nota máxima
+                
+                # Penalizar por tempo de resolução longo
+                if hasattr(ticket, 'sla_deadline') and ticket.sla_deadline:
+                    if ticket.resolvido_em > ticket.sla_deadline:
+                        satisfaction_score -= 2.0  # SLA violado
+                
+                # Penalizar por escalações
+                if ticket.is_escalated:
+                    satisfaction_score -= 1.0
+                
+                # Penalizar por muitas interações (pode indicar problema complexo)
+                interaction_count = ticket.interacoes.count() if hasattr(ticket, 'interacoes') else 0
+                if interaction_count > 10:
+                    satisfaction_score -= 0.5
+                
+                # Garantir que está entre 1 e 5
+                satisfaction_score = max(1.0, min(5.0, satisfaction_score))
+                return satisfaction_score
+                
+        except Exception as e:
+            logger.warning(f"Erro ao obter satisfação do ticket {ticket.id}: {str(e)}")
+        
         return None
 
 # Instância global

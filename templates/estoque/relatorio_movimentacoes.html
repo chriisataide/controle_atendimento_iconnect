@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - iConnect{% endblock %}
+
+{% block page_title %}{{ title }}{% endblock %}
+{% block breadcrumb_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="ms-3">
+        <h3 class="mb-0 h4 font-weight-bolder">{{ title }}</h3>
+        <p class="mb-4">
+            Relatório de movimentações de estoque por período
+        </p>
+    </div>
+    
+    <!-- Cards de Resumo -->
+    <div class="col-xl-12">
+        <div class="row">
+            {% for resumo in resumo_tipos %}
+            <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+                <div class="card">
+                    <div class="card-header p-2 ps-3">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <p class="text-sm mb-0 text-capitalize">{{ resumo.tipo_operacao|capfirst }}</p>
+                                <h4 class="mb-0">{{ resumo.total_movimentacoes }}</h4>
+                                <p class="text-xs mb-0">R$ {{ resumo.valor_total|floatformat:2|default:"0,00" }}</p>
+                            </div>
+                            <div class="icon icon-md icon-shape 
+                                {% if resumo.tipo_operacao == 'entrada' %}bg-gradient-success{% elif resumo.tipo_operacao == 'saida' %}bg-gradient-danger{% else %}bg-gradient-info{% endif %} 
+                                shadow text-center border-radius-lg">
+                                {% if resumo.tipo_operacao == 'entrada' %}
+                                    <i class="material-symbols-rounded opacity-10">arrow_downward</i>
+                                {% elif resumo.tipo_operacao == 'saida' %}
+                                    <i class="material-symbols-rounded opacity-10">arrow_upward</i>
+                                {% else %}
+                                    <i class="material-symbols-rounded opacity-10">swap_horiz</i>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card my-4">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+                    <h6 class="text-white text-capitalize ps-3">Filtros do Relatório</h6>
+                </div>
+            </div>
+            <div class="card-body px-4 pb-2">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <div class="input-group input-group-outline">
+                            <label class="form-label">Data Início</label>
+                            <input type="date" name="data_inicio" class="form-control" 
+                                value="{{ data_inicio|date:'Y-m-d' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="input-group input-group-outline">
+                            <label class="form-label">Data Fim</label>
+                            <input type="date" name="data_fim" class="form-control" 
+                                value="{{ data_fim|date:'Y-m-d' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="input-group input-group-outline">
+                            <label class="form-label">Tipo de Operação</label>
+                            <select name="tipo_operacao" class="form-control">
+                                <option value="">Todas as operações</option>
+                                <option value="entrada" {% if tipo_operacao == 'entrada' %}selected{% endif %}>Entrada</option>
+                                <option value="saida" {% if tipo_operacao == 'saida' %}selected{% endif %}>Saída</option>
+                                <option value="ajuste" {% if tipo_operacao == 'ajuste' %}selected{% endif %}>Ajuste</option>
+                                <option value="transferencia" {% if tipo_operacao == 'transferencia' %}selected{% endif %}>Transferência</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary mb-0">
+                            <i class="material-symbols-rounded">search</i> Filtrar
+                        </button>
+                        <a href="{% url 'estoque:relatorio_movimentacoes' %}" class="btn btn-outline-secondary mb-0 ms-2">
+                            <i class="material-symbols-rounded">clear</i> Limpar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card my-4">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+                    <h6 class="text-white text-capitalize ps-3">Movimentações de Estoque</h6>
+                </div>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Data/Hora</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Produto</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tipo</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Operação</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Quantidade</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Valor Unit.</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Valor Total</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Usuário</th>
+                                <th class="text-secondary opacity-7">Observações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mov in movimentacoes %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ mov.data_movimentacao|date:"d/m/Y" }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ mov.data_movimentacao|time:"H:i" }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ mov.produto.nome }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ mov.produto.codigo }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">
+                                        {{ mov.tipo_movimentacao.nome }}
+                                    </span>
+                                </td>
+                                <td class="align-middle text-center text-sm">
+                                    {% if mov.tipo_operacao == 'entrada' %}
+                                        <span class="badge badge-sm bg-gradient-success">
+                                            <i class="material-symbols-rounded text-xs">arrow_downward</i> Entrada
+                                        </span>
+                                    {% elif mov.tipo_operacao == 'saida' %}
+                                        <span class="badge badge-sm bg-gradient-danger">
+                                            <i class="material-symbols-rounded text-xs">arrow_upward</i> Saída
+                                        </span>
+                                    {% elif mov.tipo_operacao == 'ajuste' %}
+                                        <span class="badge badge-sm bg-gradient-info">
+                                            <i class="material-symbols-rounded text-xs">tune</i> Ajuste
+                                        </span>
+                                    {% else %}
+                                        <span class="badge badge-sm bg-gradient-warning">
+                                            <i class="material-symbols-rounded text-xs">swap_horiz</i> Transfer.
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">
+                                        {{ mov.quantidade }} {{ mov.produto.unidade_medida.sigla }}
+                                    </span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">
+                                        R$ {{ mov.valor_unitario|floatformat:2 }}
+                                    </span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">
+                                        R$ {{ mov.valor_total|floatformat:2 }}
+                                    </span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">
+                                        {{ mov.usuario.first_name|default:mov.usuario.username }}
+                                    </span>
+                                </td>
+                                <td class="align-middle">
+                                    <span class="text-secondary text-xs">
+                                        {{ mov.observacoes|truncatechars:50 }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-4">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <i class="material-symbols-rounded text-muted mb-2" style="font-size: 3rem;">history</i>
+                                        <h6 class="text-muted">Nenhuma movimentação encontrada</h6>
+                                        <p class="text-sm text-muted mb-0">
+                                            Ajuste o período ou realize algumas movimentações de estoque.
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ações do Relatório -->
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-end">
+            <button onclick="window.print()" class="btn btn-outline-primary mb-0 me-2">
+                <i class="material-symbols-rounded">print</i> Imprimir
+            </button>
+            <button onclick="exportarCSV()" class="btn btn-success mb-0">
+                <i class="material-symbols-rounded">download</i> Exportar CSV
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function exportarCSV() {
+    // Criar CSV dos dados da tabela
+    const rows = [];
+    const table = document.querySelector('table');
+    
+    // Cabeçalho
+    const headers = [];
+    table.querySelectorAll('thead th').forEach(th => {
+        if (th.textContent.trim() !== '') {
+            headers.push(th.textContent.trim().replace(/,/g, ';'));
+        }
+    });
+    rows.push(headers.join(','));
+    
+    // Dados
+    table.querySelectorAll('tbody tr').forEach(tr => {
+        const cells = [];
+        tr.querySelectorAll('td').forEach((td, index) => {
+            if (index < headers.length) {
+                let text = td.textContent.trim().replace(/,/g, ';').replace(/\s+/g, ' ');
+                cells.push('"' + text + '"');
+            }
+        });
+        if (cells.length > 0 && !tr.querySelector('td[colspan]')) {
+            rows.push(cells.join(','));
+        }
+    });
+    
+    // Download
+    const csv = rows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'relatorio_movimentacoes_' + new Date().toISOString().slice(0,10) + '.csv';
+    link.click();
+}
+
+// Estilização para impressão
+const style = document.createElement('style');
+style.textContent = `
+    @media print {
+        .btn, .card-header { display: none !important; }
+        .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+        body { font-size: 12px; }
+        .badge { color: #000 !important; background: #f8f9fa !important; }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

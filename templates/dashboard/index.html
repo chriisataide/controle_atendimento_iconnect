@@ -97,6 +97,63 @@
     </div>
 </div>
 
+<!-- ========== COMUNICAÇÃO QUICK ACCESS ========== -->
+<div class="row mt-4">
+    <div class="col-12">
+        <h6 class="ms-2 mt-4 mb-3">Central de Comunicação</h6>
+    </div>
+    
+    <!-- Central de Comunicação Card -->
+    <div class="col-xl-6 col-sm-6 mb-xl-0 mb-4">
+        <div class="card cursor-pointer hover-lift" onclick="window.location.href='{% url 'dashboard:communication_center' %}'">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Central Unificada</p>
+                        <h4 class="mb-0">6 Módulos</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">forum</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">
+                    <span class="text-primary font-weight-bolder">
+                        <i class="material-symbols-rounded text-sm">integration_instructions</i> Chat • IA • Analytics
+                    </span>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- WhatsApp Business Card -->
+    <div class="col-xl-6 col-sm-6 mb-xl-0 mb-4">
+        <div class="card cursor-pointer hover-lift" onclick="window.location.href='{% url 'dashboard:whatsapp:dashboard' %}'">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">WhatsApp Business</p>
+                        <h4 class="mb-0">Conectado</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                        <i class="fab fa-whatsapp opacity-10" style="font-size: 18px;"></i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">
+                    <span class="text-success font-weight-bolder">
+                        <i class="material-symbols-rounded text-sm">chat</i> Conversas • Templates • Analytics
+                    </span>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ========== SLA QUICK ACCESS SECTION ========== -->
 <div class="row mt-4">
     <div class="col-12">

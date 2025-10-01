@@ -1,0 +1,1071 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Central de Comunicação - iConnect{% endblock %}
+
+{% block page_title %}Central de Comunicação{% endblock %}
+{% block breadcrumb_title %}Central de Comunicação{% endblock %}
+
+{% block extra_css %}
+<style>
+.real-time-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #10b981;
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+.communication-tabs {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.nav-tabs {
+    border-bottom: none;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    border-radius: 10px 10px 0 0;
+    color: #6b7280;
+    font-weight: 500;
+    padding: 1rem 1.5rem;
+    margin-right: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.nav-tabs .nav-link:hover:not(.active) {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.tab-content {
+    padding: 2rem;
+    min-height: 600px;
+}
+
+.chat-widget {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+}
+
+.chat-widget:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.chat-widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: between;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.chat-widget-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.2rem;
+    color: white;
+}
+
+.icon-chat { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.icon-new { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.icon-ai { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.icon-analytics { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+.icon-basic { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+.icon-config { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+
+.chat-messages-container {
+    height: 400px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 1rem;
+    background: #f9fafb;
+}
+
+.quick-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.action-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid #e5e7eb;
+    background: white;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+}
+
+.action-btn.primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: transparent;
+}
+
+.action-btn.primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.chatbot-preview {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.conversation-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+}
+
+.conversation-item:hover {
+    background: #f9fafb;
+}
+
+.conversation-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-weight: 600;
+}
+
+.conversation-content {
+    flex: 1;
+}
+
+.conversation-time {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.config-section {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e5e7eb;
+}
+
+.config-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.setting-group {
+    margin-bottom: 1.5rem;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #667eea;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Central de Comunicação</h3>
+            <p class="mb-4">
+                <span class="real-time-indicator"></span>
+                Gerencie todas as suas ferramentas de comunicação em um só lugar.
+            </p>
+        </div>
+        <div class="col-md-6 d-flex align-items-center justify-content-end">
+            <button class="btn btn-outline-primary btn-sm me-2" onclick="refreshData()">
+                <i class="fas fa-sync-alt me-1"></i>
+                Atualizar
+            </button>
+            <button class="btn btn-success btn-sm" onclick="openQuickChat()">
+                <i class="fas fa-plus me-1"></i>
+                Nova Conversa
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="row">
+        <div class="col-12">
+            <div class="communication-tabs">
+                <ul class="nav nav-tabs" id="communicationTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="chat-advanced-tab" data-bs-toggle="tab" data-bs-target="#chat-advanced" type="button" role="tab">
+                            <i class="fas fa-comments me-2"></i>
+                            Chat Avançado
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="new-conversation-tab" data-bs-toggle="tab" data-bs-target="#new-conversation" type="button" role="tab">
+                            <i class="fas fa-plus-circle me-2"></i>
+                            Nova Conversa
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="chatbot-ai-tab" data-bs-toggle="tab" data-bs-target="#chatbot-ai" type="button" role="tab">
+                            <i class="fas fa-robot me-2"></i>
+                            Chatbot IA
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button" role="tab">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Analytics
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="chat-basic-tab" data-bs-toggle="tab" data-bs-target="#chat-basic" type="button" role="tab">
+                            <i class="fas fa-comment me-2"></i>
+                            Chat Básico
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button" role="tab">
+                            <i class="fas fa-cog me-2"></i>
+                            Configurações
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="communicationTabContent">
+                    <!-- Chat Avançado -->
+                    <div class="tab-pane fade show active" id="chat-advanced" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="chat-widget">
+                                    <div class="chat-widget-header">
+                                        <div class="chat-widget-icon icon-chat">
+                                            <i class="fas fa-comments"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h5 class="mb-1">Chat Avançado</h5>
+                                            <p class="text-muted mb-0">Interface completa de conversas em tempo real</p>
+                                        </div>
+                                        <div class="ms-auto">
+                                            <span class="badge bg-success">{{ active_conversations|default:0 }} ativas</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="chat-messages-container" id="chatAdvancedContainer">
+                                        <div class="text-center py-4">
+                                            <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                                            <h6 class="text-muted">Conversas em Tempo Real</h6>
+                                            <p class="text-muted">Selecione uma conversa para começar o atendimento</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="quick-actions">
+                                        <button class="action-btn primary" onclick="openChatAdvanced()">
+                                            <i class="fas fa-external-link-alt me-1"></i>
+                                            Abrir Chat Completo
+                                        </button>
+                                        <button class="action-btn" onclick="createRoom()">
+                                            <i class="fas fa-plus me-1"></i>
+                                            Nova Sala
+                                        </button>
+                                        <button class="action-btn" onclick="viewHistory()">
+                                            <i class="fas fa-history me-1"></i>
+                                            Histórico
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="stats-grid">
+                                    <div class="stat-card">
+                                        <div class="stat-number">{{ total_conversations|default:12 }}</div>
+                                        <div class="stat-label">Conversas Hoje</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-number">{{ avg_response_time|default:"2.3m" }}</div>
+                                        <div class="stat-label">Tempo Médio</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="chat-widget">
+                                    <h6 class="mb-3">Conversas Recentes</h6>
+                                    <div id="recentConversations">
+                                        {% for conversation in recent_conversations|slice:":5" %}
+                                        <div class="conversation-item">
+                                            <div class="conversation-avatar">
+                                                {{ conversation.participant_name|first|upper }}
+                                            </div>
+                                            <div class="conversation-content">
+                                                <div class="fw-semibold">{{ conversation.participant_name }}</div>
+                                                <div class="text-muted small">{{ conversation.last_message|truncatechars:30 }}</div>
+                                            </div>
+                                            <div class="conversation-time">
+                                                {{ conversation.updated_at|timesince }}
+                                            </div>
+                                        </div>
+                                        {% empty %}
+                                        <div class="text-center py-3 text-muted">
+                                            <i class="fas fa-comment-slash"></i>
+                                            <div class="mt-2">Nenhuma conversa recente</div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nova Conversa -->
+                    <div class="tab-pane fade" id="new-conversation" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="chat-widget">
+                                    <div class="chat-widget-header">
+                                        <div class="chat-widget-icon icon-new">
+                                            <i class="fas fa-plus-circle"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-1">Nova Conversa</h5>
+                                            <p class="text-muted mb-0">Inicie uma nova conversa ou sala de chat</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <form id="newConversationForm">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Nome da Conversa</label>
+                                                    <input type="text" class="form-control" name="name" placeholder="Digite o nome...">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Tipo</label>
+                                                    <select class="form-select" name="type">
+                                                        <option value="support">Suporte</option>
+                                                        <option value="sales">Vendas</option>
+                                                        <option value="general">Geral</option>
+                                                        <option value="private">Privado</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Participantes</label>
+                                            <select class="form-select" multiple name="participants">
+                                                {% for user in team_users %}
+                                                <option value="{{ user.id }}">{{ user.get_full_name|default:user.username }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Descrição (Opcional)</label>
+                                            <textarea class="form-control" rows="3" name="description" placeholder="Descreva o propósito da conversa..."></textarea>
+                                        </div>
+                                        
+                                        <div class="quick-actions">
+                                            <button type="submit" class="action-btn primary">
+                                                <i class="fas fa-plus me-1"></i>
+                                                Criar Conversa
+                                            </button>
+                                            <button type="button" class="action-btn" onclick="openQuickChat()">
+                                                <i class="fas fa-bolt me-1"></i>
+                                                Chat Rápido
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="chat-widget">
+                                    <h6 class="mb-3">Templates Rápidos</h6>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-primary btn-sm" onclick="createTemplate('support')">
+                                            <i class="fas fa-life-ring me-1"></i>
+                                            Suporte Técnico
+                                        </button>
+                                        <button class="btn btn-outline-success btn-sm" onclick="createTemplate('sales')">
+                                            <i class="fas fa-handshake me-1"></i>
+                                            Vendas
+                                        </button>
+                                        <button class="btn btn-outline-info btn-sm" onclick="createTemplate('feedback')">
+                                            <i class="fas fa-star me-1"></i>
+                                            Feedback
+                                        </button>
+                                        <button class="btn btn-outline-warning btn-sm" onclick="createTemplate('escalation')">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            Escalação
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chatbot IA -->
+                    <div class="tab-pane fade" id="chatbot-ai" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="chatbot-preview">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="chat-widget-icon icon-ai me-3">
+                                            <i class="fas fa-robot"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-1 text-white">Assistente Virtual IA</h5>
+                                            <p class="mb-0 opacity-75">Powered by OpenAI GPT-4</p>
+                                        </div>
+                                        <div class="ms-auto">
+                                            <span class="badge bg-white text-primary">{{ chatbot.status|default:"Ativo" }}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row text-center">
+                                        <div class="col-md-3">
+                                            <div class="mb-2">
+                                                <h4 class="text-white mb-0">{{ chatbot.total_conversations|default:847 }}</h4>
+                                                <small class="opacity-75">Conversas</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-2">
+                                                <h4 class="text-white mb-0">{{ chatbot.success_rate|default:92 }}%</h4>
+                                                <small class="opacity-75">Taxa Sucesso</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-2">
+                                                <h4 class="text-white mb-0">{{ chatbot.avg_resolution_time|default:"1.8m" }}</h4>
+                                                <small class="opacity-75">Tempo Médio</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-2">
+                                                <h4 class="text-white mb-0">{{ chatbot.handoffs_today|default:12 }}</h4>
+                                                <small class="opacity-75">Transferências</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="chat-widget">
+                                    <div class="chat-widget-header">
+                                        <h6 class="mb-0">Interface do Chatbot</h6>
+                                        <div class="ms-auto">
+                                            <button class="btn btn-sm btn-outline-primary" onclick="testChatbot()">
+                                                <i class="fas fa-play me-1"></i>
+                                                Testar
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="chat-messages-container" id="chatbotContainer">
+                                        <div class="message-bubble mb-3 p-3 bg-light rounded">
+                                            <strong>Assistente IA:</strong> {{ chatbot.greeting_message|default:"Olá! Sou o assistente virtual da iConnect. Como posso ajudá-lo hoje?" }}
+                                        </div>
+                                        
+                                        <div class="text-center py-4">
+                                            <button class="action-btn primary" onclick="openChatbotInterface()">
+                                                <i class="fas fa-external-link-alt me-1"></i>
+                                                Abrir Interface Completa
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="chat-widget">
+                                    <h6 class="mb-3">Conhecimento Recente</h6>
+                                    <div id="recentKnowledge">
+                                        {% for item in recent_knowledge|slice:":3" %}
+                                        <div class="mb-3 p-2 border rounded">
+                                            <div class="fw-semibold small">{{ item.title }}</div>
+                                            <div class="text-muted small">{{ item.content|truncatechars:50 }}</div>
+                                        </div>
+                                        {% empty %}
+                                        <div class="text-center py-3 text-muted">
+                                            <i class="fas fa-brain"></i>
+                                            <div class="mt-2">Base de conhecimento vazia</div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <button class="btn btn-outline-primary btn-sm w-100" onclick="manageKnowledge()">
+                                        <i class="fas fa-plus me-1"></i>
+                                        Adicionar Conhecimento
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analytics -->
+                    <div class="tab-pane fade" id="analytics" role="tabpanel">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="stats-grid">
+                                    <div class="stat-card">
+                                        <div class="stat-number">{{ analytics.total_messages|default:1247 }}</div>
+                                        <div class="stat-label">Mensagens Hoje</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-number">{{ analytics.active_conversations|default:23 }}</div>
+                                        <div class="stat-label">Conversas Ativas</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-number">{{ analytics.avg_response_time|default:2.1 }}m</div>
+                                        <div class="stat-label">Tempo Médio Resposta</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-number">{{ analytics.satisfaction_rate|default:94 }}%</div>
+                                        <div class="stat-label">Satisfação</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="chat-widget">
+                                    <div class="chat-widget-header">
+                                        <h6 class="mb-0">Mensagens por Hora</h6>
+                                    </div>
+                                    <canvas id="messagesChart" height="200"></canvas>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="chat-widget">
+                                    <div class="chat-widget-header">
+                                        <h6 class="mb-0">Canais de Comunicação</h6>
+                                    </div>
+                                    <canvas id="channelsChart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="quick-actions">
+                                    <button class="action-btn primary" onclick="openAnalyticsDashboard()">
+                                        <i class="fas fa-chart-line me-1"></i>
+                                        Dashboard Completo
+                                    </button>
+                                    <button class="action-btn" onclick="exportReport()">
+                                        <i class="fas fa-download me-1"></i>
+                                        Exportar Relatório
+                                    </button>
+                                    <button class="action-btn" onclick="scheduleReport()">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        Agendar Relatório
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Básico -->
+                    <div class="tab-pane fade" id="chat-basic" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="chat-widget">
+                                    <div class="chat-widget-header">
+                                        <div class="chat-widget-icon icon-basic">
+                                            <i class="fas fa-comment"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-1">Chat Básico</h5>
+                                            <p class="text-muted mb-0">Interface simplificada de chat</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="chat-messages-container" id="chatBasicContainer">
+                                        <div class="text-center py-4">
+                                            <i class="fas fa-comment fa-3x text-muted mb-3"></i>
+                                            <h6 class="text-muted">Chat Simplificado</h6>
+                                            <p class="text-muted">Interface básica para conversas rápidas</p>
+                                            
+                                            <button class="action-btn primary" onclick="openBasicChat()">
+                                                <i class="fas fa-external-link-alt me-1"></i>
+                                                Abrir Chat Básico
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="chat-widget">
+                                    <h6 class="mb-3">Funcionalidades</h6>
+                                    <ul class="list-unstyled">
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success me-2"></i>
+                                            Mensagens de texto simples
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success me-2"></i>
+                                            Emojis e reações
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success me-2"></i>
+                                            Histórico básico
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-times text-danger me-2"></i>
+                                            Arquivos e mídia
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-times text-danger me-2"></i>
+                                            Chamadas de voz/vídeo
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configurações -->
+                    <div class="tab-pane fade" id="config" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="config-section">
+                                    <div class="config-header">
+                                        <div class="chat-widget-icon icon-config me-3">
+                                            <i class="fas fa-cog"></i>
+                                        </div>
+                                        <h6 class="mb-0">Configurações Gerais</h6>
+                                    </div>
+                                    
+                                    <form id="generalConfigForm">
+                                        <div class="setting-group">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <label class="form-label mb-0">Notificações de Chat</label>
+                                                    <small class="text-muted d-block">Receber notificações de novas mensagens</small>
+                                                </div>
+                                                <div class="toggle-switch">
+                                                    <input type="checkbox" id="chatNotifications" checked>
+                                                    <span class="slider"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="setting-group">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <label class="form-label mb-0">Som de Notificação</label>
+                                                    <small class="text-muted d-block">Reproduzir som quando receber mensagens</small>
+                                                </div>
+                                                <div class="toggle-switch">
+                                                    <input type="checkbox" id="soundNotifications" checked>
+                                                    <span class="slider"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="setting-group">
+                                            <label class="form-label">Status Padrão</label>
+                                            <select class="form-select">
+                                                <option value="online">Online</option>
+                                                <option value="away">Ausente</option>
+                                                <option value="busy">Ocupado</option>
+                                                <option value="invisible">Invisível</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="setting-group">
+                                            <label class="form-label">Tempo de Inatividade (minutos)</label>
+                                            <input type="number" class="form-control" value="15" min="5" max="60">
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="config-section">
+                                    <div class="config-header">
+                                        <div class="chat-widget-icon icon-ai me-3">
+                                            <i class="fas fa-robot"></i>
+                                        </div>
+                                        <h6 class="mb-0">Configurações do Chatbot</h6>
+                                    </div>
+                                    
+                                    <form id="chatbotConfigForm">
+                                        <div class="setting-group">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <label class="form-label mb-0">Chatbot Ativo</label>
+                                                    <small class="text-muted d-block">Ativar o assistente virtual</small>
+                                                </div>
+                                                <div class="toggle-switch">
+                                                    <input type="checkbox" id="chatbotActive" {{ chatbot.is_active|yesno:"checked," }}>
+                                                    <span class="slider"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="setting-group">
+                                            <label class="form-label">Nome do Bot</label>
+                                            <input type="text" class="form-control" value="{{ chatbot.name|default:'iConnect Assistant' }}">
+                                        </div>
+                                        
+                                        <div class="setting-group">
+                                            <label class="form-label">Mensagem de Saudação</label>
+                                            <textarea class="form-control" rows="3">{{ chatbot.greeting_message|default:"Olá! Sou o assistente virtual da iConnect. Como posso ajudá-lo hoje?" }}</textarea>
+                                        </div>
+                                        
+                                        <div class="setting-group">
+                                            <label class="form-label">Tempo de Resposta (segundos)</label>
+                                            <input type="number" class="form-control" value="{{ chatbot.response_time|default:2 }}" min="1" max="10">
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="quick-actions">
+                                    <button class="action-btn primary" onclick="saveConfigurations()">
+                                        <i class="fas fa-save me-1"></i>
+                                        Salvar Configurações
+                                    </button>
+                                    <button class="action-btn" onclick="resetDefaults()">
+                                        <i class="fas fa-undo me-1"></i>
+                                        Restaurar Padrões
+                                    </button>
+                                    <button class="action-btn" onclick="openAdvancedSettings()">
+                                        <i class="fas fa-cogs me-1"></i>
+                                        Configurações Avançadas
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Inicialização
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    loadRecentData();
+});
+
+// Funções de navegação
+function openChatAdvanced() {
+    window.open('{% url "dashboard:chat_dashboard" %}', '_blank');
+}
+
+function openChatbotInterface() {
+    window.open('{% url "dashboard:chatbot_ai_interface" %}', '_blank');
+}
+
+function openBasicChat() {
+    window.open('{% url "dashboard:chatbot" %}', '_blank');
+}
+
+function openAnalyticsDashboard() {
+    window.open('{% url "dashboard:chatbot_ai_dashboard" %}', '_blank');
+}
+
+function openAdvancedSettings() {
+    window.open('{% url "dashboard:chatbot_settings" %}', '_blank');
+}
+
+// Funções de ação
+function refreshData() {
+    location.reload();
+}
+
+function openQuickChat() {
+    window.open('{% url "dashboard:create_chat_room" %}', '_blank');
+}
+
+function createRoom() {
+    document.getElementById('new-conversation-tab').click();
+}
+
+function testChatbot() {
+    // Simulação de teste do chatbot
+    const container = document.getElementById('chatbotContainer');
+    const testMessage = document.createElement('div');
+    testMessage.className = 'message-bubble mb-2 p-2 bg-primary text-white rounded';
+    testMessage.innerHTML = '<strong>Você:</strong> Olá, como você funciona?';
+    
+    setTimeout(() => {
+        const response = document.createElement('div');
+        response.className = 'message-bubble mb-2 p-2 bg-light rounded';
+        response.innerHTML = '<strong>Assistente IA:</strong> Posso ajudá-lo com informações sobre nossos serviços, suporte técnico e direcionamento para os departamentos adequados. Como posso ajudá-lo hoje?';
+        container.appendChild(response);
+    }, 1000);
+    
+    container.appendChild(testMessage);
+    container.scrollTop = container.scrollHeight;
+}
+
+function manageKnowledge() {
+    window.open('{% url "dashboard:chatbot_ai_knowledge" %}', '_blank');
+}
+
+function createTemplate(type) {
+    const templates = {
+        support: {
+            name: 'Suporte Técnico',
+            type: 'support',
+            description: 'Conversa para resolver problemas técnicos do cliente'
+        },
+        sales: {
+            name: 'Vendas',
+            type: 'sales', 
+            description: 'Conversa para processo de vendas e demonstrações'
+        },
+        feedback: {
+            name: 'Feedback',
+            type: 'general',
+            description: 'Coleta de feedback e sugestões de clientes'
+        },
+        escalation: {
+            name: 'Escalação',
+            type: 'private',
+            description: 'Conversa urgente que necessita de escalação'
+        }
+    };
+    
+    const template = templates[type];
+    if (template) {
+        document.querySelector('[name="name"]').value = template.name;
+        document.querySelector('[name="type"]').value = template.type;
+        document.querySelector('[name="description"]').value = template.description;
+    }
+}
+
+function saveConfigurations() {
+    // Simulação de salvamento
+    alert('Configurações salvas com sucesso!');
+}
+
+function resetDefaults() {
+    if (confirm('Tem certeza que deseja restaurar as configurações padrão?')) {
+        location.reload();
+    }
+}
+
+function exportReport() {
+    alert('Funcionalidade de exportação será implementada em breve!');
+}
+
+function scheduleReport() {
+    alert('Funcionalidade de agendamento será implementada em breve!');
+}
+
+function loadRecentData() {
+    // Simulação de carregamento de dados recentes
+    console.log('Carregando dados recentes...');
+}
+
+function initializeCharts() {
+    // Gráfico de Mensagens por Hora
+    const messagesCtx = document.getElementById('messagesChart');
+    if (messagesCtx) {
+        new Chart(messagesCtx, {
+            type: 'line',
+            data: {
+                labels: ['8h', '10h', '12h', '14h', '16h', '18h'],
+                datasets: [{
+                    label: 'Mensagens',
+                    data: [12, 19, 15, 25, 22, 18],
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+    
+    // Gráfico de Canais
+    const channelsCtx = document.getElementById('channelsChart');
+    if (channelsCtx) {
+        new Chart(channelsCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Chat Web', 'WhatsApp', 'Email', 'Telefone'],
+                datasets: [{
+                    data: [45, 30, 15, 10],
+                    backgroundColor: [
+                        '#667eea',
+                        '#764ba2',
+                        '#f093fb',
+                        '#f5576c'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Form submissions
+document.getElementById('newConversationForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    // Aqui você faria a requisição AJAX para criar a conversa
+    
+    alert('Nova conversa criada com sucesso!');
+    this.reset();
+});
+</script>
+{% endblock %}

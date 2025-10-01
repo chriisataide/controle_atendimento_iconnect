@@ -6,7 +6,7 @@
 {% block extra_css %}
 <style>
     .filter-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #2E3192 0%, #ED3A5B 100%);
         color: white;
         padding: 1rem;
         margin: -0.5rem -0.5rem 1rem -0.5rem;
@@ -21,9 +21,9 @@
     }
     
     .filter-chip {
-        background: rgba(255,255,255,0.2);
-        border: 1px solid rgba(255,255,255,0.3);
-        color: white;
+    background: rgba(46,49,146,0.12);
+    border: 1.5px solid #ED3A5B;
+    color: #2E3192;
         padding: 0.25rem 0.75rem;
         border-radius: 15px;
         font-size: 0.85rem;
@@ -34,9 +34,10 @@
     
     .filter-chip.active,
     .filter-chip:hover {
-        background: rgba(255,255,255,0.3);
-        border-color: rgba(255,255,255,0.5);
-        transform: translateY(-1px);
+        background: #ED3A5B;
+        color: #fff;
+        border-color: #2E3192;
+        transform: translateY(-2px) scale(1.05);
     }
     
     .ticket-card {
@@ -44,7 +45,7 @@
         border-radius: 16px;
         padding: 1rem;
         margin-bottom: 1rem;
-        border-left: 4px solid;
+    border-left: 4px solid #2E3192;
         box-shadow: 0 2px 20px rgba(0,0,0,0.08);
         transition: all 0.3s ease;
         position: relative;
@@ -57,15 +58,15 @@
     }
     
     .ticket-card.priority-alta {
-        border-left-color: #ff4757;
+    border-left-color: #ED3A5B;
     }
     
     .ticket-card.priority-media {
-        border-left-color: #ffa502;
+    border-left-color: #2E3192;
     }
     
     .ticket-card.priority-baixa {
-        border-left-color: #2ed573;
+    border-left-color: #00b894;
     }
     
     .ticket-header {
@@ -91,27 +92,27 @@
     }
     
     .status-aberto {
-        background: #fff5f5;
-        color: #e53e3e;
-        border: 1px solid #fed7d7;
+    background: #FDF2F8;
+    color: #ED3A5B;
+    border: 1.5px solid #ED3A5B;
     }
     
     .status-em_andamento {
-        background: #fffbeb;
-        color: #d69e2e;
-        border: 1px solid #fbd38d;
+    background: #EEF2FF;
+    color: #2E3192;
+    border: 1.5px solid #2E3192;
     }
     
     .status-resolvido {
-        background: #f0fff4;
-        color: #38a169;
-        border: 1px solid #9ae6b4;
+    background: #E6FFFA;
+    color: #00b894;
+    border: 1.5px solid #00b894;
     }
     
     .status-fechado {
-        background: #edf2f7;
-        color: #4a5568;
-        border: 1px solid #cbd5e0;
+    background: #F3F4F6;
+    color: #6B7280;
+    border: 1.5px solid #E5E7EB;
     }
     
     .ticket-title {
@@ -148,26 +149,30 @@
     }
     
     .priority-badge {
-        padding: 0.25rem 0.5rem;
-        border-radius: 8px;
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
+    padding: 0.25rem 0.5rem;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border: 1.5px solid #2E3192;
     }
     
     .priority-alta {
-        background: #fed7d7;
-        color: #c53030;
+    background: #ED3A5B22;
+    color: #ED3A5B;
+    border-color: #ED3A5B;
     }
     
     .priority-media {
-        background: #fbd38d;
-        color: #d69e2e;
+    background: #2E319222;
+    color: #2E3192;
+    border-color: #2E3192;
     }
     
     .priority-baixa {
-        background: #9ae6b4;
-        color: #2f855a;
+    background: #00b89422;
+    color: #00b894;
+    border-color: #00b894;
     }
     
     .search-container {
@@ -223,7 +228,8 @@
         right: 1rem;
         width: 56px;
         height: 56px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #ED3A5B 0%, #2E3192 100%);
+    box-shadow: 0 8px 32px #ED3A5B55;
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -237,8 +243,8 @@
     }
     
     .create-ticket-fab:hover {
-        transform: scale(1.1) translateY(-2px);
-        box-shadow: 0 12px 40px rgba(102, 126, 234, 0.4);
+    transform: scale(1.12) translateY(-4px);
+    box-shadow: 0 12px 40px #2E319255;
     }
     
     .loading-spinner {
@@ -247,7 +253,7 @@
         height: 20px;
         border: 2px solid #e2e8f0;
         border-radius: 50%;
-        border-top-color: #667eea;
+    border-top-color: #ED3A5B;
         animation: spin 1s ease-in-out infinite;
     }
     
@@ -291,7 +297,7 @@
         bottom: 0;
         left: 0;
         height: 3px;
-        background: linear-gradient(90deg, #667eea, #764ba2);
+    background: linear-gradient(90deg, #ED3A5B, #2E3192);
         transition: width 0.3s ease;
     }
     

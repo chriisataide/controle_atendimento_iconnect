@@ -1,0 +1,387 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ produto.nome }} - Detalhes - iConnect{% endblock %}
+
+{% block page_title %}{{ produto.nome }}{% endblock %}
+{% block breadcrumb_title %}Detalhes do Produto{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Informações Principais -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="text-white text-capitalize ps-3">Informações do Produto</h6>
+                        <div class="me-3">
+                            <a href="{% url 'estoque:produto_update' produto.pk %}" class="btn btn-sm btn-outline-white me-2">
+                                <i class="material-symbols-rounded me-1">edit</i>
+                                Editar
+                            </a>
+                            <a href="{% url 'estoque:produto_list' %}" class="btn btn-sm btn-outline-white">
+                                <i class="material-symbols-rounded me-1">arrow_back</i>
+                                Voltar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body pt-4">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-uppercase text-body text-xs font-weight-bolder">Informações Básicas</h6>
+                        <div class="mb-3">
+                            <label class="form-label text-dark">Nome do Produto</label>
+                            <p class="form-control-static">{{ produto.nome }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark">Código</label>
+                            <p class="form-control-static font-weight-bold">{{ produto.codigo }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark">Categoria</label>
+                            <p class="form-control-static">{{ produto.categoria.nome }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark">Descrição</label>
+                            <p class="form-control-static">{{ produto.descricao|default:"Não informado" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="text-uppercase text-body text-xs font-weight-bolder">Unidade e Localização</h6>
+                        <div class="mb-3">
+                            <label class="form-label text-dark">Unidade de Medida</label>
+                            <p class="form-control-static">{{ produto.unidade_medida.nome }} ({{ produto.unidade_medida.sigla }})</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark">Localização</label>
+                            <p class="form-control-static">{{ produto.localizacao|default:"Não informado" }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark">Status</label>
+                            <p class="form-control-static">
+                                {% if produto.ativo %}
+                                <span class="badge badge-sm bg-gradient-success">Ativo</span>
+                                {% else %}
+                                <span class="badge badge-sm bg-gradient-secondary">Inativo</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr class="horizontal dark">
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="text-uppercase text-body text-xs font-weight-bolder">Preços</h6>
+                        <div class="mb-3">
+                            <label class="form-label text-dark">Preço de Custo</label>
+                            <p class="form-control-static font-weight-bold text-success">
+                                R$ {{ produto.preco_custo|floatformat:2 }}
+                            </p>
+                        </div>
+                        {% if produto.preco_venda %}
+                        <div class="mb-3">
+                            <label class="form-label text-dark">Preço de Venda</label>
+                            <p class="form-control-static font-weight-bold text-info">
+                                R$ {{ produto.preco_venda|floatformat:2 }}
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <h6 class="text-uppercase text-body text-xs font-weight-bolder">Controle de Estoque</h6>
+                        <div class="mb-3">
+                            <label class="form-label text-dark">Estoque Atual</label>
+                            <p class="form-control-static font-weight-bold {{ produto.status_estoque_css }}">
+                                {{ produto.estoque_atual|floatformat:2 }} {{ produto.unidade_medida.sigla }}
+                                {% if produto.estoque_critico %}
+                                <i class="material-symbols-rounded text-danger">warning</i>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark">Estoque Mínimo</label>
+                            <p class="form-control-static">{{ produto.estoque_minimo|floatformat:2 }} {{ produto.unidade_medida.sigla }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark">Estoque Máximo</label>
+                            <p class="form-control-static">{{ produto.estoque_maximo|floatformat:2 }} {{ produto.unidade_medida.sigla }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <h6 class="text-uppercase text-body text-xs font-weight-bolder">Datas</h6>
+                        <div class="mb-3">
+                            <label class="form-label text-dark">Data de Criação</label>
+                            <p class="form-control-static">{{ produto.created_at|date:"d/m/Y H:i" }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark">Última Atualização</label>
+                            <p class="form-control-static">{{ produto.updated_at|date:"d/m/Y H:i" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cards de Status -->
+    <div class="col-lg-4">
+        <!-- Card de Estoque -->
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <h5 class="font-weight-bolder">Status do Estoque</h5>
+                <div class="chart-container position-relative mb-3">
+                    <canvas id="estoqueChart" width="200" height="200"></canvas>
+                </div>
+                <div class="d-flex justify-content-between text-sm">
+                    <span>Mínimo: {{ produto.estoque_minimo|floatformat:2 }}</span>
+                    <span>Máximo: {{ produto.estoque_maximo|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Card de Ações Rápidas -->
+        <div class="card">
+            <div class="card-header pb-0">
+                <h6>Ações Rápidas</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'estoque:movimentacao_create' %}?produto={{ produto.pk }}" 
+                       class="btn btn-primary">
+                        <i class="material-symbols-rounded me-2">sync</i>
+                        Nova Movimentação
+                    </a>
+                    <a href="{% url 'estoque:produto_update' produto.pk %}" 
+                       class="btn btn-secondary">
+                        <i class="material-symbols-rounded me-2">edit</i>
+                        Editar Produto
+                    </a>
+                    <button class="btn btn-info" onclick="gerarRelatorio()">
+                        <i class="material-symbols-rounded me-2">assessment</i>
+                        Relatório do Produto
+                    </button>
+                    {% if produto.ativo %}
+                    <button class="btn btn-warning" onclick="alterarStatus(false)">
+                        <i class="material-symbols-rounded me-2">pause</i>
+                        Desativar Produto
+                    </button>
+                    {% else %}
+                    <button class="btn btn-success" onclick="alterarStatus(true)">
+                        <i class="material-symbols-rounded me-2">play_arrow</i>
+                        Ativar Produto
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Histórico de Movimentações -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header pb-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6>Histórico de Movimentações</h6>
+                    <div>
+                        <select class="form-select form-select-sm" id="periodo-filter">
+                            <option value="7">Últimos 7 dias</option>
+                            <option value="30" selected>Últimos 30 dias</option>
+                            <option value="90">Últimos 90 dias</option>
+                            <option value="365">Último ano</option>
+                            <option value="all">Todas</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center justify-content-center mb-0" id="movimentacoes-table">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Data</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Tipo</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Quantidade</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Estoque Após</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Observações</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Usuário</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Carregado via AJAX -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar gráfico de estoque
+    const ctx = document.getElementById('estoqueChart').getContext('2d');
+    const estoqueAtual = {{ produto.estoque_atual }};
+    const estoqueMinimo = {{ produto.estoque_minimo }};
+    const estoqueMaximo = {{ produto.estoque_maximo }};
+    
+    // Calcular percentual
+    const percentual = (estoqueAtual / estoqueMaximo) * 100;
+    
+    const chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Estoque Atual', 'Disponível'],
+            datasets: [{
+                data: [estoqueAtual, Math.max(0, estoqueMaximo - estoqueAtual)],
+                backgroundColor: [
+                    percentual <= 20 ? '#f56565' : percentual <= 50 ? '#ed8936' : '#48bb78',
+                    '#e2e8f0'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            cutout: '70%'
+        }
+    });
+    
+    // Texto central do gráfico
+    Chart.register({
+        id: 'centerText',
+        beforeDraw: function(chart) {
+            const width = chart.width;
+            const height = chart.height;
+            const ctx = chart.ctx;
+            
+            ctx.restore();
+            const fontSize = (height / 114).toFixed(2);
+            ctx.font = fontSize + "em sans-serif";
+            ctx.textBaseline = "middle";
+            ctx.fillStyle = percentual <= 20 ? '#f56565' : percentual <= 50 ? '#ed8936' : '#48bb78';
+            
+            const text = percentual.toFixed(0) + '%';
+            const textX = Math.round((width - ctx.measureText(text).width) / 2);
+            const textY = height / 2;
+            
+            ctx.fillText(text, textX, textY);
+            ctx.save();
+        }
+    });
+    
+    // Carregar movimentações
+    carregarMovimentacoes(30);
+    
+    // Event listener para filtro de período
+    document.getElementById('periodo-filter').addEventListener('change', function() {
+        carregarMovimentacoes(this.value);
+    });
+});
+
+function carregarMovimentacoes(periodo) {
+    const url = `/estoque/api/produtos/${{{ produto.pk }}}/movimentacoes/?periodo=${periodo}`;
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.querySelector('#movimentacoes-table tbody');
+            tbody.innerHTML = '';
+            
+            if (data.movimentacoes.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            Nenhuma movimentação encontrada no período selecionado
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            data.movimentacoes.forEach(mov => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <p class="text-xs font-weight-bold mb-0">${mov.data_movimentacao}</p>
+                    </td>
+                    <td>
+                        <span class="badge badge-sm ${mov.tipo === 'Entrada' ? 'bg-gradient-success' : 'bg-gradient-danger'}">
+                            ${mov.tipo}
+                        </span>
+                    </td>
+                    <td>
+                        <p class="text-xs font-weight-bold mb-0 ${mov.tipo === 'Entrada' ? 'text-success' : 'text-danger'}">
+                            ${mov.tipo === 'Entrada' ? '+' : '-'}${mov.quantidade}
+                        </p>
+                    </td>
+                    <td>
+                        <p class="text-xs font-weight-bold mb-0">${mov.estoque_apos}</p>
+                    </td>
+                    <td>
+                        <p class="text-xs mb-0">${mov.observacoes || '-'}</p>
+                    </td>
+                    <td>
+                        <p class="text-xs mb-0">${mov.usuario}</p>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(error => {
+            console.error('Erro ao carregar movimentações:', error);
+        });
+}
+
+function gerarRelatorio() {
+    window.open(`/estoque/relatorios/produto/${{{ produto.pk }}}/`, '_blank');
+}
+
+function alterarStatus(novoStatus) {
+    const acao = novoStatus ? 'ativar' : 'desativar';
+    if (confirm(`Tem certeza que deseja ${acao} este produto?`)) {
+        fetch(`/estoque/api/produtos/${{{ produto.pk }}}/status/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                ativo: novoStatus
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erro ao alterar status do produto');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao alterar status do produto');
+        });
+    }
+}
+</script>
+{% endblock %}

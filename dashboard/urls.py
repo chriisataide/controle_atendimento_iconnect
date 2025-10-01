@@ -1,5 +1,5 @@
-from django.urls import path
-from . import views, integrations, sla_views, chat_views, push_views
+from django.urls import path, include
+from . import views, integrations, sla_views, chat_views, push_views, executive_views, chatbot_ai_views
 from .monitoring import HealthCheckView, MetricsView
 
 app_name = 'dashboard'
@@ -123,6 +123,35 @@ urlpatterns = [
     path('api/push/unsubscribe/', push_views.unsubscribe_push, name='push_unsubscribe'),
     path('api/push/preferences/', push_views.update_preferences, name='push_preferences'),
     path('api/push/test/', push_views.test_notification, name='push_test'),
+    
+    # Dashboard Executivo
+    path('executive/', executive_views.executive_dashboard, name='executive_dashboard'),
+    
+    # APIs do Dashboard Executivo
+    path('api/executive-kpis/', executive_views.executive_kpis_api, name='executive_kpis_api'),
+    path('api/executive-charts/', executive_views.executive_charts_api, name='executive_charts_api'),
+    path('api/executive-alerts/', executive_views.executive_alerts_api, name='executive_alerts_api'),
+    
+    # Chatbot IA
+    path('chatbot-ai/', chatbot_ai_views.chatbot_interface, name='chatbot_ai_interface'),
+    path('chatbot-ai/dashboard/', chatbot_ai_views.chatbot_dashboard, name='chatbot_ai_dashboard'),
+    path('chatbot-ai/knowledge/', chatbot_ai_views.chatbot_knowledge_base, name='chatbot_ai_knowledge'),
+    path('chatbot-ai/conversations/', chatbot_ai_views.chatbot_conversations, name='chatbot_ai_conversations'),
+    path('chatbot-ai/conversation/<uuid:conversation_id>/', chatbot_ai_views.chatbot_conversation_detail, name='chatbot_ai_conversation_detail'),
+    path('chatbot-ai/settings/', chatbot_ai_views.chatbot_settings, name='chatbot_ai_settings'),
+    
+    # APIs do Chatbot IA
+    path('api/chatbot/', chatbot_ai_views.chatbot_api, name='chatbot_ai_api'),
+    path('api/chatbot/feedback/', chatbot_ai_views.chatbot_feedback, name='chatbot_ai_feedback'),
+    path('api/chatbot/add-knowledge/', chatbot_ai_views.chatbot_add_knowledge, name='chatbot_ai_add_knowledge'),
+    path('api/chatbot/create-ticket/', chatbot_ai_views.chatbot_create_ticket_from_conversation, name='chatbot_ai_create_ticket'),
+    path('api/chatbot/analytics/', chatbot_ai_views.chatbot_analytics_api, name='chatbot_ai_analytics'),
+    
+    # WhatsApp Business
+    path('whatsapp/', include('dashboard.whatsapp_urls')),
+    
+    # Central de Comunicação Unificada
+    path('communication/', views.communication_center, name='communication_center'),
     
     # Webhooks para Integrações
     path('webhooks/whatsapp/', integrations.whatsapp_webhook, name='whatsapp_webhook'),

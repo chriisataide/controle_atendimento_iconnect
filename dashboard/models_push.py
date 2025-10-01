@@ -76,8 +76,8 @@ class NotificationPreference(models.Model):
             'vibration_enabled': self.vibration_enabled,
         }
 
-class NotificationLog(models.Model):
-    """Log de notificações enviadas"""
+class PushNotificationLog(models.Model):
+    """Log de notificações push enviadas"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notification_logs')
     subscription = models.ForeignKey(PushSubscription, on_delete=models.CASCADE, null=True, blank=True)
     

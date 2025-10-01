@@ -4,30 +4,62 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.utils import timezone
-# Versão temporária simplificada das Push Views
-# TODO: Instalar pywebpush e ativar modelos completos
+from pywebpush import webpush, WebPushException
 
 import json
 import logging
+from .models_push import PushSubscription
 
 logger = logging.getLogger(__name__)
+
+# VAPID keys - configure in settings
+VAPID_PUBLIC_KEY = getattr(settings, 'VAPID_PUBLIC_KEY', 'BEl62iUYgUivxIkv69yViEuiBIa40HI0u2Zd43v_rYgL6-xfEkUNECDqJf0pv8VFJdw4aBQQ1hvGsq-cDdfqjgI')
+VAPID_PRIVATE_KEY = getattr(settings, 'VAPID_PRIVATE_KEY', '')
+VAPID_CLAIMS = getattr(settings, 'VAPID_CLAIMS', {"sub": "mailto:admin@iconnect.com"})
 
 @login_required
 @require_http_methods(["GET"])
 def get_public_key(request):
     """Retorna a chave pública VAPID para o cliente"""
     return JsonResponse({
-        'public_key': 'BEl62iUYgUivxIkv69yViEuiBIa40HI0u2Zd43v_rYgL6-xfEkUNECDqJf0pv8VFJdw4aBQQ1hvGsq-cDdfqjgI',
-        'status': 'mock'
+        'public_key': VAPID_PUBLIC_KEY,
+        'status': 'active'
     })
 
 @login_required  
 @csrf_exempt
 @require_http_methods(["POST"])
 def subscribe_push(request):
-    """Inscreve o usuário para notificações push - versão mock"""
+    """Inscreve o usuário para notificações push"""
     try:
         data = json.loads(request.body)
+        subscription_info = data.get('subscription')
+        
+        if not subscription_info:
+            return JsonResponse({'success': False, 'error': 'Subscription data missing'})
+        
+        # Criar ou atualizar subscription
+        subscription, created = PushSubscription.objects.update_or_create(
+            user=request.user,
+            defaults={
+                'endpoint': subscription_info.get('endpoint'),
+                'p256dh': subscription_info.get('keys', {}).get('p256dh'),
+                'auth': subscription_info.get('keys', {}).get('auth'),
+                'is_active': True
+            }
+        )
+        
+        logger.info(f"Push subscription {'created' if created else 'updated'} for user {request.user.username}")
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Subscription successful',
+            'subscription_id': subscription.id
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in push subscription: {str(e)}")
+        return JsonResponse({'success': False, 'error': 'Subscription failed'})
         logger.info(f"Mock push subscription for user {request.user.id}")
         
         return JsonResponse({

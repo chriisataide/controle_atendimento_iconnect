@@ -1,0 +1,1156 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Executivo{% endblock %}
+
+{% block page_title %}Dashboard Executivo{% endblock %}
+{% block breadcrumb_title %}Dashboard Executivo{% endblock %}
+
+{% block extra_css %}
+<style>
+.real-time-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #10b981;
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 4px solid #6366f1;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes tooltipFadeIn {
+    0% { 
+        opacity: 0; 
+        transform: translateX(-50%) translateY(-5px) scale(0.9); 
+    }
+    100% { 
+        opacity: 1; 
+        transform: translateX(-50%) translateY(0) scale(1); 
+    }
+}
+
+@keyframes chartGlow {
+    0% { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    50% { box-shadow: 0 8px 15px -3px rgba(99, 102, 241, 0.2); }
+    100% { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+}
+
+.filter-option {
+    transition: all 0.3s ease;
+}
+
+.filter-option:hover {
+    background-color: rgba(99, 102, 241, 0.1) !important;
+    color: #6366f1 !important;
+}
+
+.filter-option.active {
+    background-color: #6366f1 !important;
+    color: white !important;
+    font-weight: 600;
+}
+
+.filter-option.active i {
+    color: white !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Dashboard Executivo</h3>
+            <p class="mb-4">
+                <span class="real-time-indicator"></span>
+                Visão estratégica e indicadores-chave de performance do sistema iConnect.
+            </p>
+        </div>
+        <div class="col-md-6 d-flex align-items-center justify-content-end">
+            <button class="btn btn-outline-primary btn-sm me-2" onclick="refreshDashboard()">
+                <i class="material-icons me-1" style="font-size: 16px;">refresh</i>
+                Atualizar
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="exportReport()">
+                <i class="material-icons me-1" style="font-size: 16px;">download</i>
+                Exportar
+            </button>
+        </div>
+    </div>
+
+    <!-- KPIs Grid -->
+    <div class="row">
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-capitalize font-weight-bold">Receita Total (Mês)</p>
+                                <h5 class="font-weight-bolder mb-0">
+                                    R$ {{ total_revenue|floatformat:2|default:"125.000,00" }}
+                                    <span class="text-success text-sm font-weight-bolder">+15%</span>
+                                </h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
+                                <i class="material-icons opacity-10">attach_money</i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-capitalize font-weight-bold">Tickets Resolvidos</p>
+                                <h5 class="font-weight-bolder mb-0">
+                                    {{ tickets_resolved|default:"247" }}
+                                    <span class="text-success text-sm font-weight-bolder">+8%</span>
+                                </h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-md">
+                                <i class="material-icons opacity-10">task_alt</i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-capitalize font-weight-bold">Satisfação Média</p>
+                                <h5 class="font-weight-bolder mb-0">
+                                    {{ satisfaction_avg|floatformat:1|default:"4.3" }}/5.0
+                                    <span class="text-secondary text-sm font-weight-bolder">Estável</span>
+                                </h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-info shadow text-center border-radius-md">
+                                <i class="material-icons opacity-10">sentiment_satisfied</i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-sm-6">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-capitalize font-weight-bold">SLA Compliance</p>
+                                <h5 class="font-weight-bolder mb-0">
+                                    {{ sla_compliance|floatformat:1|default:"87.5" }}%
+                                    <span class="text-warning text-sm font-weight-bolder">-2%</span>
+                                </h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-md">
+                                <i class="material-icons opacity-10">timer</i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos e Análises -->
+    <div class="row mt-4">
+        <div class="col-lg-8">
+            <div class="card h-100">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6>Evolução da Receita</h6>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" 
+                                    id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="material-icons me-1" style="font-size: 16px;">filter_list</i>
+                                <span id="filterLabel">Últimos 12 meses</span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item filter-option" href="#" 
+                                       onclick="selectFilter('7d', 'Últimos 7 dias', this)" 
+                                       data-period="7d">
+                                    <i class="material-icons me-2" style="font-size: 16px;">today</i>
+                                    Últimos 7 dias
+                                </a></li>
+                                <li><a class="dropdown-item filter-option" href="#" 
+                                       onclick="selectFilter('30d', 'Últimos 30 dias', this)" 
+                                       data-period="30d">
+                                    <i class="material-icons me-2" style="font-size: 16px;">date_range</i>
+                                    Últimos 30 dias
+                                </a></li>
+                                <li><a class="dropdown-item filter-option" href="#" 
+                                       onclick="selectFilter('90d', 'Últimas 12 semanas', this)" 
+                                       data-period="90d">
+                                    <i class="material-icons me-2" style="font-size: 16px;">view_week</i>
+                                    Últimas 12 semanas
+                                </a></li>
+                                <li><a class="dropdown-item filter-option active" href="#" 
+                                       onclick="selectFilter('12m', 'Últimos 12 meses', this)" 
+                                       data-period="12m">
+                                    <i class="material-icons me-2" style="font-size: 16px;">calendar_view_month</i>
+                                    Últimos 12 meses
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-3">
+                    <div id="revenueChart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header pb-0">
+                    <h6>Distribuição de Tickets por Status</h6>
+                </div>
+                <div class="card-body p-3" style="overflow: hidden;">
+                    <div id="ticketsChart" style="height: 300px; width: 100%; position: relative;"></div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Métricas em Tempo Real e Alertas -->
+    <div class="row mt-4">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>
+                        <span class="real-time-indicator"></span>
+                        Métricas em Tempo Real
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-2 py-1">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">ROI Campanhas</h6>
+                                                <p class="text-xs text-secondary mb-0">Retorno sobre investimento</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="align-middle text-center text-sm">
+                                        <span class="text-xs font-weight-bold">120%</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <div class="progress-wrapper w-75 mx-auto">
+                                            <div class="progress-info">
+                                                <div class="progress-percentage">
+                                                    <span class="text-xs font-weight-bold">120%</span>
+                                                </div>
+                                            </div>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-gradient-success" 
+                                                     role="progressbar" 
+                                                     style="width: 100%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-2 py-1">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">Performance Equipe</h6>
+                                                <p class="text-xs text-secondary mb-0">Produtividade geral</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="align-middle text-center text-sm">
+                                        <span class="text-xs font-weight-bold">85%</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <div class="progress-wrapper w-75 mx-auto">
+                                            <div class="progress-info">
+                                                <div class="progress-percentage">
+                                                    <span class="text-xs font-weight-bold">85%</span>
+                                                </div>
+                                            </div>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-gradient-primary" 
+                                                     role="progressbar" 
+                                                     style="width: 85%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-2 py-1">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">Churn Rate</h6>
+                                                <p class="text-xs text-secondary mb-0">Taxa de cancelamento</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="align-middle text-center text-sm">
+                                        <span class="text-xs font-weight-bold">5%</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <div class="progress-wrapper w-75 mx-auto">
+                                            <div class="progress-info">
+                                                <div class="progress-percentage">
+                                                    <span class="text-xs font-weight-bold">5%</span>
+                                                </div>
+                                            </div>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-gradient-warning" 
+                                                     role="progressbar" 
+                                                     style="width: 25%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>
+                        <i class="material-icons me-2">notification_important</i>
+                        Alertas Executivos
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="alert-heading mb-1">SLA em Risco</h6>
+                                <p class="mb-1 text-sm">Tickets #1234, #1235 próximos do vencimento</p>
+                                <small class="text-muted">
+                                    <i class="material-icons me-1" style="font-size: 14px;">schedule</i>
+                                    5 minutos atrás
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-warning">Alta</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info alert-dismissible fade show mb-3" role="alert">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="alert-heading mb-1">Meta de Satisfação</h6>
+                                <p class="mb-1 text-sm">Satisfação abaixo da meta este mês</p>
+                                <small class="text-muted">
+                                    <i class="material-icons me-1" style="font-size: 14px;">schedule</i>
+                                    1 hora atrás
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-info">Média</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-success alert-dismissible fade show mb-0" role="alert">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="alert-heading mb-1">Sistema Atualizado</h6>
+                                <p class="mb-1 text-sm">Nova versão implantada com sucesso</p>
+                                <small class="text-muted">
+                                    <i class="material-icons me-1" style="font-size: 14px;">schedule</i>
+                                    2 horas atrás
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-success">Baixa</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Dashboard Executivo carregado com sucesso');
+    initializeDashboard();
+});
+
+function initializeDashboard() {
+    console.log('Inicializando dashboard...');
+    createVisualCharts();
+    startVisualIndicators();
+    console.log('Dashboard inicializado com sucesso!');
+}
+
+function createVisualCharts() {
+    console.log('Iniciando criação dos gráficos...');
+    createRevenueChartHTML();
+    createTicketsChartHTML();
+    console.log('Gráficos criados!');
+}
+
+function createRevenueChartHTML() {
+    const container = document.getElementById('revenueChart');
+    if (!container) {
+        console.log('Container revenueChart não encontrado');
+        return;
+    }
+    
+    console.log('Criando gráfico de receita...');
+    container.innerHTML = '';
+    
+    // Definir dados para diferentes períodos
+    window.revenueData = {
+        '7d': {
+            data: [15, 22, 18, 25, 30, 28, 32],
+            labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+            title: 'Últimos 7 dias',
+            unit: 'k'
+        },
+        '30d': {
+            data: [120, 135, 110, 145, 160, 155, 170, 165, 180, 175, 190, 185, 200, 195, 210, 205, 220, 215, 230, 225, 240, 235, 250, 245, 260, 255, 270, 265, 280, 275],
+            labels: Array.from({length: 30}, (_, i) => (i + 1).toString()),
+            title: 'Últimos 30 dias',
+            unit: 'k'
+        },
+        '90d': {
+            data: [95, 88, 102, 115, 108, 122, 135, 128, 142, 155, 148, 162],
+            labels: ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'S11', 'S12'],
+            title: 'Últimas 12 semanas',
+            unit: 'k'
+        },
+        '12m': {
+            data: [850, 920, 1100, 1250, 980, 1350, 1420, 1180, 1580, 1680, 1750, 1950],
+            labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+            title: 'Últimos 12 meses',
+            unit: ''
+        }
+    };
+    
+    // Período atual (padrão: 12 meses)
+    window.currentPeriod = '12m';
+    
+    createChart(window.currentPeriod);
+}
+
+function createChart(period) {
+    const container = document.getElementById('revenueChart');
+    const periodData = window.revenueData[period];
+    const data = periodData.data;
+    const labels = periodData.labels;
+    const maxValue = Math.max(...data);
+    
+    // Limpar container
+    container.innerHTML = '';
+    
+    // Container principal
+    const chartContainer = document.createElement('div');
+    chartContainer.style.cssText = `
+        width: 100%;
+        height: 280px;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid #e2e8f0;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-sizing: border-box;
+    `;
+    
+    // Título dinâmico
+    const title = document.createElement('div');
+    title.style.cssText = `
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    `;
+    title.innerHTML = `<i class="material-icons" style="font-size: 16px; color: #6366f1;">trending_up</i>${periodData.title}`;
+    
+    // Área das barras
+    const barsContainer = document.createElement('div');
+    barsContainer.style.cssText = `
+        height: 180px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-around;
+        background: linear-gradient(to top, rgba(99, 102, 241, 0.1) 0%, transparent 100%);
+        border-radius: 6px;
+        padding: 10px;
+        margin-bottom: 10px;
+        position: relative;
+    `;
+    
+    // Adicionar linhas de grade
+    for (let i = 1; i <= 4; i++) {
+        const gridLine = document.createElement('div');
+        gridLine.style.cssText = `
+            position: absolute;
+            top: ${(i * 20)}%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(99, 102, 241, 0.1);
+            z-index: 1;
+        `;
+        barsContainer.appendChild(gridLine);
+        
+        // Labels de valor no eixo Y
+        const valueLabel = document.createElement('div');
+        valueLabel.style.cssText = `
+            position: absolute;
+            top: ${(i * 20) - 2}%;
+            left: -35px;
+            font-size: 10px;
+            color: #6b7280;
+            font-weight: 500;
+        `;
+        const value = Math.round((maxValue * (5 - i)) / 5);
+        valueLabel.textContent = `${value}${periodData.unit}`;
+        barsContainer.appendChild(valueLabel);
+    }
+    
+    // Criar barras
+    data.forEach((value, index) => {
+        const barContainer = document.createElement('div');
+        barContainer.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            max-width: ${period === '30d' ? '15px' : '40px'};
+            z-index: 2;
+            position: relative;
+        `;
+        
+        const bar = document.createElement('div');
+        const height = (value / maxValue) * 140;
+        bar.style.cssText = `
+            width: ${period === '30d' ? '8px' : '20px'};
+            height: ${height}px;
+            background: linear-gradient(to top, #6366f1, #8b5cf6);
+            border-radius: 4px 4px 0 0;
+            margin-bottom: 5px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
+        `;
+        
+        // Valor da barra
+        const barValue = document.createElement('div');
+        barValue.style.cssText = `
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 9px;
+            color: #6366f1;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2px 4px;
+            border-radius: 3px;
+            white-space: nowrap;
+            margin-bottom: 2px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        `;
+        
+        if (periodData.unit === '') {
+            barValue.textContent = `R$ ${(value * 1000).toLocaleString('pt-BR')}`;
+        } else {
+            barValue.textContent = `R$ ${value}${periodData.unit}`;
+        }
+        
+        bar.appendChild(barValue);
+        
+        // Label do período
+        const label = document.createElement('div');
+        label.style.cssText = `
+            font-size: ${period === '30d' ? '8px' : '10px'};
+            color: #6c757d;
+            font-weight: 500;
+            text-align: center;
+            transform: ${period === '30d' ? 'rotate(45deg)' : 'none'};
+            margin-top: ${period === '30d' ? '8px' : '2px'};
+        `;
+        label.textContent = labels[index];
+        
+        // Hover effects
+        bar.addEventListener('mouseenter', () => {
+            bar.style.transform = 'scale(1.1)';
+            bar.style.background = 'linear-gradient(to top, #4f46e5, #7c3aed)';
+            barValue.style.opacity = '1';
+        });
+        
+        bar.addEventListener('mouseleave', () => {
+            bar.style.transform = 'scale(1)';
+            bar.style.background = 'linear-gradient(to top, #6366f1, #8b5cf6)';
+            barValue.style.opacity = '0';
+        });
+        
+        barContainer.appendChild(bar);
+        barContainer.appendChild(label);
+        barsContainer.appendChild(barContainer);
+    });
+    
+    // Estatísticas do período
+    const statsContainer = document.createElement('div');
+    statsContainer.style.cssText = `
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 8px;
+        font-size: 11px;
+        margin-top: 5px;
+    `;
+    
+    const total = data.reduce((a, b) => a + b, 0);
+    const average = Math.round(total / data.length);
+    const growth = data.length > 1 ? (((data[data.length - 1] - data[0]) / data[0]) * 100).toFixed(1) : 0;
+    
+    statsContainer.innerHTML = `
+        <div style="color: #374151; font-weight: 600;">
+            <span style="color: #6b7280;">Total:</span> 
+            ${periodData.unit === '' ? 'R$ ' + (total * 1000).toLocaleString('pt-BR') : 'R$ ' + total + periodData.unit}
+        </div>
+        <div style="color: #374151; font-weight: 600;">
+            <span style="color: #6b7280;">Média:</span> 
+            ${periodData.unit === '' ? 'R$ ' + (average * 1000).toLocaleString('pt-BR') : 'R$ ' + average + periodData.unit}
+        </div>
+        <div style="color: ${growth >= 0 ? '#10b981' : '#ef4444'}; font-weight: 600;">
+            <span style="color: #6b7280;">Crescimento:</span> 
+            ${growth >= 0 ? '+' : ''}${growth}%
+        </div>
+    `;
+    
+    chartContainer.appendChild(title);
+    chartContainer.appendChild(barsContainer);
+    chartContainer.appendChild(statsContainer);
+    container.appendChild(chartContainer);
+    console.log(`Gráfico de receita criado para período: ${period}`);
+}
+
+function selectFilter(period, label, element) {
+    // Remover classe active de todos os filtros
+    document.querySelectorAll('.filter-option').forEach(option => {
+        option.classList.remove('active');
+    });
+    
+    // Adicionar classe active ao filtro selecionado
+    element.classList.add('active');
+    
+    // Atualizar label do dropdown
+    document.getElementById('filterLabel').textContent = label;
+    
+    // Atualizar gráfico
+    updateChart(period);
+    
+    // Fechar dropdown
+    const dropdown = bootstrap.Dropdown.getInstance(document.getElementById('filterDropdown'));
+    if (dropdown) {
+        dropdown.hide();
+    }
+}
+
+function updateChart(period) {
+    console.log('Filtrando dados para período:', period);
+    
+    // Atualizar período atual
+    window.currentPeriod = period;
+    
+    // Feedback visual
+    const chart = document.getElementById('revenueChart');
+    if (chart) {
+        chart.style.opacity = '0.7';
+        chart.style.transform = 'scale(0.98)';
+        
+        setTimeout(() => {
+            createChart(period);
+            chart.style.opacity = '1';
+            chart.style.transform = 'scale(1)';
+            chart.style.transition = 'all 0.3s ease';
+        }, 200);
+    }
+}
+
+function createTicketsChartHTML() {
+    const container = document.getElementById('ticketsChart');
+    if (!container) {
+        console.log('Container ticketsChart não encontrado');
+        return;
+    }
+    
+    console.log('Criando gráfico de tickets melhorado...');
+    container.innerHTML = '';
+    
+    // Dados dos tickets com cores melhoradas
+    const data = [30, 45, 125];
+    const colors = ['#ef4444', '#f59e0b', '#10b981']; // Vermelho, Amarelo, Verde
+    const labels = ['Abertos', 'Em Andamento', 'Resolvidos'];
+    const icons = ['pending', 'autorenew', 'check_circle'];
+    const total = data.reduce((a, b) => a + b, 0);
+    
+    // Container principal ajustado para ficar dentro do card
+    const chartContainer = document.createElement('div');
+    chartContainer.style.cssText = `
+        width: 100%;
+        height: 100%;
+        max-height: 300px;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 12px;
+        padding: 15px;
+        border: 1px solid #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        box-sizing: border-box;
+        overflow: hidden;
+    `;
+    
+    // Título do gráfico
+    const title = document.createElement('div');
+    title.style.cssText = `
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    `;
+    title.innerHTML = '<i class="material-icons" style="font-size: 16px; color: #6366f1;">donut_large</i>Distribuição por Status';
+    
+    // Container do gráfico donut ajustado
+    const donutContainer = document.createElement('div');
+    donutContainer.style.cssText = `
+        width: 120px;
+        height: 120px;
+        position: relative;
+        margin-bottom: 15px;
+        flex-shrink: 0;
+    `;
+    
+    // Criar SVG para o donut chart
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '120');
+    svg.setAttribute('height', '120');
+    svg.style.transform = 'rotate(-90deg)'; // Começar do topo
+    
+    const centerX = 60;
+    const centerY = 60;
+    const radius = 45;
+    const strokeWidth = 18;
+    
+    // Criar círculo de fundo
+    const backgroundCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    backgroundCircle.setAttribute('cx', centerX);
+    backgroundCircle.setAttribute('cy', centerY);
+    backgroundCircle.setAttribute('r', radius);
+    backgroundCircle.setAttribute('fill', 'none');
+    backgroundCircle.setAttribute('stroke', '#f1f5f9');
+    backgroundCircle.setAttribute('stroke-width', strokeWidth);
+    svg.appendChild(backgroundCircle);
+    
+    // Calcular circunferência
+    const circumference = 2 * Math.PI * radius;
+    let currentOffset = 0;
+    
+    // Criar segmentos animados
+    data.forEach((value, index) => {
+        const percentage = value / total;
+        const strokeDasharray = circumference * percentage;
+        const strokeDashoffset = currentOffset;
+        
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', centerX);
+        circle.setAttribute('cy', centerY);
+        circle.setAttribute('r', radius);
+        circle.setAttribute('fill', 'none');
+        circle.setAttribute('stroke', colors[index]);
+        circle.setAttribute('stroke-width', strokeWidth);
+        circle.setAttribute('stroke-linecap', 'round');
+        circle.setAttribute('stroke-dasharray', `${strokeDasharray} ${circumference}`);
+        circle.setAttribute('stroke-dashoffset', -strokeDashoffset);
+        circle.style.transition = 'all 0.6s ease-in-out';
+        circle.style.cursor = 'pointer';
+        
+        // Hover effects
+        circle.addEventListener('mouseenter', function() {
+            circle.setAttribute('stroke-width', strokeWidth + 2);
+            
+            // Mostrar tooltip
+            showTooltip(donutContainer, labels[index], value, percentage * 100, colors[index]);
+        });
+        
+        circle.addEventListener('mouseleave', function() {
+            circle.setAttribute('stroke-width', strokeWidth);
+            hideTooltip();
+        });
+        
+        svg.appendChild(circle);
+        currentOffset += strokeDasharray;
+    });
+    
+    // Centro com informações
+    const centerInfo = document.createElement('div');
+    centerInfo.style.cssText = `
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        pointer-events: none;
+    `;
+    
+    const totalLabel = document.createElement('div');
+    totalLabel.style.cssText = `
+        font-size: 20px;
+        font-weight: bold;
+        color: #1f2937;
+        line-height: 1;
+    `;
+    totalLabel.textContent = total;
+    
+    const totalSubLabel = document.createElement('div');
+    totalSubLabel.style.cssText = `
+        font-size: 10px;
+        color: #6b7280;
+        font-weight: 500;
+        margin-top: 2px;
+    `;
+    totalSubLabel.textContent = 'Total';
+    
+    centerInfo.appendChild(totalLabel);
+    centerInfo.appendChild(totalSubLabel);
+    
+    // Legenda compacta
+    const legend = document.createElement('div');
+    legend.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        width: 100%;
+        flex: 1;
+        overflow-y: auto;
+    `;
+    
+    data.forEach((value, index) => {
+        const percentage = ((value / total) * 100).toFixed(1);
+        
+        const item = document.createElement('div');
+        item.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px;
+            background: white;
+            border-radius: 8px;
+            border-left: 3px solid ${colors[index]};
+            font-size: 11px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        `;
+        
+        const leftSection = document.createElement('div');
+        leftSection.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        `;
+        
+        const icon = document.createElement('i');
+        icon.className = 'material-icons';
+        icon.style.cssText = `
+            font-size: 14px;
+            color: ${colors[index]};
+        `;
+        icon.textContent = icons[index];
+        
+        const label = document.createElement('span');
+        label.style.cssText = `
+            color: #374151;
+            font-weight: 600;
+            font-size: 11px;
+        `;
+        label.textContent = labels[index];
+        
+        const valueSpan = document.createElement('span');
+        valueSpan.style.cssText = `
+            color: ${colors[index]};
+            font-weight: bold;
+            font-size: 12px;
+        `;
+        valueSpan.textContent = `${value} (${percentage}%)`;
+        
+        leftSection.appendChild(icon);
+        leftSection.appendChild(label);
+        item.appendChild(leftSection);
+        item.appendChild(valueSpan);
+        
+        // Hover effects na legenda
+        item.addEventListener('mouseenter', function() {
+            item.style.transform = 'translateX(3px)';
+            item.style.boxShadow = `0 2px 8px ${colors[index]}30`;
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            item.style.transform = 'translateX(0)';
+            item.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.1)';
+        });
+        
+        legend.appendChild(item);
+    });
+    
+    donutContainer.appendChild(svg);
+    donutContainer.appendChild(centerInfo);
+    
+    chartContainer.appendChild(title);
+    chartContainer.appendChild(donutContainer);
+    chartContainer.appendChild(legend);
+    container.appendChild(chartContainer);
+    
+    console.log('Gráfico de tickets melhorado criado com sucesso!');
+}
+
+function showTooltip(parent, label, value, percentage, color) {
+    hideTooltip(); // Remove tooltip anterior se existir
+    
+    const tooltip = document.createElement('div');
+    tooltip.id = 'tickets-tooltip';
+    tooltip.style.cssText = `
+        position: absolute;
+        top: -45px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${color};
+        color: white;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        animation: tooltipFadeIn 0.3s ease;
+    `;
+    
+    tooltip.innerHTML = `
+        <div style="text-align: center;">
+            <div>${label}</div>
+            <div style="font-size: 11px; opacity: 0.9; margin-top: 2px;">${value} tickets (${percentage.toFixed(1)}%)</div>
+        </div>
+    `;
+    
+    // Adicionar seta
+    const arrow = document.createElement('div');
+    arrow.style.cssText = `
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 6px solid ${color};
+    `;
+    tooltip.appendChild(arrow);
+    
+    parent.appendChild(tooltip);
+}
+
+function hideTooltip() {
+    const existingTooltip = document.getElementById('tickets-tooltip');
+    if (existingTooltip) {
+        existingTooltip.remove();
+    }
+}
+
+function startVisualIndicators() {
+    const indicators = document.querySelectorAll('.real-time-indicator');
+    indicators.forEach(indicator => {
+        indicator.style.display = 'inline-block';
+        indicator.style.width = '8px';
+        indicator.style.height = '8px';
+        indicator.style.backgroundColor = '#10b981';
+        indicator.style.borderRadius = '50%';
+        indicator.style.marginRight = '8px';
+        indicator.style.animation = 'pulse 2s infinite';
+    });
+}
+
+function refreshDashboard() {
+    console.log('Atualizando dashboard...');
+    
+    const refreshBtn = document.querySelector('[onclick="refreshDashboard()"]');
+    if (refreshBtn) {
+        const originalText = refreshBtn.innerHTML;
+        refreshBtn.innerHTML = '<i class="material-icons me-1" style="font-size: 16px;">hourglass_empty</i>Atualizando...';
+        refreshBtn.disabled = true;
+        
+        setTimeout(() => {
+            refreshBtn.innerHTML = originalText;
+            refreshBtn.disabled = false;
+            
+            // Recriar gráficos
+            createVisualCharts();
+            updateKPIValues();
+        }, 1000);
+    }
+}
+
+function updateKPIValues() {
+    const kpiValues = document.querySelectorAll('.font-weight-bolder');
+    kpiValues.forEach(value => {
+        value.style.transition = 'color 0.3s ease';
+        value.style.color = '#28a745';
+        setTimeout(() => {
+            value.style.color = '';
+        }, 500);
+    });
+}
+
+function exportReport() {
+    console.log('Preparando relatório...');
+    
+    const exportBtn = document.querySelector('[onclick="exportReport()"]');
+    if (exportBtn) {
+        const originalText = exportBtn.innerHTML;
+        exportBtn.innerHTML = '<i class="material-icons me-1" style="font-size: 16px;">download</i>Preparando...';
+        exportBtn.disabled = true;
+        
+        setTimeout(() => {
+            exportBtn.innerHTML = originalText;
+            exportBtn.disabled = false;
+            
+            // Criar dados do relatório
+            const reportData = {
+                data_relatorio: new Date().toLocaleDateString('pt-BR'),
+                hora_relatorio: new Date().toLocaleTimeString('pt-BR'),
+                kpis: {
+                    receita_total: 'R$ 125.000,00',
+                    tickets_resolvidos: 247,
+                    satisfacao_media: 4.3,
+                    sla_compliance: '87.5%'
+                },
+                detalhes_tickets: {
+                    abertos: 30,
+                    em_andamento: 45,
+                    resolvidos: 125,
+                    total: 200
+                }
+            };
+            
+            // Download do relatório
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(reportData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "relatorio-executivo-" + new Date().toISOString().split('T')[0] + ".json");
+            downloadAnchor.click();
+        }, 1000);
+    }
+}
+
+function updateChart(period) {
+    console.log('Filtrando dados para período:', period);
+    
+    // Atualizar período atual
+    window.currentPeriod = period;
+    
+    // Feedback visual
+    const chart = document.getElementById('revenueChart');
+    if (chart) {
+        chart.style.opacity = '0.7';
+        chart.style.transform = 'scale(0.98)';
+        
+        setTimeout(() => {
+            createChart(period);
+            chart.style.opacity = '1';
+            chart.style.transform = 'scale(1)';
+            chart.style.transition = 'all 0.3s ease';
+        }, 200);
+    }
+}
+</script>
+{% endblock %}

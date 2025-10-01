@@ -1,0 +1,433 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Editar{% else %}Novo{% endif %} Produto - iConnect{% endblock %}
+
+{% block page_title %}{% if form.instance.pk %}Editar Produto{% else %}Novo Produto{% endif %}{% endblock %}
+{% block breadcrumb_title %}{% if form.instance.pk %}Editar Produto{% else %}Novo Produto{% endif %}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="text-white text-capitalize ps-3">
+                            {% if form.instance.pk %}Editar Produto{% else %}Cadastrar Novo Produto{% endif %}
+                        </h6>
+                        <div class="me-3">
+                            <a href="{% url 'estoque:produto_list' %}" class="btn btn-sm btn-outline-white">
+                                <i class="material-symbols-rounded me-1">arrow_back</i>
+                                Voltar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                    <div class="alert alert-danger" role="alert">
+                        <strong>Corrija os erros abaixo:</strong>
+                        <ul class="mb-0">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Informações Básicas -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-uppercase text-body text-xs font-weight-bolder mb-3">Informações Básicas</h6>
+                        </div>
+                        
+                        <div class="col-md-8">
+                            <div class="input-group input-group-outline mb-3 {% if form.nome.value %}is-filled{% endif %}">
+                                <label class="form-label">Nome do Produto *</label>
+                                {{ form.nome }}
+                            </div>
+                            {% if form.nome.errors %}
+                            <div class="text-danger text-sm">{{ form.nome.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="input-group input-group-outline mb-3 {% if form.codigo.value %}is-filled{% endif %}">
+                                <label class="form-label">Código *</label>
+                                {{ form.codigo }}
+                            </div>
+                            {% if form.codigo.errors %}
+                            <div class="text-danger text-sm">{{ form.codigo.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="input-group input-group-outline mb-3 {% if form.descricao.value %}is-filled{% endif %}">
+                                <label class="form-label">Descrição</label>
+                                {{ form.descricao }}
+                            </div>
+                            {% if form.descricao.errors %}
+                            <div class="text-danger text-sm">{{ form.descricao.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <hr class="horizontal dark">
+                    
+                    <!-- Categoria e Unidade -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-uppercase text-body text-xs font-weight-bolder mb-3">Categoria e Unidade</h6>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-3">
+                                <select class="form-control" name="categoria" required>
+                                    <option value="">Selecione uma categoria</option>
+                                    {% for categoria in form.categoria.field.queryset %}
+                                    <option value="{{ categoria.pk }}" {% if form.categoria.value == categoria.pk %}selected{% endif %}>
+                                        {{ categoria.nome }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% if form.categoria.errors %}
+                            <div class="text-danger text-sm">{{ form.categoria.errors.0 }}</div>
+                            {% endif %}
+                            <small class="text-muted">
+                                <a href="#" onclick="abrirModalCategoria()">Criar nova categoria</a>
+                            </small>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-3">
+                                <select class="form-control" name="unidade_medida" required>
+                                    <option value="">Selecione uma unidade</option>
+                                    {% for unidade in form.unidade_medida.field.queryset %}
+                                    <option value="{{ unidade.pk }}" {% if form.unidade_medida.value == unidade.pk %}selected{% endif %}>
+                                        {{ unidade.nome }} ({{ unidade.sigla }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% if form.unidade_medida.errors %}
+                            <div class="text-danger text-sm">{{ form.unidade_medida.errors.0 }}</div>
+                            {% endif %}
+                            <small class="text-muted">
+                                <a href="#" onclick="abrirModalUnidade()">Criar nova unidade</a>
+                            </small>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="input-group input-group-outline mb-3 {% if form.localizacao.value %}is-filled{% endif %}">
+                                <label class="form-label">Localização (Prateleira, Setor, etc.)</label>
+                                {{ form.localizacao }}
+                            </div>
+                            {% if form.localizacao.errors %}
+                            <div class="text-danger text-sm">{{ form.localizacao.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <hr class="horizontal dark">
+                    
+                    <!-- Preços -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-uppercase text-body text-xs font-weight-bolder mb-3">Preços</h6>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-3 {% if form.preco_custo.value %}is-filled{% endif %}">
+                                <label class="form-label">Preço de Custo (R$) *</label>
+                                {{ form.preco_custo }}
+                            </div>
+                            {% if form.preco_custo.errors %}
+                            <div class="text-danger text-sm">{{ form.preco_custo.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-3 {% if form.preco_venda.value %}is-filled{% endif %}">
+                                <label class="form-label">Preço de Venda (R$)</label>
+                                {{ form.preco_venda }}
+                            </div>
+                            {% if form.preco_venda.errors %}
+                            <div class="text-danger text-sm">{{ form.preco_venda.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <hr class="horizontal dark">
+                    
+                    <!-- Controle de Estoque -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-uppercase text-body text-xs font-weight-bolder mb-3">Controle de Estoque</h6>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="input-group input-group-outline mb-3 {% if form.estoque_atual.value %}is-filled{% endif %}">
+                                <label class="form-label">Estoque Atual *</label>
+                                {{ form.estoque_atual }}
+                            </div>
+                            {% if form.estoque_atual.errors %}
+                            <div class="text-danger text-sm">{{ form.estoque_atual.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="input-group input-group-outline mb-3 {% if form.estoque_minimo.value %}is-filled{% endif %}">
+                                <label class="form-label">Estoque Mínimo *</label>
+                                {{ form.estoque_minimo }}
+                            </div>
+                            {% if form.estoque_minimo.errors %}
+                            <div class="text-danger text-sm">{{ form.estoque_minimo.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="input-group input-group-outline mb-3 {% if form.estoque_maximo.value %}is-filled{% endif %}">
+                                <label class="form-label">Estoque Máximo *</label>
+                                {{ form.estoque_maximo }}
+                            </div>
+                            {% if form.estoque_maximo.errors %}
+                            <div class="text-danger text-sm">{{ form.estoque_maximo.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <hr class="horizontal dark">
+                    
+                    <!-- Status -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-uppercase text-body text-xs font-weight-bolder mb-3">Status</h6>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                {{ form.ativo }}
+                                <label class="form-check-label" for="{{ form.ativo.id_for_label }}">
+                                    Produto Ativo
+                                </label>
+                            </div>
+                            <small class="text-muted">Produtos inativos não aparecerão nas movimentações</small>
+                        </div>
+                    </div>
+                    
+                    <hr class="horizontal dark">
+                    
+                    <!-- Botões -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-end">
+                                <a href="{% url 'estoque:produto_list' %}" class="btn btn-secondary me-2">
+                                    Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="material-symbols-rounded me-1">save</i>
+                                    {% if form.instance.pk %}Atualizar{% else %}Salvar{% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Nova Categoria -->
+<div class="modal fade" id="categoriaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nova Categoria</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="categoria-form">
+                    <div class="input-group input-group-outline mb-3">
+                        <label class="form-label">Nome da Categoria</label>
+                        <input type="text" class="form-control" name="nome" required>
+                    </div>
+                    <div class="input-group input-group-outline mb-3">
+                        <label class="form-label">Descrição</label>
+                        <textarea class="form-control" name="descricao" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="salvarCategoria()">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Nova Unidade -->
+<div class="modal fade" id="unidadeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nova Unidade de Medida</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="unidade-form">
+                    <div class="input-group input-group-outline mb-3">
+                        <label class="form-label">Nome da Unidade</label>
+                        <input type="text" class="form-control" name="nome" required>
+                    </div>
+                    <div class="input-group input-group-outline mb-3">
+                        <label class="form-label">Símbolo/Abreviação</label>
+                        <input type="text" class="form-control" name="sigla" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="salvarUnidade()">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Inicializar formulário
+document.addEventListener('DOMContentLoaded', function() {
+    // Aplicar máscaras de moeda
+    const precoInputs = document.querySelectorAll('input[name="preco_custo"], input[name="preco_venda"]');
+    precoInputs.forEach(input => {
+        input.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            value = (value / 100).toFixed(2);
+            e.target.value = value;
+        });
+    });
+    
+    // Validação de estoque
+    const estoqueInputs = document.querySelectorAll('input[name="estoque_atual"], input[name="estoque_minimo"], input[name="estoque_maximo"]');
+    estoqueInputs.forEach(input => {
+        input.addEventListener('blur', validarEstoque);
+    });
+});
+
+function validarEstoque() {
+    const atual = parseFloat(document.querySelector('input[name="estoque_atual"]').value) || 0;
+    const minimo = parseFloat(document.querySelector('input[name="estoque_minimo"]').value) || 0;
+    const maximo = parseFloat(document.querySelector('input[name="estoque_maximo"]').value) || 0;
+    
+    if (minimo >= maximo && maximo > 0) {
+        alert('O estoque mínimo deve ser menor que o estoque máximo');
+        return false;
+    }
+    
+    if (atual > maximo && maximo > 0) {
+        if (!confirm('O estoque atual é maior que o estoque máximo. Deseja continuar?')) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+function abrirModalCategoria() {
+    const modal = new bootstrap.Modal(document.getElementById('categoriaModal'));
+    modal.show();
+}
+
+function abrirModalUnidade() {
+    const modal = new bootstrap.Modal(document.getElementById('unidadeModal'));
+    modal.show();
+}
+
+function salvarCategoria() {
+    const form = document.getElementById('categoria-form');
+    const formData = new FormData(form);
+    
+    fetch('/estoque/api/categorias/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Adicionar nova categoria ao select
+            const select = document.querySelector('select[name="categoria"]');
+            const option = document.createElement('option');
+            option.value = data.categoria.id;
+            option.textContent = data.categoria.nome;
+            option.selected = true;
+            select.appendChild(option);
+            
+            // Fechar modal
+            bootstrap.Modal.getInstance(document.getElementById('categoriaModal')).hide();
+            form.reset();
+        } else {
+            alert('Erro ao salvar categoria: ' + (data.error || 'Erro desconhecido'));
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao salvar categoria');
+    });
+}
+
+function salvarUnidade() {
+    const form = document.getElementById('unidade-form');
+    const formData = new FormData(form);
+    
+    fetch('/estoque/api/unidades/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Adicionar nova unidade ao select
+            const select = document.querySelector('select[name="unidade_medida"]');
+            const option = document.createElement('option');
+            option.value = data.unidade.id;
+            option.textContent = `${data.unidade.nome} (${data.unidade.sigla})`;
+            option.selected = true;
+            select.appendChild(option);
+            
+            // Fechar modal
+            bootstrap.Modal.getInstance(document.getElementById('unidadeModal')).hide();
+            form.reset();
+        } else {
+            alert('Erro ao salvar unidade: ' + (data.error || 'Erro desconhecido'));
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao salvar unidade');
+    });
+}
+
+// Validação do formulário antes do submit
+document.querySelector('form').addEventListener('submit', function(e) {
+    if (!validarEstoque()) {
+        e.preventDefault();
+    }
+});
+</script>
+{% endblock %}

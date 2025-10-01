@@ -1,0 +1,585 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}WhatsApp Business - Contatos{% endblock %}
+
+{% block page_title %}WhatsApp Business - Contatos{% endblock %}
+{% block breadcrumb_title %}Contatos WhatsApp{% endblock %}
+
+{% block extra_css %}
+<style>
+.real-time-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #10b981;
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+.contact-card {
+    border: 1px solid #e3e6f0;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.contact-card:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.contact-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.contact-status {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+}
+
+.status-ativo {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.status-bloqueado {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.status-inativo {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}
+
+.search-section {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stats-cards {
+    margin-bottom: 1.5rem;
+}
+
+.stats-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    text-align: center;
+    border-left: 4px solid #25D366;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.stats-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+    display: block;
+}
+
+.stats-label {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-top: 0.5rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.contact-info {
+    flex: 1;
+}
+
+.contact-name {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.contact-phone {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.contact-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.export-section {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 1.5rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Contatos WhatsApp Business</h3>
+            <p class="mb-4">
+                <span class="real-time-indicator" style="display: inline-block; width: 8px; height: 8px; background-color: rgb(16, 185, 129); border-radius: 50%; margin-right: 8px; animation: 2s ease 0s infinite normal none running pulse;"></span>
+                Gerencie todos os contatos do WhatsApp Business.
+            </p>
+        </div>
+        <div class="col-md-6 d-flex align-items-center justify-content-end">
+            <button class="btn btn-outline-primary btn-sm me-2" onclick="refreshContacts()">
+                <i class="fas fa-sync-alt me-1"></i>
+                Atualizar
+            </button>
+            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addContactModal">
+                <i class="fas fa-plus me-1"></i>
+                Adicionar Contato
+            </button>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row stats-cards">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <span class="stats-number">{{ total_contacts|default:0 }}</span>
+                <div class="stats-label">
+                    <i class="fas fa-users me-1"></i>
+                    Total de Contatos
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <span class="stats-number">{{ active_contacts|default:0 }}</span>
+                <div class="stats-label">
+                    <i class="fas fa-user-check me-1"></i>
+                    Contatos Ativos
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <span class="stats-number">{{ conversations_today|default:0 }}</span>
+                <div class="stats-label">
+                    <i class="fas fa-comments me-1"></i>
+                    Conversas Hoje
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <span class="stats-number">{{ new_contacts_week|default:0 }}</span>
+                <div class="stats-label">
+                    <i class="fas fa-user-plus me-1"></i>
+                    Novos esta Semana
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Busca e Filtros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="search-section">
+                <form method="GET" class="row align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label">Buscar Contatos</label>
+                        <input type="text" class="form-control" name="search" 
+                               value="{{ request.GET.search }}" 
+                               placeholder="Nome ou telefone...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" name="status">
+                            <option value="">Todos</option>
+                            <option value="ativo" {% if request.GET.status == 'ativo' %}selected{% endif %}>Ativo</option>
+                            <option value="bloqueado" {% if request.GET.status == 'bloqueado' %}selected{% endif %}>Bloqueado</option>
+                            <option value="inativo" {% if request.GET.status == 'inativo' %}selected{% endif %}>Inativo</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Ordenar por</label>
+                        <select class="form-select" name="order">
+                            <option value="-criado_em" {% if request.GET.order == '-criado_em' %}selected{% endif %}>Mais recentes</option>
+                            <option value="nome" {% if request.GET.order == 'nome' %}selected{% endif %}>Nome A-Z</option>
+                            <option value="-nome" {% if request.GET.order == '-nome' %}selected{% endif %}>Nome Z-A</option>
+                            <option value="-ultima_interacao" {% if request.GET.order == '-ultima_interacao' %}selected{% endif %}>Última interação</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-1"></i>
+                            Buscar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Contatos -->
+    <div class="row">
+        <div class="col-12">
+            {% if contacts %}
+                {% for contact in contacts %}
+                <div class="contact-card">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <div class="contact-avatar">
+                                {{ contact.nome|first|upper|default:"?" }}
+                            </div>
+                        </div>
+                        <div class="col contact-info">
+                            <h6 class="contact-name">{{ contact.nome|default:"Contato sem nome" }}</h6>
+                            <div class="contact-phone">
+                                <i class="fab fa-whatsapp me-1"></i>
+                                {{ contact.telefone }}
+                            </div>
+                            <div class="contact-stats">
+                                <span>
+                                    <i class="fas fa-comments me-1"></i>
+                                    {{ contact.total_conversas|default:0 }} conversas
+                                </span>
+                                <span>
+                                    <i class="fas fa-envelope me-1"></i>
+                                    {{ contact.total_mensagens|default:0 }} mensagens
+                                </span>
+                                <span>
+                                    <i class="fas fa-clock me-1"></i>
+                                    Última: {{ contact.ultima_interacao|timesince|default:"Nunca" }} atrás
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <span class="contact-status status-{{ contact.status|default:'inativo' }}">
+                                {{ contact.get_status_display|default:"Inativo" }}
+                            </span>
+                        </div>
+                        <div class="col-auto">
+                            <div class="action-buttons">
+                                <button class="btn btn-sm btn-outline-success" 
+                                        onclick="startConversation('{{ contact.id }}')"
+                                        title="Iniciar conversa">
+                                    <i class="fab fa-whatsapp"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        onclick="viewContact('{{ contact.id }}')"
+                                        title="Ver detalhes">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning" 
+                                        onclick="editContact('{{ contact.id }}')"
+                                        title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary" 
+                                            type="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#" onclick="exportContact('{{ contact.id }}')">
+                                            <i class="fas fa-download me-2"></i>Exportar
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="blockContact('{{ contact.id }}')">
+                                            <i class="fas fa-ban me-2"></i>Bloquear
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteContact('{{ contact.id }}')">
+                                            <i class="fas fa-trash me-2"></i>Excluir
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Paginação -->
+                {% if is_paginated %}
+                <div class="d-flex justify-content-center mt-4">
+                    <nav aria-label="Navegação da paginação">
+                        <ul class="pagination">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.order %}&order={{ request.GET.order }}{% endif %}">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.order %}&order={{ request.GET.order }}{% endif %}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.order %}&order={{ request.GET.order }}{% endif %}">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nenhum contato encontrado</h5>
+                    <p class="text-muted">
+                        {% if request.GET.search %}
+                            Não encontramos contatos com os termos "{{ request.GET.search }}".
+                        {% else %}
+                            Os contatos do WhatsApp aparecerão aqui conforme forem adicionados.
+                        {% endif %}
+                    </p>
+                    <div class="mt-3">
+                        {% if request.GET.search %}
+                            <a href="{% url 'dashboard:whatsapp:contacts' %}" class="btn btn-outline-primary me-2">
+                                <i class="fas fa-times me-1"></i>
+                                Limpar Busca
+                            </a>
+                        {% endif %}
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addContactModal">
+                            <i class="fas fa-plus me-1"></i>
+                            Adicionar Primeiro Contato
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Seção de Exportação em Lote -->
+    {% if contacts %}
+    <div class="row">
+        <div class="col-12">
+            <div class="export-section">
+                <h6 class="mb-3">
+                    <i class="fas fa-download me-2"></i>
+                    Exportação em Lote
+                </h6>
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <p class="mb-0 text-muted">
+                            Exporte todos os contatos filtrados em diferentes formatos.
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="btn-group">
+                            <button class="btn btn-outline-primary btn-sm" onclick="exportContacts('csv')">
+                                <i class="fas fa-file-csv me-1"></i>
+                                CSV
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm" onclick="exportContacts('excel')">
+                                <i class="fas fa-file-excel me-1"></i>
+                                Excel
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm" onclick="exportContacts('json')">
+                                <i class="fas fa-file-code me-1"></i>
+                                JSON
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Adicionar Contato -->
+<div class="modal fade" id="addContactModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Adicionar Novo Contato
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addContactForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Nome *</label>
+                        <input type="text" class="form-control" name="nome" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Telefone *</label>
+                        <input type="tel" class="form-control" name="telefone" 
+                               placeholder="+55 11 99999-9999" required>
+                        <div class="form-text">
+                            Inclua o código do país (ex: +55 para Brasil)
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" name="email">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Observações</label>
+                        <textarea class="form-control" name="observacoes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-success" onclick="saveContact()">
+                    <i class="fas fa-save me-1"></i>
+                    Salvar Contato
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function refreshContacts() {
+    location.reload();
+}
+
+function startConversation(contactId) {
+    // Implementar início de conversa
+    window.open(`/dashboard/whatsapp/start-chat/${contactId}/`, '_blank');
+}
+
+function viewContact(contactId) {
+    // Implementar visualização de detalhes
+    window.location.href = `/dashboard/whatsapp/contact/${contactId}/`;
+}
+
+function editContact(contactId) {
+    // Implementar edição de contato
+    window.location.href = `/dashboard/whatsapp/contact/${contactId}/edit/`;
+}
+
+function blockContact(contactId) {
+    if (confirm('Tem certeza que deseja bloquear este contato?')) {
+        fetch(`/dashboard/whatsapp/api/contact/${contactId}/block/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erro ao bloquear contato: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao bloquear contato');
+        });
+    }
+}
+
+function deleteContact(contactId) {
+    if (confirm('Tem certeza que deseja excluir este contato? Esta ação não pode ser desfeita.')) {
+        fetch(`/dashboard/whatsapp/api/contact/${contactId}/delete/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erro ao excluir contato: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao excluir contato');
+        });
+    }
+}
+
+function saveContact() {
+    const form = document.getElementById('addContactForm');
+    const formData = new FormData(form);
+    
+    fetch('/dashboard/whatsapp/api/contact/create/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erro ao salvar contato: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao salvar contato');
+    });
+}
+
+function exportContacts(format) {
+    const params = new URLSearchParams(window.location.search);
+    params.set('export', format);
+    
+    window.location.href = `{% url 'dashboard:whatsapp:contacts' %}?${params.toString()}`;
+}
+
+function exportContact(contactId) {
+    window.location.href = `/dashboard/whatsapp/api/contact/${contactId}/export/`;
+}
+</script>
+{% endblock %}

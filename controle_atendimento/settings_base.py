@@ -2,6 +2,11 @@
 Configurações base do Django para o projeto Controle de Atendimento iConnect.
 Configurações compartilhadas entre desenvolvimento e produção.
 """
+
+"""
+Configurações base do Django para o projeto Controle de Atendimento iConnect.
+Configurações compartilhadas entre desenvolvimento e produção.
+"""
 import os
 from pathlib import Path
 
@@ -10,6 +15,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-change-me-in-production')
+
+try:
+    from config.sentry_settings_example import *  # type: ignore
+except ImportError:
+    pass
 
 # Application definition
 INSTALLED_APPS = [
@@ -25,6 +35,7 @@ INSTALLED_APPS = [
     'django_extensions',
 ]
 
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Para arquivos estáticos
@@ -36,6 +47,16 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'dashboard.monitoring.MonitoringMiddleware',  # Monitoramento customizado
 ]
+
+# Segurança: brute-force e 2FA
+try:
+    from config.axes_settings_example import *  # type: ignore
+except ImportError:
+    pass
+try:
+    from config.two_factor_settings_example import *  # type: ignore
+except ImportError:
+    pass
 
 ROOT_URLCONF = 'controle_atendimento.urls'
 
@@ -81,10 +102,26 @@ TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
 USE_TZ = True
 
+
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'assets']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+]
+
+# --- Ativação segura do compressor (após definição de STATICFILES_FINDERS) ---
+try:
+    from config.compressor_settings_example import *  # type: ignore
+    if 'compressor' not in INSTALLED_APPS:
+        INSTALLED_APPS += ['compressor']
+    if 'compressor.finders.CompressorFinder' not in STATICFILES_FINDERS:
+        STATICFILES_FINDERS = list(STATICFILES_FINDERS) + ['compressor.finders.CompressorFinder']
+except ImportError:
+    # Compressor não instalado, pular configuração
+    pass
 
 # Media files (user uploads)
 MEDIA_URL = '/media/'
@@ -116,10 +153,32 @@ CACHES = {
     }
 }
 
-# Session Configuration
+# Session configuration
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_CACHE_ALIAS = 'default'
-SESSION_COOKIE_AGE = 86400  # 24 horas
+SESSION_COOKIE_AGE = 3600  # 1 hour
+SESSION_SAVE_EVERY_REQUEST = True
+
+# Cache configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'KEY_PREFIX': 'iconnect',
+        'TIMEOUT': 300,  # 5 minutes default
+    }
+}
+
+# Cache key prefixes
+CACHE_KEYS = {
+    'tickets': 'tickets',
+    'dashboard_stats': 'dashboard_stats',
+    'user_permissions': 'user_perms',
+    'ml_predictions': 'ml_pred',
+}
 
 # Logging Configuration
 LOGGING = {
@@ -214,20 +273,12 @@ WORKFLOW_CONFIG = {
     }
 }
 
-# WhatsApp Business API Configuration
-WHATSAPP_CONFIG = {
-    'BASE_URL': os.environ.get('WHATSAPP_API_URL', ''),
-    'ACCESS_TOKEN': os.environ.get('WHATSAPP_ACCESS_TOKEN', ''),
-    'PHONE_NUMBER_ID': os.environ.get('WHATSAPP_PHONE_NUMBER_ID', ''),
-    'WEBHOOK_VERIFY_TOKEN': os.environ.get('WHATSAPP_WEBHOOK_TOKEN', ''),
-}
 
-# Slack Integration
-SLACK_CONFIG = {
-    'WEBHOOK_URL': os.environ.get('SLACK_WEBHOOK_URL', ''),
-    'BOT_TOKEN': os.environ.get('SLACK_BOT_TOKEN', ''),
-    'CHANNEL': os.environ.get('SLACK_CHANNEL', '#atendimento'),
-}
+# Integrações externas (WhatsApp, Slack, CRM, ERP, Webhooks)
+try:
+    from config.integrations_settings_example import *
+except ImportError:
+    pass
 
 # AI/Chatbot Configuration
 AI_CONFIG = {

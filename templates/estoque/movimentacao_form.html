@@ -1,0 +1,412 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Nova Movimentação - iConnect{% endblock %}
+
+{% block page_title %}Nova Movimentação{% endblock %}
+{% block breadcrumb_title %}Nova Movimentação{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="text-white text-capitalize ps-3">Registrar Nova Movimentação</h6>
+                        <div class="me-3">
+                            <a href="{% url 'estoque:movimentacao_list' %}" class="btn btn-sm btn-outline-white">
+                                <i class="material-symbols-rounded me-1">arrow_back</i>
+                                Voltar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <form method="post" novalidate id="movimentacao-form">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                    <div class="alert alert-danger" role="alert">
+                        <strong>Corrija os erros abaixo:</strong>
+                        <ul class="mb-0">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Produto e Tipo -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-uppercase text-body text-xs font-weight-bolder mb-3">Produto e Tipo de Movimentação</h6>
+                        </div>
+                        
+                        <div class="col-md-8">
+                            <div class="input-group input-group-outline mb-3">
+                                <select class="form-control" name="produto" required id="produto-select">
+                                    <option value="">Selecione um produto</option>
+                                    {% for produto in form.produto.field.queryset %}
+                                    <option value="{{ produto.pk }}" 
+                                            data-estoque="{{ produto.estoque_atual }}"
+                                            data-unidade="{{ produto.unidade_medida.sigla }}"
+                                            data-minimo="{{ produto.estoque_minimo }}"
+                                            data-maximo="{{ produto.estoque_maximo }}"
+                                            {% if form.produto.value == produto.pk %}selected{% endif %}>
+                                        {{ produto.nome }} ({{ produto.codigo }}) - Estoque: {{ produto.estoque_atual }} {{ produto.unidade_medida.sigla }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% if form.produto.errors %}
+                            <div class="text-danger text-sm">{{ form.produto.errors.0 }}</div>
+                            {% endif %}
+                            
+                            <!-- Info do produto selecionado -->
+                            <div id="produto-info" class="d-none">
+                                <div class="alert alert-info">
+                                    <div class="d-flex justify-content-between">
+                                        <span><strong>Estoque Atual:</strong> <span id="estoque-atual">0</span> <span id="unidade-medida">un</span></span>
+                                        <span><strong>Mín:</strong> <span id="estoque-minimo">0</span> | <strong>Máx:</strong> <span id="estoque-maximo">0</span></span>
+                                    </div>
+                                    <div class="progress mt-2" style="height: 6px;">
+                                        <div class="progress-bar" id="progress-estoque" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="input-group input-group-outline mb-3">
+                                <select class="form-control" name="tipo_movimentacao" required id="tipo-select">
+                                    <option value="">Selecione o tipo</option>
+                                    {% for tipo in form.tipo_movimentacao.field.queryset %}
+                                    <option value="{{ tipo.pk }}" 
+                                            data-tipo="{{ tipo.tipo }}"
+                                            {% if form.tipo_movimentacao.value == tipo.pk %}selected{% endif %}>
+                                        {{ tipo.nome }} 
+                                        {% if tipo.tipo == 'entrada' %}
+                                        <i class="text-success">(+)</i>
+                                        {% else %}
+                                        <i class="text-danger">(-)</i>
+                                        {% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% if form.tipo_movimentacao.errors %}
+                            <div class="text-danger text-sm">{{ form.tipo_movimentacao.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <hr class="horizontal dark">
+                    
+                    <!-- Quantidade e Data -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-uppercase text-body text-xs font-weight-bolder mb-3">Quantidade e Data</h6>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-3 {% if form.quantidade.value %}is-filled{% endif %}">
+                                <label class="form-label">Quantidade *</label>
+                                {{ form.quantidade }}
+                            </div>
+                            {% if form.quantidade.errors %}
+                            <div class="text-danger text-sm">{{ form.quantidade.errors.0 }}</div>
+                            {% endif %}
+                            
+                            <!-- Calculadora de estoque -->
+                            <div id="calculadora-estoque" class="d-none">
+                                <small class="text-muted">
+                                    <strong>Estoque após movimentação:</strong> 
+                                    <span id="estoque-resultado" class="font-weight-bold">0</span> 
+                                    <span id="unidade-resultado">un</span>
+                                </small>
+                                <div id="alerta-estoque" class="d-none">
+                                    <small class="text-warning">
+                                        <i class="material-symbols-rounded text-xs">warning</i>
+                                        <span id="mensagem-alerta"></span>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="input-group input-group-outline mb-3 {% if form.data_movimentacao.value %}is-filled{% endif %}">
+                                <label class="form-label">Data e Hora</label>
+                                {{ form.data_movimentacao }}
+                            </div>
+                            {% if form.data_movimentacao.errors %}
+                            <div class="text-danger text-sm">{{ form.data_movimentacao.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <hr class="horizontal dark">
+                    
+                    <!-- Observações -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-uppercase text-body text-xs font-weight-bolder mb-3">Observações</h6>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="input-group input-group-outline mb-3 {% if form.observacoes.value %}is-filled{% endif %}">
+                                <label class="form-label">Observações (opcional)</label>
+                                {{ form.observacoes }}
+                            </div>
+                            {% if form.observacoes.errors %}
+                            <div class="text-danger text-sm">{{ form.observacoes.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <hr class="horizontal dark">
+                    
+                    <!-- Resumo da Movimentação -->
+                    <div id="resumo-movimentacao" class="d-none">
+                        <div class="row">
+                            <div class="col-12">
+                                <h6 class="text-uppercase text-body text-xs font-weight-bolder mb-3">Resumo da Movimentação</h6>
+                            </div>
+                            <div class="col-12">
+                                <div class="card bg-light">
+                                    <div class="card-body p-3">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <p class="mb-1"><strong>Produto:</strong> <span id="resumo-produto">-</span></p>
+                                                <p class="mb-1"><strong>Tipo:</strong> <span id="resumo-tipo">-</span></p>
+                                                <p class="mb-0"><strong>Quantidade:</strong> <span id="resumo-quantidade">-</span></p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p class="mb-1"><strong>Estoque Atual:</strong> <span id="resumo-estoque-atual">-</span></p>
+                                                <p class="mb-1"><strong>Estoque Final:</strong> <span id="resumo-estoque-final">-</span></p>
+                                                <p class="mb-0"><strong>Data:</strong> <span id="resumo-data">-</span></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="horizontal dark">
+                    </div>
+                    
+                    <!-- Botões -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-end">
+                                <a href="{% url 'estoque:movimentacao_list' %}" class="btn btn-secondary me-2">
+                                    Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-primary" id="btn-salvar">
+                                    <i class="material-symbols-rounded me-1">save</i>
+                                    Registrar Movimentação
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const produtoSelect = document.getElementById('produto-select');
+    const tipoSelect = document.getElementById('tipo-select');
+    const quantidadeInput = document.querySelector('input[name="quantidade"]');
+    const dataInput = document.querySelector('input[name="data_movimentacao"]');
+    
+    // Configurar data atual
+    if (!dataInput.value) {
+        const agora = new Date();
+        const dataFormatada = agora.toISOString().slice(0, 16);
+        dataInput.value = dataFormatada;
+        dataInput.parentElement.classList.add('is-filled');
+    }
+    
+    // Event listeners
+    produtoSelect.addEventListener('change', atualizarInfoProduto);
+    tipoSelect.addEventListener('change', calcularEstoque);
+    quantidadeInput.addEventListener('input', calcularEstoque);
+    
+    // Aplicar produto pré-selecionado da URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('produto')) {
+        produtoSelect.value = urlParams.get('produto');
+        atualizarInfoProduto();
+    }
+});
+
+function atualizarInfoProduto() {
+    const produtoSelect = document.getElementById('produto-select');
+    const produtoInfo = document.getElementById('produto-info');
+    const selectedOption = produtoSelect.selectedOptions[0];
+    
+    if (selectedOption && selectedOption.value) {
+        const estoque = parseFloat(selectedOption.dataset.estoque) || 0;
+        const unidade = selectedOption.dataset.unidade || 'un';
+        const minimo = parseFloat(selectedOption.dataset.minimo) || 0;
+        const maximo = parseFloat(selectedOption.dataset.maximo) || 0;
+        
+        // Atualizar elementos
+        document.getElementById('estoque-atual').textContent = estoque.toFixed(2);
+        document.getElementById('unidade-medida').textContent = unidade;
+        document.getElementById('estoque-minimo').textContent = minimo.toFixed(2);
+        document.getElementById('estoque-maximo').textContent = maximo.toFixed(2);
+        
+        // Calcular percentual para progress bar
+        const percentual = maximo > 0 ? (estoque / maximo) * 100 : 0;
+        const progressBar = document.getElementById('progress-estoque');
+        progressBar.style.width = Math.min(percentual, 100) + '%';
+        
+        // Definir cor da barra
+        if (percentual <= 20) {
+            progressBar.className = 'progress-bar bg-danger';
+        } else if (percentual <= 50) {
+            progressBar.className = 'progress-bar bg-warning';
+        } else {
+            progressBar.className = 'progress-bar bg-success';
+        }
+        
+        produtoInfo.classList.remove('d-none');
+        calcularEstoque();
+        atualizarResumo();
+    } else {
+        produtoInfo.classList.add('d-none');
+        document.getElementById('calculadora-estoque').classList.add('d-none');
+        document.getElementById('resumo-movimentacao').classList.add('d-none');
+    }
+}
+
+function calcularEstoque() {
+    const produtoSelect = document.getElementById('produto-select');
+    const tipoSelect = document.getElementById('tipo-select');
+    const quantidadeInput = document.querySelector('input[name="quantidade"]');
+    const calculadora = document.getElementById('calculadora-estoque');
+    const alerta = document.getElementById('alerta-estoque');
+    
+    const selectedProduto = produtoSelect.selectedOptions[0];
+    const selectedTipo = tipoSelect.selectedOptions[0];
+    
+    if (!selectedProduto || !selectedTipo || !quantidadeInput.value) {
+        calculadora.classList.add('d-none');
+        return;
+    }
+    
+    const estoqueAtual = parseFloat(selectedProduto.dataset.estoque) || 0;
+    const quantidade = parseFloat(quantidadeInput.value) || 0;
+    const tipo = selectedTipo.dataset.tipo;
+    const unidade = selectedProduto.dataset.unidade || 'un';
+    const minimo = parseFloat(selectedProduto.dataset.minimo) || 0;
+    
+    let estoqueResultado;
+    if (tipo === 'entrada') {
+        estoqueResultado = estoqueAtual + quantidade;
+    } else {
+        estoqueResultado = estoqueAtual - quantidade;
+    }
+    
+    // Atualizar resultado
+    document.getElementById('estoque-resultado').textContent = estoqueResultado.toFixed(2);
+    document.getElementById('unidade-resultado').textContent = unidade;
+    
+    // Verificar alertas
+    let mostrarAlerta = false;
+    let mensagem = '';
+    
+    if (estoqueResultado < 0) {
+        mostrarAlerta = true;
+        mensagem = 'Estoque ficará negativo!';
+        document.getElementById('estoque-resultado').className = 'font-weight-bold text-danger';
+    } else if (estoqueResultado <= minimo) {
+        mostrarAlerta = true;
+        mensagem = 'Estoque ficará abaixo do mínimo!';
+        document.getElementById('estoque-resultado').className = 'font-weight-bold text-warning';
+    } else {
+        document.getElementById('estoque-resultado').className = 'font-weight-bold text-success';
+    }
+    
+    if (mostrarAlerta) {
+        document.getElementById('mensagem-alerta').textContent = mensagem;
+        alerta.classList.remove('d-none');
+    } else {
+        alerta.classList.add('d-none');
+    }
+    
+    calculadora.classList.remove('d-none');
+    atualizarResumo();
+}
+
+function atualizarResumo() {
+    const produtoSelect = document.getElementById('produto-select');
+    const tipoSelect = document.getElementById('tipo-select');
+    const quantidadeInput = document.querySelector('input[name="quantidade"]');
+    const dataInput = document.querySelector('input[name="data_movimentacao"]');
+    const resumo = document.getElementById('resumo-movimentacao');
+    
+    const selectedProduto = produtoSelect.selectedOptions[0];
+    const selectedTipo = tipoSelect.selectedOptions[0];
+    
+    if (selectedProduto && selectedTipo && quantidadeInput.value) {
+        const estoqueAtual = parseFloat(selectedProduto.dataset.estoque) || 0;
+        const quantidade = parseFloat(quantidadeInput.value) || 0;
+        const tipo = selectedTipo.dataset.tipo;
+        const unidade = selectedProduto.dataset.unidade || 'un';
+        
+        let estoqueResultado;
+        if (tipo === 'entrada') {
+            estoqueResultado = estoqueAtual + quantidade;
+        } else {
+            estoqueResultado = estoqueAtual - quantidade;
+        }
+        
+        // Atualizar resumo
+        document.getElementById('resumo-produto').textContent = selectedProduto.textContent.split(' -')[0];
+        document.getElementById('resumo-tipo').innerHTML = selectedTipo.innerHTML;
+        document.getElementById('resumo-quantidade').textContent = `${tipo === 'entrada' ? '+' : '-'}${quantidade} ${unidade}`;
+        document.getElementById('resumo-estoque-atual').textContent = `${estoqueAtual} ${unidade}`;
+        document.getElementById('resumo-estoque-final').textContent = `${estoqueResultado.toFixed(2)} ${unidade}`;
+        
+        if (dataInput.value) {
+            const data = new Date(dataInput.value);
+            document.getElementById('resumo-data').textContent = data.toLocaleString('pt-BR');
+        }
+        
+        resumo.classList.remove('d-none');
+    } else {
+        resumo.classList.add('d-none');
+    }
+}
+
+// Validação antes do submit
+document.getElementById('movimentacao-form').addEventListener('submit', function(e) {
+    const produtoSelect = document.getElementById('produto-select');
+    const quantidadeInput = document.querySelector('input[name="quantidade"]');
+    const selectedProduto = produtoSelect.selectedOptions[0];
+    
+    if (selectedProduto) {
+        const estoqueAtual = parseFloat(selectedProduto.dataset.estoque) || 0;
+        const quantidade = parseFloat(quantidadeInput.value) || 0;
+        const tipo = document.getElementById('tipo-select').selectedOptions[0]?.dataset.tipo;
+        
+        if (tipo === 'saida' && quantidade > estoqueAtual) {
+            if (!confirm('A quantidade de saída é maior que o estoque atual. Deseja continuar mesmo assim?')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

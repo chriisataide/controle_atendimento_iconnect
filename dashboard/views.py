@@ -211,8 +211,10 @@ def admin_dashboard(request):
     tickets_media = ticket_stats['media']
     tickets_baixa = ticket_stats['baixa']
     
-    # Tickets recentes
-    tickets_recentes = Ticket.objects.select_related('cliente', 'categoria').order_by('-criado_em')[:10]
+    # Tickets recentes com otimização
+    tickets_recentes = Ticket.objects.select_related(
+        'cliente', 'categoria', 'agente', 'sla_policy'
+    ).order_by('-criado_em')[:10]
     
     # Usuários recentes
     usuarios_recentes = User.objects.order_by('-date_joined')[:5]
@@ -1617,3 +1619,104 @@ def notifications_list(request):
     }
     
     return render(request, 'dashboard/notifications.html', context)
+
+@login_required
+def communication_center(request):
+    """Central de Comunicação Unificada"""
+    from django.db import models
+    
+    # Import seguro dos modelos
+    try:
+        from .models_chat import ChatRoom, ChatMessage, ChatBot
+    except ImportError:
+        ChatRoom = ChatMessage = ChatBot = None
+    
+    try:
+        from .models_chatbot_ai import ChatbotConversation, ChatbotKnowledge
+    except ImportError:
+        ChatbotConversation = None
+        ChatbotKnowledge = None
+    
+    # Dados do Chat Avançado - com tratamento de erro
+    recent_conversations = []
+    total_conversations = 0
+    active_conversations = 0
+    
+    if ChatRoom:
+        try:
+            recent_conversations = ChatRoom.objects.filter(
+                participants__user=request.user
+            ).annotate(
+                last_message_time=models.Max('messages__created_at')
+            ).order_by('-last_message_time')[:5]
+            
+            total_conversations = ChatRoom.objects.filter(
+                participants__user=request.user,
+                created_at__date=timezone.now().date()
+            ).count()
+            
+            active_conversations = ChatRoom.objects.filter(
+                participants__user=request.user,
+                status='active'
+            ).count()
+        except Exception as e:
+            # Em caso de erro, usar valores padrão
+            print(f"Erro ao carregar dados do chat: {e}")
+    
+    # Dados do Chatbot IA
+    chatbot = None
+    if ChatBot:
+        try:
+            chatbot = ChatBot.objects.first()
+        except Exception:
+            pass
+    
+    # Base de conhecimento recente
+    recent_knowledge = []
+    if ChatbotKnowledge:
+        try:
+            recent_knowledge = ChatbotKnowledge.objects.order_by('-created_at')[:3]
+        except Exception:
+            pass
+    
+    # Analytics básicas
+    total_messages_today = 0
+    if ChatMessage:
+        try:
+            total_messages_today = ChatMessage.objects.filter(
+                created_at__date=timezone.now().date()
+            ).count()
+        except Exception:
+            pass
+    
+    analytics_data = {
+        'total_messages': total_messages_today,
+        'active_conversations': active_conversations,
+        'avg_response_time': 2.1,  # Mock data
+        'satisfaction_rate': 94,   # Mock data
+    }
+    
+    # Lista de usuários da equipe para nova conversa
+    team_users = []
+    try:
+        team_users = get_user_model().objects.filter(
+            is_active=True,
+            groups__name__in=['Agentes', 'Supervisores', 'Gerentes']
+        ).distinct()
+    except Exception:
+        # Fallback: todos os usuários ativos
+        team_users = get_user_model().objects.filter(is_active=True)[:10]
+    
+    context = {
+        'title': 'Central de Comunicação',
+        'recent_conversations': recent_conversations,
+        'total_conversations': total_conversations,
+        'active_conversations': active_conversations,
+        'avg_response_time': "2.3m",
+        'chatbot': chatbot,
+        'recent_knowledge': recent_knowledge,
+        'analytics': analytics_data,
+        'team_users': team_users,
+    }
+    
+    return render(request, 'dashboard/communication_center.html', context)

@@ -291,3 +291,16 @@ else:
     print("⚠️  Channels usando camada em memória (apenas para desenvolvimento)")
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ========== CONFIGURAÇÕES WHATSAPP BUSINESS ==========
+# Token de verificação do webhook (configure no .env)
+WHATSAPP_WEBHOOK_VERIFY_TOKEN = config('WHATSAPP_WEBHOOK_VERIFY_TOKEN', default='controle_atendimento_webhook_2024')
+
+# URL base da API do WhatsApp Business (normalmente não muda)
+WHATSAPP_API_BASE_URL = 'https://graph.facebook.com/v18.0'
+
+# Configurações de timeout para requisições WhatsApp
+WHATSAPP_REQUEST_TIMEOUT = 30  # segundos
+
+# Log de webhooks (recomendado True em produção)
+WHATSAPP_LOG_WEBHOOKS = True

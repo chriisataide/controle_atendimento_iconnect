@@ -360,6 +360,16 @@ class MobileManager {
     }
 
     setupOfflineHandling() {
+        // Só ativa offline handling em contexto mobile
+        const isMobilePage = document.body.classList.contains('mobile-layout') || 
+                           document.querySelector('.mobile-header') || 
+                           window.location.pathname.includes('/mobile/') ||
+                           document.querySelector('[data-mobile="true"]');
+        
+        if (!isMobilePage) {
+            return; // Não ativa em páginas desktop
+        }
+        
         // Garante que só um offline-indicator exista
         let offlineIndicator = this.createOfflineIndicator();
 

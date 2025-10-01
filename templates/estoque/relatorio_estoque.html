@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - iConnect{% endblock %}
+
+{% block page_title %}{{ title }}{% endblock %}
+{% block breadcrumb_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="ms-3">
+        <h3 class="mb-0 h4 font-weight-bolder">{{ title }}</h3>
+        <p class="mb-4">
+            Relatório detalhado da posição atual do estoque
+        </p>
+    </div>
+    
+    <!-- Cards de Resumo -->
+    <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Valor Total Estoque</p>
+                        <h4 class="mb-0">R$ {{ total_valor_estoque|floatformat:2|default:"0,00" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">attach_money</i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Total de Produtos</p>
+                        <h4 class="mb-0">{{ produtos|length }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">inventory</i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Produtos Críticos</p>
+                        <h4 class="mb-0 text-danger">{{ total_produtos_criticos|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">warning</i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card my-4">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+                    <h6 class="text-white text-capitalize ps-3">Filtros do Relatório</h6>
+                </div>
+            </div>
+            <div class="card-body px-4 pb-2">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <div class="input-group input-group-outline">
+                            <label class="form-label">Categoria</label>
+                            <select name="categoria" class="form-control">
+                                <option value="">Todas as categorias</option>
+                                {% for categoria in categorias %}
+                                    <option value="{{ categoria.id }}" 
+                                        {% if categoria.id|stringformat:"s" == categoria_selected %}selected{% endif %}>
+                                        {{ categoria.nome }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="apenas_criticos" value="true" 
+                                {% if apenas_criticos %}checked{% endif %} id="apenas_criticos">
+                            <label class="form-check-label" for="apenas_criticos">
+                                Apenas produtos críticos
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary mb-0">
+                            <i class="material-symbols-rounded">search</i> Filtrar
+                        </button>
+                        <a href="{% url 'estoque:relatorio_estoque' %}" class="btn btn-outline-secondary mb-0 ms-2">
+                            <i class="material-symbols-rounded">clear</i> Limpar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card my-4">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+                    <h6 class="text-white text-capitalize ps-3">Posição do Estoque</h6>
+                </div>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Produto</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Categoria</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Estoque Atual</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Estoque Mín.</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Estoque Máx.</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Valor Unit.</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Valor Total</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                <th class="text-secondary opacity-7"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for produto in produtos %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ produto.nome }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ produto.codigo }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">{{ produto.categoria.nome }}</p>
+                                </td>
+                                <td class="align-middle text-center text-sm">
+                                    <span class="badge badge-sm bg-gradient-info">
+                                        {{ produto.estoque_atual }} {{ produto.unidade_medida.sigla }}
+                                    </span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">
+                                        {{ produto.estoque_minimo }} {{ produto.unidade_medida.sigla }}
+                                    </span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">
+                                        {{ produto.estoque_maximo }} {{ produto.unidade_medida.sigla }}
+                                    </span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">
+                                        R$ {{ produto.preco_custo|floatformat:2 }}
+                                    </span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">
+                                        R$ {{ produto.valor_estoque|floatformat:2 }}
+                                    </span>
+                                </td>
+                                <td class="align-middle text-center text-sm">
+                                    {% if produto.estoque_critico %}
+                                        <span class="badge badge-sm bg-gradient-danger">Crítico</span>
+                                    {% elif produto.estoque_baixo %}
+                                        <span class="badge badge-sm bg-gradient-warning">Baixo</span>
+                                    {% else %}
+                                        <span class="badge badge-sm bg-gradient-success">Normal</span>
+                                    {% endif %}
+                                </td>
+                                <td class="align-middle">
+                                    <a href="{% url 'estoque:produto_detail' produto.pk %}" 
+                                       class="text-secondary font-weight-bold text-xs" 
+                                       data-toggle="tooltip" data-original-title="Ver detalhes">
+                                        <i class="material-symbols-rounded">visibility</i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-4">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <i class="material-symbols-rounded text-muted mb-2" style="font-size: 3rem;">inventory</i>
+                                        <h6 class="text-muted">Nenhum produto encontrado</h6>
+                                        <p class="text-sm text-muted mb-0">
+                                            {% if apenas_criticos %}
+                                                Não há produtos com estoque crítico no momento.
+                                            {% else %}
+                                                Ajuste os filtros ou cadastre novos produtos.
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ações do Relatório -->
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-end">
+            <button onclick="window.print()" class="btn btn-outline-primary mb-0 me-2">
+                <i class="material-symbols-rounded">print</i> Imprimir
+            </button>
+            <button onclick="exportarCSV()" class="btn btn-success mb-0">
+                <i class="material-symbols-rounded">download</i> Exportar CSV
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function exportarCSV() {
+    // Criar CSV dos dados da tabela
+    const rows = [];
+    const table = document.querySelector('table');
+    
+    // Cabeçalho
+    const headers = [];
+    table.querySelectorAll('thead th').forEach(th => {
+        if (th.textContent.trim() !== '') {
+            headers.push(th.textContent.trim());
+        }
+    });
+    rows.push(headers.join(','));
+    
+    // Dados
+    table.querySelectorAll('tbody tr').forEach(tr => {
+        const cells = [];
+        tr.querySelectorAll('td').forEach((td, index) => {
+            if (index < headers.length - 1) { // Excluir última coluna (ações)
+                let text = td.textContent.trim().replace(/,/g, ';');
+                cells.push(text);
+            }
+        });
+        if (cells.length > 0) {
+            rows.push(cells.join(','));
+        }
+    });
+    
+    // Download
+    const csv = rows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'relatorio_estoque_' + new Date().toISOString().slice(0,10) + '.csv';
+    link.click();
+}
+
+// Estilização para impressão
+const style = document.createElement('style');
+style.textContent = `
+    @media print {
+        .btn, .card-header { display: none !important; }
+        .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+        body { font-size: 12px; }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

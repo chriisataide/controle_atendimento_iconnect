@@ -41,7 +41,7 @@ CACHES = {
     }
 }
 
-# Logging mais verboso para desenvolvimento
-LOGGING['handlers']['console']['level'] = 'DEBUG'
-LOGGING['loggers']['django']['level'] = 'DEBUG'
-LOGGING['loggers']['dashboard']['level'] = 'DEBUG'
+# Logging menos verboso para evitar spam de debug
+LOGGING['handlers']['console']['level'] = 'INFO'
+LOGGING['loggers']['django']['level'] = 'INFO'
+LOGGING['loggers']['dashboard']['level'] = 'INFO'

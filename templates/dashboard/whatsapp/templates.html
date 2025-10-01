@@ -1,0 +1,660 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}WhatsApp Business - Templates{% endblock %}
+
+{% block page_title %}WhatsApp Business - Templates{% endblock %}
+{% block breadcrumb_title %}Templates WhatsApp{% endblock %}
+
+{% block extra_css %}
+<style>
+.real-time-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #10b981;
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+.template-card {
+    border: 1px solid #e3e6f0;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.template-card:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.template-preview {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.template-status {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+}
+
+.status-aprovado {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.status-pendente {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.status-rejeitado {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.status-rascunho {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}
+
+.template-type {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 8px;
+    background: #e5f3ff;
+    color: #1d4ed8;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.variable-highlight {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 0.125rem 0.25rem;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.template-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.template-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-top: 0.5rem;
+}
+
+.create-template-section {
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Templates WhatsApp Business</h3>
+            <p class="mb-4">
+                <span class="real-time-indicator" style="display: inline-block; width: 8px; height: 8px; background-color: rgb(16, 185, 129); border-radius: 50%; margin-right: 8px; animation: 2s ease 0s infinite normal none running pulse;"></span>
+                Crie e gerencie templates de mensagens para o WhatsApp Business.
+            </p>
+        </div>
+        <div class="col-md-6 d-flex align-items-center justify-content-end">
+            <button class="btn btn-outline-primary btn-sm me-2" onclick="refreshTemplates()">
+                <i class="fas fa-sync-alt me-1"></i>
+                Atualizar
+            </button>
+            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#createTemplateModal">
+                <i class="fas fa-plus me-1"></i>
+                Criar Template
+            </button>
+        </div>
+    </div>
+
+    <!-- Seção de Criação Rápida -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="create-template-section">
+                <h5 class="mb-3">
+                    <i class="fas fa-magic me-2"></i>
+                    Criação Rápida de Templates
+                </h5>
+                <p class="mb-4">
+                    Templates aprovados pelo WhatsApp permitem enviar mensagens em larga escala 
+                    e iniciar conversas com clientes que não interagiram recentemente.
+                </p>
+                <div class="row justify-content-center">
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-light w-100" onclick="createQuickTemplate('welcome')">
+                            <i class="fas fa-hand-wave me-2"></i>
+                            Boas-vindas
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-light w-100" onclick="createQuickTemplate('promotion')">
+                            <i class="fas fa-tag me-2"></i>
+                            Promoção
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-light w-100" onclick="createQuickTemplate('notification')">
+                            <i class="fas fa-bell me-2"></i>
+                            Notificação
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-light w-100" onclick="createQuickTemplate('reminder')">
+                            <i class="fas fa-clock me-2"></i>
+                            Lembrete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label">Buscar Templates</label>
+                            <input type="text" class="form-control" name="search" 
+                                   value="{{ request.GET.search }}" 
+                                   placeholder="Nome do template...">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="status">
+                                <option value="">Todos</option>
+                                <option value="aprovado" {% if request.GET.status == 'aprovado' %}selected{% endif %}>Aprovado</option>
+                                <option value="pendente" {% if request.GET.status == 'pendente' %}selected{% endif %}>Pendente</option>
+                                <option value="rejeitado" {% if request.GET.status == 'rejeitado' %}selected{% endif %}>Rejeitado</option>
+                                <option value="rascunho" {% if request.GET.status == 'rascunho' %}selected{% endif %}>Rascunho</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Categoria</label>
+                            <select class="form-select" name="categoria">
+                                <option value="">Todas</option>
+                                <option value="marketing" {% if request.GET.categoria == 'marketing' %}selected{% endif %}>Marketing</option>
+                                <option value="utility" {% if request.GET.categoria == 'utility' %}selected{% endif %}>Utilidade</option>
+                                <option value="authentication" {% if request.GET.categoria == 'authentication' %}selected{% endif %}>Autenticação</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Idioma</label>
+                            <select class="form-select" name="idioma">
+                                <option value="">Todos</option>
+                                <option value="pt_BR" {% if request.GET.idioma == 'pt_BR' %}selected{% endif %}>Português (BR)</option>
+                                <option value="en_US" {% if request.GET.idioma == 'en_US' %}selected{% endif %}>English (US)</option>
+                                <option value="es_ES" {% if request.GET.idioma == 'es_ES' %}selected{% endif %}>Español</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-search me-1"></i>
+                                Buscar
+                            </button>
+                            <a href="{% url 'dashboard:whatsapp:templates' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>
+                                Limpar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Templates -->
+    <div class="row">
+        <div class="col-12">
+            {% if templates %}
+                {% for template in templates %}
+                <div class="template-card">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="mb-1">{{ template.nome }}</h6>
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="template-type">{{ template.categoria }}</span>
+                                        <span class="template-status status-{{ template.status }}">
+                                            {{ template.get_status_display }}
+                                        </span>
+                                        <small class="text-muted">{{ template.idioma }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Preview do Template -->
+                            <div class="template-preview">
+                                {% if template.header %}
+                                    <div class="fw-bold mb-2">{{ template.header }}</div>
+                                {% endif %}
+                                <div class="template-body">
+                                    {% autoescape off %}
+                                        {{ template.corpo|linebreaks }}
+                                    {% endautoescape %}
+                                </div>
+                                {% if template.footer %}
+                                    <div class="text-muted small mt-2">{{ template.footer }}</div>
+                                {% endif %}
+                                {% if template.botoes %}
+                                    <div class="mt-2">
+                                        {% for botao in template.botoes %}
+                                            <span class="badge bg-primary me-1">{{ botao.texto }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Estatísticas -->
+                            <div class="template-stats">
+                                <span>
+                                    <i class="fas fa-paper-plane me-1"></i>
+                                    {{ template.total_envios|default:0 }} envios
+                                </span>
+                                <span>
+                                    <i class="fas fa-eye me-1"></i>
+                                    {{ template.total_visualizacoes|default:0 }} visualizações
+                                </span>
+                                <span>
+                                    <i class="fas fa-mouse-pointer me-1"></i>
+                                    {{ template.total_cliques|default:0 }} cliques
+                                </span>
+                                <span>
+                                    <i class="fas fa-calendar me-1"></i>
+                                    Criado: {{ template.criado_em|date:"d/m/Y" }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="template-actions">
+                                {% if template.status == 'aprovado' %}
+                                    <button class="btn btn-success btn-sm" onclick="useTemplate('{{ template.id }}')">
+                                        <i class="fas fa-paper-plane me-1"></i>
+                                        Usar Template
+                                    </button>
+                                {% endif %}
+                                <button class="btn btn-outline-primary btn-sm" onclick="previewTemplate('{{ template.id }}')">
+                                    <i class="fas fa-eye me-1"></i>
+                                    Preview
+                                </button>
+                                <button class="btn btn-outline-warning btn-sm" onclick="editTemplate('{{ template.id }}')">
+                                    <i class="fas fa-edit me-1"></i>
+                                    Editar
+                                </button>
+                                <button class="btn btn-outline-info btn-sm" onclick="duplicateTemplate('{{ template.id }}')">
+                                    <i class="fas fa-copy me-1"></i>
+                                    Duplicar
+                                </button>
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#" onclick="exportTemplate('{{ template.id }}')">
+                                            <i class="fas fa-download me-2"></i>Exportar
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="viewAnalytics('{{ template.id }}')">
+                                            <i class="fas fa-chart-bar me-2"></i>Analytics
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteTemplate('{{ template.id }}')">
+                                            <i class="fas fa-trash me-2"></i>Excluir
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Paginação -->
+                {% if is_paginated %}
+                <div class="d-flex justify-content-center mt-4">
+                    <nav aria-label="Navegação da paginação">
+                        <ul class="pagination">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nenhum template encontrado</h5>
+                    <p class="text-muted">
+                        {% if request.GET.search %}
+                            Não encontramos templates com os termos "{{ request.GET.search }}".
+                        {% else %}
+                            Crie seu primeiro template para começar a enviar mensagens padronizadas.
+                        {% endif %}
+                    </p>
+                    <div class="mt-3">
+                        {% if request.GET.search %}
+                            <a href="{% url 'dashboard:whatsapp:templates' %}" class="btn btn-outline-primary me-2">
+                                <i class="fas fa-times me-1"></i>
+                                Limpar Busca
+                            </a>
+                        {% endif %}
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createTemplateModal">
+                            <i class="fas fa-plus me-1"></i>
+                            Criar Primeiro Template
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal Criar Template -->
+<div class="modal fade" id="createTemplateModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>
+                    Criar Novo Template
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createTemplateForm">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Nome do Template *</label>
+                                <input type="text" class="form-control" name="nome" required>
+                                <div class="form-text">Apenas letras minúsculas, números e underscore</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Categoria *</label>
+                                <select class="form-select" name="categoria" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="marketing">Marketing</option>
+                                    <option value="utility">Utilidade</option>
+                                    <option value="authentication">Autenticação</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Idioma *</label>
+                        <select class="form-select" name="idioma" required>
+                            <option value="pt_BR">Português (Brasil)</option>
+                            <option value="en_US">English (US)</option>
+                            <option value="es_ES">Español</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Header (Opcional)</label>
+                        <input type="text" class="form-control" name="header">
+                        <div class="form-text">Título ou cabeçalho da mensagem</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Corpo da Mensagem *</label>
+                        <textarea class="form-control" name="corpo" rows="4" required></textarea>
+                        <div class="form-text">
+                            Use {{1}}, {{2}}, etc. para variáveis dinâmicas
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Footer (Opcional)</label>
+                        <input type="text" class="form-control" name="footer">
+                        <div class="form-text">Rodapé da mensagem</div>
+                    </div>
+                    
+                    <!-- Preview -->
+                    <div class="mb-3">
+                        <label class="form-label">Preview</label>
+                        <div id="templatePreview" class="template-preview">
+                            <div class="text-muted">O preview aparecerá aqui conforme você digita...</div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-warning me-2" onclick="saveTemplate('rascunho')">
+                    <i class="fas fa-save me-1"></i>
+                    Salvar como Rascunho
+                </button>
+                <button type="button" class="btn btn-success" onclick="saveTemplate('pendente')">
+                    <i class="fas fa-paper-plane me-1"></i>
+                    Enviar para Aprovação
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function refreshTemplates() {
+    location.reload();
+}
+
+function createQuickTemplate(type) {
+    const templates = {
+        welcome: {
+            nome: 'boas_vindas',
+            categoria: 'utility',
+            header: 'Bem-vindo!',
+            corpo: 'Olá {{1}}! Bem-vindo à nossa empresa. Estamos aqui para ajudá-lo.',
+            footer: 'Equipe de Atendimento'
+        },
+        promotion: {
+            nome: 'promocao',
+            categoria: 'marketing',
+            header: 'Oferta Especial!',
+            corpo: 'Aproveite {{1}}% de desconto em {{2}}. Oferta válida até {{3}}.',
+            footer: 'Não perca esta oportunidade!'
+        },
+        notification: {
+            nome: 'notificacao',
+            categoria: 'utility',
+            corpo: 'Informamos que {{1}}. Para mais detalhes, entre em contato conosco.',
+            footer: 'Atenciosamente, Equipe'
+        },
+        reminder: {
+            nome: 'lembrete',
+            categoria: 'utility',
+            corpo: 'Lembrete: {{1}} está agendado para {{2}}. Confirme sua presença.',
+            footer: 'Obrigado!'
+        }
+    };
+    
+    const template = templates[type];
+    if (template) {
+        document.querySelector('#createTemplateForm [name="nome"]').value = template.nome;
+        document.querySelector('#createTemplateForm [name="categoria"]').value = template.categoria;
+        if (template.header) document.querySelector('#createTemplateForm [name="header"]').value = template.header;
+        document.querySelector('#createTemplateForm [name="corpo"]').value = template.corpo;
+        if (template.footer) document.querySelector('#createTemplateForm [name="footer"]').value = template.footer;
+        
+        updatePreview();
+        document.getElementById('createTemplateModal').querySelector('.modal').show();
+    }
+}
+
+function updatePreview() {
+    const header = document.querySelector('#createTemplateForm [name="header"]').value;
+    const corpo = document.querySelector('#createTemplateForm [name="corpo"]').value;
+    const footer = document.querySelector('#createTemplateForm [name="footer"]').value;
+    
+    let preview = '';
+    if (header) preview += `<div class="fw-bold mb-2">${header}</div>`;
+    preview += `<div>${corpo.replace(/\n/g, '<br>')}</div>`;
+    if (footer) preview += `<div class="text-muted small mt-2">${footer}</div>`;
+    
+    document.getElementById('templatePreview').innerHTML = preview || '<div class="text-muted">O preview aparecerá aqui conforme você digita...</div>';
+}
+
+function saveTemplate(status) {
+    const form = document.getElementById('createTemplateForm');
+    const formData = new FormData(form);
+    formData.append('status', status);
+    
+    fetch('/dashboard/whatsapp/api/template/create/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erro ao salvar template: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao salvar template');
+    });
+}
+
+function useTemplate(templateId) {
+    window.location.href = `/dashboard/whatsapp/send-template/${templateId}/`;
+}
+
+function previewTemplate(templateId) {
+    window.open(`/dashboard/whatsapp/template/${templateId}/preview/`, '_blank');
+}
+
+function editTemplate(templateId) {
+    window.location.href = `/dashboard/whatsapp/template/${templateId}/edit/`;
+}
+
+function duplicateTemplate(templateId) {
+    if (confirm('Deseja criar uma cópia deste template?')) {
+        fetch(`/dashboard/whatsapp/api/template/${templateId}/duplicate/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erro ao duplicar template: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao duplicar template');
+        });
+    }
+}
+
+function deleteTemplate(templateId) {
+    if (confirm('Tem certeza que deseja excluir este template? Esta ação não pode ser desfeita.')) {
+        fetch(`/dashboard/whatsapp/api/template/${templateId}/delete/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erro ao excluir template: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao excluir template');
+        });
+    }
+}
+
+// Event listeners para preview em tempo real
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('createTemplateForm');
+    if (form) {
+        form.addEventListener('input', updatePreview);
+    }
+});
+</script>
+{% endblock %}

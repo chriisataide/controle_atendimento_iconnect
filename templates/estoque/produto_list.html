@@ -1,0 +1,342 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Produtos - iConnect{% endblock %}
+
+{% block page_title %}Produtos{% endblock %}
+{% block breadcrumb_title %}Produtos{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card my-4">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="text-white text-capitalize ps-3">Lista de Produtos</h6>
+                        <div class="me-3">
+                            <a href="{% url 'estoque:produto_create' %}" class="btn btn-sm btn-outline-white">
+                                <i class="material-symbols-rounded me-1">add</i>
+                                Novo Produto
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filtros -->
+            <div class="card-body px-0 pb-2">
+                <div class="row px-3 mb-3">
+                    <div class="col-md-3">
+                        <div class="input-group input-group-outline">
+                            <label class="form-label">Buscar produto...</label>
+                            <input type="text" id="search-input" class="form-control">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="input-group input-group-outline">
+                            <select class="form-control" id="categoria-filter">
+                                <option value="">Todas as categorias</option>
+                                {% for categoria in categorias %}
+                                <option value="{{ categoria.id }}">{{ categoria.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="input-group input-group-outline">
+                            <select class="form-control" id="status-filter">
+                                <option value="">Todos os status</option>
+                                <option value="ativo">Ativo</option>
+                                <option value="inativo">Inativo</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="estoque-critico">
+                            <label class="form-check-label" for="estoque-critico">
+                                Apenas estoque crítico
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tabela de Produtos -->
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0" id="produtos-table">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Produto</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Código</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Categoria</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Estoque Atual</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Preço</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
+                                <th class="text-secondary opacity-7">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for produto in produtos %}
+                            <tr data-categoria="{{ produto.categoria.id }}" 
+                                data-status="{% if produto.ativo %}ativo{% else %}inativo{% endif %}"
+                                data-estoque-critico="{% if produto.estoque_atual <= produto.estoque_minimo %}true{% else %}false{% endif %}">
+                                
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ produto.nome }}</h6>
+                                            {% if produto.descricao %}
+                                            <p class="text-xs text-secondary mb-0">
+                                                {{ produto.descricao|truncatewords:8 }}
+                                            </p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">{{ produto.codigo }}</p>
+                                </td>
+                                
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">{{ produto.categoria.nome }}</p>
+                                </td>
+                                
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="text-xs font-weight-bold {{ produto.status_estoque_css }}">
+                                            {{ produto.estoque_atual|floatformat:2 }} {{ produto.unidade_medida.sigla }}
+                                        </span>
+                                        {% if produto.estoque_critico %}
+                                        <i class="material-symbols-rounded text-danger text-sm ms-1">warning</i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="progress mt-1" style="height: 4px;">
+                                        <div class="progress-bar 
+                                            {% if produto.percentual_estoque <= 20 %}bg-danger
+                                            {% elif produto.percentual_estoque <= 50 %}bg-warning  
+                                            {% else %}bg-success{% endif %}" 
+                                            style="width: {{ produto.percentual_estoque|floatformat:0 }}%"></div>
+                                    </div>
+                                </td>
+                                
+                                <td>
+                                    <p class="text-xs font-weight-bold mb-0">
+                                        R$ {{ produto.preco_custo|floatformat:2 }}
+                                    </p>
+                                    {% if produto.preco_venda %}
+                                    <p class="text-xs text-secondary mb-0">
+                                        Venda: R$ {{ produto.preco_venda|floatformat:2 }}
+                                    </p>
+                                    {% endif %}
+                                </td>
+                                
+                                <td>
+                                    {% if produto.ativo %}
+                                    <span class="badge badge-sm bg-gradient-success">Ativo</span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-gradient-secondary">Inativo</span>
+                                    {% endif %}
+                                </td>
+                                
+                                <td class="align-middle">
+                                    <div class="d-flex">
+                                        <a href="{% url 'estoque:produto_detail' produto.pk %}" 
+                                           class="btn btn-link text-dark px-2 mb-0" title="Ver detalhes">
+                                            <i class="material-symbols-rounded text-sm">visibility</i>
+                                        </a>
+                                        <a href="{% url 'estoque:produto_update' produto.pk %}" 
+                                           class="btn btn-link text-dark px-2 mb-0" title="Editar">
+                                            <i class="material-symbols-rounded text-sm">edit</i>
+                                        </a>
+                                        <button type="button" class="btn btn-link text-danger px-2 mb-0" 
+                                                title="Excluir" onclick="confirmarExclusao({{ produto.pk }}, '{{ produto.nome }}')">
+                                            <i class="material-symbols-rounded text-sm">delete</i>
+                                        </button>
+                                        <div class="dropdown">
+                                            <button class="btn btn-link text-secondary px-2 mb-0" type="button" 
+                                                    data-bs-toggle="dropdown">
+                                                <i class="material-symbols-rounded text-sm">more_vert</i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" 
+                                                       href="{% url 'estoque:movimentacao_create' %}?produto={{ produto.pk }}">
+                                                    <i class="material-symbols-rounded me-2">sync</i>
+                                                    Nova Movimentação
+                                                </a></li>
+                                                <li><a class="dropdown-item" href="#" 
+                                                       onclick="gerarRelatorio({{ produto.pk }})">
+                                                    <i class="material-symbols-rounded me-2">assessment</i>
+                                                    Relatório do Produto
+                                                </a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="material-symbols-rounded display-4 text-muted mb-3">inventory</i>
+                                    <h6>Nenhum produto encontrado</h6>
+                                    <p>Comece adicionando seu primeiro produto ao estoque.</p>
+                                    <a href="{% url 'estoque:produto_create' %}" class="btn btn-primary">
+                                        <i class="material-symbols-rounded me-1">add</i>
+                                        Adicionar Produto
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Paginação -->
+                {% if is_paginated %}
+                <div class="row mt-3 px-3">
+                    <div class="col-sm-12 col-md-5">
+                        <div class="dataTables_info">
+                            Mostrando {{ page_obj.start_index }} a {{ page_obj.end_index }} 
+                            de {{ page_obj.paginator.count }} produtos
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-md-7">
+                        <div class="dataTables_paginate paging_simple_numbers">
+                            <ul class="pagination">
+                                {% if page_obj.has_previous %}
+                                <li class="paginate_button page-item previous">
+                                    <a href="?page={{ page_obj.previous_page_number }}" class="page-link">Anterior</a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                <li class="paginate_button page-item active">
+                                    <a href="#" class="page-link">{{ num }}</a>
+                                </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="paginate_button page-item">
+                                    <a href="?page={{ num }}" class="page-link">{{ num }}</a>
+                                </li>
+                                {% endif %}
+                                {% endfor %}
+                                
+                                {% if page_obj.has_next %}
+                                <li class="paginate_button page-item next">
+                                    <a href="?page={{ page_obj.next_page_number }}" class="page-link">Próximo</a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir o produto <strong id="produto-nome"></strong>?</p>
+                <p class="text-muted">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="delete-form" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Excluir</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search-input');
+    const categoriaFilter = document.getElementById('categoria-filter');
+    const statusFilter = document.getElementById('status-filter');
+    const estoqueCritico = document.getElementById('estoque-critico');
+    const table = document.getElementById('produtos-table');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    
+    // Função para filtrar tabela
+    function filterTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const categoriaValue = categoriaFilter.value;
+        const statusValue = statusFilter.value;
+        const estoqueCriticoChecked = estoqueCritico.checked;
+        
+        Array.from(rows).forEach(row => {
+            if (row.cells.length === 1) return; // Skip empty state row
+            
+            const produto = row.cells[0].textContent.toLowerCase();
+            const codigo = row.cells[1].textContent.toLowerCase();
+            const categoria = row.getAttribute('data-categoria');
+            const status = row.getAttribute('data-status');
+            const isEstoqueCritico = row.getAttribute('data-estoque-critico') === 'true';
+            
+            let show = true;
+            
+            // Filtro de busca
+            if (searchTerm && !produto.includes(searchTerm) && !codigo.includes(searchTerm)) {
+                show = false;
+            }
+            
+            // Filtro de categoria
+            if (categoriaValue && categoria !== categoriaValue) {
+                show = false;
+            }
+            
+            // Filtro de status
+            if (statusValue && status !== statusValue) {
+                show = false;
+            }
+            
+            // Filtro de estoque crítico
+            if (estoqueCriticoChecked && !isEstoqueCritico) {
+                show = false;
+            }
+            
+            row.style.display = show ? '' : 'none';
+        });
+    }
+    
+    // Event listeners para filtros
+    searchInput.addEventListener('input', filterTable);
+    categoriaFilter.addEventListener('change', filterTable);
+    statusFilter.addEventListener('change', filterTable);
+    estoqueCritico.addEventListener('change', filterTable);
+    
+    // Aplicar filtros da URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('estoque_critico') === 'true') {
+        estoqueCritico.checked = true;
+        filterTable();
+    }
+});
+
+function confirmarExclusao(produtoId, produtoNome) {
+    document.getElementById('produto-nome').textContent = produtoNome;
+    document.getElementById('delete-form').action = `/estoque/produtos/${produtoId}/delete/`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+function gerarRelatorio(produtoId) {
+    window.open(`/estoque/relatorios/produto/${produtoId}/`, '_blank');
+}
+</script>
+{% endblock %}

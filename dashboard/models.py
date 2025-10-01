@@ -1,4 +1,8 @@
 from django.db import models
+
+# Importar modelos de estoque
+from .models_estoque import *
+
 # ----------------------
 # Modelo de Ponto de Venda
 # ----------------------
@@ -744,6 +748,9 @@ class MovimentacaoFinanceira(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.PROTECT)
     # Relacionamento opcional com fatura (para receitas de faturas pagas)
     fatura = models.ForeignKey(Fatura, on_delete=models.SET_NULL, null=True, blank=True)
+    # Novo campo para centro de custo
+    centro_custo = models.ForeignKey('CentroCusto', on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='movimentacoes', help_text="Centro de custo responsável")
     criado_em = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -780,6 +787,114 @@ class RelatorioFinanceiro(models.Model):
     
     def __str__(self):
         return f"{self.nome} - {self.get_tipo_display()}"
+
+
+class CentroCusto(models.Model):
+    """Centro de Custos para controle financeiro por departamento/projeto"""
+    STATUS_CHOICES = [
+        ('ativo', 'Ativo'),
+        ('inativo', 'Inativo'),
+        ('suspenso', 'Suspenso'),
+    ]
+    
+    # Informações básicas
+    codigo = models.CharField(max_length=20, unique=True, help_text="Código único do centro de custo")
+    nome = models.CharField(max_length=100, help_text="Nome do centro de custo")
+    descricao = models.TextField(blank=True, null=True, help_text="Descrição detalhada")
+    
+    # Hierarquia e organização
+    departamento = models.CharField(max_length=100, help_text="Departamento responsável")
+    centro_pai = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, 
+                                   related_name='subcentros', help_text="Centro de custo pai (para hierarquia)")
+    
+    # Responsabilidade
+    responsavel = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name='centros_custo_responsavel', help_text="Responsável pelo centro de custo")
+    gerente = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='centros_custo_gerente', help_text="Gerente do centro de custo")
+    
+    # Orçamento e controle
+    orcamento_mensal = models.DecimalField(max_digits=12, decimal_places=2, default=0,
+                                          help_text="Orçamento mensal planejado")
+    orcamento_anual = models.DecimalField(max_digits=12, decimal_places=2, default=0,
+                                         help_text="Orçamento anual planejado")
+    
+    # Status e configurações
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ativo')
+    permite_suborçamento = models.BooleanField(default=False, 
+                                               help_text="Permite estourar o orçamento")
+    alerta_percentual = models.DecimalField(max_digits=5, decimal_places=2, default=80,
+                                           help_text="Percentual para alerta de orçamento (%)")
+    
+    # Metadados
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+    criado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name='centros_custo_criados')
+    
+    class Meta:
+        verbose_name = "Centro de Custo"
+        verbose_name_plural = "Centros de Custo"
+        ordering = ['departamento', 'codigo']
+        
+    def __str__(self):
+        return f"{self.codigo} - {self.nome}"
+    
+    @property
+    def orcamento_utilizado_mes_atual(self):
+        """Calcula o orçamento utilizado no mês atual"""
+        from datetime import datetime
+        mes_atual = datetime.now().month
+        ano_atual = datetime.now().year
+        
+        total = MovimentacaoFinanceira.objects.filter(
+            centro_custo=self,
+            data_movimentacao__month=mes_atual,
+            data_movimentacao__year=ano_atual,
+            tipo='despesa'
+        ).aggregate(total=models.Sum('valor'))['total'] or 0
+        
+        return total
+    
+    @property
+    def percentual_orcamento_utilizado(self):
+        """Calcula o percentual do orçamento mensal utilizado"""
+        if self.orcamento_mensal <= 0:
+            return 0
+        
+        utilizado = self.orcamento_utilizado_mes_atual
+        return (utilizado / self.orcamento_mensal) * 100
+    
+    @property
+    def saldo_orcamento_mensal(self):
+        """Calcula o saldo restante do orçamento mensal"""
+        return self.orcamento_mensal - self.orcamento_utilizado_mes_atual
+    
+    @property
+    def status_orcamento(self):
+        """Retorna o status do orçamento baseado no percentual utilizado"""
+        percentual = self.percentual_orcamento_utilizado
+        
+        if percentual >= 100:
+            return 'estourado'
+        elif percentual >= self.alerta_percentual:
+            return 'alerta'
+        else:
+            return 'normal'
+    
+    def get_movimentacoes_mes(self, mes=None, ano=None):
+        """Retorna as movimentações do mês especificado"""
+        from datetime import datetime
+        if not mes:
+            mes = datetime.now().month
+        if not ano:
+            ano = datetime.now().year
+            
+        return MovimentacaoFinanceira.objects.filter(
+            centro_custo=self,
+            data_movimentacao__month=mes,
+            data_movimentacao__year=ano
+        ).order_by('-data_movimentacao')
 
 
 # ========== IMPORTAR MODELOS DE CHAT ==========

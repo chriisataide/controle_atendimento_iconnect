@@ -5,6 +5,7 @@ URLs da API para funcionalidades avançadas do iConnect
 from django.urls import path
 from rest_framework.authtoken.views import obtain_auth_token
 from . import api_views
+from .api_ai import TicketAISuggestionView
 
 app_name = 'api'
 
@@ -30,6 +31,8 @@ urlpatterns = [
     path('ml/predict-priority/', api_views.ml_predict_priority, name='ml-predict-priority'),
     path('ml/predict-category/', api_views.ml_predict_category, name='ml-predict-category'),
     path('ml/predict-resolution-time/', api_views.ml_predict_resolution_time, name='ml-predict-resolution-time'),
+    # IA: sugestão automática de prioridade/categoria
+    path('ml/suggest-ticket/', TicketAISuggestionView.as_view(), name='ml-suggest-ticket'),
     
     # Chatbot IA
 ]

@@ -1,0 +1,10 @@
+[tool.black]
+line-length = 88
+exclude = '''
+/(\.|venv|migrations|static|media|node_modules)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+skip = [".venv", "venv", "migrations", "static", "media", "node_modules"]

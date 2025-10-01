@@ -1,4 +1,24 @@
+
 # Sistema de Controle de Atendimento iConnect - Changelog
+
+## [Unreleased]
+### Adicionado
+- Documentação automática das APIs (Swagger e Redoc) via drf-yasg em `/swagger/` e `/redoc/`.
+- Exemplo de settings para integrações externas (Slack, WhatsApp, CRM, ERP, webhooks).
+- Service worker e manifest para PWA offline.
+- Testes automatizados para modelos principais.
+- Pipeline CI/CD com lint, test, coverage e dependabot.
+- Monitoramento Sentry, health check, métricas e logs estruturados.
+- Segurança: 2FA admin, brute-force protection, atualização de dependências.
+- Otimização: cache Redis, compressão, minificação de assets.
+
+### Alterado
+- Modularização dos settings para facilitar ativação de integrações e features.
+
+### Corrigido
+- Ajustes de responsividade e acessibilidade no template base.
+
+---
 
 ## [1.0.0] 2025-09-08
 
