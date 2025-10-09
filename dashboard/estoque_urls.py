@@ -2,7 +2,7 @@
 URLs para Sistema de Controle de Estoque
 """
 from django.urls import path
-from . import estoque_views
+from . import estoque_views, views
 
 app_name = 'estoque'
 

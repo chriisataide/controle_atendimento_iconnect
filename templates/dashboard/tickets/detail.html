@@ -61,7 +61,12 @@
                     <strong>Categoria:</strong> <span style="color: {{ ticket.categoria.cor }};">{{ ticket.categoria.nome }}</span>
                   </li>
                   <li class="list-group-item border-0 ps-0 text-sm">
-                    <strong>Agente:</strong> {{ ticket.agente.get_full_name|default:ticket.agente.username|default:"Não atribuído" }}
+                    <strong>Agente:</strong> 
+                    {% if ticket.agente %}
+                      {{ ticket.agente.get_full_name|default:ticket.agente.username }}
+                    {% else %}
+                      Não atribuído
+                    {% endif %}
                   </li>
                   <li class="list-group-item border-0 ps-0 text-sm">
                     <strong>Criado:</strong> {{ ticket.criado_em|date:"d/m/Y às H:i" }}
@@ -94,7 +99,11 @@
               </span>
               <div class="timeline-content">
                 <h6 class="text-dark text-sm font-weight-bold mb-0">
-                  {{ interacao.usuario.get_full_name|default:interacao.usuario.username }}
+                  {% if interacao.usuario %}
+                    {{ interacao.usuario.get_full_name|default:interacao.usuario.username }}
+                  {% else %}
+                    Usuário removido
+                  {% endif %}
                   {% if not interacao.eh_publico %}
                     <span class="badge badge-sm bg-gradient-warning">Interno</span>
                   {% endif %}
@@ -208,6 +217,222 @@
           </div>
         </div>
       </div>
+
+      <!-- Produtos e Serviços Utilizados -->
+      {% if ticket.status == 'em_andamento' or ticket.status == 'resolvido' or ticket.status == 'fechado' %}
+      <div class="card mt-4" id="produtosServicosCard">
+        <div class="card-header pb-0">
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+              <div class="icon icon-shape icon-sm shadow border-radius-md bg-gradient-primary me-3">
+                <i class="material-symbols-rounded opacity-10">inventory_2</i>
+              </div>
+              <div>
+                <h6 class="mb-0">Produtos e Serviços Utilizados</h6>
+                <p class="text-sm mb-0 text-muted">Itens aplicados neste atendimento</p>
+              </div>
+            </div>
+            {% if ticket.status == 'em_andamento' %}
+            <button class="btn btn-primary btn-sm" onclick="openAddItemModal()">
+              <i class="material-symbols-rounded text-sm me-1">add_shopping_cart</i>
+              Adicionar Item
+            </button>
+            {% endif %}
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="itensAtendimentoList">
+            <!-- Lista de itens será carregada aqui via AJAX -->
+            <div class="text-center py-5" id="loadingItens">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Carregando...</span>
+              </div>
+              <p class="text-muted mt-3">Carregando itens do atendimento...</p>
+            </div>
+          </div>
+          
+          <!-- Resumo Financeiro Melhorado -->
+          <div class="mt-4" id="resumoFinanceiro" style="display: none;">
+            <div class="card bg-gradient-light border-0">
+              <div class="card-body p-3">
+                <h6 class="mb-3">
+                  <i class="material-symbols-rounded me-2 text-primary">calculate</i>
+                  Resumo Financeiro
+                </h6>
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="d-flex justify-content-between align-items-center py-2">
+                      <span class="text-sm text-muted">
+                        <i class="material-symbols-rounded text-xs me-1">receipt</i>
+                        Subtotal:
+                      </span>
+                      <span class="text-sm fw-bold" id="subtotalValue">R$ 0,00</span>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="d-flex justify-content-between align-items-center py-2">
+                      <span class="text-sm text-muted">
+                        <i class="material-symbols-rounded text-xs me-1">local_offer</i>
+                        Desconto:
+                      </span>
+                      <span class="text-sm fw-bold text-success" id="descontoValue">R$ 0,00</span>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="d-flex justify-content-between align-items-center py-2 border-start ps-3">
+                      <span class="text-lg fw-bold text-dark">
+                        <i class="material-symbols-rounded me-1">payments</i>
+                        Total:
+                      </span>
+                      <span class="text-lg fw-bold text-primary" id="totalValue">R$ 0,00</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Adicionar Item -->
+<div class="modal fade" id="addItemModal" tabindex="-1" aria-labelledby="addItemModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-gradient-primary">
+        <h5 class="modal-title text-white" id="addItemModalLabel">
+          <i class="material-symbols-rounded me-2">add_shopping_cart</i>
+          Adicionar Produto/Serviço
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="addItemForm">
+          {% csrf_token %}
+          
+          <!-- Seção de Seleção do Produto -->
+          <div class="card bg-gradient-light border-0 mb-4">
+            <div class="card-body p-3">
+              <h6 class="mb-3">
+                <i class="material-symbols-rounded me-2 text-primary">search</i>
+                Selecionar Item
+              </h6>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="input-group input-group-outline mb-3">
+                    <label class="form-label">Produto/Serviço</label>
+                    <select class="form-control" id="produtoSelect" name="produto" required>
+                      <option value="">Selecione um item...</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group input-group-outline mb-3">
+                    <label class="form-label">Tipo</label>
+                    <select class="form-control" id="tipoItemSelect" name="tipo_item">
+                      <option value="produto">Produto</option>
+                      <option value="servico">Serviço</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Seção de Quantidade e Valores -->
+          <div class="card bg-gradient-light border-0 mb-4">
+            <div class="card-body p-3">
+              <h6 class="mb-3">
+                <i class="material-symbols-rounded me-2 text-info">calculate</i>
+                Quantidade e Valores
+              </h6>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="input-group input-group-outline mb-3">
+                    <label class="form-label">Quantidade</label>
+                    <input type="number" class="form-control" id="quantidadeInput" name="quantidade" 
+                           value="1" min="0.001" step="0.001" required>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="input-group input-group-outline mb-3">
+                    <label class="form-label">Valor Unit. (R$)</label>
+                    <input type="number" class="form-control" id="valorUnitarioInput" name="valor_unitario" 
+                           step="0.01" min="0" required>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="input-group input-group-outline mb-3">
+                    <label class="form-label">Desconto (%)</label>
+                    <input type="number" class="form-control" id="descontoInput" name="desconto_percentual" 
+                           value="0" min="0" max="100" step="0.01">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Seção de Observações -->
+          <div class="card bg-gradient-light border-0 mb-4">
+            <div class="card-body p-3">
+              <h6 class="mb-3">
+                <i class="material-symbols-rounded me-2 text-warning">sticky_note_2</i>
+                Observações (Opcional)
+              </h6>
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Observações</label>
+                <textarea class="form-control" id="observacoesInput" name="observacoes" rows="3" 
+                          placeholder="Adicione observações específicas sobre este item..."></textarea>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Resumo do Item -->
+          <div class="card bg-gradient-primary border-0">
+            <div class="card-body p-3">
+              <h6 class="text-white mb-3">
+                <i class="material-symbols-rounded me-2">receipt</i>
+                Resumo do Item
+              </h6>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="d-flex justify-content-between align-items-center py-1">
+                    <span class="text-white text-sm opacity-8">Subtotal:</span>
+                    <span class="text-white fw-bold" id="modalSubtotal">R$ 0,00</span>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="d-flex justify-content-between align-items-center py-1">
+                    <span class="text-white text-sm opacity-8">Desconto:</span>
+                    <span class="text-white fw-bold" id="modalDesconto">R$ 0,00</span>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="d-flex justify-content-between align-items-center py-1 border-start border-white border-opacity-25 ps-3">
+                    <span class="text-white fw-bold">Total:</span>
+                    <span class="text-white fw-bold fs-5" id="modalTotal">R$ 0,00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+            <div class="modal-footer bg-gradient-light border-0 pt-0">
+        <div class="d-flex gap-2 w-100">
+          <button type="button" class="btn btn-outline-secondary btn-lg flex-fill" data-bs-dismiss="modal">
+            <i class="material-symbols-rounded me-2">close</i>
+            Cancelar
+          </button>
+          <button type="submit" form="addItemForm" class="btn btn-primary btn-lg flex-fill">
+            <i class="material-symbols-rounded me-2">add_shopping_cart</i>
+            Adicionar Item
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -215,24 +440,395 @@
 <script>
 function updateTicketStatus(ticketId, newStatus) {
   if (confirm('Deseja realmente alterar o status deste ticket?')) {
+    
+    // Mostrar loading
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="material-symbols-rounded text-sm">hourglass_empty</i>&nbsp;&nbsp;Processando...';
+    button.disabled = true;
+    
     fetch("{% url 'dashboard:update_ticket_status' %}", {
       method: 'POST',
       headers: {
         'X-CSRFToken': '{{ csrf_token }}',
         'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json'
       },
       body: `ticket_id=${ticketId}&status=${newStatus}`
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        // Mostrar sucesso e recarregar
+        alert('Status atualizado com sucesso!');
+        location.reload();
+      } else {
+        alert('Erro: ' + (data.message || 'Erro desconhecido'));
+        // Restaurar botão
+        button.innerHTML = originalText;
+        button.disabled = false;
+      }
+    })
+    .catch(error => {
+      console.error('Erro na requisição:', error);
+      alert('Erro na requisição: ' + error.message);
+      // Restaurar botão
+      button.innerHTML = originalText;
+      button.disabled = false;
+    });
+  }
+}
+
+// Funções para gerenciar produtos e serviços do atendimento
+let produtosDisponiveis = [];
+
+// Carregar produtos disponíveis
+function carregarProdutos() {
+  fetch('/dashboard/api/produtos-ativos/')
+    .then(response => response.json())
+    .then(data => {
+      produtosDisponiveis = data;
+      const select = document.getElementById('produtoSelect');
+      select.innerHTML = '<option value="">Selecione um item...</option>';
+      
+      data.forEach(produto => {
+        const option = document.createElement('option');
+        option.value = produto.id;
+        option.textContent = `${produto.nome} - R$ ${produto.preco_venda}`;
+        option.dataset.preco = produto.preco_venda;
+        option.dataset.tipo = produto.tipo;
+        select.appendChild(option);
+      });
+    })
+    .catch(error => {
+      console.error('Erro ao carregar produtos:', error);
+    });
+}
+
+// Abrir modal para adicionar item
+function openAddItemModal() {
+  carregarProdutos();
+  const modal = new bootstrap.Modal(document.getElementById('addItemModal'));
+  modal.show();
+  
+  // Reset form
+  document.getElementById('addItemForm').reset();
+  document.getElementById('quantidadeInput').value = 1;
+  document.getElementById('descontoInput').value = 0;
+  calcularTotalModal();
+}
+
+// Calcular total no modal
+function calcularTotalModal() {
+  const quantidade = parseFloat(document.getElementById('quantidadeInput').value) || 0;
+  const valorUnitario = parseFloat(document.getElementById('valorUnitarioInput').value) || 0;
+  const desconto = parseFloat(document.getElementById('descontoInput').value) || 0;
+  
+  const subtotal = quantidade * valorUnitario;
+  const valorDesconto = subtotal * (desconto / 100);
+  const total = subtotal - valorDesconto;
+  
+  document.getElementById('modalSubtotal').textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+  document.getElementById('modalDesconto').textContent = `R$ ${valorDesconto.toFixed(2).replace('.', ',')}`;
+  document.getElementById('modalTotal').textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+}
+
+// Event listeners para cálculo automático
+document.addEventListener('DOMContentLoaded', function() {
+  const produtoSelect = document.getElementById('produtoSelect');
+  const quantidadeInput = document.getElementById('quantidadeInput');
+  const valorUnitarioInput = document.getElementById('valorUnitarioInput');
+  const descontoInput = document.getElementById('descontoInput');
+  const tipoItemSelect = document.getElementById('tipoItemSelect');
+  
+  if (produtoSelect) {
+    produtoSelect.addEventListener('change', function() {
+      const selectedOption = this.options[this.selectedIndex];
+      if (selectedOption.dataset.preco) {
+        valorUnitarioInput.value = selectedOption.dataset.preco;
+        tipoItemSelect.value = selectedOption.dataset.tipo || 'produto';
+        calcularTotalModal();
+      }
+    });
+  }
+  
+  if (quantidadeInput) {
+    quantidadeInput.addEventListener('input', calcularTotalModal);
+  }
+  
+  if (valorUnitarioInput) {
+    valorUnitarioInput.addEventListener('input', calcularTotalModal);
+  }
+  
+  if (descontoInput) {
+    descontoInput.addEventListener('input', calcularTotalModal);
+  }
+  
+  // Event listener para o formulário de adicionar item
+  const addItemForm = document.getElementById('addItemForm');
+  if (addItemForm) {
+    addItemForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      addItemToTicket();
+    });
+  }
+  
+  // Carregar itens do atendimento
+  carregarItensAtendimento();
+});
+
+// Adicionar item ao ticket
+function addItemToTicket() {
+  const form = document.getElementById('addItemForm');
+  const formData = new FormData(form);
+  formData.append('ticket_id', '{{ ticket.id }}');
+  
+  fetch('/dashboard/api/ticket-itens/add/', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': '{{ csrf_token }}',
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      const modal = bootstrap.Modal.getInstance(document.getElementById('addItemModal'));
+      modal.hide();
+      carregarItensAtendimento();
+    } else {
+      alert('Erro: ' + (data.message || 'Erro desconhecido'));
+    }
+  })
+  .catch(error => {
+    console.error('Erro ao adicionar item:', error);
+    alert('Erro ao adicionar item');
+  });
+}
+
+// Carregar itens do atendimento
+function carregarItensAtendimento() {
+  fetch(`/dashboard/api/ticket-itens/{{ ticket.id }}/`)
+    .then(response => response.json())
+    .then(data => {
+      const container = document.getElementById('itensAtendimentoList');
+      const loadingElement = document.getElementById('loadingItens');
+      const resumoElement = document.getElementById('resumoFinanceiro');
+      
+      if (loadingElement) {
+        loadingElement.style.display = 'none';
+      }
+      
+      if (data.itens && data.itens.length > 0) {
+        container.innerHTML = '';
+        
+        data.itens.forEach(item => {
+          const itemElement = criarElementoItem(item);
+          container.appendChild(itemElement);
+        });
+        
+        // Mostrar resumo financeiro
+        if (resumoElement) {
+          resumoElement.style.display = 'block';
+          document.getElementById('subtotalValue').textContent = `R$ ${data.resumo.subtotal.toFixed(2)}`;
+          document.getElementById('descontoValue').textContent = `R$ ${data.resumo.desconto.toFixed(2)}`;
+          document.getElementById('totalValue').textContent = `R$ ${data.resumo.total.toFixed(2)}`;
+        }
+      } else {
+        container.innerHTML = `
+          <div class="text-center py-5">
+            <div class="icon icon-shape icon-lg bg-gradient-light shadow border-radius-lg mx-auto mb-3">
+              <i class="material-symbols-rounded opacity-10 text-muted" style="font-size: 2rem;">inventory_2</i>
+            </div>
+            <h6 class="text-muted mb-2">Nenhum item adicionado</h6>
+            <p class="text-sm text-muted mb-0">
+              ${ticket.status == 'em_andamento' ? 
+                'Adicione produtos ou serviços utilizados neste atendimento clicando no botão "Adicionar Item" acima.' : 
+                'Nenhum produto ou serviço foi utilizado neste atendimento.'
+              }
+            </p>
+            ${ticket.status == 'em_andamento' ? 
+              `<button class="btn btn-outline-primary btn-sm mt-3" onclick="openAddItemModal()">
+                <i class="material-symbols-rounded text-sm me-1">add_shopping_cart</i>
+                Adicionar Primeiro Item
+              </button>` : ''
+            }
+          </div>
+        `;
+        if (resumoElement) {
+          resumoElement.style.display = 'none';
+        }
+      }
+    })
+    .catch(error => {
+      console.error('Erro ao carregar itens:', error);
+      const container = document.getElementById('itensAtendimentoList');
+      container.innerHTML = `
+        <div class="text-center py-4 text-danger">
+          <i class="material-symbols-rounded">error</i>
+          <p class="mt-2">Erro ao carregar itens do atendimento.</p>
+        </div>
+      `;
+    });
+}
+
+// Criar elemento HTML para um item
+function criarElementoItem(item) {
+  const div = document.createElement('div');
+  div.className = 'mb-3';
+  
+  // Definir ícone e cor baseado no tipo
+  const tipoInfo = {
+    'produto': {
+      icon: 'inventory_2',
+      color: 'primary',
+      bgColor: 'bg-gradient-primary',
+      textColor: 'text-primary'
+    },
+    'servico': {
+      icon: 'design_services', 
+      color: 'info',
+      bgColor: 'bg-gradient-info',
+      textColor: 'text-info'
+    },
+    'kit': {
+      icon: 'category',
+      color: 'warning', 
+      bgColor: 'bg-gradient-warning',
+      textColor: 'text-warning'
+    }
+  };
+  
+  const tipo = tipoInfo[item.tipo_item] || tipoInfo['produto'];
+  
+  div.innerHTML = `
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <div class="row align-items-center">
+          <!-- Produto/Serviço Info -->
+          <div class="col-md-5">
+            <div class="d-flex align-items-center">
+              <div class="icon icon-shape icon-sm shadow border-radius-md ${tipo.bgColor} me-3">
+                <i class="material-symbols-rounded opacity-10 text-white">${tipo.icon}</i>
+              </div>
+              <div>
+                <h6 class="mb-1 text-sm">${item.produto_nome}</h6>
+                <div class="d-flex align-items-center">
+                  <span class="badge badge-sm bg-gradient-${tipo.color} me-2">${item.tipo_item.toUpperCase()}</span>
+                  <span class="text-xs text-muted">Cód: ${item.produto_codigo}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Quantidade -->
+          <div class="col-md-1 text-center">
+            <div class="d-flex flex-column">
+              <span class="text-sm fw-bold">${item.quantidade}</span>
+              <span class="text-xs text-muted">${item.unidade_medida || 'un'}</span>
+            </div>
+          </div>
+          
+          <!-- Valor Unitário -->
+          <div class="col-md-2 text-center">
+            <div class="d-flex flex-column">
+              <span class="text-sm fw-bold">R$ ${parseFloat(item.valor_unitario).toFixed(2)}</span>
+              <span class="text-xs text-muted">Valor unit.</span>
+            </div>
+          </div>
+          
+          <!-- Desconto -->
+          <div class="col-md-2 text-center">
+            <div class="d-flex flex-column">
+              ${item.desconto_percentual > 0 ? 
+                `<span class="text-sm fw-bold text-success">-${item.desconto_percentual}%</span>
+                 <span class="text-xs text-success">-R$ ${parseFloat(item.valor_desconto).toFixed(2)}</span>` : 
+                `<span class="text-sm text-muted">Sem desconto</span>
+                 <span class="text-xs text-muted">R$ 0,00</span>`
+              }
+            </div>
+          </div>
+          
+          <!-- Total -->
+          <div class="col-md-1 text-center">
+            <div class="d-flex flex-column">
+              <span class="text-lg fw-bold ${tipo.textColor}">R$ ${parseFloat(item.valor_total).toFixed(2)}</span>
+              <span class="text-xs text-muted">Total</span>
+            </div>
+          </div>
+          
+          <!-- Ações -->
+          <div class="col-md-1 text-center">
+            {% if ticket.status == 'em_andamento' %}
+            <div class="dropdown">
+              <button class="btn btn-link text-secondary p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="material-symbols-rounded">more_vert</i>
+              </button>
+              <ul class="dropdown-menu">
+                <li>
+                  <a class="dropdown-item text-danger" href="#" onclick="removerItem(${item.id})">
+                    <i class="material-symbols-rounded text-sm me-2">delete</i>
+                    Remover
+                  </a>
+                </li>
+              </ul>
+            </div>
+            {% else %}
+            <span class="text-muted">-</span>
+            {% endif %}
+          </div>
+        </div>
+        
+        <!-- Observações (se houver) -->
+        ${item.observacoes ? `
+        <div class="row mt-3">
+          <div class="col-12">
+            <div class="alert alert-light py-2 mb-0">
+              <div class="d-flex align-items-start">
+                <i class="material-symbols-rounded text-info me-2 mt-1" style="font-size: 16px;">sticky_note_2</i>
+                <div>
+                  <small class="text-muted fw-bold">Observações:</small>
+                  <small class="d-block text-dark">${item.observacoes}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+  return div;
+}
+
+// Remover item
+function removerItem(itemId) {
+  if (confirm('Deseja remover este item do atendimento?')) {
+    fetch(`/dashboard/api/ticket-itens/${itemId}/remove/`, {
+      method: 'DELETE',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
     })
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        location.reload();
+        carregarItensAtendimento();
       } else {
-        alert('Erro: ' + data.message);
+        alert('Erro: ' + (data.message || 'Erro desconhecido'));
       }
     })
     .catch(error => {
-      alert('Erro na requisição: ' + error);
+      console.error('Erro ao remover item:', error);
+      alert('Erro ao remover item');
     });
   }
 }

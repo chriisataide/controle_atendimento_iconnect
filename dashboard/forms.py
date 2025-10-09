@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
+from .models import Ticket, Cliente, CategoriaTicket
 
 User = get_user_model()
 
@@ -147,6 +148,51 @@ class TicketForm(forms.ModelForm):
                 'class': 'form-select'
             })
         }
+
+
+class TicketCreateForm(forms.ModelForm):
+    """Formulário para criação de tickets com cliente"""
+    
+    class Meta:
+        model = Ticket
+        fields = ['cliente', 'categoria', 'titulo', 'descricao', 'prioridade', 'tags']
+        widgets = {
+            'cliente': forms.Select(attrs={
+                'class': 'form-control',
+                'id': 'clienteSelect'
+            }),
+            'categoria': forms.Select(attrs={
+                'class': 'form-control',
+                'id': 'categoriaSelect'
+            }),
+            'titulo': forms.TextInput(attrs={
+                'class': 'form-control',
+                'id': 'tituloInput',
+                'placeholder': 'Título do ticket'
+            }),
+            'descricao': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 5,
+                'placeholder': 'Descrição detalhada do problema'
+            }),
+            'prioridade': forms.Select(attrs={
+                'class': 'form-control',
+                'id': 'prioridadeSelect'
+            }),
+            'tags': forms.TextInput(attrs={
+                'class': 'form-control',
+                'id': 'tagsInput',
+                'placeholder': 'Tags separadas por vírgula'
+            })
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['cliente'].queryset = Cliente.objects.all().order_by('nome')
+        self.fields['categoria'].queryset = CategoriaTicket.objects.all()
+        self.fields['cliente'].empty_label = "Selecione um cliente..."
+        self.fields['categoria'].empty_label = "Selecione uma categoria..."
+        self.fields['prioridade'].empty_label = "Selecione a prioridade..."
 
 class ClienteForm(forms.ModelForm):
     """Formulário para cadastro de clientes"""

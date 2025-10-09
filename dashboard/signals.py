@@ -3,14 +3,15 @@ Signals para Sistema de Notificações Automáticas
 iConnect - Automatização de Eventos
 """
 
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save, pre_save, pre_delete
 from django.dispatch import receiver
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.utils import timezone
 from datetime import timedelta
 
-from .models import Ticket, InteracaoTicket, Notification, PerfilAgente, Cliente
+from .models import Ticket, InteracaoTicket, Notification, PerfilAgente, Cliente, ItemAtendimento
+from .models_estoque import MovimentacaoEstoque, TipoMovimentacao, Produto
 from django.contrib.auth.models import User
 from .services.sla_calculator import sla_calculator
 
@@ -440,3 +441,118 @@ def send_sla_dashboard_update():
         
     except Exception as e:
         print(f"❌ Erro ao enviar atualização do dashboard SLA: {str(e)}")
+
+
+# ========== CONTROLE DE ESTOQUE ==========
+
+@receiver(post_save, sender=ItemAtendimento)
+def item_atendimento_created(sender, instance, created, **kwargs):
+    """Controla estoque quando item é adicionado ao atendimento"""
+    
+    if created and instance.produto.controla_estoque:
+        try:
+            # Verificar se existe tipo de movimentação para atendimento
+            tipo_movimentacao, created_tipo = TipoMovimentacao.objects.get_or_create(
+                nome='Utilização em Atendimento',
+                defaults={
+                    'tipo_operacao': 'saida',
+                    'descricao': 'Saída de produtos utilizados em atendimentos aos clientes',
+                    'automatico': True,
+                    'ativo': True
+                }
+            )
+            
+            # Criar movimentação de saída do estoque
+            MovimentacaoEstoque.objects.create(
+                tipo_movimentacao=tipo_movimentacao,
+                tipo_operacao='saida',
+                produto=instance.produto,
+                quantidade=instance.quantidade,
+                valor_unitario=instance.valor_unitario,
+                ticket_relacionado=instance.ticket,
+                observacoes=f'Utilização no atendimento #{instance.ticket.numero}: {instance.ticket.titulo}',
+                usuario=instance.adicionado_por,
+                data_movimentacao=timezone.now()
+            )
+            
+            print(f"✅ Estoque reduzido: {instance.produto.nome} (-{instance.quantidade})")
+            
+        except Exception as e:
+            print(f"❌ Erro ao reduzir estoque para item {instance.id}: {str(e)}")
+
+
+@receiver(post_save, sender=ItemAtendimento)
+def item_atendimento_updated(sender, instance, created, **kwargs):
+    """Atualiza estoque quando item é modificado"""
+    
+    if not created and instance.produto.controla_estoque:
+        # Para atualizações, seria necessário controlar a diferença
+        # Por simplicidade, vamos apenas registrar a alteração
+        try:
+            # Buscar a movimentação original
+            movimentacao_original = MovimentacaoEstoque.objects.filter(
+                ticket_relacionado=instance.ticket,
+                produto=instance.produto,
+                tipo_operacao='saida'
+            ).order_by('-criado_em').first()
+            
+            if movimentacao_original:
+                # Calcular diferença
+                diferenca = instance.quantidade - movimentacao_original.quantidade
+                
+                if diferenca != 0:
+                    # Criar nova movimentação para a diferença
+                    tipo_movimentacao = TipoMovimentacao.objects.get(nome='Utilização em Atendimento')
+                    
+                    MovimentacaoEstoque.objects.create(
+                        tipo_movimentacao=tipo_movimentacao,
+                        tipo_operacao='saida' if diferenca > 0 else 'entrada',
+                        produto=instance.produto,
+                        quantidade=abs(diferenca),
+                        valor_unitario=instance.valor_unitario,
+                        ticket_relacionado=instance.ticket,
+                        observacoes=f'Ajuste de quantidade no atendimento #{instance.ticket.numero}',
+                        usuario=instance.adicionado_por,
+                        data_movimentacao=timezone.now()
+                    )
+                    
+                    print(f"✅ Estoque ajustado: {instance.produto.nome} ({'+' if diferenca < 0 else '-'}{abs(diferenca)})")
+                    
+        except Exception as e:
+            print(f"❌ Erro ao ajustar estoque para item {instance.id}: {str(e)}")
+
+
+@receiver(pre_delete, sender=ItemAtendimento)
+def item_atendimento_deleted(sender, instance, **kwargs):
+    """Devolve estoque quando item é removido do atendimento"""
+    
+    if instance.produto.controla_estoque:
+        try:
+            # Verificar se existe tipo de movimentação para devolução
+            tipo_movimentacao, created_tipo = TipoMovimentacao.objects.get_or_create(
+                nome='Devolução de Atendimento',
+                defaults={
+                    'tipo_operacao': 'entrada',
+                    'descricao': 'Devolução de produtos removidos de atendimentos',
+                    'automatico': True,
+                    'ativo': True
+                }
+            )
+            
+            # Criar movimentação de entrada no estoque (devolução)
+            MovimentacaoEstoque.objects.create(
+                tipo_movimentacao=tipo_movimentacao,
+                tipo_operacao='entrada',
+                produto=instance.produto,
+                quantidade=instance.quantidade,
+                valor_unitario=instance.valor_unitario,
+                ticket_relacionado=instance.ticket,
+                observacoes=f'Devolução do atendimento #{instance.ticket.numero}: item removido',
+                usuario=instance.adicionado_por,
+                data_movimentacao=timezone.now()
+            )
+            
+            print(f"✅ Estoque devolvido: {instance.produto.nome} (+{instance.quantidade})")
+            
+        except Exception as e:
+            print(f"❌ Erro ao devolver estoque para item {instance.id}: {str(e)}")

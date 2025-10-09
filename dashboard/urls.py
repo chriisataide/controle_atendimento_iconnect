@@ -46,6 +46,17 @@ urlpatterns = [
     path('api/agente/status/', views.update_agent_status, name='update_agent_status'),
     path('api/metrics/', views.ajax_metrics, name='ajax_metrics'),
     path('api/cliente/stats/', views.cliente_stats_ajax, name='cliente_stats_ajax'),
+    
+    # APIs para Itens de Atendimento
+    path('api/produtos-ativos/', views.api_produtos_ativos, name='api_produtos_ativos'),
+    path('api/ticket-itens/add/', views.api_add_item_atendimento, name='api_add_item_atendimento'),
+    path('api/ticket-itens/<int:ticket_id>/', views.api_listar_itens_atendimento, name='api_listar_itens_atendimento'),
+    path('api/ticket-itens/<int:item_id>/remove/', views.api_remover_item_atendimento, name='api_remover_item_atendimento'),
+    path('api/ticket-financeiro/<int:ticket_id>/', views.api_estatisticas_financeiras_ticket, name='api_estatisticas_financeiras_ticket'),
+    
+    # Relatórios
+    path('relatorios/itens-atendimento/', views.relatorio_itens_atendimento, name='relatorio_itens_atendimento'),
+    
     path('export/tickets/', views.export_tickets, name='export_tickets'),
     
     # ========== FUNCIONALIDADES AVANÇADAS ==========

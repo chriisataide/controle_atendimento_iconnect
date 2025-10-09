@@ -1,4 +1,5 @@
 from django.db import models
+from decimal import Decimal
 
 # Importar modelos de estoque
 from .models_estoque import *
@@ -331,6 +332,62 @@ class InteracaoTicket(models.Model):
     
     def __str__(self):
         return f"Interação em {self.ticket.numero} por {self.usuario.username}"
+
+
+class ItemAtendimento(models.Model):
+    """Produtos e serviços utilizados em um atendimento/ticket"""
+    
+    TIPO_ITEM_CHOICES = [
+        ('produto', 'Produto'),
+        ('servico', 'Serviço'),
+    ]
+    
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='itens_atendimento')
+    produto = models.ForeignKey(Produto, on_delete=models.CASCADE, related_name='itens_atendimento')
+    tipo_item = models.CharField(max_length=10, choices=TIPO_ITEM_CHOICES, default='produto')
+    
+    # Quantidade e valores
+    quantidade = models.DecimalField(max_digits=10, decimal_places=3, default=1)
+    valor_unitario = models.DecimalField(max_digits=10, decimal_places=2, help_text="Valor unitário usado no atendimento")
+    desconto_percentual = models.DecimalField(max_digits=5, decimal_places=2, default=0, help_text="Desconto aplicado (%)")
+    
+    # Observações específicas do uso
+    observacoes = models.TextField(blank=True, help_text="Observações sobre o uso do item no atendimento")
+    
+    # Controle
+    adicionado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='itens_adicionados')
+    adicionado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Item de Atendimento"
+        verbose_name_plural = "Itens de Atendimento"
+        ordering = ['adicionado_em']
+        unique_together = ['ticket', 'produto']  # Evita duplicação do mesmo produto no mesmo ticket
+    
+    def __str__(self):
+        return f"{self.produto.nome} - Ticket #{self.ticket.numero}"
+    
+    @property
+    def valor_subtotal(self):
+        """Calcula o subtotal do item (quantidade × valor_unitário)"""
+        return self.quantidade * self.valor_unitario
+    
+    @property
+    def valor_desconto(self):
+        """Calcula o valor do desconto aplicado"""
+        return self.valor_subtotal * (self.desconto_percentual / Decimal('100'))
+    
+    @property
+    def valor_total(self):
+        """Calcula o valor total do item (subtotal - desconto)"""
+        return self.valor_subtotal - self.valor_desconto
+    
+    def save(self, *args, **kwargs):
+        # Se não foi definido um valor unitário, usar o preço de venda do produto
+        if not self.valor_unitario:
+            self.valor_unitario = self.produto.preco_venda
+        super().save(*args, **kwargs)
 
 
 class StatusAgente(models.TextChoices):

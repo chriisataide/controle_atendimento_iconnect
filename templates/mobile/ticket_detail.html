@@ -643,7 +643,12 @@
                     {% if comment.tipo == 'sistema' %}
                         <i class="fas fa-cog"></i> Sistema
                     {% else %}
-                        <i class="fas fa-user"></i> {{ comment.usuario.get_full_name|default:comment.usuario.username }}
+                        <i class="fas fa-user"></i> 
+                        {% if comment.usuario %}
+                            {{ comment.usuario.get_full_name|default:comment.usuario.username }}
+                        {% else %}
+                            Usuário removido
+                        {% endif %}
                     {% endif %}
                 </span>
                 <span class="comment-time">{{ comment.criado_em|timesince }} atrás</span>
