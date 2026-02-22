@@ -5,8 +5,6 @@ iConnect - Automatização de Eventos
 
 from django.db.models.signals import post_save, pre_save, pre_delete
 from django.dispatch import receiver
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
 from django.utils import timezone
 from datetime import timedelta
 
@@ -19,14 +17,22 @@ import logging
 logger = logging.getLogger('dashboard')
 
 
-channel_layer = get_channel_layer()
+def _get_channel_layer():
+    """Lazy-load channel layer para evitar falha se Redis não estiver disponível no import."""
+    try:
+        from channels.layers import get_channel_layer
+        return get_channel_layer()
+    except Exception:
+        return None
 
 
 def _safe_group_send(group, message):
     """Send to channel group only when layer is available (not in tests/dev without Redis)."""
-    if channel_layer is not None:
+    layer = _get_channel_layer()
+    if layer is not None:
         try:
-            async_to_sync(channel_layer.group_send)(group, message)
+            from asgiref.sync import async_to_sync
+            async_to_sync(layer.group_send)(group, message)
         except Exception:
             logger.debug("Channel layer send failed (no backend?)")
 

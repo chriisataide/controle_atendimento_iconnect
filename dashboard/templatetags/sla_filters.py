@@ -78,7 +78,7 @@ def porcentagem_sla(ticket):
         
         porcentagem = (tempo_decorrido.total_seconds() / tempo_total.total_seconds()) * 100
         return min(100, max(0, porcentagem))
-    except:
+    except Exception:
         return 0
 
 @register.filter

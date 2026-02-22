@@ -159,7 +159,7 @@ class Command(BaseCommand):
                     if hasattr(ticket, 'resolution_time_hours'):
                         ticket.resolution_time_hours = tempo_resolucao
                         ticket.save()
-                except:
+                except (AttributeError, Exception):
                     pass  # Ignore se o campo não existir
             
             self.stdout.write(self.style.SUCCESS(f'✅ Ticket criado: {ticket.titulo}'))

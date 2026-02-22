@@ -467,7 +467,7 @@ class TicketChatConsumer(AsyncWebsocketConsumer):
                 await self.close()
                 return
                 
-        except:
+        except Exception:
             await self.close()
             return
         
@@ -668,7 +668,7 @@ class AgentStatusConsumer(AsyncWebsocketConsumer):
             if profile.tipo not in ['agente', 'administrador']:
                 await self.close()
                 return
-        except:
+        except Exception:
             await self.close()
             return
         

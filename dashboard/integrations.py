@@ -335,7 +335,7 @@ def _handle_slack_ticket_command(text):
                     }]
                 })
                 
-            except:
+            except (Ticket.DoesNotExist, ValueError):
                 return JsonResponse({
                     'response_type': 'ephemeral',
                     'text': f'Ticket {text.upper()} não encontrado.'

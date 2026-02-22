@@ -68,7 +68,9 @@ services:
       - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD:?Defina DJANGO_SUPERUSER_PASSWORD no .env}
       - DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL:-admin@iconnect.com}
     volumes:
-      - .:/app
+      # SEGURANÇA: Não montar código-fonte em produção (usa COPY do Dockerfile).
+      # Para desenvolvimento local com hot-reload, descomente:
+      # - .:/app
       - static_volume:/app/staticfiles
       - media_volume:/app/media
       - ./logs:/app/logs

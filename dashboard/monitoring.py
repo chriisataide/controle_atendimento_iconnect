@@ -182,7 +182,7 @@ class MetricsView(View):
             import psutil
             boot_time = psutil.boot_time()
             return int(time.time() - boot_time)
-        except:
+        except (ImportError, AttributeError):
             return 0
     
     def _get_system_metrics(self):
