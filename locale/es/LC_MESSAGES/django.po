@@ -1,0 +1,163 @@
+# Spanish translations for iConnect Helpdesk
+# Copyright (c) 2024 iConnect
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: es\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# Navigation
+msgid "Dashboard"
+msgstr "Panel de Control"
+
+msgid "Tickets"
+msgstr "Tickets"
+
+msgid "Novo Ticket"
+msgstr "Nuevo Ticket"
+
+msgid "Todos os Tickets"
+msgstr "Todos los Tickets"
+
+msgid "Kanban Board"
+msgstr "Tablero Kanban"
+
+msgid "Meus Tickets"
+msgstr "Mis Tickets"
+
+msgid "Clientes"
+msgstr "Clientes"
+
+msgid "Relatórios"
+msgstr "Informes"
+
+msgid "Configurações"
+msgstr "Configuración"
+
+msgid "Perfil"
+msgstr "Perfil"
+
+msgid "Sair"
+msgstr "Salir"
+
+# Ticket fields
+msgid "Título"
+msgstr "Título"
+
+msgid "Descrição"
+msgstr "Descripción"
+
+msgid "Status"
+msgstr "Estado"
+
+msgid "Prioridade"
+msgstr "Prioridad"
+
+msgid "Categoria"
+msgstr "Categoría"
+
+msgid "Agente"
+msgstr "Agente"
+
+msgid "Cliente"
+msgstr "Cliente"
+
+msgid "Criado em"
+msgstr "Creado el"
+
+msgid "Atualizado em"
+msgstr "Actualizado el"
+
+# Status
+msgid "Aberto"
+msgstr "Abierto"
+
+msgid "Em Andamento"
+msgstr "En Progreso"
+
+msgid "Pendente"
+msgstr "Pendiente"
+
+msgid "Resolvido"
+msgstr "Resuelto"
+
+msgid "Fechado"
+msgstr "Cerrado"
+
+# Priority
+msgid "Baixa"
+msgstr "Baja"
+
+msgid "Média"
+msgstr "Media"
+
+msgid "Alta"
+msgstr "Alta"
+
+msgid "Urgente"
+msgstr "Urgente"
+
+msgid "Crítica"
+msgstr "Crítica"
+
+# Actions
+msgid "Salvar"
+msgstr "Guardar"
+
+msgid "Cancelar"
+msgstr "Cancelar"
+
+msgid "Editar"
+msgstr "Editar"
+
+msgid "Excluir"
+msgstr "Eliminar"
+
+msgid "Buscar"
+msgstr "Buscar"
+
+msgid "Filtrar"
+msgstr "Filtrar"
+
+msgid "Exportar"
+msgstr "Exportar"
+
+# Messages
+msgid "Ticket criado com sucesso"
+msgstr "Ticket creado exitosamente"
+
+msgid "Ticket atualizado com sucesso"
+msgstr "Ticket actualizado exitosamente"
+
+msgid "Nenhum ticket encontrado"
+msgstr "No se encontraron tickets"
+
+# Dashboard
+msgid "Total de Tickets"
+msgstr "Total de Tickets"
+
+msgid "Tickets Abertos"
+msgstr "Tickets Abiertos"
+
+msgid "Tempo Médio de Resolução"
+msgstr "Tiempo Promedio de Resolución"
+
+msgid "Satisfação do Cliente"
+msgstr "Satisfacción del Cliente"
+
+# Dark mode
+msgid "Modo Escuro"
+msgstr "Modo Oscuro"
+
+msgid "Modo Claro"
+msgstr "Modo Claro"
+
+# Keyboard shortcuts
+msgid "Atalhos do Teclado"
+msgstr "Atajos de Teclado"
+
+msgid "Navegação"
+msgstr "Navegación"
+
+msgid "Ações"
+msgstr "Acciones"

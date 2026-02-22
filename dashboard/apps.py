@@ -6,5 +6,7 @@ class DashboardConfig(AppConfig):
     name = 'dashboard'
     
     def ready(self):
-        """Importar signals quando o app estiver pronto"""
-        import dashboard.signals
+        """Importar signals e modulos adicionais quando o app estiver pronto"""
+        import dashboard.signals  # noqa: F401
+        import dashboard.audit_models  # noqa: F401
+        import dashboard.rbac  # noqa: F401

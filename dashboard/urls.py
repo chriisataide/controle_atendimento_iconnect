@@ -1,5 +1,5 @@
 from django.urls import path, include
-from . import views, integrations, sla_views, chat_views, push_views, executive_views, chatbot_ai_views
+from . import views, integrations, sla_views, chat_views, push_views, executive_views, chatbot_ai_views, analytics_views
 from .monitoring import HealthCheckView, MetricsView
 
 app_name = 'dashboard'
@@ -12,6 +12,7 @@ urlpatterns = [
     
     # Sistema de Tickets
     path('tickets/', views.TicketListView.as_view(), name='ticket_list'),
+    path('tickets/kanban/', views.KanbanBoardView.as_view(), name='ticket_kanban'),
     path('tickets/novo/', views.TicketCreateView.as_view(), name='ticket_create'),
     path('tickets/<int:pk>/', views.TicketDetailView.as_view(), name='ticket_detail'),
     path('tickets/<int:pk>/editar/', views.TicketUpdateView.as_view(), name='ticket_update'),
@@ -34,6 +35,13 @@ urlpatterns = [
     # Portal do Cliente
     path('cliente/', views.ClientePortalView.as_view(), name='cliente_portal'),
     path('cliente/tickets/', views.ClienteTicketsView.as_view(), name='cliente_tickets'),
+    
+    # Gestão de Clientes (Admin)
+    path('clientes/', views.ClienteListView.as_view(), name='cliente_list'),
+    path('clientes/novo/', views.ClienteCreateView.as_view(), name='cliente_create'),
+    path('clientes/<int:pk>/', views.cliente_detail_view, name='cliente_detail'),
+    path('clientes/<int:pk>/editar/', views.ClienteUpdateView.as_view(), name='cliente_update'),
+    path('clientes/<int:pk>/excluir/', views.cliente_delete_view, name='cliente_delete'),
 
     # Pontos de Venda
     path('pontosdevenda/', views.PontoDeVendaListView.as_view(), name='pontodevenda_list'),
@@ -80,6 +88,7 @@ urlpatterns = [
     path('notifications/', views.notifications_list, name='notifications'),
     path('api/notifications/recent/', views.api_notifications_recent, name='api_notifications_recent'),
     path('api/notifications/<int:notification_id>/mark-read/', views.api_notification_mark_read, name='api_notification_mark_read'),
+    path('api/notifications/<int:notification_id>/delete/', views.api_notification_delete, name='api_notification_delete'),
     path('api/notifications/mark-all-read/', views.api_notifications_mark_all_read, name='api_notifications_mark_all_read'),
     
     # ========== SISTEMA DE CHAT AVANÇADO ==========
@@ -103,7 +112,6 @@ urlpatterns = [
     # AI Chatbot Interface
     path('chatbot/', views.chatbot_interface, name='chatbot'),
     path('chatbot/api/', views.chatbot_api, name='chatbot_api'),
-    path('chat/', views.chat_interface, name='chat'),
     
     # Automation Engine
     path('automation/', views.automation_dashboard, name='automation'),
@@ -134,6 +142,9 @@ urlpatterns = [
     path('api/push/unsubscribe/', push_views.unsubscribe_push, name='push_unsubscribe'),
     path('api/push/preferences/', push_views.update_preferences, name='push_preferences'),
     path('api/push/test/', push_views.test_notification, name='push_test'),
+    
+    # Analytics Avançado
+    path('analytics/', analytics_views.analytics_dashboard, name='analytics_dashboard'),
     
     # Dashboard Executivo
     path('executive/', executive_views.executive_dashboard, name='executive_dashboard'),

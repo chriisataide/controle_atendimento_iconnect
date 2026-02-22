@@ -1,390 +1,165 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}WhatsApp Business - Conversas{% endblock %}
-
-{% block page_title %}WhatsApp Business - Conversas{% endblock %}
+{% block title %}Conversas WhatsApp - iConnect{% endblock %}
+{% block page_title %}Conversas{% endblock %}
 {% block breadcrumb_title %}Conversas WhatsApp{% endblock %}
 
-{% block extra_css %}
-<style>
-.real-time-indicator {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    background-color: #10b981;
-    border-radius: 50%;
-    margin-right: 8px;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-    }
-    70% {
-        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-    }
-}
-
-.conversation-card {
-    border: 1px solid #e3e6f0;
-    border-radius: 10px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.conversation-card:hover {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
-}
-
-.conversation-card.active {
-    border-color: #25D366;
-    background-color: #f8fff8;
-}
-
-.status-badge {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 12px;
-}
-
-.status-ativa {
-    background-color: #d1fae5;
-    color: #065f46;
-}
-
-.status-pendente {
-    background-color: #fef3c7;
-    color: #92400e;
-}
-
-.status-finalizada {
-    background-color: #fee2e2;
-    color: #991b1b;
-}
-
-.message-preview {
-    font-size: 0.9rem;
-    color: #6b7280;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.contact-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
-    font-size: 1.2rem;
-}
-
-.time-ago {
-    font-size: 0.8rem;
-    color: #9ca3af;
-}
-
-.unread-count {
-    background-color: #25D366;
-    color: white;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7rem;
-    font-weight: bold;
-}
-
-.filter-section {
-    background: #f8fafc;
-    border-radius: 10px;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.filter-btn {
-    margin: 0.25rem;
-    padding: 0.5rem 1rem;
-    border: 1px solid #d1d5db;
-    background: white;
-    color: #374151;
-    border-radius: 6px;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    font-size: 0.875rem;
-}
-
-.filter-btn:hover,
-.filter-btn.active {
-    background: #25D366;
-    color: white;
-    border-color: #25D366;
-    text-decoration: none;
-}
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="container-fluid py-4">
-    <!-- Header Section -->
-    <div class="row">
+<!-- ===== HEADER ===== -->
+<div class="row">
+    <div class="col-lg-8 col-md-7">
         <div class="ms-3">
-            <h3 class="mb-0 h4 font-weight-bolder">Conversas WhatsApp Business</h3>
-            <p class="mb-4">
-                <span class="real-time-indicator" style="display: inline-block; width: 8px; height: 8px; background-color: rgb(16, 185, 129); border-radius: 50%; margin-right: 8px; animation: 2s ease 0s infinite normal none running pulse;"></span>
-                Gerencie todas as conversas do WhatsApp Business em um só lugar.
-            </p>
-        </div>
-        <div class="col-md-6 d-flex align-items-center justify-content-end">
-            <button class="btn btn-outline-primary btn-sm me-2" onclick="refreshConversations()">
-                <i class="fas fa-sync-alt me-1"></i>
-                Atualizar
-            </button>
-            <a href="{% url 'dashboard:whatsapp:analytics' %}" class="btn btn-outline-secondary btn-sm">
-                <i class="fas fa-chart-bar me-1"></i>
-                Analytics
-            </a>
+            <h3 class="mb-0 h4 font-weight-bolder">Conversas WhatsApp</h3>
+            <p class="mb-0 text-sm">Visualize e gerencie todas as conversas do WhatsApp Business</p>
         </div>
     </div>
+    <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+        <a href="{% url 'dashboard:whatsapp:dashboard' %}" class="btn btn-outline-primary btn-sm mb-0">
+            <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Dashboard
+        </a>
+    </div>
+</div>
 
-    <!-- Filtros -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="filter-section">
-                <h6 class="mb-3">
-                    <i class="fas fa-filter me-2"></i>
-                    Filtrar Conversas
-                </h6>
-                <div class="d-flex flex-wrap">
-                    <a href="?status=all" class="filter-btn {% if not request.GET.status or request.GET.status == 'all' %}active{% endif %}">
-                        <i class="fas fa-list me-1"></i>
-                        Todas
-                    </a>
-                    <a href="?status=ativa" class="filter-btn {% if request.GET.status == 'ativa' %}active{% endif %}">
-                        <i class="fas fa-comments me-1"></i>
-                        Ativas
-                    </a>
-                    <a href="?status=pendente" class="filter-btn {% if request.GET.status == 'pendente' %}active{% endif %}">
-                        <i class="fas fa-clock me-1"></i>
-                        Pendentes
-                    </a>
-                    <a href="?status=finalizada" class="filter-btn {% if request.GET.status == 'finalizada' %}active{% endif %}">
-                        <i class="fas fa-check me-1"></i>
-                        Finalizadas
-                    </a>
+<!-- ===== FILTROS + LISTA ===== -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+                    <h6 class="text-white text-capitalize ps-3 mb-0">Lista de Conversas</h6>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Lista de Conversas -->
-    <div class="row">
-        <div class="col-12">
-            {% if conversations %}
-                {% for conversa in conversations %}
-                <div class="conversation-card" onclick="openConversation('{{ conversa.uuid }}')">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <div class="contact-avatar">
-                                {{ conversa.contato.nome|first|upper }}
+            <div class="card-body px-0 pb-2">
+                <!-- Filtros -->
+                <div class="row px-4 mb-3">
+                    <div class="col-md-12">
+                        <form method="get" class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label text-xs">Conta</label>
+                                <select name="account" class="form-select">
+                                    <option value="">Todas as Contas</option>
+                                    {% for acc in accounts %}
+                                        <option value="{{ acc.id }}" {% if current_filters.account == acc.id|stringformat:"s" %}selected{% endif %}>{{ acc.nome|default:acc.phone_number_id }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
-                        </div>
-                        <div class="col">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <h6 class="mb-1">
-                                        {{ conversa.contato.nome|default:"Contato sem nome" }}
-                                        {% if conversa.nao_lidas > 0 %}
-                                            <span class="unread-count ms-2">{{ conversa.nao_lidas }}</span>
-                                        {% endif %}
-                                    </h6>
-                                    <div class="message-preview">
-                                        {{ conversa.ultima_mensagem.conteudo|default:"Nenhuma mensagem"|truncatechars:80 }}
-                                    </div>
-                                </div>
-                                <div class="text-end">
-                                    <span class="status-badge status-{{ conversa.estado }}">
-                                        {{ conversa.get_estado_display }}
-                                    </span>
-                                    <div class="time-ago mt-1">
-                                        {{ conversa.atualizada_em|timesince }} atrás
-                                    </div>
-                                </div>
+                            <div class="col-md-3">
+                                <label class="form-label text-xs">Estado</label>
+                                <select name="estado" class="form-select">
+                                    <option value="">Todos</option>
+                                    <option value="ativa" {% if current_filters.estado == 'ativa' %}selected{% endif %}>Ativa</option>
+                                    <option value="encerrada" {% if current_filters.estado == 'encerrada' %}selected{% endif %}>Encerrada</option>
+                                    <option value="pendente" {% if current_filters.estado == 'pendente' %}selected{% endif %}>Pendente</option>
+                                </select>
                             </div>
-                        </div>
-                        <div class="col-auto">
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-ellipsis-v"></i>
+                            <div class="col-md-3">
+                                <label class="form-label text-xs">Agente</label>
+                                <select name="agente" class="form-select">
+                                    <option value="">Todos</option>
+                                    {% for ag in agentes %}
+                                        <option value="{{ ag.id }}" {% if current_filters.agente == ag.id|stringformat:"s" %}selected{% endif %}>{{ ag.get_full_name|default:ag.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="submit" class="btn bg-gradient-primary btn-sm mb-0 w-100">
+                                    <i class="material-symbols-rounded text-sm me-1">filter_list</i> Filtrar
                                 </button>
-                                <ul class="dropdown-menu">
-                                    <li>
-                                        <a class="dropdown-item" href="#" onclick="markAsRead('{{ conversa.uuid }}')">
-                                            <i class="fas fa-eye me-2"></i>Marcar como lida
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="#" onclick="archiveConversation('{{ conversa.uuid }}')">
-                                            <i class="fas fa-archive me-2"></i>Arquivar
-                                        </a>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <a class="dropdown-item text-danger" href="#" onclick="deleteConversation('{{ conversa.uuid }}')">
-                                            <i class="fas fa-trash me-2"></i>Excluir
-                                        </a>
-                                    </li>
-                                </ul>
                             </div>
-                        </div>
+                        </form>
                     </div>
                 </div>
-                {% endfor %}
+
+                <!-- Tabela -->
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Contato</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Conta</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Estado</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Agente</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Iniciada</th>
+                                <th class="text-secondary opacity-7"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for conv in page_obj %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="icon icon-sm icon-shape bg-gradient-success shadow text-center border-radius-md me-2">
+                                            <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">person</i>
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ conv.contato.profile_name|default:conv.contato.nome|default:"Desconhecido" }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ conv.contato.phone_number }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-xs font-weight-bold">{{ conv.account.nome|default:conv.account.phone_number_id }}</span>
+                                </td>
+                                <td class="align-middle text-center text-sm">
+                                    {% if conv.estado == 'ativa' %}
+                                        <span class="badge badge-sm bg-gradient-success">Ativa</span>
+                                    {% elif conv.estado == 'encerrada' %}
+                                        <span class="badge badge-sm bg-gradient-secondary">Encerrada</span>
+                                    {% elif conv.estado == 'pendente' %}
+                                        <span class="badge badge-sm bg-gradient-warning">Pendente</span>
+                                    {% else %}
+                                        <span class="badge badge-sm bg-gradient-dark">{{ conv.get_estado_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-xs font-weight-bold">{{ conv.agente.get_full_name|default:"Não atribuído" }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">{{ conv.iniciada_em|date:"d/m/Y H:i" }}</span>
+                                </td>
+                                <td class="align-middle">
+                                    <a href="{% url 'dashboard:whatsapp:conversation_detail' conv.uuid %}" class="text-secondary font-weight-bold text-xs" data-bs-toggle="tooltip" title="Ver detalhes">
+                                        <i class="material-symbols-rounded">visibility</i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <i class="material-symbols-rounded opacity-5 d-block mb-2" style="font-size:48px">chat_bubble_outline</i>
+                                    <p class="text-sm text-muted mb-0">Nenhuma conversa encontrada</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
 
                 <!-- Paginação -->
-                {% if is_paginated %}
-                <div class="d-flex justify-content-center mt-4">
-                    <nav aria-label="Navegação da paginação">
-                        <ul class="pagination">
+                {% if page_obj.has_other_pages %}
+                <div class="d-flex justify-content-center mt-3 mb-2">
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
                             {% if page_obj.has_previous %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
-                                        <i class="fas fa-chevron-left"></i>
-                                    </a>
-                                </li>
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_filters.account %}&account={{ current_filters.account }}{% endif %}{% if current_filters.estado %}&estado={{ current_filters.estado }}{% endif %}{% if current_filters.agente %}&agente={{ current_filters.agente }}{% endif %}"><i class="material-symbols-rounded text-sm">chevron_left</i></a></li>
                             {% endif %}
-                            
                             {% for num in page_obj.paginator.page_range %}
                                 {% if page_obj.number == num %}
-                                    <li class="page-item active">
-                                        <span class="page-link">{{ num }}</span>
-                                    </li>
+                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
                                 {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{{ num }}</a>
-                                    </li>
+                                <li class="page-item"><a class="page-link" href="?page={{ num }}{% if current_filters.account %}&account={{ current_filters.account }}{% endif %}{% if current_filters.estado %}&estado={{ current_filters.estado }}{% endif %}{% if current_filters.agente %}&agente={{ current_filters.agente }}{% endif %}">{{ num }}</a></li>
                                 {% endif %}
                             {% endfor %}
-                            
                             {% if page_obj.has_next %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
-                                        <i class="fas fa-chevron-right"></i>
-                                    </a>
-                                </li>
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_filters.account %}&account={{ current_filters.account }}{% endif %}{% if current_filters.estado %}&estado={{ current_filters.estado }}{% endif %}{% if current_filters.agente %}&agente={{ current_filters.agente }}{% endif %}"><i class="material-symbols-rounded text-sm">chevron_right</i></a></li>
                             {% endif %}
                         </ul>
                     </nav>
                 </div>
                 {% endif %}
-            {% else %}
-                <div class="text-center py-5">
-                    <i class="fas fa-comments fa-3x text-muted mb-3"></i>
-                    <h5 class="text-muted">Nenhuma conversa encontrada</h5>
-                    <p class="text-muted">As conversas do WhatsApp aparecerão aqui conforme forem iniciadas.</p>
-                    <a href="{% url 'dashboard:whatsapp:dashboard' %}" class="btn btn-primary">
-                        <i class="fas fa-arrow-left me-1"></i>
-                        Voltar ao Dashboard
-                    </a>
-                </div>
-            {% endif %}
+            </div>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-function openConversation(uuid) {
-    window.location.href = `{% url 'dashboard:whatsapp:conversation_detail' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', uuid);
-}
-
-function refreshConversations() {
-    location.reload();
-}
-
-function markAsRead(uuid) {
-    fetch(`/dashboard/whatsapp/api/conversation/${uuid}/mark-read/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            alert('Erro ao marcar como lida');
-        }
-    })
-    .catch(error => {
-        console.error('Erro:', error);
-        alert('Erro ao marcar como lida');
-    });
-}
-
-function archiveConversation(uuid) {
-    if (confirm('Tem certeza que deseja arquivar esta conversa?')) {
-        fetch(`/dashboard/whatsapp/api/conversation/${uuid}/archive/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Erro ao arquivar conversa');
-            }
-        })
-        .catch(error => {
-            console.error('Erro:', error);
-            alert('Erro ao arquivar conversa');
-        });
-    }
-}
-
-function deleteConversation(uuid) {
-    if (confirm('Tem certeza que deseja excluir esta conversa? Esta ação não pode ser desfeita.')) {
-        fetch(`/dashboard/whatsapp/api/conversation/${uuid}/delete/`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Erro ao excluir conversa');
-            }
-        })
-        .catch(error => {
-            console.error('Erro:', error);
-            alert('Erro ao excluir conversa');
-        });
-    }
-}
-</script>
 {% endblock %}

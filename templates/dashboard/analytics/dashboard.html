@@ -1,515 +1,419 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Analytics Dashboard - iConnect{% endblock %}
-
-{% block extra_css %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-.analytics-card {
-    border-radius: 15px;
-    transition: transform 0.2s;
-}
-
-.analytics-card:hover {
-    transform: translateY(-5px);
-}
-
-.metric-value {
-    font-size: 2.5rem;
-    font-weight: bold;
-}
-
-.chart-container {
-    position: relative;
-    height: 400px;
-    width: 100%;
-}
-</style>
-{% endblock %}
+{% block page_title %}Analytics{% endblock %}
+{% block breadcrumb_title %}Analytics Dashboard{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card mb-4">
-                <div class="card-header pb-0">
-                    <div class="d-flex align-items-center">
-                        <i class="material-icons text-lg me-2">analytics</i>
-                        <h6>Analytics Dashboard</h6>
-                        <div class="ms-auto">
-                            <button class="btn btn-outline-primary btn-sm" id="refreshData">
-                                <i class="material-icons text-sm">refresh</i> Atualizar
-                            </button>
-                        </div>
+<!-- ===== HEADER ===== -->
+<div class="row">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Analytics Dashboard</h3>
+            <p class="mb-0 text-sm">Métricas avançadas de desempenho — Período: {{ periodo_mes }}</p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+        <button class="btn btn-outline-primary btn-sm mb-0" onclick="location.reload()">
+            <i class="material-symbols-rounded text-sm me-1">refresh</i> Atualizar
+        </button>
+    </div>
+</div>
+
+<!-- ===== KPI CARDS ===== -->
+<div class="row mt-4">
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Tickets Hoje</p>
+                        <h4 class="mb-0">{{ tickets_hoje }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-dark shadow-dark text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">confirmation_number</i>
                     </div>
                 </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-info font-weight-bolder">{{ tickets_mes }}</span> este mês</p>
             </div>
         </div>
     </div>
-
-    <!-- KPI Cards -->
-    <div class="row">
-        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-            <div class="card analytics-card">
-                <div class="card-header p-3 pt-2">
-                    <div class="icon icon-lg icon-shape bg-gradient-dark shadow-dark text-center border-radius-xl mt-n4 position-absolute">
-                        <i class="material-icons opacity-10">receipt_long</i>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Taxa de Resolução</p>
+                        <h4 class="mb-0">{{ taxa_resolucao }}%</h4>
                     </div>
-                    <div class="text-end pt-1">
-                        <p class="text-sm mb-0 text-capitalize">Total Tickets</p>
-                        <h4 class="mb-0 metric-value" id="totalTickets">---</h4>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">check_circle</i>
                     </div>
-                </div>
-                <hr class="dark horizontal my-0">
-                <div class="card-footer p-3">
-                    <p class="mb-0"><span class="text-success text-sm font-weight-bolder" id="ticketsTrend">+0% </span>desde ontem</p>
                 </div>
             </div>
-        </div>
-
-        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-            <div class="card analytics-card">
-                <div class="card-header p-3 pt-2">
-                    <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary text-center border-radius-xl mt-n4 position-absolute">
-                        <i class="material-icons opacity-10">person</i>
-                    </div>
-                    <div class="text-end pt-1">
-                        <p class="text-sm mb-0 text-capitalize">Agentes Ativos</p>
-                        <h4 class="mb-0 metric-value" id="activeAgents">---</h4>
-                    </div>
-                </div>
-                <hr class="dark horizontal my-0">
-                <div class="card-footer p-3">
-                    <p class="mb-0"><span class="text-success text-sm font-weight-bolder" id="agentsTrend">0 </span>online agora</p>
-                </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-success font-weight-bolder">{{ tickets_ano }}</span> tickets no ano</p>
             </div>
         </div>
-
-        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-            <div class="card analytics-card">
-                <div class="card-header p-3 pt-2">
-                    <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
-                        <i class="material-icons opacity-10">speed</i>
+    </div>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">SLA Performance</p>
+                        <h4 class="mb-0">{{ sla_performance }}%</h4>
                     </div>
-                    <div class="text-end pt-1">
+                    <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">timer</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Tickets dentro do <span class="text-warning font-weight-bolder">prazo SLA</span></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
                         <p class="text-sm mb-0 text-capitalize">Tempo Médio</p>
-                        <h4 class="mb-0 metric-value" id="avgResponseTime">---</h4>
+                        <h4 class="mb-0" id="tempoMedio">{% if tempo_medio %}{{ tempo_medio.days }}d{% else %}--{% endif %}</h4>
                     </div>
-                </div>
-                <hr class="dark horizontal my-0">
-                <div class="card-footer p-3">
-                    <p class="mb-0"><span class="text-danger text-sm font-weight-bolder" id="timeTrend">0min </span>de resposta</p>
+                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">speed</i>
+                    </div>
                 </div>
             </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Resolução <span class="text-info font-weight-bolder">média</span></p>
+            </div>
         </div>
+    </div>
+</div>
 
-        <div class="col-xl-3 col-sm-6">
-            <div class="card analytics-card">
-                <div class="card-header p-3 pt-2">
-                    <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
-                        <i class="material-icons opacity-10">thumb_up</i>
-                    </div>
-                    <div class="text-end pt-1">
-                        <p class="text-sm mb-0 text-capitalize">Satisfação</p>
-                        <h4 class="mb-0 metric-value" id="satisfaction">---%</h4>
-                    </div>
-                </div>
-                <hr class="dark horizontal my-0">
-                <div class="card-footer p-3">
-                    <p class="mb-0"><span class="text-success text-sm font-weight-bolder" id="satisfactionTrend">+0% </span>este mês</p>
+<!-- ===== GRÁFICOS LINHA 1 ===== -->
+<div class="row mt-4">
+    <!-- Tendência de Tickets (últimos 30 dias) -->
+    <div class="col-lg-8 mb-4">
+        <div class="card z-index-2">
+            <div class="card-header pb-0 pt-3 bg-transparent">
+                <h6 class="text-capitalize">Tendência de Tickets</h6>
+                <p class="text-sm mb-0">
+                    <i class="material-symbols-rounded text-sm me-1 text-info">show_chart</i>
+                    Últimos 30 dias
+                </p>
+            </div>
+            <div class="card-body p-3">
+                <div class="chart">
+                    <canvas id="chartTendencia" class="chart-canvas" height="250"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Charts Row -->
-    <div class="row mt-4">
-        <!-- Tickets ao Longo do Tempo -->
-        <div class="col-lg-6 col-md-12 mt-4 mb-4">
-            <div class="card z-index-2">
-                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
-                    <div class="bg-gradient-primary shadow-primary border-radius-lg py-3 pe-1">
-                        <div class="chart">
-                            <h6 class="text-white ms-4 mt-2 mb-0">Tickets ao Longo do Tempo</h6>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="ticketsTimelineChart" height="120"></canvas>
-                    </div>
-                    <p class="text-sm mt-3">Últimos 30 dias</p>
-                    <select class="form-select form-select-sm" id="timelineFilter">
-                        <option value="30">Últimos 30 dias</option>
-                        <option value="7" selected>Últimos 7 dias</option>
-                        <option value="1">Hoje</option>
-                    </select>
-                </div>
+    <!-- Horário de Pico -->
+    <div class="col-lg-4 mb-4">
+        <div class="card z-index-2 h-100">
+            <div class="card-header pb-0 pt-3 bg-transparent">
+                <h6 class="text-capitalize">Horários de Pico</h6>
+                <p class="text-sm mb-0">
+                    <i class="material-symbols-rounded text-sm me-1 text-warning">schedule</i>
+                    Distribuição por hora
+                </p>
             </div>
-        </div>
-
-        <!-- Distribuição por Status -->
-        <div class="col-lg-6 col-md-12 mt-4 mb-4">
-            <div class="card z-index-2">
-                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
-                    <div class="bg-gradient-success shadow-success border-radius-lg py-3 pe-1">
-                        <div class="chart">
-                            <h6 class="text-white ms-4 mt-2 mb-0">Distribuição por Status</h6>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="statusDistributionChart" height="120"></canvas>
-                    </div>
-                    <div class="row mt-3">
-                        <div class="col-6">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-gradient-danger" style="width: 12px; height: 12px; border-radius: 50%; margin-right: 8px;"></div>
-                                <span class="text-sm">Abertos: {{ tickets_por_status.aberto }}</span>
-                            </div>
-                            <div class="d-flex align-items-center mt-2">
-                                <div class="bg-gradient-warning" style="width: 12px; height: 12px; border-radius: 50%; margin-right: 8px;"></div>
-                                <span class="text-sm">Em Andamento: {{ tickets_por_status.em_andamento }}</span>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-gradient-info" style="width: 12px; height: 12px; border-radius: 50%; margin-right: 8px;"></div>
-                                <span class="text-sm">Resolvidos: {{ tickets_por_status.resolvido }}</span>
-                            </div>
-                            <div class="d-flex align-items-center mt-2">
-                                <div class="bg-gradient-success" style="width: 12px; height: 12px; border-radius: 50%; margin-right: 8px;"></div>
-                                <span class="text-sm">Fechados: {{ tickets_por_status.fechado }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Segunda linha de gráficos -->
-    <div class="row">
-        <!-- Performance por Agente -->
-        <div class="col-lg-6 col-md-12 mt-4 mb-4">
-            <div class="card z-index-2">
-                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
-                    <div class="bg-gradient-dark shadow-dark border-radius-lg py-3 pe-1">
-                        <div class="chart">
-                            <h6 class="text-white ms-4 mt-2 mb-0">Performance por Agente</h6>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="agentPerformanceChart" height="120"></canvas>
-                    </div>
-                    <p class="text-sm mt-3">Tickets resolvidos este mês</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Horários de Maior Demanda -->
-        <div class="col-lg-6 col-md-12 mt-4 mb-4">
-            <div class="card z-index-2">
-                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
-                    <div class="bg-gradient-warning shadow-warning border-radius-lg py-3 pe-1">
-                        <div class="chart">
-                            <h6 class="text-white ms-4 mt-2 mb-0">Horários de Maior Demanda</h6>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="peakHoursChart" height="120"></canvas>
-                    </div>
-                    <p class="text-sm mt-3">Distribuição por hora do dia</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Real-time Activity -->
-    <div class="row">
-        <div class="col-12 mt-4">
-            <div class="card">
-                <div class="card-header pb-0">
-                    <h6>Atividade em Tempo Real</h6>
-                </div>
-                <div class="card-body px-0 pt-0 pb-2">
-                    <div class="table-responsive p-0">
-                        <table class="table align-items-center mb-0">
-                            <thead>
-                                <tr>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Evento</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Usuário</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Hora</th>
-                                    <th class="text-secondary opacity-7"></th>
-                                </tr>
-                            </thead>
-                            <tbody id="activityFeed">
-                                <!-- Será preenchido via JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
+            <div class="card-body p-3">
+                <div class="chart">
+                    <canvas id="chartHorarios" class="chart-canvas" height="250"></canvas>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Gráficos com dados reais -->
+<!-- ===== TABELAS ===== -->
+<div class="row">
+    <!-- Performance Agentes -->
+    <div class="col-lg-7 mb-4">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+                    <h6 class="text-white text-capitalize ps-3 mb-0">Performance dos Agentes</h6>
+                </div>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Agente</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tickets</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Resolvidos</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Satisfação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for agente in agentes %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="avatar avatar-sm me-3 bg-gradient-primary rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;min-width:36px">
+                                            <span class="text-white text-xs">{{ agente.agente__first_name|first }}{{ agente.agente__last_name|first }}</span>
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ agente.agente__first_name }} {{ agente.agente__last_name }}</h6>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-sm font-weight-bold">{{ agente.total_tickets }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="badge badge-sm bg-gradient-success">{{ agente.resolvidos }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    {% if agente.satisfacao_media %}
+                                        <span class="text-sm font-weight-bold">{{ agente.satisfacao_media|floatformat:1 }}/5</span>
+                                    {% else %}
+                                        <span class="text-xs text-secondary">N/A</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4">
+                                    <i class="material-symbols-rounded opacity-5 d-block mb-2" style="font-size:48px">groups</i>
+                                    <p class="text-sm text-muted mb-0">Nenhum agente com tickets neste período</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categorias + Top Clientes -->
+    <div class="col-lg-5 mb-4">
+        <!-- Distribuição por Categoria -->
+        <div class="card mb-4">
+            <div class="card-header pb-0">
+                <h6>Distribuição por Categoria</h6>
+            </div>
+            <div class="card-body pt-2">
+                {% for cat in categorias %}
+                <div class="d-flex align-items-center mb-3">
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-sm font-weight-bold">{{ cat.categoria|default:"Sem categoria" }}</span>
+                            <span class="text-sm text-secondary">{{ cat.total }} tickets</span>
+                        </div>
+                        <div class="progress" style="height:6px">
+                            <div class="progress-bar bg-gradient-info" role="progressbar" style="width:{% widthratio cat.resolvidos cat.total 100 %}%"></div>
+                        </div>
+                        <span class="text-xs text-secondary">{{ cat.resolvidos }} resolvidos</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-sm text-center text-muted py-3">Nenhuma categoria com tickets</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Top Clientes -->
+        <div class="card">
+            <div class="card-header pb-0">
+                <h6>Top Clientes (Este Mês)</h6>
+            </div>
+            <div class="card-body pt-2 px-3">
+                {% for cliente in top_clientes %}
+                <div class="d-flex align-items-center {% if not forloop.last %}mb-3 pb-3 border-bottom{% endif %}">
+                    <div class="icon icon-sm icon-shape bg-gradient-dark shadow text-center border-radius-md me-3">
+                        <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">person</i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-0 text-sm">{{ cliente.nome }}</h6>
+                        <p class="text-xs text-secondary mb-0">{{ cliente.email|default:"" }}</p>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge badge-sm bg-gradient-info">{{ cliente.tickets_mes }} tickets</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-sm text-center text-muted py-3">Nenhum cliente com tickets</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== SATISFAÇÃO POR CATEGORIA ===== -->
+{% if satisfacao_categoria %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header pb-0">
+                <h6>Satisfação por Categoria</h6>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Categoria</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Nota Média</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Avaliações</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nível</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in satisfacao_categoria %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <h6 class="mb-0 text-sm">{{ item.categoria|default:"Sem categoria" }}</h6>
+                                    </div>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-sm font-weight-bold">{{ item.satisfacao_media|floatformat:1 }}/5</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-sm">{{ item.total_avaliacoes }}</span>
+                                </td>
+                                <td>
+                                    {% if item.satisfacao_media >= 4 %}
+                                        <span class="badge badge-sm bg-gradient-success">Excelente</span>
+                                    {% elif item.satisfacao_media >= 3 %}
+                                        <span class="badge badge-sm bg-gradient-info">Bom</span>
+                                    {% elif item.satisfacao_media >= 2 %}
+                                        <span class="badge badge-sm bg-gradient-warning">Regular</span>
+                                    {% else %}
+                                        <span class="badge badge-sm bg-gradient-danger">Ruim</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Dados vindos do Django template
-    const ticketsTimeline = JSON.parse('{{ tickets_timeline|escapejs }}');
-    const ticketsStatus = {
-        'aberto': {{ tickets_por_status.aberto }},
-        'em_andamento': {{ tickets_por_status.em_andamento }},
-        'resolvido': {{ tickets_por_status.resolvido }},
-        'fechado': {{ tickets_por_status.fechado }}
-    };
-    const agentesPerformance = JSON.parse('{{ agentes_performance|escapejs }}');
-    const horariosDemanda = JSON.parse('{{ horarios_demanda|escapejs }}');
+    // ===== Dados do Django =====
+    const tendenciaData = [
+        {% for item in tendencia_dados %}
+        { data: '{{ item.data }}', tickets: {{ item.tickets }} }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+    const horariosData = [
+        {% for item in tickets_por_hora %}
+        { hora: {{ item.hora }}, total: {{ item.total }} }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
 
-    // 1. Gráfico de Tickets ao Longo do Tempo
-    const timelineCtx = document.getElementById('ticketsTimelineChart').getContext('2d');
-    new Chart(timelineCtx, {
-        type: 'line',
-        data: {
-            labels: ticketsTimeline.map(item => item.date),
-            datasets: [{
-                label: 'Tickets Criados',
-                data: ticketsTimeline.map(item => item.count),
-                borderColor: '#374151',
-                backgroundColor: 'rgba(55, 65, 81, 0.1)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#374151',
-                pointRadius: 5,
-                pointHoverRadius: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
+    // ===== GRÁFICO TENDÊNCIA =====
+    const ctxTend = document.getElementById('chartTendencia');
+    if (ctxTend && tendenciaData.length) {
+        new Chart(ctxTend.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: tendenciaData.map(d => d.data),
+                datasets: [{
+                    label: 'Tickets',
+                    data: tendenciaData.map(d => d.tickets),
+                    borderColor: '#334155',
+                    backgroundColor: 'rgba(51, 65, 85, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 2,
+                    pointRadius: 2,
+                    pointHoverRadius: 5,
+                    pointBackgroundColor: '#334155'
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(0,0,0,0.1)'
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { drawBorder: false, color: 'rgba(200,200,200,0.2)' },
+                        ticks: { font: { size: 11, family: "Inter" }, color: '#b2b9bf' }
                     },
-                    ticks: {
-                        callback: function(value) {
-                            return value + ' tickets';
-                        }
-                    }
-                },
-                x: {
-                    grid: {
-                        color: 'rgba(0,0,0,0.1)'
-                    }
-                }
-            },
-            elements: {
-                point: {
-                    radius: 4,
-                    hoverRadius: 8
-                }
-            }
-        }
-    });
-
-    // 2. Gráfico de Distribuição por Status
-    const statusCtx = document.getElementById('statusDistributionChart').getContext('2d');
-    new Chart(statusCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Abertos', 'Em Andamento', 'Resolvidos', 'Fechados'],
-            datasets: [{
-                data: [
-                    ticketsStatus.aberto,
-                    ticketsStatus.em_andamento, 
-                    ticketsStatus.resolvido,
-                    ticketsStatus.fechado
-                ],
-                backgroundColor: [
-                    '#e91e63', // Rosa para abertos
-                    '#ff9800', // Laranja para em andamento  
-                    '#2196f3', // Azul para resolvidos
-                    '#4caf50'  // Verde para fechados
-                ],
-                borderWidth: 3,
-                borderColor: '#fff',
-                hoverBorderWidth: 4,
-                hoverOffset: 10
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = ((context.parsed * 100) / total).toFixed(1);
-                            return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
-                        }
-                    }
-                }
-            },
-            cutout: '60%'
-        }
-    });
-
-    // 3. Gráfico de Performance por Agente
-    const agentCtx = document.getElementById('agentPerformanceChart').getContext('2d');
-    new Chart(agentCtx, {
-        type: 'bar',
-        data: {
-            labels: agentesPerformance.map(agent => 
-                (agent.first_name || '') + ' ' + (agent.last_name || 'Agente')
-            ),
-            datasets: [{
-                label: 'Tickets Resolvidos',
-                data: agentesPerformance.map(agent => agent.tickets_resolvidos || 0),
-                backgroundColor: [
-                    '#667eea',
-                    '#764ba2', 
-                    '#f093fb',
-                    '#f5576c',
-                    '#4facfe'
-                ],
-                borderColor: [
-                    '#5a67d8',
-                    '#6b46c1',
-                    '#ec4899',
-                    '#ef4444',
-                    '#3b82f6'
-                ],
-                borderWidth: 2,
-                borderRadius: 8,
-                borderSkipped: false
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(0,0,0,0.1)'
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            return value + ' tickets';
-                        }
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
+                    x: {
+                        grid: { drawBorder: false, display: false },
+                        ticks: { font: { size: 10, family: "Inter" }, color: '#b2b9bf', maxTicksLimit: 15 }
                     }
                 }
             }
-        }
-    });
+        });
+    }
 
-    // 4. Gráfico de Horários de Maior Demanda
-    const peakCtx = document.getElementById('peakHoursChart').getContext('2d');
-    new Chart(peakCtx, {
-        type: 'bar',
-        data: {
-            labels: horariosDemanda.map(item => item.hour),
-            datasets: [{
-                label: 'Tickets',
-                data: horariosDemanda.map(item => item.count),
-                backgroundColor: function(context) {
-                    const value = context.parsed.y;
-                    const max = Math.max(...horariosDemanda.map(item => item.count));
-                    const intensity = value / max;
-                    
-                    if (intensity > 0.7) return '#ff6b6b'; // Alto
-                    if (intensity > 0.4) return '#feca57'; // Médio
-                    return '#48dbfb'; // Baixo
-                },
-                borderRadius: 4,
-                borderSkipped: false
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    callbacks: {
-                        title: function(context) {
-                            return 'Horário: ' + context[0].label;
-                        },
-                        label: function(context) {
-                            return 'Tickets: ' + context.parsed.y;
+    // ===== GRÁFICO HORÁRIOS =====
+    const ctxHora = document.getElementById('chartHorarios');
+    if (ctxHora && horariosData.length) {
+        const maxVal = Math.max(...horariosData.map(d => d.total));
+        new Chart(ctxHora.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: horariosData.map(d => d.hora + 'h'),
+                datasets: [{
+                    label: 'Tickets',
+                    data: horariosData.map(d => d.total),
+                    backgroundColor: horariosData.map(d => {
+                        const r = maxVal > 0 ? d.total / maxVal : 0;
+                        if (r > 0.7) return '#ef4444';
+                        if (r > 0.4) return '#f59e0b';
+                        return '#06b6d4';
+                    }),
+                    borderRadius: 4,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: ctx => 'Horário: ' + ctx[0].label,
+                            label: ctx => ctx.parsed.y + ' tickets'
                         }
                     }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(0,0,0,0.1)'
-                    }
                 },
-                x: {
-                    grid: {
-                        display: false
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { drawBorder: false, color: 'rgba(200,200,200,0.2)' },
+                        ticks: { font: { size: 11 }, color: '#b2b9bf' }
                     },
-                    ticks: {
-                        maxTicksLimit: 12 // Mostrar apenas algumas horas
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 10 }, color: '#b2b9bf', maxTicksLimit: 12 }
                     }
                 }
             }
-        }
-    });
-
-    // Atualizar KPIs
-    document.getElementById('totalTickets').textContent = {{ total_tickets }};
-    document.getElementById('activeAgents').textContent = {{ active_agents }};
-    document.getElementById('avgResponseTime').textContent = '24min'; // Placeholder
-    document.getElementById('satisfaction').textContent = '87%'; // Placeholder
-
-    // Event listener para filtro de timeline
-    document.getElementById('timelineFilter').addEventListener('change', function() {
-        // Implementar filtro (recarregar página com parâmetro diferente)
-        console.log('Filtro selecionado:', this.value);
-    });
-
-    // Refresh automático dos dados
-    document.getElementById('refreshData').addEventListener('click', function() {
-        location.reload();
-    });
-    
-    console.log('📊 Analytics Dashboard carregado com sucesso!');
+        });
+    }
 });
 </script>
 {% endblock %}

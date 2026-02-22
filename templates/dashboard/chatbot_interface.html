@@ -3,6 +3,9 @@
 
 {% block title %}Chatbot IA - Suporte Virtual{% endblock %}
 
+{% block page_title %}Chatbot IA{% endblock %}
+{% block breadcrumb_title %}Chatbot IA{% endblock %}
+
 {% block extra_css %}
 <style>
 .chatbot-container {
@@ -136,6 +139,17 @@
     background: #e9ecef;
     border-color: #adb5bd;
 }
+
+/* Dark mode overrides */
+.dark-version .chatbot-container { background: var(--bg-card) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important; }
+.dark-version .chatbot-messages { background: var(--bg-primary) !important; }
+.dark-version .message-content { background: var(--bg-card) !important; color: var(--text-primary) !important; box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important; }
+.dark-version .message.bot .message-content { background: var(--bg-secondary) !important; color: var(--text-primary) !important; border-color: var(--border-color) !important; }
+.dark-version .chatbot-input { background: var(--bg-card) !important; border-top-color: var(--border-color) !important; }
+.dark-version .message-input { background: var(--bg-primary) !important; color: var(--text-primary) !important; border-color: var(--border-color) !important; }
+.dark-version .message-input:focus { border-color: #667eea !important; }
+.dark-version .suggestion-btn { background: var(--bg-primary) !important; color: var(--text-secondary) !important; border-color: var(--border-color) !important; }
+.dark-version .suggestion-btn:hover { background: var(--bg-secondary) !important; color: var(--text-primary) !important; }
 
 .chatbot-input {
     padding: 20px;

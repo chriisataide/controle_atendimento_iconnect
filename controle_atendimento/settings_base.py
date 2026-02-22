@@ -2,19 +2,16 @@
 Configurações base do Django para o projeto Controle de Atendimento iConnect.
 Configurações compartilhadas entre desenvolvimento e produção.
 """
-
-"""
-Configurações base do Django para o projeto Controle de Atendimento iConnect.
-Configurações compartilhadas entre desenvolvimento e produção.
-"""
 import os
 from pathlib import Path
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-change-me-in-production')
+# Gerado pelo Django: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-MUDE-ESTA-CHAVE-EM-PRODUCAO')
 
 try:
     from config.sentry_settings_example import *  # type: ignore
@@ -33,30 +30,32 @@ INSTALLED_APPS = [
     
     # Terceiros
     'django_extensions',
+    'rest_framework',
+    'django_filters',
+    'corsheaders',
+    'axes',
 ]
 
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Para arquivos estáticos
+    'corsheaders.middleware.CorsMiddleware',  # CORS antes do CommonMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',  # i18n
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'dashboard.security.SecurityHeadersMiddleware',  # Headers de seguranca
+    'dashboard.audit_system.AuditMiddleware',  # Audit trail de requests
     'dashboard.monitoring.MonitoringMiddleware',  # Monitoramento customizado
+    'axes.middleware.AxesMiddleware',  # Brute-force protection (deve ser ultimo)
 ]
 
-# Segurança: brute-force e 2FA
-try:
-    from config.axes_settings_example import *  # type: ignore
-except ImportError:
-    pass
-try:
-    from config.two_factor_settings_example import *  # type: ignore
-except ImportError:
-    pass
+# Seguranca: configuracoes agora estao no final deste arquivo (AXES_*, AUTHENTICATION_BACKENDS)
+# As configuracoes legadas em config/ nao sao mais importadas.
 
 ROOT_URLCONF = 'controle_atendimento.urls'
 
@@ -67,9 +66,11 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'dashboard.rbac.rbac_context',
             ],
         },
     },
@@ -100,7 +101,18 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = 'pt-br'
 TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
+USE_L10N = True
 USE_TZ = True
+
+LANGUAGES = [
+    ('pt-br', 'Português (Brasil)'),
+    ('en', 'English'),
+    ('es', 'Español'),
+]
+
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
 
 
 # Static files (CSS, JavaScript, Images)
@@ -145,11 +157,13 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@iconnect.com')
 
-# Redis/Cache Configuration
+# Redis/Cache Configuration (base — pode ser sobrescrita em dev/prod)
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache' if os.environ.get('REDIS_URL') else 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': os.environ.get('REDIS_URL', 'unique-snowflake'),
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache' if config('REDIS_URL', default='') else 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': config('REDIS_URL', default='unique-snowflake'),
+        'KEY_PREFIX': 'iconnect',
+        'TIMEOUT': 300,
     }
 }
 
@@ -158,19 +172,6 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_CACHE_ALIAS = 'default'
 SESSION_COOKIE_AGE = 3600  # 1 hour
 SESSION_SAVE_EVERY_REQUEST = True
-
-# Cache configuration
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1'),
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        },
-        'KEY_PREFIX': 'iconnect',
-        'TIMEOUT': 300,  # 5 minutes default
-    }
-}
 
 # Cache key prefixes
 CACHE_KEYS = {
@@ -294,4 +295,56 @@ CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://redis:6
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+
+# ==================== REST Framework ====================
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/day',
+        'user': '1000/day',
+    },
+}
+
+# JWT Configuration
+from datetime import timedelta  # noqa: E402
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+}
+
+# CORS Configuration — origens específicas definidas em settings_dev.py / settings_prod.py
+CORS_ALLOWED_ORIGINS = []  # Sobrescrito por ambiente
+CORS_ALLOW_CREDENTIALS = True
+
+# Django Axes - Brute-force protection
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = timedelta(minutes=30)
+AXES_LOCKOUT_TEMPLATE = None  # Usa JSON response
+AXES_RESET_ON_SUCCESS = True
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 CELERY_TIMEZONE = TIME_ZONE

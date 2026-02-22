@@ -1,515 +1,101 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ title }}{% endblock %}
-{% block page_title %}{{ title }}{% endblock %}
+{% block title %}Centros de Custo{% endblock %}
+{% block page_title %}Centros de Custo{% endblock %}
 {% block breadcrumb_title %}Centros de Custo{% endblock %}
 
-{% block extra_css %}
-<style>
-    .centro-custo-card {
-        border: none;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(52, 71, 103, 0.15);
-        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-        overflow: hidden;
-        position: relative;
-    }
-
-    .centro-custo-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-    }
-
-    .centro-custo-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 12px 40px rgba(52, 71, 103, 0.25);
-    }
-
-    .centro-custo-card.status-ativo::before {
-        background: linear-gradient(90deg, #4CAF50 0%, #45a049 100%);
-    }
-    
-    .centro-custo-card.status-inativo::before {
-        background: linear-gradient(90deg, #6c757d 0%, #5a6268 100%);
-    }
-    
-    .centro-custo-card.status-suspenso::before {
-        background: linear-gradient(90deg, #ffc107 0%, #e0a800 100%);
-    }
-    
-    .orcamento-progress {
-        height: 12px;
-        border-radius: 8px;
-        overflow: hidden;
-        background: rgba(102, 126, 234, 0.1);
-    }
-    
-    .orcamento-progress .progress-bar {
-        transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-        border-radius: 8px;
-    }
-    
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.4rem 0.8rem;
-        border-radius: 20px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .departamento-badge {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        font-size: 0.75rem;
-        padding: 0.4rem 0.8rem;
-        border-radius: 20px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .card-title {
-        color: #344767;
-        font-weight: 600;
-        font-size: 1.1rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .card-subtitle {
-        color: #67748e;
-        font-size: 0.875rem;
-        font-weight: 500;
-    }
-
-    .orcamento-info {
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-        border-radius: 12px;
-        padding: 1rem;
-        margin: 1rem 0;
-    }
-
-    .orcamento-valor {
-        color: #344767;
-        font-weight: 700;
-        font-size: 1.1rem;
-    }
-
-    .orcamento-label {
-        color: #67748e;
-        font-size: 0.8rem;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .btn-action {
-        border-radius: 10px;
-        font-weight: 600;
-        padding: 0.5rem 1rem;
-        transition: all 0.3s ease;
-        border: none;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-    }
-
-    .btn-outline-primary {
-        border: 2px solid #667eea;
-        color: #667eea;
-        background: transparent;
-    }
-
-    .btn-outline-primary:hover {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-    }
-
-    .form-control, .form-select {
-        border: 2px solid rgba(102, 126, 234, 0.2);
-        border-radius: 10px;
-        padding: 0.75rem 1rem;
-        transition: all 0.3s ease;
-        background: white;
-    }
-
-    .form-control:focus, .form-select:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        outline: none;
-    }
-
-    .header-gradient {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        font-weight: 700;
-    }
-
-    .loading-spinner {
-        display: inline-block;
-        width: 20px;
-        height: 20px;
-        border: 3px solid rgba(102, 126, 234, 0.3);
-        border-radius: 50%;
-        border-top-color: #667eea;
-        animation: spin 1s ease-in-out infinite;
-    }
-
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-
-    .fade-in {
-        animation: fadeIn 0.6s ease-in-out;
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .no-results {
-        text-align: center;
-        padding: 3rem;
-        color: #67748e;
-    }
-
-    .no-results i {
-        font-size: 4rem;
-        color: rgba(102, 126, 234, 0.3);
-        margin-bottom: 1rem;
-    }
-
-    @media (max-width: 768px) {
-        .centro-custo-card {
-            margin-bottom: 1rem;
-        }
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="container-fluid py-4">
-    <!-- Header com ações -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header pb-0">
-                    <div class="d-lg-flex">
-                        <div>
-                            <h5 class="mb-0">{{ title }}</h5>
-                            <p class="text-sm mb-0">
-                                Gerencie os centros de custo da organização
-                            </p>
-                        </div>
-                        <div class="ms-auto my-auto mt-lg-0 mt-4">
-                            <div class="ms-auto my-auto">
-                                <a href="{% url 'financeiro:centros_custo_dashboard' %}" class="btn btn-outline-primary btn-sm mb-0 me-2">
-                                    <i class="material-icons text-sm">analytics</i>
-                                    Dashboard
-                                </a>
-                                <a href="{% url 'financeiro:centro_custo_create' %}" class="btn bg-gradient-primary btn-sm mb-0">
-                                    <i class="material-icons text-sm">add</i>
-                                    Novo Centro
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Centros de Custo</h3>
+            <p class="mb-0 text-sm">Gestão de centros de custo &bull; Orçamentos e departamentos</p>
         </div>
     </div>
-
-    <!-- Filtros -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="input-group input-group-outline">
-                                <label class="form-label">Buscar...</label>
-                                <input type="text" class="form-control" id="searchInput">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <select class="form-select" id="statusFilter">
-                                <option value="">Todos os Status</option>
-                                <option value="ativo">Ativo</option>
-                                <option value="inativo">Inativo</option>
-                                <option value="suspenso">Suspenso</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <select class="form-select" id="departamentoFilter">
-                                <option value="">Todos os Departamentos</option>
-                                {% for centro in centros_custo %}
-                                    {% if centro.departamento %}
-                                        <option value="{{ centro.departamento }}">{{ centro.departamento }}</option>
-                                    {% endif %}
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <button class="btn btn-outline-secondary" onclick="clearFilters()">
-                                <i class="material-icons">clear</i>
-                                Limpar Filtros
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="col-lg-4 col-md-5 text-end d-flex align-items-center justify-content-end">
+        <a href="{% url 'financeiro:centros_custo_dashboard' %}" class="btn btn-sm bg-gradient-info mb-0 me-2">
+            <i class="material-symbols-rounded text-sm me-1">dashboard</i> Dashboard
+        </a>
+        <a href="{% url 'financeiro:centro_custo_create' %}" class="btn btn-sm bg-gradient-success mb-0">
+            <i class="material-symbols-rounded text-sm me-1">add</i> Novo
+        </a>
     </div>
-
-    <!-- Lista de centros de custo -->
-    <div class="row mt-4" id="centrosCustoContainer">
-        {% for centro in centros_custo %}
-        <div class="col-xl-4 col-md-6 mb-4 centro-custo-item" 
-             data-status="{{ centro.status }}" 
-             data-departamento="{{ centro.departamento }}"
-             data-search="{{ centro.codigo|lower }} {{ centro.nome|lower }} {{ centro.departamento|lower }}">
-            <div class="card centro-custo-card status-{{ centro.status }}">
-                <div class="card-body">
-                    <!-- Header do card -->
-                    <div class="row">
-                        <div class="col-8">
-                            <div class="numbers">
-                                <h6 class="font-weight-bolder mb-0">
-                                    {{ centro.codigo }}
-                                </h6>
-                                <p class="text-sm mb-0 text-capitalize font-weight-bold">
-                                    {{ centro.nome }}
-                                </p>
-                                {% if centro.departamento %}
-                                <span class="departamento-badge mt-1">
-                                    {{ centro.departamento }}
-                                </span>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-4 text-end">
-                            <span class="status-badge bg-gradient-{{ centro.status|yesno:'success,secondary,warning' }}">
-                                {{ centro.get_status_display }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Orçamento -->
-                    {% if centro.orcamento_mensal > 0 %}
-                    <div class="mt-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span class="text-xs">Orçamento Mensal</span>
-                            <span class="text-xs font-weight-bold">
-                                R$ {{ centro.orcamento_utilizado_mes_atual|floatformat:2 }} / R$ {{ centro.orcamento_mensal|floatformat:2 }}
-                            </span>
-                        </div>
-                        <div class="orcamento-progress">
-                            {% with percentual=centro.percentual_orcamento_utilizado %}
-                            <div class="progress-bar bg-gradient-{% if percentual >= 100 %}danger{% elif percentual >= centro.alerta_percentual %}warning{% else %}success{% endif %}"
-                                 style="width: {% if percentual > 100 %}100{% else %}{{ percentual }}{% endif %}%">
-                            </div>
-                            {% endwith %}
-                        </div>
-                        <div class="text-xs mt-1 text-{% if centro.percentual_orcamento_utilizado >= 100 %}danger{% elif centro.percentual_orcamento_utilizado >= centro.alerta_percentual %}warning{% else %}success{% endif %}">
-                            {{ centro.percentual_orcamento_utilizado|floatformat:1 }}% utilizado
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <!-- Responsáveis -->
-                    <div class="mt-3">
-                        {% if centro.responsavel %}
-                        <div class="d-flex align-items-center mb-1">
-                            <i class="material-icons text-sm me-1 opacity-5">person</i>
-                            <span class="text-xs">{{ centro.responsavel.get_full_name|default:centro.responsavel.username }}</span>
-                        </div>
-                        {% endif %}
-                        {% if centro.gerente %}
-                        <div class="d-flex align-items-center">
-                            <i class="material-icons text-sm me-1 opacity-5">supervisor_account</i>
-                            <span class="text-xs">{{ centro.gerente.get_full_name|default:centro.gerente.username }}</span>
-                        </div>
-                        {% endif %}
-                    </div>
-
-                    <!-- Ações -->
-                    <div class="mt-3">
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'financeiro:centro_custo_detail' centro.id %}" 
-                               class="btn btn-outline-primary btn-sm">
-                                <i class="material-icons text-sm">visibility</i>
-                                Detalhes
-                            </a>
-                            <a href="{% url 'financeiro:centro_custo_edit' centro.id %}" 
-                               class="btn btn-outline-secondary btn-sm">
-                                <i class="material-icons text-sm">edit</i>
-                                Editar
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% empty %}
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body text-center py-5">
-                    <i class="material-icons text-muted" style="font-size: 48px;">account_balance</i>
-                    <h5 class="mt-3 text-muted">Nenhum centro de custo encontrado</h5>
-                    <p class="text-muted">Comece criando seu primeiro centro de custo.</p>
-                    <a href="{% url 'financeiro:centro_custo_create' %}" class="btn bg-gradient-primary">
-                        <i class="material-icons text-sm">add</i>
-                        Criar Primeiro Centro
-                    </a>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-
-    <!-- Estatísticas resumidas -->
-    {% if centros_custo %}
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header pb-0">
-                    <h6>Resumo</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <h3 class="font-weight-bold text-primary">{{ centros_custo|length }}</h3>
-                                <p class="text-sm mb-0">Total de Centros</p>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                {% with ativos=centros_custo|dictsort:"status" %}
-                                <h3 class="font-weight-bold text-success">
-                                    {% for centro in centros_custo %}{% if centro.status == 'ativo' %}1{% endif %}{% endfor %}{{ centros_custo|length|add:"-1"|add:"1" }}
-                                </h3>
-                                {% endwith %}
-                                <p class="text-sm mb-0">Centros Ativos</p>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                {% with total_orcamento=0 %}
-                                {% for centro in centros_custo %}
-                                {% endfor %}
-                                <h3 class="font-weight-bold text-info">
-                                    R$ {% widthratio centros_custo|length 1 10000 %}
-                                </h3>
-                                {% endwith %}
-                                <p class="text-sm mb-0">Orçamento Total</p>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <h3 class="font-weight-bold text-warning">
-                                    {% for centro in centros_custo %}{% if centro.status_orcamento == 'alerta' %}1{% endif %}{% endfor %}0
-                                </h3>
-                                <p class="text-sm mb-0">Com Alertas</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 </div>
-{% endblock %}
 
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchInput');
-    const statusFilter = document.getElementById('statusFilter');
-    const departamentoFilter = document.getElementById('departamentoFilter');
-    const items = document.querySelectorAll('.centro-custo-item');
-
-    // Função de filtro
-    function filterItems() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const statusValue = statusFilter.value;
-        const departamentoValue = departamentoFilter.value;
-
-        items.forEach(item => {
-            const searchData = item.dataset.search;
-            const status = item.dataset.status;
-            const departamento = item.dataset.departamento;
-
-            const matchesSearch = searchData.includes(searchTerm);
-            const matchesStatus = !statusValue || status === statusValue;
-            const matchesDepartamento = !departamentoValue || departamento === departamentoValue;
-
-            if (matchesSearch && matchesStatus && matchesDepartamento) {
-                item.style.display = 'block';
-            } else {
-                item.style.display = 'none';
-            }
-        });
-    }
-
-    // Event listeners
-    searchInput.addEventListener('input', filterItems);
-    statusFilter.addEventListener('change', filterItems);
-    departamentoFilter.addEventListener('change', filterItems);
-
-    // Remover duplicatas do select de departamento
-    const departamentoSelect = document.getElementById('departamentoFilter');
-    const options = Array.from(departamentoSelect.options);
-    const uniqueOptions = {};
-    
-    options.forEach(option => {
-        if (option.value && !uniqueOptions[option.value]) {
-            uniqueOptions[option.value] = option;
-        }
-    });
-    
-    departamentoSelect.innerHTML = '<option value="">Todos os Departamentos</option>';
-    Object.values(uniqueOptions).forEach(option => {
-        departamentoSelect.appendChild(option);
-    });
-});
-
-function clearFilters() {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('statusFilter').value = '';
-    document.getElementById('departamentoFilter').value = '';
-    
-    document.querySelectorAll('.centro-custo-item').forEach(item => {
-        item.style.display = 'block';
-    });
-}
-</script>
+<!-- Tabela -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-4 pb-3 px-3">
+                    <h6 class="text-white text-capitalize mb-0">
+                        <i class="material-symbols-rounded text-sm me-1 opacity-7">account_balance</i>
+                        Lista de Centros de Custo
+                    </h6>
+                </div>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Código / Nome</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Departamento</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Responsável</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Orçamento Mensal</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for centro in centros_custo %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="icon icon-sm icon-shape bg-gradient-primary shadow text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
+                                            <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px;">account_balance</i>
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ centro.nome }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ centro.codigo }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="text-xs font-weight-bold">{{ centro.departamento }}</span></td>
+                                <td><span class="text-xs font-weight-bold">{{ centro.responsavel.get_full_name|default:"-" }}</span></td>
+                                <td class="align-middle text-center">
+                                    <span class="text-sm font-weight-bold">R$ {{ centro.orcamento_mensal|floatformat:2 }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="badge badge-sm bg-gradient-{% if centro.status == 'ativo' %}success{% elif centro.status == 'suspenso' %}warning{% else %}secondary{% endif %}">
+                                        {{ centro.get_status_display }}
+                                    </span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <a href="{% url 'financeiro:centro_custo_detail' centro.id %}" class="text-info me-2" title="Detalhes">
+                                        <i class="material-symbols-rounded text-sm">visibility</i>
+                                    </a>
+                                    <a href="{% url 'financeiro:centro_custo_edit' centro.id %}" class="text-warning" title="Editar">
+                                        <i class="material-symbols-rounded text-sm">edit</i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <i class="material-symbols-rounded opacity-5" style="font-size:40px;">account_balance</i>
+                                    <p class="text-sm text-secondary mt-2 mb-0">Nenhum centro de custo cadastrado</p>
+                                    <a href="{% url 'financeiro:centro_custo_create' %}" class="btn btn-sm bg-gradient-info mt-2">Criar primeiro centro</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

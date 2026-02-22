@@ -1,483 +1,290 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Alertas SLA - iConnect{% endblock %}
+{% block title %}Alertas SLA{% endblock %}
+{% block page_title %}Alertas SLA{% endblock %}
+{% block breadcrumb_title %}Alertas SLA{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <!-- Page Header -->
-    <div class="ms-3">
-        <h3 class="mb-0 h4 font-weight-bolder">Alertas SLA</h3>
-        <p class="mb-4">Monitore e gerencie os alertas de violação de SLA em tempo real</p>
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Alertas SLA</h3>
+            <p class="mb-0 text-sm">Monitoramento de alertas e violações de SLA</p>
+        </div>
     </div>
+    <div class="col-lg-4 col-md-5 text-end">
+        <a href="{% url 'dashboard:sla_dashboard' %}" class="btn btn-sm bg-gradient-dark mb-0">
+            <i class="material-symbols-rounded text-sm me-1">dashboard</i> Dashboard
+        </a>
+    </div>
+</div>
 
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-            <div class="card">
-                <div class="card-header p-3 pt-2">
-                    <div class="icon icon-lg icon-shape bg-gradient-danger shadow-danger text-center border-radius-xl mt-n4 position-absolute">
-                        <i class="material-icons opacity-10">warning</i>
+<!-- KPIs -->
+<div class="row">
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Violações</p>
+                        <h4 class="mb-0">{{ stats.breach|default:"0" }}</h4>
                     </div>
-                    <div class="text-end pt-1">
-                        <p class="text-sm mb-0 text-capitalize">Alertas Críticos</p>
-                        <h4 class="mb-0">8</h4>
+                    <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">error</i>
                     </div>
-                </div>
-                <hr class="dark horizontal my-0">
-                <div class="card-footer p-3">
-                    <p class="mb-0"><span class="text-success text-sm font-weight-bolder">+12% </span>nas últimas 24h</p>
                 </div>
             </div>
-        </div>
-        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-            <div class="card">
-                <div class="card-header p-3 pt-2">
-                    <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute">
-                        <i class="material-icons opacity-10">error_outline</i>
-                    </div>
-                    <div class="text-end pt-1">
-                        <p class="text-sm mb-0 text-capitalize">Alertas Médios</p>
-                        <h4 class="mb-0">23</h4>
-                    </div>
-                </div>
-                <hr class="dark horizontal my-0">
-                <div class="card-footer p-3">
-                    <p class="mb-0"><span class="text-danger text-sm font-weight-bolder">-2% </span>nas últimas 24h</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-            <div class="card">
-                <div class="card-header p-3 pt-2">
-                    <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
-                        <i class="material-icons opacity-10">info</i>
-                    </div>
-                    <div class="text-end pt-1">
-                        <p class="text-sm mb-0 text-capitalize">Alertas Baixos</p>
-                        <h4 class="mb-0">45</h4>
-                    </div>
-                </div>
-                <hr class="dark horizontal my-0">
-                <div class="card-footer p-3">
-                    <p class="mb-0"><span class="text-success text-sm font-weight-bolder">+5% </span>nas últimas 24h</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-sm-6">
-            <div class="card">
-                <div class="card-header p-3 pt-2">
-                    <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
-                        <i class="material-icons opacity-10">check_circle</i>
-                    </div>
-                    <div class="text-end pt-1">
-                        <p class="text-sm mb-0 text-capitalize">SLAs Cumpridos</p>
-                        <h4 class="mb-0">892</h4>
-                    </div>
-                </div>
-                <hr class="dark horizontal my-0">
-                <div class="card-footer p-3">
-                    <p class="mb-0"><span class="text-success text-sm font-weight-bolder">+15% </span>nas últimas 24h</p>
-                </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">SLA descumprido</p>
             </div>
         </div>
     </div>
-
-    <!-- Alerts Filter and Actions -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card my-4">
-                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-                    <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
-                        <h6 class="text-white text-capitalize ps-3">Alertas Ativos</h6>
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Avisos</p>
+                        <h4 class="mb-0">{{ stats.warning|default:"0" }}</h4>
                     </div>
-                </div>
-                
-                <!-- Filters Section -->
-                <div class="card-body px-0 pb-2">
-                    <div class="row px-3 mb-3">
-                        <div class="col-md-3">
-                            <div class="input-group input-group-outline">
-                                <label class="form-label">Buscar alertas...</label>
-                                <input type="text" class="form-control" id="searchAlerts">
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <select class="form-select" id="priorityFilter">
-                                <option value="">Todas as Prioridades</option>
-                                <option value="critical">Crítico</option>
-                                <option value="high">Alto</option>
-                                <option value="medium">Médio</option>
-                                <option value="low">Baixo</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <select class="form-select" id="statusFilter">
-                                <option value="">Todos os Status</option>
-                                <option value="active">Ativo</option>
-                                <option value="acknowledged">Reconhecido</option>
-                                <option value="resolved">Resolvido</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <select class="form-select" id="policyFilter">
-                                <option value="">Todas as Políticas</option>
-                                <option value="1">Suporte Técnico - Crítico</option>
-                                <option value="2">Suporte Comercial - Alto</option>
-                                <option value="3">Suporte Geral - Médio</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-primary btn-sm">
-                                    <i class="material-icons text-sm">search</i>
-                                </button>
-                                <button class="btn btn-outline-secondary btn-sm">
-                                    <i class="material-icons text-sm">clear</i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Alerts Table -->
-                    <div class="table-responsive p-0">
-                        <table class="table align-items-center mb-0">
-                            <thead>
-                                <tr>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Alerta</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Ticket</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Prioridade</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tempo Violação</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Política SLA</th>
-                                    <th class="text-secondary opacity-7">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Critical Alerts -->
-                                <tr>
-                                    <td>
-                                        <div class="d-flex px-2 py-1">
-                                            <div class="d-flex flex-column justify-content-center">
-                                                <h6 class="mb-0 text-sm">#SLA-2025-001</h6>
-                                                <p class="text-xs text-secondary mb-0">Tempo de resposta excedido</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <p class="text-xs font-weight-bold mb-0">#TCK-2025-15478</p>
-                                        <p class="text-xs text-secondary mb-0">Sistema indisponível</p>
-                                    </td>
-                                    <td class="align-middle text-center text-sm">
-                                        <span class="badge badge-sm bg-gradient-danger">Crítico</span>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="text-secondary text-xs font-weight-bold">Ativo</span>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="text-secondary text-xs font-weight-bold">2h 35min</span>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="text-secondary text-xs font-weight-bold">Suporte Técnico - Crítico</span>
-                                    </td>
-                                    <td class="align-middle">
-                                        <div class="d-flex align-items-center">
-                                            <button class="btn btn-link text-dark px-2 mb-0" 
-                                                    data-bs-toggle="tooltip" 
-                                                    data-bs-placement="top" 
-                                                    title="Reconhecer Alerta"
-                                                    onclick="acknowledgeAlert(1)">
-                                                <i class="material-icons text-sm">done</i>
-                                            </button>
-                                            <button class="btn btn-link text-info px-2 mb-0" 
-                                                    data-bs-toggle="tooltip" 
-                                                    data-bs-placement="top" 
-                                                    title="Ver Detalhes"
-                                                    onclick="viewAlertDetails(1)">
-                                                <i class="material-icons text-sm">visibility</i>
-                                            </button>
-                                            <button class="btn btn-link text-warning px-2 mb-0" 
-                                                    data-bs-toggle="tooltip" 
-                                                    data-bs-placement="top" 
-                                                    title="Escalar Alerta"
-                                                    onclick="escalateAlert(1)">
-                                                <i class="material-icons text-sm">trending_up</i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                
-                                <!-- High Priority Alert -->
-                                <tr>
-                                    <td>
-                                        <div class="d-flex px-2 py-1">
-                                            <div class="d-flex flex-column justify-content-center">
-                                                <h6 class="mb-0 text-sm">#SLA-2025-002</h6>
-                                                <p class="text-xs text-secondary mb-0">Tempo de resolução excedido</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <p class="text-xs font-weight-bold mb-0">#TCK-2025-15465</p>
-                                        <p class="text-xs text-secondary mb-0">Erro de integração</p>
-                                    </td>
-                                    <td class="align-middle text-center text-sm">
-                                        <span class="badge badge-sm bg-gradient-warning">Alto</span>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="text-secondary text-xs font-weight-bold">Reconhecido</span>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="text-secondary text-xs font-weight-bold">45min</span>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="text-secondary text-xs font-weight-bold">Suporte Comercial - Alto</span>
-                                    </td>
-                                    <td class="align-middle">
-                                        <div class="d-flex align-items-center">
-                                            <button class="btn btn-link text-success px-2 mb-0" 
-                                                    data-bs-toggle="tooltip" 
-                                                    data-bs-placement="top" 
-                                                    title="Resolver Alerta"
-                                                    onclick="resolveAlert(2)">
-                                                <i class="material-icons text-sm">check_circle</i>
-                                            </button>
-                                            <button class="btn btn-link text-info px-2 mb-0" 
-                                                    data-bs-toggle="tooltip" 
-                                                    data-bs-placement="top" 
-                                                    title="Ver Detalhes"
-                                                    onclick="viewAlertDetails(2)">
-                                                <i class="material-icons text-sm">visibility</i>
-                                            </button>
-                                            <button class="btn btn-link text-warning px-2 mb-0" 
-                                                    data-bs-toggle="tooltip" 
-                                                    data-bs-placement="top" 
-                                                    title="Escalar Alerta"
-                                                    onclick="escalateAlert(2)">
-                                                <i class="material-icons text-sm">trending_up</i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                <!-- Medium Priority Alert -->
-                                <tr>
-                                    <td>
-                                        <div class="d-flex px-2 py-1">
-                                            <div class="d-flex flex-column justify-content-center">
-                                                <h6 class="mb-0 text-sm">#SLA-2025-003</h6>
-                                                <p class="text-xs text-secondary mb-0">Tempo de primeira resposta excedido</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <p class="text-xs font-weight-bold mb-0">#TCK-2025-15432</p>
-                                        <p class="text-xs text-secondary mb-0">Dúvida sobre funcionalidade</p>
-                                    </td>
-                                    <td class="align-middle text-center text-sm">
-                                        <span class="badge badge-sm bg-gradient-info">Médio</span>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="text-secondary text-xs font-weight-bold">Ativo</span>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="text-secondary text-xs font-weight-bold">15min</span>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="text-secondary text-xs font-weight-bold">Suporte Geral - Médio</span>
-                                    </td>
-                                    <td class="align-middle">
-                                        <div class="d-flex align-items-center">
-                                            <button class="btn btn-link text-dark px-2 mb-0" 
-                                                    data-bs-toggle="tooltip" 
-                                                    data-bs-placement="top" 
-                                                    title="Reconhecer Alerta"
-                                                    onclick="acknowledgeAlert(3)">
-                                                <i class="material-icons text-sm">done</i>
-                                            </button>
-                                            <button class="btn btn-link text-info px-2 mb-0" 
-                                                    data-bs-toggle="tooltip" 
-                                                    data-bs-placement="top" 
-                                                    title="Ver Detalhes"
-                                                    onclick="viewAlertDetails(3)">
-                                                <i class="material-icons text-sm">visibility</i>
-                                            </button>
-                                            <button class="btn btn-link text-secondary px-2 mb-0" 
-                                                    data-bs-toggle="tooltip" 
-                                                    data-bs-placement="top" 
-                                                    title="Silenciar por 1h"
-                                                    onclick="snoozeAlert(3)">
-                                                <i class="material-icons text-sm">snooze</i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Pagination -->
-                    <div class="d-flex justify-content-between align-items-center px-3 py-2">
-                        <div class="text-sm text-secondary">
-                            Mostrando 1 a 3 de 76 alertas
-                        </div>
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination pagination-sm mb-0">
-                                <li class="page-item disabled">
-                                    <a class="page-link" href="#" tabindex="-1">Anterior</a>
-                                </li>
-                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                                <li class="page-item">
-                                    <a class="page-link" href="#">Próximo</a>
-                                </li>
-                            </ul>
-                        </nav>
+                    <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">warning</i>
                     </div>
                 </div>
             </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Próximos ao vencimento</p>
+            </div>
         </div>
     </div>
-
-    <!-- Alert Details Modal -->
-    <div class="modal fade" id="alertDetailsModal" tabindex="-1" role="dialog" aria-labelledby="alertDetailsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="alertDetailsModalLabel">Detalhes do Alerta</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">ID do Alerta</label>
-                                <input type="text" class="form-control" id="alertId" readonly>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Ticket Relacionado</label>
-                                <input type="text" class="form-control" id="alertTicket" readonly>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Prioridade</label>
-                                <input type="text" class="form-control" id="alertPriority" readonly>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Status</label>
-                                <input type="text" class="form-control" id="alertStatus" readonly>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Descrição</label>
-                                <textarea class="form-control" rows="3" id="alertDescription" readonly></textarea>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Tempo de Violação</label>
-                                <input type="text" class="form-control" id="alertViolationTime" readonly>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Política SLA</label>
-                                <input type="text" class="form-control" id="alertSlaPolicy" readonly>
-                            </div>
-                        </div>
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Escalações</p>
+                        <h4 class="mb-0">{{ stats.escalation|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">call_made</i>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                    <button type="button" class="btn btn-primary" onclick="acknowledgeAlert()">Reconhecer</button>
-                    <button type="button" class="btn btn-success" onclick="resolveAlert()">Resolver</button>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Encaminhadas a supervisor</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Resolvidos</p>
+                        <h4 class="mb-0">{{ stats.resolved|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">check_circle</i>
+                    </div>
                 </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Alertas já resolvidos</p>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Filtros -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body p-3">
+                <form method="get" class="row g-2 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label text-xs text-uppercase mb-1">Tipo de Alerta</label>
+                        <select name="type" class="form-select form-select-sm">
+                            <option value="all" {% if current_type == 'all' %}selected{% endif %}>Todos</option>
+                            {% for value, label in alert_types %}
+                            <option value="{{ value }}" {% if current_type == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check form-switch mt-3">
+                            <input class="form-check-input" type="checkbox" name="resolved" value="true" id="showResolved" {% if show_resolved %}checked{% endif %}>
+                            <label class="form-check-label text-sm" for="showResolved">Incluir resolvidos</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button type="submit" class="btn btn-sm bg-gradient-dark mb-0">
+                            <i class="material-symbols-rounded text-sm me-1">filter_list</i> Filtrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabela de Alertas -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">notifications_active</i>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Alertas de SLA</h6>
+                    {% if alerts.paginator %}
+                    <span class="text-xs text-muted">{{ alerts.paginator.count }} alerta{{ alerts.paginator.count|pluralize:"s" }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ticket</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Mensagem</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tipo</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Data</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for alert in alerts %}
+                            <tr id="alert-row-{{ alert.id }}">
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <a href="{% url 'dashboard:ticket_detail' alert.ticket.pk %}" class="text-sm font-weight-bold text-info mb-0">
+                                                #{{ alert.ticket.numero }}
+                                            </a>
+                                            <p class="text-xs text-secondary mb-0">{{ alert.ticket.titulo|truncatechars:35 }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-xs">{{ alert.message|truncatechars:60 }}</span>
+                                </td>
+                                <td class="text-center">
+                                    {% if alert.alert_type == 'breach' %}
+                                    <span class="badge bg-gradient-danger">Violação</span>
+                                    {% elif alert.alert_type == 'warning' %}
+                                    <span class="badge bg-gradient-warning">Aviso</span>
+                                    {% elif alert.alert_type == 'escalation' %}
+                                    <span class="badge bg-gradient-primary">Escalação</span>
+                                    {% elif alert.alert_type == 'resolved' %}
+                                    <span class="badge bg-gradient-success">Cumprido</span>
+                                    {% else %}
+                                    <span class="badge bg-gradient-dark">{{ alert.get_alert_type_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-xs">{{ alert.created_at|date:"d/m/Y H:i" }}</span>
+                                </td>
+                                <td class="text-center">
+                                    {% if alert.resolved_at %}
+                                    <span class="badge bg-gradient-success">Resolvido</span>
+                                    <br><small class="text-xs text-muted">{{ alert.resolved_at|date:"d/m H:i" }}</small>
+                                    {% else %}
+                                    <span class="badge bg-gradient-danger">Pendente</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if not alert.resolved_at %}
+                                    <button class="btn btn-link text-success px-2 mb-0" onclick="resolveAlert({{ alert.id }})" title="Resolver">
+                                        <i class="material-symbols-rounded text-sm">check</i>
+                                    </button>
+                                    {% endif %}
+                                    <a href="{% url 'dashboard:ticket_detail' alert.ticket.pk %}" class="btn btn-link text-info px-2 mb-0" title="Ver ticket">
+                                        <i class="material-symbols-rounded text-sm">visibility</i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <i class="material-symbols-rounded text-success mb-2" style="font-size:48px;">check_circle</i>
+                                    <p class="text-sm text-muted mb-0">Nenhum alerta encontrado</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginação -->
+                {% if alerts.has_other_pages %}
+                <div class="d-flex justify-content-center mt-3 mb-2">
+                    <nav>
+                        <ul class="pagination pagination-sm">
+                            {% if alerts.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ alerts.previous_page_number }}&type={{ current_type }}&resolved={{ show_resolved|yesno:'true,false' }}">
+                                    <i class="material-symbols-rounded text-sm">chevron_left</i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            <li class="page-item disabled">
+                                <span class="page-link text-xs">{{ alerts.number }} / {{ alerts.paginator.num_pages }}</span>
+                            </li>
+                            {% if alerts.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ alerts.next_page_number }}&type={{ current_type }}&resolved={{ show_resolved|yesno:'true,false' }}">
+                                    <i class="material-symbols-rounded text-sm">chevron_right</i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
 <script>
-    function acknowledgeAlert(alertId) {
-        // Implementar lógica para reconhecer alerta
-        console.log('Reconhecendo alerta:', alertId);
-        // Aqui você faria uma requisição AJAX para o backend
-        alert('Alerta reconhecido com sucesso!');
-    }
-
-    function resolveAlert(alertId) {
-        // Implementar lógica para resolver alerta
-        console.log('Resolvendo alerta:', alertId);
-        // Aqui você faria uma requisição AJAX para o backend
-        alert('Alerta resolvido com sucesso!');
-    }
-
-    function escalateAlert(alertId) {
-        // Implementar lógica para escalar alerta
-        console.log('Escalando alerta:', alertId);
-        // Aqui você faria uma requisição AJAX para o backend
-        alert('Alerta escalado com sucesso!');
-    }
-
-    function snoozeAlert(alertId) {
-        // Implementar lógica para adiar alerta
-        console.log('Adiando alerta:', alertId);
-        // Aqui você faria uma requisição AJAX para o backend
-        alert('Alerta adiado por 1 hora!');
-    }
-
-    function viewAlertDetails(alertId) {
-        // Implementar lógica para carregar detalhes do alerta
-        console.log('Carregando detalhes do alerta:', alertId);
-        
-        // Exemplo de dados (em produção, viria do backend)
-        const alertData = {
-            id: '#SLA-2025-' + String(alertId).padStart(3, '0'),
-            ticket: '#TCK-2025-1547' + alertId,
-            priority: alertId === 1 ? 'Crítico' : alertId === 2 ? 'Alto' : 'Médio',
-            status: alertId === 2 ? 'Reconhecido' : 'Ativo',
-            description: 'Descrição detalhada do alerta #' + alertId,
-            violationTime: alertId === 1 ? '2h 35min' : alertId === 2 ? '45min' : '15min',
-            slaPolicy: alertId === 1 ? 'Suporte Técnico - Crítico' : alertId === 2 ? 'Suporte Comercial - Alto' : 'Suporte Geral - Médio'
-        };
-        
-        // Preencher modal com os dados
-        document.getElementById('alertId').value = alertData.id;
-        document.getElementById('alertTicket').value = alertData.ticket;
-        document.getElementById('alertPriority').value = alertData.priority;
-        document.getElementById('alertStatus').value = alertData.status;
-        document.getElementById('alertDescription').value = alertData.description;
-        document.getElementById('alertViolationTime').value = alertData.violationTime;
-        document.getElementById('alertSlaPolicy').value = alertData.slaPolicy;
-        
-        // Adicionar classe is-filled para todos os campos preenchidos
-        const fieldIds = ['alertId', 'alertTicket', 'alertPriority', 'alertStatus', 'alertDescription', 'alertViolationTime', 'alertSlaPolicy'];
-        fieldIds.forEach(fieldId => {
-            const field = document.getElementById(fieldId);
-            const inputGroup = field.closest('.input-group');
-            if (inputGroup && field.value) {
-                inputGroup.classList.add('is-filled');
+function resolveAlert(alertId) {
+    if (!confirm('Marcar este alerta como resolvido?')) return;
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value
+        || document.cookie.split('; ').find(c => c.startsWith('csrftoken='))?.split('=')[1] || '';
+    
+    fetch(`/dashboard/api/sla/alerts/${alertId}/resolve/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const row = document.getElementById('alert-row-' + alertId);
+            if (row) {
+                // Atualiza status na linha
+                const statusCell = row.querySelectorAll('td')[4];
+                statusCell.innerHTML = '<span class="badge bg-gradient-success">Resolvido</span>';
+                // Remove botão de resolver
+                const actionCell = row.querySelectorAll('td')[5];
+                const resolveBtn = actionCell.querySelector('button');
+                if (resolveBtn) resolveBtn.remove();
             }
-        });
-        
-        // Mostrar modal
-        const modal = new bootstrap.Modal(document.getElementById('alertDetailsModal'));
-        modal.show();
-    }
-
-    // Inicializar tooltips
-    document.addEventListener('DOMContentLoaded', function() {
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    });
+        } else {
+            alert('Erro: ' + (data.error || 'Não foi possível resolver'));
+        }
+    })
+    .catch(e => alert('Erro ao resolver alerta: ' + e));
+}
 </script>
 {% endblock %}

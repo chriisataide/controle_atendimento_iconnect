@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Relatório Itens de Atendimento - iConnect{% endblock %}
+{% block page_title %}Itens de Atendimento{% endblock %}
+{% block breadcrumb_title %}Relatório Itens de Atendimento{% endblock %}
+
+{% block content %}
+<!-- ===== HEADER ===== -->
+<div class="row">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Relatório de Itens de Atendimento</h3>
+            <p class="mb-0 text-sm">Produtos e serviços mais utilizados nos atendimentos</p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+        <a href="{% url 'dashboard:reports' %}" class="btn btn-outline-primary btn-sm mb-0">
+            <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Relatórios
+        </a>
+    </div>
+</div>
+
+<!-- ===== FILTROS ===== -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body py-3">
+                <form method="get" class="row align-items-end">
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label text-xs font-weight-bold mb-1">Data Início</label>
+                        <input type="date" name="data_inicio" class="form-control form-control-sm" value="{{ filtros.data_inicio|default:'' }}">
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label text-xs font-weight-bold mb-1">Data Fim</label>
+                        <input type="date" name="data_fim" class="form-control form-control-sm" value="{{ filtros.data_fim|default:'' }}">
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label text-xs font-weight-bold mb-1">Categoria</label>
+                        <input type="text" name="categoria" class="form-control form-control-sm" placeholder="ID da categoria" value="{{ filtros.categoria|default:'' }}">
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button type="submit" class="btn bg-gradient-primary btn-sm mb-0 w-100">
+                            <i class="material-symbols-rounded text-sm me-1">filter_list</i> Filtrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== KPI CARDS ===== -->
+<div class="row mt-4">
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Total Itens</p>
+                        <h4 class="mb-0">{{ totais.total_itens|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">inventory_2</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Itens <span class="text-primary font-weight-bolder">registrados</span></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Valor Total</p>
+                        <h4 class="mb-0">R$ {{ totais.total_valor|floatformat:2|default:"0,00" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">attach_money</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Soma <span class="text-success font-weight-bolder">geral</span></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Tickets</p>
+                        <h4 class="mb-0">{{ totais.total_tickets|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">confirmation_number</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Com <span class="text-info font-weight-bolder">itens</span></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Valor Médio</p>
+                        <h4 class="mb-0">R$ {{ totais.valor_medio_item|floatformat:2|default:"0,00" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">calculate</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Por <span class="text-warning font-weight-bolder">item</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== PRODUTOS MAIS UTILIZADOS ===== -->
+<div class="row mt-4">
+    <div class="col-lg-7 mb-4">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+                    <h6 class="text-white text-capitalize ps-3 mb-0">Produtos Mais Utilizados (Top 10)</h6>
+                </div>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Produto</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tipo</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Qtd</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tickets</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Valor Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for produto in produtos_populares %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="icon icon-sm icon-shape bg-gradient-info shadow text-center border-radius-md me-2">
+                                            <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">inventory_2</i>
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ produto.produto__nome }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ produto.produto__codigo|default:"" }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="badge badge-sm bg-gradient-{% if produto.tipo_item == 'produto' %}primary{% elif produto.tipo_item == 'servico' %}success{% else %}info{% endif %}">
+                                        {{ produto.tipo_item }}
+                                    </span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-sm font-weight-bold">{{ produto.total_quantidade }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-sm">{{ produto.total_tickets }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-sm font-weight-bold">R$ {{ produto.valor_total|floatformat:2|default:"0,00" }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    <i class="material-symbols-rounded opacity-5 d-block mb-2" style="font-size:48px">inventory_2</i>
+                                    <p class="text-sm text-muted mb-0">Nenhum item de atendimento encontrado</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumo por Categoria -->
+    <div class="col-lg-5 mb-4">
+        <div class="card mb-4">
+            <div class="card-header pb-0">
+                <h6>Resumo por Categoria</h6>
+            </div>
+            <div class="card-body pt-2">
+                {% for cat in resumo_categorias %}
+                <div class="d-flex align-items-center {% if not forloop.last %}mb-3 pb-3 border-bottom{% endif %}">
+                    <div class="icon icon-sm icon-shape bg-gradient-dark shadow text-center border-radius-md me-3">
+                        <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">category</i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-0 text-sm">{{ cat.produto__categoria__nome|default:"Sem Categoria" }}</h6>
+                        <p class="text-xs text-secondary mb-0">{{ cat.total_itens }} itens / {{ cat.total_quantidade }} unid.</p>
+                    </div>
+                    <div class="text-end">
+                        <span class="text-sm font-weight-bold">R$ {{ cat.total_valor|floatformat:2|default:"0,00" }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-sm text-center text-muted py-3">Nenhuma categoria com itens</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Resumo por Agente -->
+        <div class="card">
+            <div class="card-header pb-0">
+                <h6>Resumo por Agente</h6>
+            </div>
+            <div class="card-body pt-2">
+                {% for agente in resumo_agentes %}
+                <div class="d-flex align-items-center {% if not forloop.last %}mb-3 pb-3 border-bottom{% endif %}">
+                    <div class="avatar avatar-sm me-3 bg-gradient-primary rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;min-width:36px">
+                        <span class="text-white text-xs">{{ agente.ticket__agente__first_name|first }}{{ agente.ticket__agente__last_name|first }}</span>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-0 text-sm">{{ agente.ticket__agente__first_name }} {{ agente.ticket__agente__last_name }}</h6>
+                        <p class="text-xs text-secondary mb-0">{{ agente.total_tickets }} tickets</p>
+                    </div>
+                    <div class="text-end">
+                        <span class="text-sm font-weight-bold">R$ {{ agente.total_valor|floatformat:2|default:"0,00" }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-sm text-center text-muted py-3">Nenhum agente com itens</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

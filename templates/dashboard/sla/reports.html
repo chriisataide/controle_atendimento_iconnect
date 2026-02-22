@@ -1,0 +1,416 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Relatórios SLA{% endblock %}
+{% block page_title %}Relatórios SLA{% endblock %}
+{% block breadcrumb_title %}Relatórios SLA{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Relatórios SLA</h3>
+            <p class="mb-0 text-sm">Análise de desempenho e conformidade de SLA — {{ start_date|date:"d/m/Y" }} a {{ end_date|date:"d/m/Y" }}</p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end">
+        <a href="{% url 'dashboard:sla_dashboard' %}" class="btn btn-sm bg-gradient-dark mb-0">
+            <i class="material-symbols-rounded text-sm me-1">dashboard</i> Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Filtro de Período -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body p-3">
+                <form method="get" class="row g-2 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label text-xs text-uppercase mb-1">Período</label>
+                        <select name="period" class="form-select form-select-sm">
+                            <option value="7" {% if period == '7' %}selected{% endif %}>Últimos 7 dias</option>
+                            <option value="15" {% if period == '15' %}selected{% endif %}>Últimos 15 dias</option>
+                            <option value="30" {% if period == '30' %}selected{% endif %}>Últimos 30 dias</option>
+                            <option value="60" {% if period == '60' %}selected{% endif %}>Últimos 60 dias</option>
+                            <option value="90" {% if period == '90' %}selected{% endif %}>Últimos 90 dias</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button type="submit" class="btn btn-sm bg-gradient-dark mb-0">
+                            <i class="material-symbols-rounded text-sm me-1">filter_list</i> Aplicar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- KPIs -->
+<div class="row">
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Tickets no Período</p>
+                        <h4 class="mb-0">{{ total_tickets|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">confirmation_number</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-success font-weight-bolder">{{ resolved_tickets|default:"0" }}</span> resolvidos</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Taxa de Conformidade</p>
+                        <h4 class="mb-0">{{ compliance_rate|floatformat:1|default:"0" }}%</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">verified</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="font-weight-bolder">{{ compliant_count|default:"0" }}</span> de {{ total_with_sla|default:"0" }} em conformidade</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Tempo Médio Resposta</p>
+                        <h4 class="mb-0">{% if avg_first_response %}{{ avg_first_response }}h{% else %}—{% endif %}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">schedule</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Primeira resposta média</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Tempo Médio Resolução</p>
+                        <h4 class="mb-0">{% if avg_resolution %}{{ avg_resolution }}h{% else %}—{% endif %}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">timer</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Até resolução completa</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos: Distribuição SLA + Compliance por Categoria -->
+<div class="row">
+    <div class="col-lg-5 mb-4">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">donut_large</i>
+                </div>
+                <h6 class="mb-0">Distribuição de Status SLA</h6>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <canvas id="statusDistChart" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7 mb-4">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-success shadow-success shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">bar_chart</i>
+                </div>
+                <h6 class="mb-0">Conformidade por Categoria</h6>
+            </div>
+            <div class="card-body">
+                {% if category_performance %}
+                <canvas id="categoryComplianceChart" height="220"></canvas>
+                {% else %}
+                <div class="text-center py-4">
+                    <p class="text-sm text-muted">Sem dados de categorias no período</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance por Agente -->
+<div class="row">
+    <div class="col-lg-7 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">group</i>
+                </div>
+                <h6 class="mb-0">Performance por Agente</h6>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Agente</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tickets</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Conformidade</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Violações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for agent in agent_performance %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="icon icon-sm icon-shape bg-gradient-dark shadow text-center border-radius-md me-2">
+                                            <i class="material-symbols-rounded text-white opacity-10" style="font-size:14px;">person</i>
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ agent.agent_name }}</h6>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-sm font-weight-bold">{{ agent.total_tickets }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <span class="text-xs font-weight-bold {% if agent.compliance_rate >= 90 %}text-success{% elif agent.compliance_rate >= 70 %}text-warning{% else %}text-danger{% endif %}">
+                                            {{ agent.compliance_rate|floatformat:1 }}%
+                                        </span>
+                                        <div class="progress w-75 mt-1" style="height:4px;">
+                                            <div class="progress-bar {% if agent.compliance_rate >= 90 %}bg-gradient-success{% elif agent.compliance_rate >= 70 %}bg-gradient-warning{% else %}bg-gradient-danger{% endif %}" style="width:{{ agent.compliance_rate|floatformat:0 }}%"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    {% if agent.sla_violations > 0 %}
+                                    <span class="badge bg-gradient-danger">{{ agent.sla_violations }}</span>
+                                    {% else %}
+                                    <span class="badge bg-gradient-success">0</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-3">
+                                    <p class="text-sm text-muted mb-0">Sem dados de agentes no período</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Violações Recentes -->
+    <div class="col-lg-5 mb-4">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">gpp_bad</i>
+                </div>
+                <h6 class="mb-0">Violações Recentes</h6>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ticket</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Data</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for violation in recent_violations %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <a href="{% url 'dashboard:ticket_detail' violation.ticket.pk %}" class="text-sm font-weight-bold text-info mb-0">
+                                                #{{ violation.ticket.numero }}
+                                            </a>
+                                            <p class="text-xs text-secondary mb-0">{{ violation.ticket.titulo|truncatechars:30 }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-xs">{{ violation.created_at|date:"d/m/Y H:i" }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="2" class="text-center py-3">
+                                    <i class="material-symbols-rounded text-success mb-1" style="font-size:32px;">verified</i>
+                                    <p class="text-sm text-muted mb-0">Sem violações no período</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance por Categoria (tabela) -->
+{% if category_performance %}
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">category</i>
+                </div>
+                <h6 class="mb-0">Detalhamento por Categoria</h6>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Categoria</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tickets</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Conformidade</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Violações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cat in category_performance %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ cat.categoria.nome }}</h6>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-sm font-weight-bold">{{ cat.total_tickets }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <span class="text-xs font-weight-bold {% if cat.compliance_rate >= 90 %}text-success{% elif cat.compliance_rate >= 70 %}text-warning{% else %}text-danger{% endif %}">
+                                            {{ cat.compliance_rate|floatformat:1 }}%
+                                        </span>
+                                        <div class="progress w-75 mt-1" style="height:4px;">
+                                            <div class="progress-bar {% if cat.compliance_rate >= 90 %}bg-gradient-success{% elif cat.compliance_rate >= 70 %}bg-gradient-warning{% else %}bg-gradient-danger{% endif %}" style="width:{{ cat.compliance_rate|floatformat:0 }}%"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    {% if cat.sla_violations > 0 %}
+                                    <span class="badge bg-gradient-danger">{{ cat.sla_violations }}</span>
+                                    {% else %}
+                                    <span class="badge bg-gradient-success">0</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- Distribuição de Status (Doughnut) ---
+    const statusData = {
+        on_track: {{ sla_status_distribution.on_track|default:"0" }},
+        warning: {{ sla_status_distribution.warning|default:"0" }},
+        breached: {{ sla_status_distribution.breached|default:"0" }},
+        escalated: {{ sla_status_distribution.escalated|default:"0" }},
+        completed: {{ sla_status_distribution.completed|default:"0" }}
+    };
+    const totalStatus = Object.values(statusData).reduce((a, b) => a + b, 0);
+
+    new Chart(document.getElementById('statusDistChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['No Prazo', 'Alerta', 'Violado', 'Escalado', 'Concluído'],
+            datasets: [{
+                data: [statusData.on_track, statusData.warning, statusData.breached, statusData.escalated, statusData.completed],
+                backgroundColor: ['#66bb6a', '#ffa726', '#ef5350', '#42a5f5', '#78909c'],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '60%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { font: { size: 11 }, padding: 12, usePointStyle: true, pointStyleWidth: 10 }
+                }
+            }
+        }
+    });
+
+    {% if category_performance %}
+    // --- Compliance por Categoria (Bar) ---
+    new Chart(document.getElementById('categoryComplianceChart'), {
+        type: 'bar',
+        data: {
+            labels: [{% for cat in category_performance %}'{{ cat.categoria.nome|escapejs }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Conformidade %',
+                data: [{% for cat in category_performance %}{{ cat.compliance_rate|floatformat:1 }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                backgroundColor: [{% for cat in category_performance %}{% if cat.compliance_rate >= 90 %}'#66bb6a'{% elif cat.compliance_rate >= 70 %}'#ffa726'{% else %}'#ef5350'{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                borderRadius: 6,
+                maxBarThickness: 40
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%', font: { size: 11 } }, grid: { color: '#f0f0f0' } },
+                x: { ticks: { font: { size: 11 } }, grid: { display: false } }
+            }
+        }
+    });
+    {% endif %}
+});
+</script>
+{% endblock %}

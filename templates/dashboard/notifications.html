@@ -3,6 +3,9 @@
 
 {% block title %}Notificações - iConnect{% endblock %}
 
+{% block page_title %}Notificações{% endblock %}
+{% block breadcrumb_title %}Notificações{% endblock %}
+
 {% block extra_css %}
 <style>
 .card {
@@ -53,6 +56,18 @@
     border-radius: 50px;
     font-size: 0.75rem;
     margin: 0 0.25rem;
+}
+
+/* Dark mode overrides locais */
+.dark-version .form-label { color: var(--text-secondary) !important; }
+.dark-version .form-select {
+    background-color: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+.dark-version .form-select:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 0.2rem rgba(6, 182, 212, 0.25) !important;
 }
 </style>
 {% endblock %}
@@ -160,16 +175,10 @@
                                     Tipo de Notificação
                                 </label>
                                 <select name="type" class="form-select" onchange="updateFilterPreview()">
-                                    <option value="">🔍 Todos os tipos</option>
-                                    {% for tipo in tipos_disponiveis %}
-                                        <option value="{{ tipo }}" {% if filter_type == tipo %}selected{% endif %}>
-                                            {% if tipo == 'new_ticket' %}🎫 Novo Ticket
-                                            {% elif tipo == 'sla_warning' %}⚠️ Alerta SLA
-                                            {% elif tipo == 'sla_breach' %}🚨 SLA Vencido
-                                            {% elif tipo == 'new_message' %}💬 Nova Mensagem
-                                            {% elif tipo == 'ticket_updated' %}🔄 Ticket Atualizado
-                                            {% else %}📋 {{ tipo|title }}
-                                            {% endif %}
+                                    <option value="">Todos os tipos</option>
+                                    {% for tipo_value, tipo_label in tipos_disponiveis %}
+                                        <option value="{{ tipo_value }}" {% if filter_type == tipo_value %}selected{% endif %}>
+                                            {{ tipo_label }}
                                         </option>
                                     {% endfor %}
                                 </select>
@@ -182,9 +191,9 @@
                                     Status de Leitura
                                 </label>
                                 <select name="read" class="form-select" onchange="updateFilterPreview()">
-                                    <option value="">👁️ Todas as notificações</option>
-                                    <option value="unread" {% if filter_read == 'unread' %}selected{% endif %}>🔴 Não lidas</option>
-                                    <option value="read" {% if filter_read == 'read' %}selected{% endif %}>✅ Já lidas</option>
+                                    <option value="">Todas as notificações</option>
+                                    <option value="unread" {% if filter_read == 'unread' %}selected{% endif %}>Não lidas</option>
+                                    <option value="read" {% if filter_read == 'read' %}selected{% endif %}>Já lidas</option>
                                 </select>
                             </div>
                             
@@ -195,10 +204,10 @@
                                     Período
                                 </label>
                                 <select name="period" class="form-select" onchange="updateFilterPreview()">
-                                    <option value="">📅 Qualquer período</option>
-                                    <option value="today" {% if request.GET.period == 'today' %}selected{% endif %}>📍 Hoje</option>
-                                    <option value="week" {% if request.GET.period == 'week' %}selected{% endif %}>📊 Esta semana</option>
-                                    <option value="month" {% if request.GET.period == 'month' %}selected{% endif %}>📈 Este mês</option>
+                                    <option value="">Qualquer período</option>
+                                    <option value="today" {% if filter_period == 'today' %}selected{% endif %}>Hoje</option>
+                                    <option value="week" {% if filter_period == 'week' %}selected{% endif %}>Esta semana</option>
+                                    <option value="month" {% if filter_period == 'month' %}selected{% endif %}>Este mês</option>
                                 </select>
                             </div>
                         </div>
@@ -232,19 +241,19 @@
                                     </div>
                                     
                                     <!-- Filtros Rápidos -->
-                                    <div class="d-flex gap-2 flex-wrap">
+                                    <div class="d-flex gap-2 flex-wrap align-items-center">
                                         <span class="text-sm text-muted me-2">Filtros rápidos:</span>
                                         <a href="?read=unread" class="badge bg-gradient-warning text-decoration-none">
-                                            🔴 Não lidas
+                                            <i class="material-icons text-sm me-1" style="vertical-align: middle; font-size: 14px;">mark_email_unread</i>Não lidas
                                         </a>
                                         <a href="?type=new_ticket" class="badge bg-gradient-primary text-decoration-none">
-                                            🎫 Novos Tickets
+                                            <i class="material-icons text-sm me-1" style="vertical-align: middle; font-size: 14px;">confirmation_number</i>Novos Tickets
                                         </a>
-                                        <a href="?type=sla_warning" class="badge bg-gradient-danger text-decoration-none">
-                                            ⚠️ Alertas SLA
+                                        <a href="?type=sla_warning&type=sla_breach" class="badge bg-gradient-danger text-decoration-none">
+                                            <i class="material-icons text-sm me-1" style="vertical-align: middle; font-size: 14px;">warning</i>Alertas SLA
                                         </a>
                                         <a href="?period=today" class="badge bg-gradient-success text-decoration-none">
-                                            📍 Hoje
+                                            <i class="material-icons text-sm me-1" style="vertical-align: middle; font-size: 14px;">today</i>Hoje
                                         </a>
                                     </div>
                                 </div>
@@ -267,20 +276,24 @@
                     {% if notifications %}
                         <div class="notifications-list">
                             {% for notification in notifications %}
-                                <div class="notification-item-full {% if not notification.lida %}unread{% endif %}" 
+                                <div class="notification-item-full {% if not notification.read %}unread{% endif %}" 
                                      data-notification-id="{{ notification.id }}">
                                     <div class="notification-icon-wrapper">
-                                        <div class="notification-icon {{ notification.tipo }}">
-                                            {% if notification.tipo == 'new_ticket' %}
-                                                <i class="material-icons">assignment</i>
-                                            {% elif notification.tipo == 'sla_warning' %}
-                                                <i class="material-icons">warning</i>
-                                            {% elif notification.tipo == 'sla_breach' %}
-                                                <i class="material-icons">error</i>
-                                            {% elif notification.tipo == 'new_message' %}
-                                                <i class="material-icons">message</i>
-                                            {% elif notification.tipo == 'ticket_updated' %}
-                                                <i class="material-icons">update</i>
+                                        <div class="notification-icon {{ notification.type }}">
+                                            {% if notification.type == 'new_ticket' %}
+                                                <i class="material-icons">confirmation_number</i>
+                                            {% elif notification.type == 'ticket_assigned' %}
+                                                <i class="material-icons">person_add</i>
+                                            {% elif notification.type == 'ticket_status_change' %}
+                                                <i class="material-icons">sync</i>
+                                            {% elif notification.type == 'sla_warning' %}
+                                                <i class="material-icons">warning_amber</i>
+                                            {% elif notification.type == 'sla_breach' %}
+                                                <i class="material-icons">error_outline</i>
+                                            {% elif notification.type == 'new_interaction' %}
+                                                <i class="material-icons">chat_bubble_outline</i>
+                                            {% elif notification.type == 'system_alert' %}
+                                                <i class="material-icons">settings_suggest</i>
                                             {% else %}
                                                 <i class="material-icons">notifications</i>
                                             {% endif %}
@@ -289,23 +302,26 @@
                                     
                                     <div class="notification-content-full">
                                         <div class="notification-header-full">
-                                            <h6 class="notification-title-full">{{ notification.titulo }}</h6>
-                                            <span class="notification-time-full">{{ notification.criado_em|timesince }} atrás</span>
+                                            <h6 class="notification-title-full">{{ notification.title }}</h6>
+                                            <span class="notification-time-full">{{ notification.created_at|timesince }} atrás</span>
                                         </div>
                                         
-                                        <p class="notification-message-full">{{ notification.mensagem }}</p>
+                                        <p class="notification-message-full">{{ notification.message }}</p>
                                         
                                         {% if notification.ticket %}
                                             <div class="notification-ticket-info">
                                                 <span class="badge bg-gradient-primary">
                                                     Ticket #{{ notification.ticket.numero }}
                                                 </span>
+                                                <span class="badge bg-gradient-{{ notification.color|default:'info' }} ms-1">
+                                                    {{ notification.get_type_display }}
+                                                </span>
                                             </div>
                                         {% endif %}
                                     </div>
                                     
                                     <div class="notification-actions-full">
-                                        {% if not notification.lida %}
+                                        {% if not notification.read %}
                                             <button class="btn btn-sm btn-outline-primary" 
                                                     onclick="markAsRead({{ notification.id }})">
                                                 <i class="material-icons">done</i>
@@ -320,6 +336,11 @@
                                                 Ver Ticket
                                             </a>
                                         {% endif %}
+                                        
+                                        <button class="btn btn-sm btn-outline-danger" 
+                                                onclick="deleteNotification({{ notification.id }})" title="Remover">
+                                            <i class="material-icons">close</i>
+                                        </button>
                                     </div>
                                 </div>
                             {% endfor %}
@@ -423,24 +444,34 @@
     color: #1976d2;
 }
 
+.notification-icon.ticket_assigned {
+    background: #e0f7fa;
+    color: #00897b;
+}
+
+.notification-icon.ticket_status_change {
+    background: #f3e5f5;
+    color: #7b1fa2;
+}
+
 .notification-icon.sla_warning {
     background: #fff3e0;
     color: #f57c00;
 }
 
 .notification-icon.sla_breach {
-    background: #ffebee;
-    color: #d32f2f;
+    background: #fce4ec;
+    color: #c62828;
 }
 
-.notification-icon.new_message {
-    background: #e8f5e8;
+.notification-icon.new_interaction {
+    background: #e8f5e9;
     color: #388e3c;
 }
 
-.notification-icon.ticket_updated {
-    background: #f3e5f5;
-    color: #7b1fa2;
+.notification-icon.system_alert {
+    background: #e8eaf6;
+    color: #3949ab;
 }
 
 .notification-content-full {
@@ -512,12 +543,26 @@
 </style>
 
 <script>
+// CSRF Token helper
+function getCSRFToken() {
+    const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (csrfInput) return csrfInput.value;
+    // Fallback: ler do cookie
+    const name = 'csrftoken';
+    const cookies = document.cookie.split(';');
+    for (let c of cookies) {
+        c = c.trim();
+        if (c.startsWith(name + '=')) return c.substring(name.length + 1);
+    }
+    return '';
+}
+
 // Funções específicas da página de notificações
 function markAsRead(notificationId) {
-    fetch(`/api/notifications/${notificationId}/mark-read/`, {
+    fetch(`/dashboard/api/notifications/${notificationId}/mark-read/`, {
         method: 'POST',
         headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-CSRFToken': getCSRFToken(),
             'Content-Type': 'application/json'
         }
     }).then(response => response.json())
@@ -527,43 +572,66 @@ function markAsRead(notificationId) {
             if (item) {
                 item.classList.remove('unread');
                 const button = item.querySelector('button[onclick*="markAsRead"]');
-                if (button) {
-                    button.remove();
-                }
+                if (button) button.remove();
             }
-            
-            // Atualizar contador na página
             updatePageStats();
+            showToast('Notificação marcada como lida', 'success');
         }
-    });
+    }).catch(() => showToast('Erro ao marcar notificação', 'danger'));
 }
 
 function markAllAsRead() {
     if (!confirm('Marcar todas as notificações como lidas?')) return;
     
-    fetch('/api/notifications/mark-all-read/', {
+    fetch('/dashboard/api/notifications/mark-all-read/', {
         method: 'POST',
         headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-CSRFToken': getCSRFToken(),
             'Content-Type': 'application/json'
         }
     }).then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Remover classe unread de todos os itens
             document.querySelectorAll('.notification-item-full.unread').forEach(item => {
                 item.classList.remove('unread');
             });
-            
-            // Remover todos os botões "marcar como lida"
-            document.querySelectorAll('button[onclick*="markAsRead"]').forEach(button => {
-                button.remove();
-            });
-            
-            // Recarregar página para atualizar estatísticas
-            location.reload();
+            document.querySelectorAll('button[onclick*="markAsRead"]').forEach(btn => btn.remove());
+            showToast(`${data.updated_count || 'Todas'} notificações marcadas como lidas`, 'success');
+            setTimeout(() => location.reload(), 800);
         }
-    });
+    }).catch(() => showToast('Erro ao marcar notificações', 'danger'));
+}
+
+function deleteNotification(notificationId) {
+    fetch(`/dashboard/api/notifications/${notificationId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+            'Content-Type': 'application/json'
+        }
+    }).then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const item = document.querySelector(`[data-notification-id="${notificationId}"]`);
+            if (item) {
+                item.style.transition = 'all 0.3s ease';
+                item.style.opacity = '0';
+                item.style.transform = 'translateX(50px)';
+                setTimeout(() => { item.remove(); updatePageStats(); }, 300);
+            }
+            showToast('Notificação removida', 'info');
+        }
+    }).catch(() => showToast('Erro ao remover notificação', 'danger'));
+}
+
+function showToast(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} position-fixed shadow-lg`;
+    toast.style.cssText = 'top:20px;right:20px;z-index:9999;min-width:280px;opacity:0;transition:opacity 0.3s';
+    toast.innerHTML = `<i class="material-icons align-middle me-2">${type === 'success' ? 'check_circle' : type === 'danger' ? 'error' : 'info'}</i>${message}`;
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => toast.style.opacity = '1');
+    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
 }
 
 function updatePageStats() {

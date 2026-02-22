@@ -1,635 +1,259 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ title }}{% endblock %}
-{% block page_title %}{{ title }}{% endblock %}
-{% block breadcrumb_title %}Centro de Custo{% endblock %}
-
-{% block extra_css %}
-<style>
-    .info-card {
-        border: none;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(52, 71, 103, 0.15);
-        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-        padding: 2rem;
-        margin-bottom: 1.5rem;
-        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .info-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-    }
-    
-    .info-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 12px 40px rgba(52, 71, 103, 0.25);
-    }
-    
-    .stats-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 16px;
-        color: white;
-        padding: 2rem;
-        text-align: center;
-        height: 100%;
-        border: none;
-        box-shadow: 0 8px 30px rgba(102, 126, 234, 0.3);
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .stats-card::after {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        animation: shimmer 3s infinite;
-    }
-
-    @keyframes shimmer {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .stats-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
-    }
-    
-    .progress-container {
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin: 1.5rem 0;
-        border: 1px solid rgba(102, 126, 234, 0.2);
-    }
-    
-    .progress-custom {
-        height: 16px;
-        border-radius: 10px;
-        overflow: hidden;
-        background: rgba(52, 71, 103, 0.1);
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .progress-bar {
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-        border-radius: 10px;
-        transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .progress-bar::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-        animation: progress-shine 2s infinite;
-    }
-
-    @keyframes progress-shine {
-        0% { left: -100%; }
-        100% { left: 100%; }
-    }
-    
-    .movimentacao-item {
-        background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        border: 2px solid rgba(102, 126, 234, 0.1);
-        transition: all 0.3s ease;
-        position: relative;
-    }
-
-    .movimentacao-item:hover {
-        border-color: rgba(102, 126, 234, 0.3);
-        transform: translateX(10px);
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
-    }
-
-    .movimentacao-item.tipo-entrada {
-        border-left: 4px solid #4CAF50;
-    }
-
-    .movimentacao-item.tipo-saida {
-        border-left: 4px solid #F44336;
-    }
-
-    .valor-entrada {
-        color: #4CAF50;
-        font-weight: 700;
-        font-size: 1.1rem;
-    }
-
-    .valor-saida {
-        color: #F44336;
-        font-weight: 700;
-        font-size: 1.1rem;
-    }
-
-    .badge-status {
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-size: 0.75rem;
-    }
-
-    .badge-ativo {
-        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-        color: white;
-    }
-
-    .badge-inativo {
-        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-        color: white;
-    }
-
-    .badge-suspenso {
-        background: linear-gradient(135deg, #FF9800 0%, #e0a800 100%);
-        color: white;
-    }
-
-    .btn-action {
-        border-radius: 10px;
-        font-weight: 600;
-        padding: 0.75rem 1.5rem;
-        transition: all 0.3s ease;
-        border: none;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        margin: 0.25rem;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-    }
-
-    .btn-outline-primary {
-        border: 2px solid #667eea;
-        color: #667eea;
-        background: transparent;
-    }
-
-    .btn-outline-primary:hover {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-    }
-
-    .btn-warning {
-        background: linear-gradient(135deg, #FF9800 0%, #e0a800 100%);
-        color: white;
-    }
-
-    .btn-warning:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
-    }
-
-    .btn-danger {
-        background: linear-gradient(135deg, #F44336 0%, #d32f2f 100%);
-        color: white;
-    }
-
-    .btn-danger:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
-    }
-
-    .header-title {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        font-weight: 700;
-        font-size: 2rem;
-    }
-
-    .section-title {
-        color: #344767;
-        font-weight: 600;
-        font-size: 1.3rem;
-        margin-bottom: 1.5rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid rgba(102, 126, 234, 0.2);
-    }
-
-    .info-label {
-        color: #67748e;
-        font-weight: 500;
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 0.5rem;
-    }
-
-    .info-value {
-        color: #344767;
-        font-weight: 600;
-        font-size: 1.1rem;
-    }
-
-    .loading-spinner {
-        display: inline-block;
-        width: 20px;
-        height: 20px;
-        border: 3px solid rgba(102, 126, 234, 0.3);
-        border-radius: 50%;
-        border-top-color: #667eea;
-        animation: spin 1s ease-in-out infinite;
-    }
-
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-
-    .fade-in {
-        animation: fadeIn 0.6s ease-in-out;
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    @media (max-width: 768px) {
-        .info-card, .stats-card {
-            margin-bottom: 1rem;
-        }
-        
-        .header-title {
-            font-size: 1.5rem;
-        }
-        
-        .btn-action {
-            width: 100%;
-            margin-bottom: 0.5rem;
-        }
-    }
-</style>
-{% endblock %}
+{% block title %}{{ centro_custo.nome }}{% endblock %}
+{% block page_title %}{{ centro_custo.nome }}{% endblock %}
+{% block breadcrumb_title %}Centros de Custo{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header pb-0">
-                    <div class="d-lg-flex">
-                        <div>
-                            <h5 class="mb-0">{{ title }}</h5>
-                            <p class="text-sm mb-0">
-                                Detalhes completos do centro de custo
-                            </p>
-                        </div>
-                        <div class="ms-auto my-auto mt-lg-0 mt-4">
-                            <div class="ms-auto my-auto">
-                                <a href="{% url 'financeiro:centros_custo_lista' %}" class="btn btn-outline-secondary btn-sm mb-0 me-2">
-                                    <i class="material-icons text-sm">arrow_back</i>
-                                    Voltar
-                                </a>
-                                <a href="{% url 'financeiro:centro_custo_edit' centro_custo.id %}" class="btn bg-gradient-primary btn-sm mb-0">
-                                    <i class="material-icons text-sm">edit</i>
-                                    Editar
-                                </a>
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">{{ centro_custo.nome }}</h3>
+            <p class="mb-0 text-sm">{{ centro_custo.codigo }} &bull; {{ centro_custo.departamento }} &bull; {{ centro_custo.get_status_display }}</p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end d-flex align-items-center justify-content-end">
+        <a href="{% url 'financeiro:centro_custo_edit' centro_custo.id %}" class="btn btn-sm bg-gradient-warning mb-0 me-2">
+            <i class="material-symbols-rounded text-sm me-1">edit</i> Editar
+        </a>
+        <a href="{% url 'financeiro:centros_custo_lista' %}" class="btn btn-sm bg-gradient-dark mb-0">
+            <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Voltar
+        </a>
+    </div>
+</div>
+
+<!-- KPIs do Centro -->
+<div class="row">
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Orçamento Mensal</p>
+                        <h4 class="mb-0">R$ {{ centro_custo.orcamento_mensal|floatformat:2 }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">savings</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Anual: <span class="font-weight-bolder">R$ {{ centro_custo.orcamento_anual|floatformat:2 }}</span></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Despesas do Mês</p>
+                        <h4 class="mb-0 text-danger">R$ {{ total_despesas_mes|floatformat:2 }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">trending_down</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">
+                    {% if centro_custo.orcamento_mensal %}
+                        {% widthratio total_despesas_mes centro_custo.orcamento_mensal 100 as pct %}
+                        <span class="{% if pct > 80 %}text-danger{% elif pct > 60 %}text-warning{% else %}text-success{% endif %} font-weight-bolder">{{ pct }}%</span> do orçamento
+                    {% else %}
+                        Sem orçamento definido
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Receitas do Mês</p>
+                        <h4 class="mb-0 text-success">R$ {{ total_receitas_mes|floatformat:2 }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">trending_up</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Entradas recebidas</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Info do Centro -->
+<div class="row mt-4">
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header pb-0 p-3">
+                <h6 class="mb-0">Informações</h6>
+            </div>
+            <div class="card-body p-3">
+                <ul class="list-group">
+                    <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
+                        <div class="d-flex align-items-center">
+                            <div class="icon icon-sm icon-shape bg-gradient-dark shadow text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
+                                <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px;">person</i>
+                            </div>
+                            <div class="d-flex flex-column">
+                                <span class="text-xs">Responsável</span>
+                                <h6 class="text-sm mb-0">{{ centro_custo.responsavel.get_full_name|default:"Não definido" }}</h6>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Informações Básicas -->
-    <div class="row mt-4">
-        <div class="col-lg-8">
-            <div class="info-card">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6 class="text-primary mb-3">Informações Gerais</h6>
-                        <div class="mb-2">
-                            <strong>Código:</strong> {{ centro_custo.codigo }}
-                        </div>
-                        <div class="mb-2">
-                            <strong>Nome:</strong> {{ centro_custo.nome }}
-                        </div>
-                        <div class="mb-2">
-                            <strong>Departamento:</strong> {{ centro_custo.departamento }}
-                        </div>
-                        <div class="mb-2">
-                            <strong>Status:</strong> 
-                            <span class="badge badge-custom bg-gradient-{{ centro_custo.status|yesno:'success,secondary,warning' }}">
-                                {{ centro_custo.get_status_display }}
-                            </span>
-                        </div>
-                        {% if centro_custo.descricao %}
-                        <div class="mb-2">
-                            <strong>Descrição:</strong><br>
-                            <p class="text-sm">{{ centro_custo.descricao }}</p>
-                        </div>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-6">
-                        <h6 class="text-primary mb-3">Responsabilidade</h6>
-                        {% if centro_custo.responsavel %}
-                        <div class="mb-2">
-                            <strong>Responsável:</strong> {{ centro_custo.responsavel.get_full_name|default:centro_custo.responsavel.username }}
-                        </div>
-                        {% endif %}
-                        {% if centro_custo.gerente %}
-                        <div class="mb-2">
-                            <strong>Gerente:</strong> {{ centro_custo.gerente.get_full_name|default:centro_custo.gerente.username }}
-                        </div>
-                        {% endif %}
-                        {% if centro_custo.centro_pai %}
-                        <div class="mb-2">
-                            <strong>Centro Pai:</strong> 
-                            <a href="{% url 'financeiro:centro_custo_detail' centro_custo.centro_pai.id %}">
-                                {{ centro_custo.centro_pai.codigo }} - {{ centro_custo.centro_pai.nome }}
-                            </a>
-                        </div>
-                        {% endif %}
-                        <div class="mb-2">
-                            <strong>Criado em:</strong> {{ centro_custo.criado_em|date:"d/m/Y H:i" }}
-                        </div>
-                        {% if centro_custo.criado_por %}
-                        <div class="mb-2">
-                            <strong>Criado por:</strong> {{ centro_custo.criado_por.get_full_name|default:centro_custo.criado_por.username }}
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Card de Status do Orçamento -->
-        <div class="col-lg-4">
-            <div class="stats-card">
-                <h6 class="text-white mb-3">Status do Orçamento</h6>
-                <div class="progress-container">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-white">Utilizado</span>
-                        <span class="text-white font-weight-bold">{{ centro_custo.percentual_orcamento_utilizado|floatformat:1 }}%</span>
-                    </div>
-                    <div class="progress progress-custom">
-                        <div class="progress-bar {% if centro_custo.status_orcamento == 'estourado' %}bg-danger{% elif centro_custo.status_orcamento == 'alerta' %}bg-warning{% else %}bg-success{% endif %}"
-                             style="width: {% if centro_custo.percentual_orcamento_utilizado > 100 %}100{% else %}{{ centro_custo.percentual_orcamento_utilizado }}{% endif %}%">
-                        </div>
-                    </div>
-                    <div class="mt-2">
-                        <small class="text-white">
-                            R$ {{ centro_custo.orcamento_utilizado_mes_atual|floatformat:2 }} de R$ {{ centro_custo.orcamento_mensal|floatformat:2 }}
-                        </small>
-                    </div>
-                </div>
-                
-                <div class="row mt-3">
-                    <div class="col-6">
-                        <div class="text-center">
-                            <h5 class="text-white mb-0">R$ {{ centro_custo.saldo_orcamento_mensal|floatformat:2 }}</h5>
-                            <small class="text-white">Saldo Restante</small>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="text-center">
-                            <h5 class="text-white mb-0">R$ {{ centro_custo.orcamento_anual|floatformat:0 }}</h5>
-                            <small class="text-white">Orçamento Anual</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Estatísticas do Mês -->
-    <div class="row mt-4">
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-body text-center">
-                    <div class="icon icon-lg icon-shape bg-gradient-success shadow text-center border-radius-md mx-auto">
-                        <i class="material-icons opacity-10">trending_up</i>
-                    </div>
-                    <h4 class="mt-3 mb-0 text-success">R$ {{ total_receitas_mes|floatformat:2 }}</h4>
-                    <p class="text-sm mb-0">Receitas do Mês</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-body text-center">
-                    <div class="icon icon-lg icon-shape bg-gradient-danger shadow text-center border-radius-md mx-auto">
-                        <i class="material-icons opacity-10">trending_down</i>
-                    </div>
-                    <h4 class="mt-3 mb-0 text-danger">R$ {{ total_despesas_mes|floatformat:2 }}</h4>
-                    <p class="text-sm mb-0">Despesas do Mês</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-body text-center">
-                    <div class="icon icon-lg icon-shape bg-gradient-info shadow text-center border-radius-md mx-auto">
-                        <i class="material-icons opacity-10">account_balance</i>
-                    </div>
-                    <h4 class="mt-3 mb-0 text-info">R$ {{ total_receitas_mes|add:total_despesas_mes|floatformat:2 }}</h4>
-                    <p class="text-sm mb-0">Saldo do Mês</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Movimentações Recentes e Subcentros -->
-    <div class="row mt-4">
-        <!-- Movimentações Recentes -->
-        <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header pb-0">
-                    <h6>Movimentações Recentes</h6>
-                </div>
-                <div class="card-body">
-                    {% for movimentacao in movimentacoes_recentes %}
-                    <div class="movimentacao-item {{ movimentacao.tipo }}">
-                        <div class="row align-items-center">
-                            <div class="col-8">
-                                <h6 class="mb-1">{{ movimentacao.descricao }}</h6>
-                                <p class="text-xs text-muted mb-0">
-                                    {{ movimentacao.categoria.nome }} • {{ movimentacao.data_movimentacao|date:"d/m/Y" }}
-                                </p>
+                    </li>
+                    <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
+                        <div class="d-flex align-items-center">
+                            <div class="icon icon-sm icon-shape bg-gradient-dark shadow text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
+                                <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px;">manage_accounts</i>
                             </div>
-                            <div class="col-4 text-end">
-                                <h6 class="mb-0 text-{{ movimentacao.tipo|yesno:'success,danger' }}">
-                                    {% if movimentacao.tipo == 'receita' %}+{% else %}-{% endif %}R$ {{ movimentacao.valor|floatformat:2 }}
+                            <div class="d-flex flex-column">
+                                <span class="text-xs">Gerente</span>
+                                <h6 class="text-sm mb-0">{{ centro_custo.gerente.get_full_name|default:"Não definido" }}</h6>
+                            </div>
+                        </div>
+                    </li>
+                    {% if centro_custo.centro_pai %}
+                    <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
+                        <div class="d-flex align-items-center">
+                            <div class="icon icon-sm icon-shape bg-gradient-info shadow text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
+                                <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px;">account_tree</i>
+                            </div>
+                            <div class="d-flex flex-column">
+                                <span class="text-xs">Centro Pai</span>
+                                <h6 class="text-sm mb-0">
+                                    <a href="{% url 'financeiro:centro_custo_detail' centro_custo.centro_pai.id %}" class="text-info">{{ centro_custo.centro_pai.nome }}</a>
                                 </h6>
-                                <span class="badge badge-sm bg-gradient-{{ movimentacao.tipo|yesno:'success,danger' }}">
-                                    {{ movimentacao.get_tipo_display }}
-                                </span>
                             </div>
                         </div>
-                    </div>
-                    {% empty %}
-                    <div class="text-center py-4">
-                        <i class="material-icons text-muted" style="font-size: 48px;">receipt_long</i>
-                        <p class="text-muted">Nenhuma movimentação registrada</p>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Subcentros -->
-        <div class="col-lg-4">
-            <div class="card h-100">
-                <div class="card-header pb-0">
-                    <h6>Subcentros de Custo</h6>
-                </div>
-                <div class="card-body">
-                    {% for subcentro in subcentros %}
-                    <div class="subcentro-card mb-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">{{ subcentro.codigo }}</h6>
-                                <p class="text-xs text-muted mb-0">{{ subcentro.nome }}</p>
-                            </div>
-                            <div class="text-end">
-                                <a href="{% url 'financeiro:centro_custo_detail' subcentro.id %}" 
-                                   class="btn btn-sm btn-outline-primary">
-                                    <i class="material-icons text-sm">visibility</i>
-                                </a>
-                            </div>
-                        </div>
-                        {% if subcentro.orcamento_mensal > 0 %}
-                        <div class="mt-2">
-                            <div class="progress" style="height: 4px;">
-                                <div class="progress-bar bg-gradient-primary" 
-                                     style="width: {{ subcentro.percentual_orcamento_utilizado }}%">
-                                </div>
-                            </div>
-                            <small class="text-muted">{{ subcentro.percentual_orcamento_utilizado|floatformat:1 }}% utilizado</small>
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% empty %}
-                    <div class="text-center py-4">
-                        <i class="material-icons text-muted" style="font-size: 48px;">account_tree</i>
-                        <p class="text-muted">Nenhum subcentro configurado</p>
-                    </div>
-                    {% endfor %}
-                </div>
+                    </li>
+                    {% endif %}
+                </ul>
+                {% if centro_custo.descricao %}
+                <hr class="dark horizontal">
+                <p class="text-sm text-secondary">{{ centro_custo.descricao }}</p>
+                {% endif %}
             </div>
         </div>
     </div>
 
-    <!-- Gráfico de Evolução (Placeholder) -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card z-index-2">
-                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
-                    <div class="bg-gradient-primary shadow-primary border-radius-lg py-3 pe-1">
-                        <div style="height: 300px; position: relative;">
-                            <canvas id="evolucaoChart"></canvas>
-                        </div>
-                    </div>
+    <!-- Subcentros -->
+    {% if subcentros %}
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-info shadow-info border-radius-lg pt-4 pb-3 px-3">
+                    <h6 class="text-white text-capitalize mb-0">
+                        <i class="material-symbols-rounded text-sm me-1 opacity-7">account_tree</i>
+                        Subcentros
+                    </h6>
                 </div>
-                <div class="card-body">
-                    <h6 class="mb-0">Evolução de Gastos - Últimos 6 Meses</h6>
-                    <p class="text-sm">Acompanhe a evolução dos gastos deste centro de custo</p>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Centro</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Orçamento</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sub in subcentros %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <a href="{% url 'financeiro:centro_custo_detail' sub.id %}" class="text-sm font-weight-bold text-info mb-0">{{ sub.nome }}</a>
+                                            <p class="text-xs text-secondary mb-0">{{ sub.codigo }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="align-middle text-center"><span class="text-xs font-weight-bold">R$ {{ sub.orcamento_mensal|floatformat:2 }}</span></td>
+                                <td class="align-middle text-center">
+                                    <span class="badge badge-sm bg-gradient-{% if sub.status == 'ativo' %}success{% elif sub.status == 'suspenso' %}warning{% else %}secondary{% endif %}">{{ sub.get_status_display }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Movimentações Recentes -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-4 pb-3 px-3">
+                    <h6 class="text-white text-capitalize mb-0">
+                        <i class="material-symbols-rounded text-sm me-1 opacity-7">swap_horiz</i>
+                        Movimentações Recentes
+                    </h6>
+                </div>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Descrição</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Tipo</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Data</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mov in movimentacoes_recentes %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="icon icon-sm icon-shape bg-gradient-{% if mov.tipo == 'receita' %}success{% else %}danger{% endif %} shadow text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
+                                            <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px;">{% if mov.tipo == 'receita' %}arrow_upward{% else %}arrow_downward{% endif %}</i>
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ mov.descricao|truncatewords:8 }}</h6>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-sm bg-gradient-{% if mov.tipo == 'receita' %}success{% else %}danger{% endif %}">{{ mov.get_tipo_display }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">{{ mov.data_movimentacao|date:"d/m/Y" }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="{% if mov.tipo == 'receita' %}text-success{% else %}text-danger{% endif %} text-sm font-weight-bold">R$ {{ mov.valor|floatformat:2 }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4">
+                                    <i class="material-symbols-rounded opacity-5" style="font-size:40px;">swap_horiz</i>
+                                    <p class="text-sm text-secondary mt-2 mb-0">Nenhuma movimentação registrada</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Gráfico de Evolução (dados fictícios para demonstração)
-    const evolucaoCtx = document.getElementById('evolucaoChart').getContext('2d');
-    new Chart(evolucaoCtx, {
-        type: 'line',
-        data: {
-            labels: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho'],
-            datasets: [{
-                label: 'Despesas',
-                data: [
-                    {% for i in "123456" %}
-                    Math.random() * {{ centro_custo.orcamento_mensal|default:1000 }},
-                    {% endfor %}
-                ],
-                borderColor: '#f44336',
-                backgroundColor: 'rgba(244, 67, 54, 0.1)',
-                tension: 0.4,
-                fill: true
-            }, {
-                label: 'Orçamento',
-                data: [
-                    {% for i in "123456" %}
-                    {{ centro_custo.orcamento_mensal|default:1000 }},
-                    {% endfor %}
-                ],
-                borderColor: '#2196F3',
-                backgroundColor: 'rgba(33, 150, 243, 0.1)',
-                borderDash: [5, 5],
-                tension: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top'
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return 'R$ ' + value.toLocaleString();
-                        }
-                    }
-                }
-            }
-        }
-    });
-});
-</script>
 {% endblock %}

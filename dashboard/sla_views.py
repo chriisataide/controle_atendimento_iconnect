@@ -2,6 +2,7 @@
 SLA Views - APIs e páginas para gerenciamento de SLA
 """
 import json
+import logging
 from datetime import datetime, timedelta
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
@@ -19,6 +20,8 @@ from .models import (
 )
 from .services.sla_monitor import sla_monitor
 from .services.sla_calculator import sla_calculator
+
+logger = logging.getLogger(__name__)
 
 
 # Função de teste temporária sem autenticação
@@ -49,8 +52,9 @@ def sla_dashboard_public(request):
         }
         return render(request, 'dashboard/sla/dashboard.html', context)
     except Exception as e:
+        logger.error(f"Erro em sla_dashboard_public: {e}")
         return JsonResponse({
-            'error': str(e),
+            'error': 'Erro interno do servidor',
             'message': 'Erro ao carregar dashboard SLA',
             'sla_system_status': 'operational'
         })
@@ -72,13 +76,66 @@ def sla_dashboard(request):
 @login_required
 def sla_policies(request):
     """Página de gerenciamento de políticas de SLA"""
+    # Tratar criação de nova política via POST
+    if request.method == 'POST':
+        try:
+            name = request.POST.get('name', '')
+            categoria_id = request.POST.get('categoria')
+            prioridade = request.POST.get('prioridade')
+            first_response_time = int(float(request.POST.get('first_response_time', 240)))
+            resolution_time = int(float(request.POST.get('resolution_time', 1440)))
+            escalation_time = int(float(request.POST.get('escalation_time', 480)))
+            business_hours_only = request.POST.get('business_hours_only') == 'on'
+            warning_percentage = int(request.POST.get('warning_percentage', 80))
+            is_active = request.POST.get('is_active') == 'on'
+
+            policy_data = {
+                'name': name or f'SLA {prioridade}',
+                'prioridade': prioridade,
+                'first_response_time': first_response_time,
+                'resolution_time': resolution_time,
+                'escalation_time': escalation_time,
+                'business_hours_only': business_hours_only,
+                'warning_percentage': warning_percentage,
+                'is_active': is_active,
+            }
+            if categoria_id:
+                policy_data['categoria_id'] = int(categoria_id)
+
+            SLAPolicy.objects.create(**policy_data)
+            messages.success(request, 'Política SLA criada com sucesso!')
+        except Exception as e:
+            messages.error(request, f'Erro ao criar política: {e}')
+        from django.shortcuts import redirect
+        return redirect('dashboard:sla_policies')
+
     policies = SLAPolicy.objects.all().select_related('categoria', 'escalation_to')
+    active_policies = policies.filter(is_active=True)
+    
+    # Estatísticas para os cards
+    active_alerts = SLAAlert.objects.filter(resolved_at__isnull=True).count()
+    pending_alerts = SLAAlert.objects.filter(resolved_at__isnull=True, alert_type='warning').count()
+    violations_30d = SLAAlert.objects.filter(
+        alert_type='breach',
+        created_at__gte=timezone.now() - timedelta(days=30)
+    ).count()
+
+    # Calcular compliance real
+    total_sla = SLAHistory.objects.count()
+    compliant_sla = SLAHistory.objects.filter(sla_compliance=True).count()
+    avg_compliance = round((compliant_sla / total_sla * 100), 1) if total_sla > 0 else 0
     
     context = {
         'title': 'Políticas de SLA',
-        'policies': policies,
+        'sla_policies': policies,
+        'policies_count': policies.count(),
+        'active_policies': active_policies.count(),
+        'avg_compliance': avg_compliance,
+        'active_alerts': active_alerts,
+        'pending_alerts': pending_alerts,
+        'violations_30d': violations_30d,
         'categorias': CategoriaTicket.objects.all(),
-        'prioridades': PrioridadeTicket.choices
+        'prioridades': PrioridadeTicket.choices,
     }
     return render(request, 'dashboard/sla/policies.html', context)
 
@@ -106,12 +163,22 @@ def sla_alerts(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # Estatísticas por tipo
+    active_alerts = SLAAlert.objects.filter(resolved_at__isnull=True)
+    stats = {
+        'breach': active_alerts.filter(alert_type='breach').count(),
+        'warning': active_alerts.filter(alert_type='warning').count(),
+        'escalation': active_alerts.filter(alert_type='escalation').count(),
+        'resolved': SLAAlert.objects.filter(resolved_at__isnull=False).count(),
+    }
+    
     context = {
         'title': 'Alertas de SLA',
         'alerts': page_obj,
         'alert_types': SLAAlert.ALERT_TYPES,
         'current_type': alert_type,
-        'show_resolved': resolved
+        'show_resolved': resolved,
+        'stats': stats,
     }
     return render(request, 'dashboard/sla/alerts.html', context)
 
@@ -205,6 +272,30 @@ def sla_reports(request):
                 'sla_violations': agent_total - agent_compliant
             })
     
+    # Tempo médio de resolução
+    avg_resolution = None
+    resolution_times = sla_histories.exclude(resolution_time__isnull=True).values_list('resolution_time', flat=True)
+    if resolution_times:
+        total_seconds = sum(rt.total_seconds() for rt in resolution_times)
+        avg_seconds = total_seconds / len(resolution_times)
+        avg_resolution = round(avg_seconds / 3600, 1)  # em horas
+
+    # Tempo médio de primeira resposta
+    avg_first_response = None
+    frt_list = sla_histories.exclude(first_response_time__isnull=True).values_list('first_response_time', flat=True)
+    if frt_list:
+        total_frt = sum(fr.total_seconds() for fr in frt_list)
+        avg_first_response = round(total_frt / len(frt_list) / 3600, 1)
+
+    # Distribuição de status SLA
+    sla_status_distribution = {
+        'on_track': sla_histories.filter(status='on_track').count(),
+        'warning': sla_histories.filter(status='warning').count(),
+        'breached': sla_histories.filter(status='breached').count(),
+        'escalated': sla_histories.filter(status='escalated').count(),
+        'completed': sla_histories.filter(status='completed').count(),
+    }
+
     context = {
         'title': 'Relatórios de SLA',
         'period': period,
@@ -213,12 +304,17 @@ def sla_reports(request):
         'total_tickets': total_tickets,
         'resolved_tickets': resolved_tickets,
         'compliance_rate': compliance_rate,
+        'total_with_sla': total_with_sla,
+        'compliant_count': compliant_count,
+        'avg_resolution': avg_resolution,
+        'avg_first_response': avg_first_response,
+        'sla_status_distribution': sla_status_distribution,
         'category_performance': category_performance,
         'agent_performance': agent_performance,
         'recent_violations': SLAAlert.objects.filter(
             alert_type='breach',
             created_at__gte=start_date
-        ).select_related('ticket', 'ticket__cliente')[:10]
+        ).select_related('ticket', 'ticket__cliente', 'ticket__agente')[:10]
     }
     
     return render(request, 'dashboard/sla/reports.html', context)
@@ -265,9 +361,10 @@ def api_sla_dashboard_data(request):
         })
         
     except Exception as e:
+        logger.error(f"Erro em api_sla_dashboard_data: {e}")
         return JsonResponse({
             'success': False,
-            'error': str(e)
+            'error': 'Erro interno do servidor'
         }, status=500)
 
 
@@ -345,9 +442,10 @@ def api_create_sla_policy(request):
             'error': 'JSON inválido'
         }, status=400)
     except Exception as e:
+        logger.error(f"Erro em api_create_sla_policy: {e}")
         return JsonResponse({
             'success': False,
-            'error': str(e)
+            'error': 'Erro interno do servidor'
         }, status=500)
 
 
@@ -374,9 +472,10 @@ def api_resolve_sla_alert(request, alert_id):
         })
         
     except Exception as e:
+        logger.error(f"Erro em api_resolve_sla_alert: {e}")
         return JsonResponse({
             'success': False,
-            'error': str(e)
+            'error': 'Erro interno do servidor'
         }, status=500)
 
 
@@ -395,9 +494,10 @@ def api_run_sla_monitor(request):
         })
         
     except Exception as e:
+        logger.error(f"Erro em api_run_sla_monitor: {e}")
         return JsonResponse({
             'success': False,
-            'error': str(e)
+            'error': 'Erro interno do servidor'
         }, status=500)
 
 
@@ -462,7 +562,8 @@ def api_ticket_sla_details(request, ticket_id):
         })
         
     except Exception as e:
+        logger.error(f"Erro em api_ticket_sla_details: {e}")
         return JsonResponse({
             'success': False,
-            'error': str(e)
+            'error': 'Erro interno do servidor'
         }, status=500)

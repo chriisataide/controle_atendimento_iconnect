@@ -1,0 +1,122 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>404 - Página Não Encontrada | iConnect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{% static 'img/icodev-logo.png' %}">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 600px;
+        }
+        .error-code {
+            font-size: 8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+            margin-bottom: 1rem;
+        }
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #f1f5f9;
+        }
+        p {
+            color: #94a3b8;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        .actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            color: white;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(6,182,212,0.4); }
+        .btn-outline {
+            border: 1px solid #475569;
+            color: #94a3b8;
+            background: transparent;
+        }
+        .btn-outline:hover { border-color: #06b6d4; color: #06b6d4; }
+        .search-box {
+            margin: 2rem 0;
+            display: flex;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .search-box input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid #475569;
+            border-radius: 0.5rem 0 0 0.5rem;
+            background: #1e293b;
+            color: #e2e8f0;
+            font-size: 0.875rem;
+            outline: none;
+        }
+        .search-box input:focus { border-color: #06b6d4; }
+        .search-box button {
+            padding: 0.75rem 1.25rem;
+            background: #06b6d4;
+            color: white;
+            border: none;
+            border-radius: 0 0.5rem 0.5rem 0;
+            cursor: pointer;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="error-code">404</div>
+        <h1>Página Não Encontrada</h1>
+        <p>A página que você está procurando pode ter sido movida, renomeada ou não existe mais. Verifique a URL ou tente uma das opções abaixo.</p>
+        <form class="search-box" action="/" method="GET">
+            <input type="text" name="q" placeholder="Buscar no sistema..." autocomplete="off">
+            <button type="submit">Buscar</button>
+        </form>
+        <div class="actions">
+            <a href="/" class="btn btn-primary">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146z"/></svg>
+                Dashboard
+            </a>
+            <a href="/tickets/" class="btn btn-outline">Meus Tickets</a>
+            <a href="javascript:history.back()" class="btn btn-outline">Voltar</a>
+        </div>
+    </div>
+</body>
+</html>

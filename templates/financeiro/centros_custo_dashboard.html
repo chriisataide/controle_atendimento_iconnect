@@ -1,558 +1,206 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Dashboard - Centros de Custo{% endblock %}
-{% block page_title %}Dashboard - Centros de Custo{% endblock %}
-{% block breadcrumb_title %}Dashboard{% endblock %}
+{% block title %}Dashboard Centros de Custo{% endblock %}
+{% block page_title %}Dashboard Centros de Custo{% endblock %}
+{% block breadcrumb_title %}Centros de Custo{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="ms-3">
-        <h3 class="mb-0 h4 font-weight-bolder">Dashboard - Centros de Custo</h3>
-        <p class="mb-4">
-            Controle financeiro e orçamentário • Bem-vindo, {{ user.get_full_name|default:user.username }}
-        </p>
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Dashboard Centros de Custo</h3>
+            <p class="mb-0 text-sm">Visão geral de orçamentos &bull; Gastos por departamento</p>
+        </div>
     </div>
-    
-    <!-- Estatísticas Gerais -->
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+    <div class="col-lg-4 col-md-5 text-end d-flex align-items-center justify-content-end">
+        <a href="{% url 'financeiro:centros_custo_lista' %}" class="btn btn-sm bg-gradient-dark mb-0">
+            <i class="material-symbols-rounded text-sm me-1">list</i> Lista
+        </a>
+    </div>
+</div>
+
+<!-- KPIs -->
+<div class="row">
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
         <div class="card">
             <div class="card-header p-2 ps-3">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <p class="text-sm mb-0 text-capitalize">Total de Centros</p>
-                        <h4 class="mb-0">{{ total_centros }}</h4>
+                        <p class="text-sm mb-0 text-capitalize">Centros Ativos</p>
+                        <h4 class="mb-0">{{ centros_ativos }}</h4>
                     </div>
                     <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">business_center</i>
+                        <i class="material-symbols-rounded opacity-10">account_balance</i>
                     </div>
                 </div>
             </div>
             <hr class="dark horizontal my-0">
             <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm"><span class="text-primary font-weight-bolder">+{{ total_centros }} </span>centros ativos</p>
+                <p class="mb-0 text-sm">
+                    {% if centros_suspensos %}<span class="text-warning font-weight-bolder">{{ centros_suspensos }}</span> suspensos &bull; {% endif %}
+                    <span class="text-secondary">{{ centros_inativos }}</span> inativos
+                </p>
             </div>
         </div>
     </div>
-    
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-        <div class="card">
-            <div class="card-header p-2 ps-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-sm mb-0 text-capitalize">Com Alertas</p>
-                        <h4 class="mb-0">{{ centros_com_alerta }}</h4>
-                    </div>
-                    <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">warning</i>
-                    </div>
-                </div>
-            </div>
-            <hr class="dark horizontal my-0">
-            <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm"><span class="text-warning font-weight-bolder">
-                    {% widthratio centros_com_alerta total_centros 100 %}%
-                </span> do total</p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-        <div class="card">
-            <div class="card-header p-2 ps-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-sm mb-0 text-capitalize">Departamentos</p>
-                        <h4 class="mb-0">{{ departamentos|length }}</h4>
-                    </div>
-                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">business</i>
-                    </div>
-                </div>
-            </div>
-            <hr class="dark horizontal my-0">
-            <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm"><span class="text-success font-weight-bolder">Ativo </span>diferentes áreas</p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-xl-3 col-sm-6">
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
         <div class="card">
             <div class="card-header p-2 ps-3">
                 <div class="d-flex justify-content-between">
                     <div>
                         <p class="text-sm mb-0 text-capitalize">Orçamento Total</p>
-                        <h4 class="mb-0">R$ {{ total_orcamento|floatformat:0 }}</h4>
+                        <h4 class="mb-0">R$ {{ total_orcamento|floatformat:2 }}</h4>
                     </div>
-                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">paid</i>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">savings</i>
                     </div>
                 </div>
             </div>
             <hr class="dark horizontal my-0">
             <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm"><span class="text-info font-weight-bolder">Mensal </span>planejado</p>
+                <p class="mb-0 text-sm">Mensal acumulado</p>
             </div>
         </div>
     </div>
-</div>
-
-<div class="row mt-4">
-    <div class="col-12">
-        <h6 class="ms-2 mt-4 mb-3">Acesso Rápido</h6>
-    </div>
-    
-    <!-- Navegação Rápida -->
-    <div class="col-lg-2 col-md-6 col-sm-6">
-        <div class="card h-100">
-            <div class="card-header pb-0">
-                <div class="row">
-                    <div class="col-12 d-flex align-items-center">
-                        <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-lg">
-                            <i class="material-symbols-rounded opacity-10 text-lg">add_circle</i>
-                        </div>
-                        <div class="ms-3">
-                            <p class="text-sm mb-0 text-capitalize font-weight-bold">Novo Centro</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body p-3">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="d-flex align-items-center">
-                            <a href="{% url 'financeiro:centro_custo_create' %}" class="btn btn-outline-primary btn-sm mb-0 w-100">
-                                Criar
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-2 col-md-6 col-sm-6">
-        <div class="card h-100">
-            <div class="card-header pb-0">
-                <div class="row">
-                    <div class="col-12 d-flex align-items-center">
-                        <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-lg">
-                            <i class="material-symbols-rounded opacity-10 text-lg">list_alt</i>
-                        </div>
-                        <div class="ms-3">
-                            <p class="text-sm mb-0 text-capitalize font-weight-bold">Listar</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body p-3">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="d-flex align-items-center">
-                            <a href="{% url 'financeiro:centros_custo_lista' %}" class="btn btn-outline-success btn-sm mb-0 w-100">
-                                Ver Todos
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-2 col-md-6 col-sm-6">
-        <div class="card h-100">
-            <div class="card-header pb-0">
-                <div class="row">
-                    <div class="col-12 d-flex align-items-center">
-                        <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-lg">
-                            <i class="material-symbols-rounded opacity-10 text-lg">analytics</i>
-                        </div>
-                        <div class="ms-3">
-                            <p class="text-sm mb-0 text-capitalize font-weight-bold">Relatórios</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body p-3">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="d-flex align-items-center">
-                            <a href="#" class="btn btn-outline-warning btn-sm mb-0 w-100">
-                                Gerar
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-2 col-md-6 col-sm-6">
-        <div class="card h-100">
-            <div class="card-header pb-0">
-                <div class="row">
-                    <div class="col-12 d-flex align-items-center">
-                        <div class="icon icon-shape bg-gradient-info shadow text-center border-radius-lg">
-                            <i class="material-symbols-rounded opacity-10 text-lg">account_balance_wallet</i>
-                        </div>
-                        <div class="ms-3">
-                            <p class="text-sm mb-0 text-capitalize font-weight-bold">Movimentações</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body p-3">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="d-flex align-items-center">
-                            <a href="#" class="btn btn-outline-info btn-sm mb-0 w-100">
-                                Visualizar
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-2 col-md-6 col-sm-6">
-        <div class="card h-100">
-            <div class="card-header pb-0">
-                <div class="row">
-                    <div class="col-12 d-flex align-items-center">
-                        <div class="icon icon-shape bg-gradient-danger shadow text-center border-radius-lg">
-                            <i class="material-symbols-rounded opacity-10 text-lg">settings</i>
-                        </div>
-                        <div class="ms-3">
-                            <p class="text-sm mb-0 text-capitalize font-weight-bold">Configurações</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body p-3">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="d-flex align-items-center">
-                            <a href="#" class="btn btn-outline-danger btn-sm mb-0 w-100">
-                                Ajustar
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-2 col-md-6 col-sm-6">
-        <div class="card h-100">
-            <div class="card-header pb-0">
-                <div class="row">
-                    <div class="col-12 d-flex align-items-center">
-                        <div class="icon icon-shape bg-gradient-secondary shadow text-center border-radius-lg">
-                            <i class="material-symbols-rounded opacity-10 text-lg">help</i>
-                        </div>
-                        <div class="ms-3">
-                            <p class="text-sm mb-0 text-capitalize font-weight-bold">Ajuda</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body p-3">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="d-flex align-items-center">
-                            <a href="#" class="btn btn-outline-secondary btn-sm mb-0 w-100">
-                                Suporte
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mt-4">
-    <div class="col-lg-4 col-md-6 mt-4 mb-4">
-        <div class="card z-index-2">
-            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
-                <div class="bg-gradient-primary shadow-primary border-radius-lg py-3 pe-1">
-                    <div class="chart">
-                        <h6 class="text-white ms-4 mt-2 mb-0">Gastos por Centro</h6>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-12">
-                        <!-- Gráfico de Gastos -->
-                        <canvas id="gastosChart" width="300" height="300" style="max-height: 300px;"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-4 col-md-6 mt-4 mb-4">
-        <div class="card z-index-2">
-            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
-                <div class="bg-gradient-success shadow-success border-radius-lg py-3 pe-1">
-                    <div class="chart">
-                        <h6 class="text-white ms-4 mt-2 mb-0">Orçamento por Departamento</h6>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-12">
-                        <!-- Gráfico de Departamentos -->
-                        <canvas id="departamentosChart" width="300" height="300" style="max-height: 300px;"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-4 col-md-6 mt-4 mb-4">
-        <div class="card h-100">
-            <div class="card-header pb-0 p-3">
-                <div class="row">
-                    <div class="col-6 d-flex align-items-center">
-                        <h6 class="mb-0">Status dos Centros</h6>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body p-3 pb-0">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-sm me-3">
-                        <i class="material-symbols-rounded opacity-10 text-sm">check_circle</i>
-                    </div>
-                    <div>
-                        <h6 class="mb-0">{{ centros_ativos }}</h6>
-                        <p class="text-sm mb-0 text-capitalize">Ativos</p>
-                    </div>
-                </div>
-                <div class="d-flex align-items-center mb-3">
-                    <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-sm me-3">
-                        <i class="material-symbols-rounded opacity-10 text-sm">warning</i>
-                    </div>
-                    <div>
-                        <h6 class="mb-0">{{ centros_com_alerta }}</h6>
-                        <p class="text-sm mb-0 text-capitalize">Com Alertas</p>
-                    </div>
-                </div>
-                <div class="d-flex align-items-center mb-3">
-                    <div class="icon icon-shape bg-gradient-info shadow text-center border-radius-sm me-3">
-                        <i class="material-symbols-rounded opacity-10 text-sm">pause_circle</i>
-                    </div>
-                    <div>
-                        <h6 class="mb-0">{{ centros_suspensos|default:0 }}</h6>
-                        <p class="text-sm mb-0 text-capitalize">Suspensos</p>
-                    </div>
-                </div>
-                <div class="d-flex align-items-center">
-                    <div class="icon icon-shape bg-gradient-danger shadow text-center border-radius-sm me-3">
-                        <i class="material-symbols-rounded opacity-10 text-sm">cancel</i>
-                    </div>
-                    <div>
-                        <h6 class="mb-0">{{ centros_inativos|default:0 }}</h6>
-                        <p class="text-sm mb-0 text-capitalize">Inativos</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mt-4">
-    <div class="col-lg-8 col-md-6 mt-4 mb-4">
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
         <div class="card">
-            <div class="card-header pb-0 p-3">
-                <h6 class="mb-0">Centros por Departamento</h6>
-            </div>
-            <div class="card-body p-3">
-                {% for dept in departamentos %}
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <div class="d-flex align-items-center">
-                        <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-sm me-3">
-                            <i class="material-symbols-rounded opacity-10 text-sm">business</i>
-                        </div>
-                        <div>
-                            <h6 class="mb-0">{{ dept.departamento }}</h6>
-                            <p class="text-sm mb-0">{{ dept.total_centros }} centro{{ dept.total_centros|pluralize:"s" }}</p>
-                        </div>
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Gastos do Mês</p>
+                        <h4 class="mb-0 text-danger">R$ {{ total_gastos|floatformat:2 }}</h4>
                     </div>
-                    <div class="text-end">
-                        <h6 class="mb-0">R$ {{ dept.total_orcamento|floatformat:0 }}</h6>
-                        <p class="text-sm mb-0">Orçamento mensal</p>
+                    <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">trending_down</i>
                     </div>
                 </div>
-                {% empty %}
-                <p class="text-center text-muted">Nenhum departamento encontrado</p>
-                {% endfor %}
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="{% if percentual_utilizado > 80 %}text-danger{% elif percentual_utilizado > 60 %}text-warning{% else %}text-success{% endif %} font-weight-bolder">{{ percentual_utilizado|floatformat:1 }}%</span> utilizado</p>
             </div>
         </div>
     </div>
-    
-    <div class="col-lg-4 col-md-6 mt-4 mb-4">
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
         <div class="card">
-            <div class="card-header pb-0 p-3">
-                <h6 class="mb-0">Resumo Financeiro</h6>
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Saldo Disponível</p>
+                        <h4 class="mb-0 text-success">R$ {{ saldo_disponivel|floatformat:2 }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">account_balance_wallet</i>
+                    </div>
+                </div>
             </div>
-            <div class="card-body p-3">
-                <div class="timeline timeline-one-side">
-                    <div class="timeline-block mb-3">
-                        <span class="timeline-step">
-                            <i class="material-symbols-rounded text-success text-gradient">paid</i>
-                        </span>
-                        <div class="timeline-content">
-                            <h6 class="text-dark text-sm font-weight-bold mb-0">Orçamento Total</h6>
-                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">R$ {{ total_orcamento|floatformat:2 }}</p>
-                        </div>
-                    </div>
-                    <div class="timeline-block mb-3">
-                        <span class="timeline-step">
-                            <i class="material-symbols-rounded text-danger text-gradient">trending_down</i>
-                        </span>
-                        <div class="timeline-content">
-                            <h6 class="text-dark text-sm font-weight-bold mb-0">Gastos do Mês</h6>
-                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">R$ {{ total_gastos|default:0|floatformat:2 }}</p>
-                        </div>
-                    </div>
-                    <div class="timeline-block mb-3">
-                        <span class="timeline-step">
-                            <i class="material-symbols-rounded text-info text-gradient">account_balance</i>
-                        </span>
-                        <div class="timeline-content">
-                            <h6 class="text-dark text-sm font-weight-bold mb-0">Saldo Disponível</h6>
-                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">R$ {{ saldo_disponivel|default:total_orcamento|floatformat:2 }}</p>
-                        </div>
-                    </div>
-                    <div class="timeline-block">
-                        <span class="timeline-step">
-                            <i class="material-symbols-rounded text-warning text-gradient">trending_up</i>
-                        </span>
-                        <div class="timeline-content">
-                            <h6 class="text-dark text-sm font-weight-bold mb-0">% Utilizado</h6>
-                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">{{ percentual_utilizado|default:0|floatformat:1 }}%</p>
-                        </div>
-                    </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">
+                    {% if centros_com_alerta %}<span class="text-danger font-weight-bolder">{{ centros_com_alerta }}</span> centros em alerta{% else %}<span class="text-success font-weight-bolder">OK</span> sem alertas{% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Gastos e Departamentos -->
+<div class="row mt-4">
+    <div class="col-lg-7 mb-4">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-danger shadow-danger border-radius-lg pt-4 pb-3 px-3">
+                    <h6 class="text-white text-capitalize mb-0">
+                        <i class="material-symbols-rounded text-sm me-1 opacity-7">trending_down</i>
+                        Top 5 Centros — Maior Gasto no Mês
+                    </h6>
+                </div>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Centro</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Orçamento</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Gasto</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for centro in top_gastos %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ centro.nome }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ centro.codigo }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="text-xs font-weight-bold">R$ {{ centro.orcamento_mensal|floatformat:2 }}</span></td>
+                                <td class="align-middle text-center">
+                                    <span class="text-danger text-sm font-weight-bold">R$ {{ centro.total_gasto|floatformat:2|default:"0.00" }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    {% with pct=centro.total_gasto|default:0 %}
+                                    {% if centro.orcamento_mensal %}
+                                    <div class="d-flex align-items-center justify-content-center">
+                                        <span class="me-2 text-xs font-weight-bold">{{ pct|floatformat:0 }}%</span>
+                                        <div class="progress" style="width:60px;height:4px;">
+                                            <div class="progress-bar bg-gradient-{% if pct > 80 %}danger{% elif pct > 60 %}warning{% else %}success{% endif %}" style="width:{% if centro.orcamento_mensal %}{{ centro.total_gasto|default:0 }}{% else %}0{% endif %}%;"></div>
+                                        </div>
+                                    </div>
+                                    {% else %}-{% endif %}
+                                    {% endwith %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center py-3"><p class="text-sm text-secondary mb-0">Sem dados</p></td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5 mb-4">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3 px-3">
+                    <h6 class="text-white text-capitalize mb-0">
+                        <i class="material-symbols-rounded text-sm me-1 opacity-7">corporate_fare</i>
+                        Departamentos
+                    </h6>
+                </div>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Departamento</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Centros</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Orçamento</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dept in departamentos %}
+                            <tr>
+                                <td><div class="d-flex px-2 py-1"><span class="text-sm font-weight-bold">{{ dept.departamento }}</span></div></td>
+                                <td class="align-middle text-center"><span class="text-xs font-weight-bold">{{ dept.total_centros }}</span></td>
+                                <td class="align-middle text-center"><span class="text-xs font-weight-bold">R$ {{ dept.total_orcamento|floatformat:2|default:"0.00" }}</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center py-3"><p class="text-sm text-secondary mb-0">Sem departamentos</p></td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Configuração padrão dos gráficos seguindo o tema do sistema
-    Chart.defaults.font.family = 'Roboto, Arial, sans-serif';
-    Chart.defaults.color = '#344767';
-
-    // Paleta de cores do sistema
-    const systemColors = {
-        primary: '#e91e63',
-        secondary: '#7b1fa2', 
-        success: '#4CAF50',
-        info: '#2196F3',
-        warning: '#FF9800',
-        danger: '#F44336',
-        dark: '#344767',
-        light: '#F8F9FA'
-    };
-
-    // Gráfico de Gastos (Doughnut)
-    const gastosCtx = document.getElementById('gastosChart').getContext('2d');
-    new Chart(gastosCtx, {
-        type: 'doughnut',
-        data: {
-            labels: [
-                {% for centro in top_gastos %}
-                {% if centro.total_gasto %}
-                '{{ centro.codigo }}',
-                {% endif %}
-                {% endfor %}
-            ],
-            datasets: [{
-                data: [
-                    {% for centro in top_gastos %}
-                    {% if centro.total_gasto %}
-                    {{ centro.total_gasto }},
-                    {% endif %}
-                    {% endfor %}
-                ],
-                backgroundColor: [
-                    systemColors.primary,
-                    systemColors.secondary,
-                    systemColors.info,
-                    systemColors.warning,
-                    systemColors.success
-                ],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'bottom'
-                }
-            }
-        }
-    });
-
-    // Gráfico de Departamentos (Bar)
-    const deptCtx = document.getElementById('departamentosChart').getContext('2d');
-    new Chart(deptCtx, {
-        type: 'bar',
-        data: {
-            labels: [
-                {% for dept in departamentos %}
-                '{{ dept.departamento }}',
-                {% endfor %}
-            ],
-            datasets: [{
-                label: 'Orçamento (R$)',
-                data: [
-                    {% for dept in departamentos %}
-                    {{ dept.total_orcamento|default:0 }},
-                    {% endfor %}
-                ],
-                backgroundColor: systemColors.success,
-                borderColor: systemColors.success,
-                borderWidth: 0,
-                borderRadius: 4,
-                borderSkipped: false,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return 'R$ ' + value.toLocaleString();
-                        }
-                    }
-                }
-            }
-        }
-    });
-});
-</script>
 {% endblock %}

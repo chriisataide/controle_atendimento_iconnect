@@ -24,6 +24,7 @@ from dashboard.monitoring import HealthCheckView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('i18n/', include('django.conf.urls.i18n')),  # Language switching
     path('', views.home_redirect, name='home'),  # Página inicial inteligente
     path('login/', views.custom_login, name='login'),
     path('logout/', views.custom_logout, name='logout'),
@@ -33,8 +34,8 @@ urlpatterns = [
     path('financeiro/', include('dashboard.financeiro_urls')),  # Módulo Financeiro
     path('estoque/', include('dashboard.estoque_urls')),  # Módulo de Estoque
     
-    # APIs Avançadas (API temporariamente desabilitada - funcionará com sistema base)
-    # path('api/', include('dashboard.api_urls')),
+    # APIs REST
+    path('api/v1/', include('dashboard.api_urls')),
     path('api/user-info/', views.get_user_info, name='user_info'),
     
     # Mobile Interface

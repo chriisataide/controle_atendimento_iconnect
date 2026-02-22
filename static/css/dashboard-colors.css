@@ -1,30 +1,41 @@
 /*
  * Dashboard Enhanced Colors & Animations
- * Sistema de cores integrado com Material Dashboard
- * Criado para melhorar a visualização dos gráficos
+ * Paleta: Slate + Cyan — Minimalista & Premium
+ * Baseado em Linear, Notion, Vercel
  */
 
 :root {
-    /* Material Dashboard Colors */
-    --md-primary: #e91e63;
-    --md-success: #4caf50;
-    --md-warning: #ff9800;
-    --md-info: #00bcd4;
-    --md-danger: #f44336;
-    --md-dark: #344767;
-    --md-light: #f8f9fa;
-    
+    /* ===== Paleta Principal — Slate + Cyan ===== */
+    --md-primary: #334155;
+    --md-primary-dark: #1e293b;
+    --md-primary-light: #475569;
+    --md-accent: #06b6d4;
+    --md-accent-dark: #0891b2;
+    --md-accent-light: #22d3ee;
+
+    /* Semânticas */
+    --md-success: #22c55e;
+    --md-warning: #f59e0b;
+    --md-info: #06b6d4;
+    --md-danger: #ef4444;
+    --md-dark: #1e293b;
+    --md-light: #f8fafc;
+
     /* Gradients */
-    --gradient-primary: linear-gradient(45deg, var(--md-primary), #ec407a);
-    --gradient-success: linear-gradient(45deg, var(--md-success), #66bb6a);
-    --gradient-warning: linear-gradient(45deg, var(--md-warning), #ffb74d);
-    --gradient-info: linear-gradient(45deg, var(--md-info), #26c6da);
-    
+    --gradient-primary: linear-gradient(195deg, #334155 0%, #1e293b 100%);
+    --gradient-accent: linear-gradient(195deg, #06b6d4 0%, #0891b2 100%);
+    --gradient-success: linear-gradient(195deg, #22c55e 0%, #16a34a 100%);
+    --gradient-warning: linear-gradient(195deg, #f59e0b 0%, #d97706 100%);
+    --gradient-info: linear-gradient(195deg, #06b6d4 0%, #0891b2 100%);
+    --gradient-danger: linear-gradient(195deg, #ef4444 0%, #dc2626 100%);
+
     /* Chart Colors */
-    --chart-primary-rgba: rgba(233, 30, 99, 0.8);
-    --chart-success-rgba: rgba(76, 175, 80, 0.8);
-    --chart-warning-rgba: rgba(255, 152, 0, 0.8);
-    --chart-info-rgba: rgba(0, 188, 212, 0.8);
+    --chart-primary-rgba: rgba(6, 182, 212, 0.8);
+    --chart-success-rgba: rgba(34, 197, 94, 0.8);
+    --chart-warning-rgba: rgba(245, 158, 11, 0.8);
+    --chart-info-rgba: rgba(59, 130, 246, 0.8);
+    --chart-danger-rgba: rgba(239, 68, 68, 0.8);
+    --chart-slate-rgba: rgba(51, 65, 85, 0.8);
 }
 
 /* Animações personalizadas */
@@ -124,46 +135,138 @@
 /* Indicadores de status com cores dinâmicas */
 .status-success {
     color: var(--md-success) !important;
-    text-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+    text-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
     animation: pulse 2s infinite;
 }
 
 .status-warning {
     color: var(--md-warning) !important;
-    text-shadow: 0 0 8px rgba(255, 152, 0, 0.3);
+    text-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
 }
 
 .status-info {
     color: var(--md-info) !important;
-    text-shadow: 0 0 8px rgba(0, 188, 212, 0.3);
+    text-shadow: 0 0 8px rgba(6, 182, 212, 0.3);
 }
 
 .status-danger {
     color: var(--md-danger) !important;
-    text-shadow: 0 0 8px rgba(244, 67, 54, 0.3);
+    text-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
 }
 
-/* Cards com gradientes aprimorados */
+/* ===== Override completo dos gradients do Material Dashboard ===== */
+
+/* Primary → Slate */
 .bg-gradient-primary {
     background: var(--gradient-primary) !important;
 }
+.btn.bg-gradient-primary,
+.btn-primary {
+    background: var(--gradient-primary) !important;
+    border-color: #334155 !important;
+    box-shadow: 0 3px 6px rgba(51,65,85,0.2) !important;
+}
+.btn.bg-gradient-primary:hover,
+.btn-primary:hover {
+    background: linear-gradient(195deg, #1e293b 0%, #0f172a 100%) !important;
+    border-color: #1e293b !important;
+    box-shadow: 0 6px 14px rgba(30,41,59,0.35) !important;
+}
+.btn.bg-gradient-primary:focus,
+.btn-primary:focus {
+    box-shadow: 0 0 0 3px rgba(51,65,85,0.25) !important;
+}
+.nav-link.active.bg-gradient-primary {
+    background: var(--gradient-primary) !important;
+}
 
+/* Success */
 .bg-gradient-success {
     background: var(--gradient-success) !important;
 }
+.btn.bg-gradient-success {
+    background: var(--gradient-success) !important;
+    box-shadow: 0 3px 6px rgba(34,197,94,0.2) !important;
+}
+.btn.bg-gradient-success:hover {
+    box-shadow: 0 6px 14px rgba(34,197,94,0.35) !important;
+}
 
+/* Warning */
 .bg-gradient-warning {
     background: var(--gradient-warning) !important;
 }
+.btn.bg-gradient-warning {
+    background: var(--gradient-warning) !important;
+    box-shadow: 0 3px 6px rgba(245,158,11,0.2) !important;
+}
 
+/* Info → Cyan (accent) */
 .bg-gradient-info {
     background: var(--gradient-info) !important;
+}
+.btn.bg-gradient-info {
+    background: var(--gradient-info) !important;
+    box-shadow: 0 3px 6px rgba(6,182,212,0.2) !important;
+}
+
+/* Danger */
+.bg-gradient-danger {
+    background: var(--gradient-danger) !important;
+}
+
+/* Dark → Slate deep */
+.bg-gradient-dark {
+    background: linear-gradient(195deg, #1e293b 0%, #0f172a 100%) !important;
+}
+.btn.bg-gradient-dark {
+    background: linear-gradient(195deg, #1e293b 0%, #0f172a 100%) !important;
+    box-shadow: 0 3px 6px rgba(15,23,42,0.2) !important;
+}
+
+/* ===== Links e accent colors ===== */
+a:not(.nav-link):not(.btn):not(.dropdown-item) {
+    color: var(--md-accent);
+}
+a:not(.nav-link):not(.btn):not(.dropdown-item):hover {
+    color: var(--md-accent-dark);
+}
+
+/* Badge overrides */
+.badge.bg-primary {
+    background: var(--md-primary) !important;
+}
+.badge.bg-success {
+    background: var(--md-success) !important;
+}
+.badge.bg-info {
+    background: var(--md-accent) !important;
+}
+.badge.bg-warning {
+    background: var(--md-warning) !important;
+}
+.badge.bg-danger {
+    background: var(--md-danger) !important;
+}
+
+/* Progress bars */
+.progress-bar {
+    background: var(--md-accent) !important;
+}
+.progress-bar.bg-success {
+    background: var(--md-success) !important;
+}
+.progress-bar.bg-warning {
+    background: var(--md-warning) !important;
+}
+.progress-bar.bg-danger {
+    background: var(--md-danger) !important;
 }
 
 /* Tooltips customizados */
 .custom-tooltip {
-    background: rgba(52, 71, 103, 0.95) !important;
-    border: 1px solid var(--md-primary) !important;
+    background: rgba(30, 41, 59, 0.95) !important;
+    border: 1px solid var(--md-accent) !important;
     border-radius: 8px !important;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
     backdrop-filter: blur(10px);
@@ -182,7 +285,7 @@
     right: 20px;
     z-index: 9999;
     min-width: 320px;
-    background: var(--gradient-success);
+    background: var(--gradient-accent, var(--gradient-success));
     color: white;
     border: none;
     border-radius: 12px;
@@ -261,9 +364,49 @@
 
 /* Melhorias para acessibilidade */
 .focus-visible {
-    outline: 2px solid var(--md-primary);
+    outline: 2px solid var(--md-accent);
     outline-offset: 2px;
     border-radius: 4px;
+}
+
+/* ===== Sidebar active state override ===== */
+.sidenav .nav-link.active {
+    background: var(--gradient-primary) !important;
+}
+
+/* ===== Page header gradient cards ===== */
+.card .card-header.bg-gradient-primary {
+    background: var(--gradient-primary) !important;
+}
+.card .card-header.bg-gradient-info {
+    background: var(--gradient-info) !important;
+}
+.card .card-header.bg-gradient-dark {
+    background: linear-gradient(195deg, #1e293b 0%, #0f172a 100%) !important;
+}
+
+/* ===== Form focus states ===== */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--md-accent) !important;
+    box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.15) !important;
+}
+
+/* ===== Pagination ===== */
+.page-item.active .page-link {
+    background: var(--md-primary) !important;
+    border-color: var(--md-primary) !important;
+}
+
+/* ===== Switch/Checkbox accent ===== */
+.form-check-input:checked {
+    background-color: var(--md-accent) !important;
+    border-color: var(--md-accent) !important;
+}
+
+/* ===== Navbar fixed top ===== */
+.navbar.bg-gradient-primary {
+    background: var(--gradient-primary) !important;
 }
 
 /* Tema escuro (se implementado) */
@@ -276,4 +419,19 @@
         background: rgba(255, 255, 255, 0.95) !important;
         color: var(--md-dark) !important;
     }
+}
+
+/* ===== Dark Mode Overrides (class-based) ===== */
+.dark-version .chart-loading::after {
+    background: linear-gradient(90deg, #1e293b 25%, #0f172a 50%, #1e293b 75%) !important;
+    background-size: 200px 100%;
+}
+.dark-version .metric-card::before {
+    background: linear-gradient(90deg, transparent, rgba(6,182,212,0.05), transparent) !important;
+}
+.dark-version .card:hover {
+    box-shadow: 0 10px 35px rgba(0,0,0,0.3) !important;
+}
+.dark-version .chart-container::after {
+    background: linear-gradient(135deg, transparent 0%, rgba(6,182,212,0.02) 100%) !important;
 }

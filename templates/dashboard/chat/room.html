@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Chat - {{ room.name }} - iConnect{% endblock %}
+{% block page_title %}Chat{% endblock %}
+{% block breadcrumb_title %}{{ room.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.chat-container { height: calc(100vh - 320px); min-height: 400px; display: flex; flex-direction: column; }
+.chat-messages { flex: 1; overflow-y: auto; padding: 1rem; }
+.chat-message { margin-bottom: 1rem; max-width: 75%; }
+.chat-message.sent { margin-left: auto; }
+.chat-message .msg-bubble { padding: 0.75rem 1rem; border-radius: 1rem; position: relative; }
+.chat-message.received .msg-bubble { background: #f0f2f5; border-bottom-left-radius: 4px; }
+.chat-message.sent .msg-bubble { background: #334155; color: #fff; border-bottom-right-radius: 4px; }
+.chat-message.system { max-width: 100%; text-align: center; }
+.chat-message.system .msg-bubble { background: transparent; color: #94a3b8; font-size: 0.75rem; }
+.chat-input-area { border-top: 1px solid #e9ecef; padding: 1rem; background: #fff; border-radius: 0 0 0.75rem 0.75rem; }
+.participant-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.participant-dot.online { background: #22c55e; }
+.participant-dot.offline { background: #94a3b8; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- ===== HEADER ===== -->
+<div class="row">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">{{ room.name }}</h3>
+            <p class="mb-0 text-sm">
+                <span class="badge badge-sm bg-gradient-{% if room.status == 'active' %}success{% else %}secondary{% endif %} me-1">{{ room.get_status_display }}</span>
+                {{ room.get_room_type_display }} &middot; {{ participants.count }} participante{{ participants.count|pluralize:"s" }}
+            </p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+        <a href="{% url 'dashboard:chat_history' room.id %}" class="btn btn-outline-primary btn-sm mb-0 me-2">
+            <i class="material-symbols-rounded text-sm me-1">history</i> Histórico
+        </a>
+        <a href="{% url 'dashboard:chat_dashboard' %}" class="btn btn-outline-secondary btn-sm mb-0">
+            <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Voltar
+        </a>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- ===== ÁREA DE CHAT ===== -->
+    <div class="col-lg-9 col-md-8 mb-4">
+        <div class="card">
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    {% for message in messages %}
+                    <div class="chat-message {% if message.sender == request.user %}sent{% elif message.message_type == 'system' %}system{% else %}received{% endif %}">
+                        {% if message.message_type != 'system' and message.sender != request.user %}
+                        <p class="text-xs text-secondary mb-1">{{ message.sender.get_full_name|default:message.sender.username }}</p>
+                        {% endif %}
+                        <div class="msg-bubble">
+                            {% if message.message_type == 'image' and message.file %}
+                                <img src="{{ message.file.url }}" alt="Imagem" class="img-fluid rounded mb-1" style="max-width:250px">
+                            {% elif message.message_type == 'file' and message.file %}
+                                <a href="{{ message.file.url }}" class="{% if message.sender == request.user %}text-white{% else %}text-dark{% endif %}" target="_blank">
+                                    <i class="material-symbols-rounded text-sm me-1">attach_file</i> {{ message.file.name|truncatechars:30 }}
+                                </a>
+                            {% endif %}
+                            {% if message.content %}
+                                <span class="text-sm">{{ message.content }}</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-xs text-muted mt-1 {% if message.sender == request.user %}text-end{% endif %}">
+                            {{ message.created_at|date:"H:i" }}
+                            {% if message.is_edited %}<i class="material-symbols-rounded" style="font-size:10px">edit</i>{% endif %}
+                        </p>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-5">
+                        <i class="material-symbols-rounded opacity-5 d-block mb-2" style="font-size:48px">chat_bubble_outline</i>
+                        <p class="text-sm text-muted">Nenhuma mensagem ainda. Inicie a conversa!</p>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Input de Mensagem -->
+                <div class="chat-input-area">
+                    <form id="messageForm" class="d-flex align-items-end gap-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="room_id" value="{{ room.id }}">
+                        <div class="flex-grow-1">
+                            <textarea id="messageInput" class="form-control border" rows="1" placeholder="Digite sua mensagem..." style="resize:none;max-height:120px"></textarea>
+                        </div>
+                        <button type="submit" class="btn bg-gradient-primary mb-0 px-3">
+                            <i class="material-symbols-rounded">send</i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== PARTICIPANTES ===== -->
+    <div class="col-lg-3 col-md-4">
+        <div class="card">
+            <div class="card-header pb-0 pt-3 px-3">
+                <h6 class="mb-0">Participantes</h6>
+                <p class="text-xs text-muted mb-0">{{ participants.count }} membro{{ participants.count|pluralize:"s" }}</p>
+            </div>
+            <div class="card-body pt-2 px-3">
+                {% for p in participants %}
+                <div class="d-flex align-items-center {% if not forloop.last %}mb-3{% endif %}">
+                    <div class="avatar avatar-sm bg-gradient-dark border-radius-md me-2 d-flex align-items-center justify-content-center">
+                        <span class="text-white text-xs font-weight-bold">{{ p.user.first_name|first|default:p.user.username|first|upper }}</span>
+                    </div>
+                    <div class="d-flex flex-column flex-grow-1">
+                        <h6 class="mb-0 text-sm">{{ p.user.get_full_name|default:p.user.username }}</h6>
+                        <p class="text-xs text-secondary mb-0">{{ p.get_role_display }}</p>
+                    </div>
+                    <span class="participant-dot {% if p.is_online %}online{% else %}offline{% endif %}" title="{% if p.is_online %}Online{% else %}Offline{% endif %}"></span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if room.ticket %}
+        <div class="card mt-3">
+            <div class="card-header pb-0 pt-3 px-3">
+                <h6 class="mb-0">Ticket Vinculado</h6>
+            </div>
+            <div class="card-body pt-2 px-3">
+                <a href="{% url 'dashboard:ticket_detail' room.ticket.pk %}" class="d-flex align-items-center text-decoration-none">
+                    <div class="icon icon-sm icon-shape bg-gradient-warning shadow text-center border-radius-md me-2">
+                        <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">confirmation_number</i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0 text-sm">#{{ room.ticket.numero }}</h6>
+                        <p class="text-xs text-secondary mb-0">{{ room.ticket.titulo|truncatechars:25 }}</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatMessages = document.getElementById('chatMessages');
+    const messageForm = document.getElementById('messageForm');
+    const messageInput = document.getElementById('messageInput');
+    const roomData = JSON.parse('{{ room_json|escapejs }}');
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    // Scroll para o final
+    if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Auto-resize textarea
+    messageInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    // Enviar mensagem
+    messageForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const content = messageInput.value.trim();
+        if (!content) return;
+
+        fetch('{% url "dashboard:api_send_message" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                room_id: roomData.id,
+                content: content,
+                message_type: 'text'
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Adicionar mensagem na tela
+                const msgDiv = document.createElement('div');
+                msgDiv.className = 'chat-message sent';
+                msgDiv.innerHTML = `
+                    <div class="msg-bubble">
+                        <span class="text-sm">${content}</span>
+                    </div>
+                    <p class="text-xs text-muted mt-1 text-end">${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</p>
+                `;
+                chatMessages.appendChild(msgDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                messageInput.value = '';
+                messageInput.style.height = 'auto';
+            }
+        })
+        .catch(err => console.error('Erro ao enviar:', err));
+    });
+
+    // Enter para enviar (Shift+Enter para nova linha)
+    messageInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            messageForm.dispatchEvent(new Event('submit'));
+        }
+    });
+});
+</script>
+{% endblock %}

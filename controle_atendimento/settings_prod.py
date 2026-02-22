@@ -3,149 +3,129 @@ Configurações de Produção para o Controle de Atendimento iConnect
 Configurações otimizadas e seguras para ambiente de produção
 """
 import os
-import dj_database_url
 from decouple import config
-from .settings_base import *
+from .settings_base import *  # noqa: F401,F403
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
-SECRET_KEY = config('SECRET_KEY')
-
-# Hosts permitidos
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='').split(',')
-
-# Cache com Redis
-CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': config('REDIS_URL', default='redis://localhost:6379/1'),
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        }
-    }
-}
-
-# Session engine com cache
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_CACHE_ALIAS = 'default'
-
-# Static e Media files com WhiteNoise
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-# Configurações de segurança HTTPS
-SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)  # Disabled for local dev
-SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000, cast=int)
-SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=True, cast=bool)
-SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=True, cast=bool)
-SECURE_CONTENT_TYPE_NOSNIFF = config('SECURE_CONTENT_TYPE_NOSNIFF', default=True, cast=bool)
-SECURE_BROWSER_XSS_FILTER = config('SECURE_BROWSER_XSS_FILTER', default=True, cast=bool)
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-# Cookies seguros
-SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=True, cast=bool)
-CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=True, cast=bool)
-SESSION_COOKIE_HTTPONLY = True
-CSRF_COOKIE_HTTPONLY = True
-
-# Email Configuration
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
-EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Sistema iConnect <noreply@iconnect.com>')
-
-# Celery Configuration
-CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = TIME_ZONE
-from .settings_base import *
+# ==========================================================================
+# SEGURANÇA
+# ==========================================================================
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
+# SECRET_KEY DEVE vir de variável de ambiente em produção
+SECRET_KEY = config('SECRET_KEY')
 
-# Database para produção (PostgreSQL)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DATABASE_NAME', 'controle_atendimento'),
-        'USER': os.environ.get('DATABASE_USER', ''),
-        'PASSWORD': os.environ.get('DATABASE_PASSWORD', ''),
-        'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
-        'PORT': os.environ.get('DATABASE_PORT', '5432'),
-        'CONN_MAX_AGE': 600,
-        'OPTIONS': {
-            'sslmode': 'require',
-        },
-    }
-}
+# Validar que não está usando a chave insegura padrão
+if 'insecure' in SECRET_KEY.lower() or 'MUDE-ESTA-CHAVE' in SECRET_KEY:
+    raise ValueError(
+        "CRITICAL: SECRET_KEY de produção não pode ser a chave padrão insegura. "
+        "Gere uma nova com: python -c \"from django.core.management.utils import get_random_secret_k"""
+Configurações de Produção para o Controle de permitidos (obrigatório em produção)
+ALLOWED_HOSTS = conCog(Configurações otimizadas e seguras para ambiente de produção
+"""n """
+import os
+from decouple import config
+from .settings_base ievimsefrom decurfrom .settings_base import==
+# ==============================================# SEGURANÇA
+# ==============================================================# ===========
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = 'ENDEBUG = False
 
-# Configurações de segurança para produção
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
-SECURE_HSTS_SECONDS = 31536000
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-X_FRAME_OPTIONS = 'DENY'
-SECURE_REFERRER_POLICY = 'same-origin'
+# SECRET_KEY DEVE vir de variável de ambiente emDA
+# SECRET_KE, dSECRET_KEY = config('SECRET_KEY')       'USER': config('DATAB
+# Validar que não está usando'PASSWORD': config('DATABASE_PASSWORD', default=''),
+           raise ValueError(
+        "CRITICAL: SECRET_KEY de produção não c        "CRITICAL: S',        "Gere uma nova com: python -c \"from django.core.management.utils       'sslmoConfigurações de Produção para o Controle de permitidos (obrigatório em produção)
+ALLOWED_HOSTS==ALLOWED_HOSTS = conCog(Configurações otimizadas e seguras para ambiente de produção=="""n """
+import os
+from decouple import config
+from .settings_base ievimsefrom decurfr 'import ':from dec_rfrom .settings_base ievims  # ==============================================# SEGURANÇA
+# =37# ========================================================= 3# SECURITY WARNIIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaDEBUG = 'ENDEBUG = False
 
-# HTTPS Settings
-USE_TLS = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SECRET_KEY DEVE vir de variável de : 
+# SECRET_KEY DEVE vir isC# SECRET_KE, dSECRET_KEY = config('SECRET_KEY')  URL# Validar que não está usando'PASSWORD': config('DATABASE_PASSWORD', def             raise ValueError(
+        "CRITICAL: SECRET_KEY de produção não c   :         "CRITICAL: SECRET_KtCALLOWED_HOSTS==ALLOWED_HOSTS = conCog(Configurações otimizadas e seguras para ambiente de produção=="""n """
+import os
+from decouple import config
+from .settings_base ievimsefrom decurfr 'import ':from dec_rfrom .settings_base ievims  # ====ESimport os
+from decouple import config
+from .settings_base ievimsefrom decurfr 'import ':from dec_rfrom .settingCUfrom decEDfrom .settings_base ievims=b# =37# ========================================================= 3# SECURITY WARNIIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaDEBCU            'CLIENT_CLASS': 'django_redis.client.DefaDEBUG = 'ENDEBUG = False
 
-# Rate Limiting (usando django-ratelimit)
-RATELIMIT_ENABLE = True
-RATELIMIT_USE_CACHE = 'default'
+# SECRET_K)
 
-# Configurações de cache Redis para produção
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': os.environ.get('REDIS_URL', 'redis://localhost:6379/1'),
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        }
-    },
-    'sessions': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': os.environ.get('REDIS_URL', 'redis://localhost:6379/2'),
-    }
-}
+# SECRET_KEY DEVE vir de variável de : 
+# SECRET_KEY DEVE vir isC# SECRET_egu# SECRET_KEY DEVE vir isC# SECRET_KE, dOO        "CRITICAL: SECRET_KEY de produção não c   :         "CRITICAL: SECRET_KtCALLOWED_HOSTS==ALLOWED_HOSTS = conCog(Configurações otimizadas e seguras para ambiente de prod==import os
+from decouple import config
+from .settings_base ievimsefrom decurfr 'import ':from dec_rfrom .settings_base ievims  # ====ESimpo_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilefrom dec'
+from .settings_base ievims==from decouple import config
+from .settings_base ievimsefrom decurfr 'import ':from dec_rfrom .settingCUf==from .settings_base ievims==            'CLIENT_CLASS': 'django_redis.client.DefaDEBCU            'CLIENT_CLASS': 'django_redis.client.DefaDEBUG = 'ENDEBUG = False
 
-# Session usando Redis
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_CACHE_ALIAS = 'sessions'
+# SECRET_K)
 
-# Configurações de logging para produção
-LOGGING['handlers']['file']['filename'] = '/app/logs/django/iconnect.log'
-LOGGING['handlers']['error_file'] = {
-    'level': 'ERROR',
-    'class': 'logging.FileHandler',
-    'filename': '/app/logs/django/iconnect_errors.log',
-    'formatter': 'verbose',
-}
-LOGGING['loggers']['django']['handlers'].append('error_file')
+# SECRET_KEY DEVE vir de variável de : 
+# SECRET_KEg(
+# SECRET_K)
 
-# Configurações de email para produção
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# SECRET_KEY DEVE vir de variável de : 
+# SECRET_KEY DEVE vir isC# SECRET_egu# SECRET_KEY DEVE vir isC# SECRET_KE, dOO HOS
+# SECRET_', # SECRET_KEY DEVE vir isC# SECRET_egu# ('from decouple import config
+from .settings_base ievimsefrom decurfr 'import ':from dec_rfrom .settings_base ievims  # ====ESimpo_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilefrom dec'
+from .settings_base ievims==from======
 
-# Comprimir arquivos estáticos
-STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
+CELERY_BROKER_URL = config('CELERfrom .settings_basault='redifrom .settings_base ievims==from decouple import config
+from .settings_base ievimsefrom decurfr 'import ':from dec_rfrom .settingCUf==from .settings_base ievims==     ZEfrom .settingLERY_RESULT_SERIALIZER = 'json'
+CELERY_TIME
+# SECRET_K)
 
-# Configurações de backup
-BACKUP_CONFIG = {
-    'ENABLED': True,
-    'S3_BUCKET': os.environ.get('BACKUP_S3_BUCKET', ''),
-    'AWS_ACCESS_KEY_ID': os.environ.get('AWS_ACCESS_KEY_ID', ''),
-    'AWS_SECRET_ACCESS_KEY': os.environ.get('AWS_SECRET_ACCESS_KEY', ''),
-    'SCHEDULE': '0 2 * * *',  # Todo dia às 2h da manhã
+# SECRET_KEY DEVE vir de variável de : 
+# SECRET_KEg(
+# SECRET_K)
+
+# SECRET_KEY DEVE vir de variável de : 
+# SECRET_KEY DEVE vir isC# SECRET_egu# SECRET_KEY DEVE vir isC# SECRET_KE, dOO HOS
+# SECRET_', # SECRET_KEY DEVE vir ult
+# SECRET_===# SECRET_KEg(
+# SECRET_K)
+
+# SECRET_KEY==# SECRET_K)
+==
+# SECRET_=
+## SECRET_KEY DEVE vir isC# SECRET_egu# ==# SECRET_', # SECRET_KEY DEVE vir isC# SECRET_egu# ('from decouple import config
+'ffrom .settings_base ievimsefrom decurfr 'import ':from dec_rfrom .settings_baselofrom .settings_base ievims==from======
+
+CELERY_BROKER_URL = config('CELERfrom .settings_basault='redifrom .settings_base ievims==from decouple import config
+from .sett/iconnect_errors.log'),
+    'formatter': 'from .settings_base ievimsefrom decurfr 'import ':from dec_rfrom .settingCUf==from .settings_base ievims==     ZEfr==CELERY_TIME
+# SECRET_K)
+
+# SECRET_KEY DEVE vir de variável de : 
+# SECRET_KEg(
+# SECRET_K)
+
+# SECRET_KEY DEVE vir de variável de : 
+# SECRET_KEY DEVE vir ==# SE=
+
+CORS_
+# SECRET_IGI# SECRET_KEg(
+# SECRET_K)
+
+# SECRET_KEYn # SECRET_K)
+OR
+# SECRET_ORI# SECRET_KEY DEVE vir isC# SECRET_egu# ig# SECRET_', # SECRET_KEY DEVE vir ult
+# SECRET_===# SECRET_KEg(
+# SECRET_K)
+
+# SE==# SECRET_===# SECRET_KEg(
+# SECRET_K==# SECRET_K)
+
+# SECRET_KE==
+# SECRET_=====
+# SECRET_=
+## SECRET__C#NF## SECRET  'ffrom .settings_base ievimsefrom decurfr 'import ':from dec_rfrom .settings_baselofrom .settings_base ievims==from======  
+CELERY_BROKER_URL = config('CELERfrom .settings_basault='redifrom .settings_base ievims==from decouple import config
+fr', from .sett/iconnect_errors.log'),
+    'formatter': 'from .settings_bã
 }

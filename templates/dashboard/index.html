@@ -2,1444 +2,742 @@
 {% load static %}
 
 {% block title %}Dashboard - Controle de Atendimento iConnect{% endblock %}
-
 {% block page_title %}Dashboard{% endblock %}
 {% block breadcrumb_title %}Dashboard{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Slate+Cyan KPI cards */
+.kpi-card { border: none; border-radius: 12px; transition: transform .2s, box-shadow .2s; overflow: hidden; }
+.kpi-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(51,65,85,.15); }
+.kpi-icon {
+  width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 0;
+}
+.kpi-icon i { font-size: 24px; }
+.kpi-value { font-size: 1.6rem; font-weight: 700; color: #1e293b; line-height: 1.2; }
+.kpi-label { font-size: .78rem; color: #64748b; font-weight: 500; }
+.kpi-var { font-size: .75rem; font-weight: 600; }
+.kpi-var.up { color: #22c55e; }
+.kpi-var.down { color: #ef4444; }
+.kpi-var.neutral { color: #64748b; }
+
+/* Chart cards */
+.chart-card {
+  border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+.chart-header {
+  border-bottom: 1px solid #f1f5f9; padding: 1rem 1.25rem .75rem;
+}
+.chart-header h6 { color: #334155; font-weight: 600; margin: 0; font-size: .9rem; }
+.chart-header .text-sub { font-size: .75rem; color: #94a3b8; }
+
+/* Alert banner */
+.alert-urgent {
+  background: #fff;
+  border: 1px solid #fde68a;
+  border-left: 4px solid #ef4444;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.alert-urgent .alert-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(239,68,68,0.25);
+}
+.alert-urgent .urgent-count {
+  font-size: 14px; font-weight: 700; color: #1e293b;
+}
+.alert-urgent .urgent-tickets {
+  font-size: 12px; color: #64748b; margin-top: 2px;
+}
+.alert-urgent .urgent-tickets a {
+  color: #ef4444; font-weight: 600; text-decoration: none;
+  transition: color 0.15s ease;
+}
+.alert-urgent .urgent-tickets a:hover {
+  color: #dc2626; text-decoration: underline;
+}
+.alert-urgent .urgent-tickets .more-count {
+  color: #94a3b8; font-weight: 500;
+}
+.alert-urgent .btn-urgent {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff; border: none; border-radius: 8px;
+  padding: 8px 18px; font-size: 12px; font-weight: 600;
+  white-space: nowrap; transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(239,68,68,0.2);
+  text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+}
+.alert-urgent .btn-urgent:hover {
+  box-shadow: 0 4px 12px rgba(239,68,68,0.35);
+  transform: translateY(-1px); color: #fff;
+}
+.alert-urgent .btn-urgent .material-icons {
+  font-size: 16px;
+}
+
+/* Table */
+.tickets-table th {
+  font-size: .68rem; text-transform: uppercase; color: #94a3b8; font-weight: 700;
+  letter-spacing: .5px; border-bottom: 2px solid #f1f5f9; padding: .6rem .75rem;
+}
+.tickets-table td { padding: .6rem .75rem; vertical-align: middle; font-size: .84rem; border-bottom: 1px solid #f8fafc; }
+.tickets-table tr:hover td { background: #f8fafc; }
+.ticket-num { font-weight: 700; color: #334155; font-size: .82rem; }
+.ticket-title { color: #64748b; font-size: .75rem; }
+
+/* Badges */
+.badge-priority { font-size: .68rem; font-weight: 600; padding: .25rem .55rem; border-radius: 6px; }
+.badge-status { font-size: .68rem; font-weight: 600; padding: .25rem .55rem; border-radius: 6px; }
+
+/* Sidebar */
+.sidebar-card { border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.agent-avatar {
+  width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: .8rem; color: #fff;
+}
+.online-dot {
+  width: 9px; height: 9px; border-radius: 50%; border: 2px solid #fff;
+  position: absolute; bottom: -1px; right: -1px; background: #22c55e;
+}
+
+/* Timeline */
+.timeline-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+.timeline-line { width: 2px; background: #e2e8f0; margin-left: 3px; min-height: 24px; }
+
+/* Heatmap */
+.heatmap-table { font-size: .7rem; }
+.heatmap-table td { padding: 2px 3px; text-align: center; border-radius: 3px; font-weight: 500; }
+.heatmap-table th { font-size: .65rem; color: #94a3b8; font-weight: 600; padding: 2px 3px; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .kpi-value { font-size: 1.3rem; }
+  .kpi-icon { width: 40px; height: 40px; }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row">
+<!-- ===== HEADER + ACTIONS ===== -->
+<div class="row mb-3">
+  <div class="col-lg-8 col-md-7">
     <div class="ms-3">
-        <h3 class="mb-0 h4 font-weight-bolder">Dashboard</h3>
-        <p class="mb-4">
-            Controle de atendimento e métricas do sistema iConnect.
+      <h3 class="mb-0 h4 font-weight-bolder" id="greeting">Ol&aacute;, {{ user.first_name|default:user.username }}!</h3>
+      <p class="mb-0 text-sm text-muted" id="datetime-now"></p>
+    </div>
+  </div>
+  <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+    <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-sm mb-0 text-white" style="background:linear-gradient(135deg,#06b6d4,#0891b2);">
+      <i class="material-symbols-rounded text-sm me-1">add</i> Novo Ticket
+    </a>
+    <a href="{% url 'dashboard:export_tickets' %}" class="btn btn-sm btn-outline-secondary mb-0 ms-1">
+      <i class="material-symbols-rounded text-sm me-1">download</i> Exportar
+    </a>
+  </div>
+</div>
+
+<!-- ===== URGENT ALERTS ===== -->
+{% if tickets_urgentes %}
+<div class="row mb-3">
+  <div class="col-12 px-4">
+    <div class="alert-urgent d-flex align-items-center">
+      <div class="alert-icon me-3">
+        <i class="material-icons text-white" style="font-size:20px">priority_high</i>
+      </div>
+      <div class="flex-grow-1">
+        <div class="urgent-count">
+          {{ tickets_urgentes|length }} ticket{{ tickets_urgentes|length|pluralize:"s" }} urgente{{ tickets_urgentes|length|pluralize:"s" }}
+        </div>
+        <div class="urgent-tickets">
+          {% for t in tickets_urgentes|slice:":3" %}
+            <a href="{% url 'dashboard:ticket_detail' t.pk %}">#{{ t.numero }}</a>{% if not forloop.last %}, {% endif %}
+          {% endfor %}
+          {% if tickets_urgentes|length > 3 %}
+            <span class="more-count">+{{ tickets_urgentes|length|add:"-3" }} mais</span>
+          {% endif %}
+        </div>
+      </div>
+      <a href="{% url 'dashboard:ticket_list' %}?prioridade=critica&status=aberto" class="btn-urgent">
+        <i class="material-icons">visibility</i>
+        Ver Urgentes
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ===== KPI CARDS ===== -->
+<div class="row px-2">
+  <!-- Atendimentos Hoje -->
+  <div class="col-xl col-sm-6 mb-xl-0 mb-3 px-2">
+    <div class="card kpi-card">
+      <div class="card-body p-3">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <p class="kpi-label mb-1">Atendimentos Hoje</p>
+            <h4 class="kpi-value mb-0" data-metric="atendimentos_hoje">{{ atendimentos_hoje|default:"0" }}</h4>
+          </div>
+          <div class="kpi-icon" style="background:linear-gradient(135deg,#334155,#1e293b);">
+            <i class="material-symbols-rounded">support_agent</i>
+          </div>
+        </div>
+        <p class="mb-0 mt-2">
+          <span class="kpi-var {% if variacao_atendimentos >= 0 %}up{% else %}down{% endif %}">
+            {% if variacao_atendimentos >= 0 %}+{% endif %}{{ variacao_atendimentos|floatformat:0 }}%
+          </span>
+          <span class="text-xs text-muted ms-1">vs ontem</span>
         </p>
+      </div>
     </div>
-    
-    <!-- Cards de Métricas -->
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-        <div class="card">
-            <div class="card-header p-2 ps-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-sm mb-0 text-capitalize">Atendimentos Hoje</p>
-                        <h4 class="mb-0">{{ atendimentos_hoje|default:"0" }}</h4>
-                    </div>
-                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">support_agent</i>
-                    </div>
-                </div>
-            </div>
-            <hr class="dark horizontal my-0">
-            <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm"><span class="text-success font-weight-bolder">+{{ variacao_atendimentos|floatformat:0 }}% </span>em relação a ontem</p>
-            </div>
+  </div>
+
+  <!-- Tickets Abertos -->
+  <div class="col-xl col-sm-6 mb-xl-0 mb-3 px-2">
+    <div class="card kpi-card">
+      <div class="card-body p-3">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <p class="kpi-label mb-1">Tickets Abertos</p>
+            <h4 class="kpi-value mb-0" data-metric="tickets_abertos">{{ tickets_abertos|default:"0" }}</h4>
+          </div>
+          <div class="kpi-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+            <i class="material-symbols-rounded">assignment</i>
+          </div>
         </div>
+        <p class="mb-0 mt-2">
+          <span class="kpi-var {% if variacao_tickets >= 0 %}up{% else %}down{% endif %}">
+            {% if variacao_tickets >= 0 %}+{% endif %}{{ variacao_tickets }}%
+          </span>
+          <span class="text-xs text-muted ms-1">vs sem. passada</span>
+        </p>
+      </div>
     </div>
-    
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-        <div class="card">
-            <div class="card-header p-2 ps-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-sm mb-0 text-capitalize">Usuários Ativos</p>
-                        <h4 class="mb-0">{{ usuarios_ativos|default:"0" }}</h4>
-                    </div>
-                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">person</i>
-                    </div>
-                </div>
-            </div>
-            <hr class="dark horizontal my-0">
-            <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm"><span class="text-success font-weight-bolder">+5% </span>este mês</p>
-            </div>
+  </div>
+
+  <!-- Tempo Medio -->
+  <div class="col-xl col-sm-6 mb-xl-0 mb-3 px-2">
+    <div class="card kpi-card">
+      <div class="card-body p-3">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <p class="kpi-label mb-1">Tempo M&eacute;dio Resolu&ccedil;&atilde;o</p>
+            <h4 class="kpi-value mb-0" data-metric="tempo_medio">{{ tempo_medio_resolucao|default:"--" }}</h4>
+          </div>
+          <div class="kpi-icon" style="background:linear-gradient(135deg,#06b6d4,#0891b2);">
+            <i class="material-symbols-rounded">timer</i>
+          </div>
         </div>
+        <p class="mb-0 mt-2">
+          <span class="kpi-var {% if variacao_tempo_medio <= 0 %}up{% else %}down{% endif %}">
+            {% if variacao_tempo_medio <= 0 %}{{ variacao_tempo_medio }}%{% else %}+{{ variacao_tempo_medio }}%{% endif %}
+          </span>
+          <span class="text-xs text-muted ms-1">vs m&ecirc;s anterior</span>
+        </p>
+      </div>
     </div>
-    
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-        <div class="card">
-            <div class="card-header p-2 ps-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-sm mb-0 text-capitalize">Tickets Abertos</p>
-                        <h4 class="mb-0">{{ tickets_abertos|default:"0" }}</h4>
-                    </div>
-                    <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">assignment</i>
-                    </div>
-                </div>
-            </div>
-            <hr class="dark horizontal my-0">
-            <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm"><span class="text-warning font-weight-bolder">-3% </span>em relação a semana passada</p>
-            </div>
+  </div>
+
+  <!-- Taxa de Resolução -->
+  <div class="col-xl col-sm-6 mb-xl-0 mb-3 px-2">
+    <div class="card kpi-card">
+      <div class="card-body p-3">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <p class="kpi-label mb-1">Taxa de Resolu&ccedil;&atilde;o</p>
+            <h4 class="kpi-value mb-0" data-metric="taxa_resolucao">{{ taxa_resolucao|default:"0" }}%</h4>
+          </div>
+          <div class="kpi-icon" style="background:linear-gradient(135deg,#22c55e,#16a34a);">
+            <i class="material-symbols-rounded">check_circle</i>
+          </div>
         </div>
+        <p class="mb-0 mt-2">
+          <span class="kpi-var {% if variacao_resolucao >= 0 %}up{% else %}down{% endif %}">
+            {% if variacao_resolucao >= 0 %}+{% endif %}{{ variacao_resolucao }}%
+          </span>
+          <span class="text-xs text-muted ms-1">este m&ecirc;s</span>
+        </p>
+      </div>
     </div>
-    
-    <div class="col-xl-3 col-sm-6">
-        <div class="card">
-            <div class="card-header p-2 ps-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-sm mb-0 text-capitalize">Taxa de Resolução</p>
-                        <h4 class="mb-0">{{ taxa_resolucao|default:"0" }}%</h4>
-                    </div>
-                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">trending_up</i>
-                    </div>
-                </div>
-            </div>
-            <hr class="dark horizontal my-0">
-            <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm"><span class="text-success font-weight-bolder">+8% </span>este mês</p>
-            </div>
+  </div>
+
+  <!-- Usuarios Ativos -->
+  <div class="col-xl col-sm-6 mb-xl-0 mb-3 px-2">
+    <div class="card kpi-card">
+      <div class="card-body p-3">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <p class="kpi-label mb-1">Usu&aacute;rios Ativos</p>
+            <h4 class="kpi-value mb-0" data-metric="usuarios_ativos">{{ usuarios_ativos|default:"0" }}</h4>
+          </div>
+          <div class="kpi-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
+            <i class="material-symbols-rounded">group</i>
+          </div>
         </div>
+        <p class="mb-0 mt-2">
+          <span class="kpi-var {% if variacao_usuarios >= 0 %}up{% else %}down{% endif %}">
+            {% if variacao_usuarios >= 0 %}+{% endif %}{{ variacao_usuarios }}%
+          </span>
+          <span class="text-xs text-muted ms-1">vs m&ecirc;s anterior</span>
+        </p>
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- ========== COMUNICAÇÃO QUICK ACCESS ========== -->
-<div class="row mt-4">
-    <div class="col-12">
-        <h6 class="ms-2 mt-4 mb-3">Central de Comunicação</h6>
-    </div>
-    
-    <!-- Central de Comunicação Card -->
-    <div class="col-xl-6 col-sm-6 mb-xl-0 mb-4">
-        <div class="card cursor-pointer hover-lift" onclick="window.location.href='{% url 'dashboard:communication_center' %}'">
-            <div class="card-header p-2 ps-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-sm mb-0 text-capitalize">Central Unificada</p>
-                        <h4 class="mb-0">6 Módulos</h4>
-                    </div>
-                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">forum</i>
-                    </div>
-                </div>
-            </div>
-            <hr class="dark horizontal my-0">
-            <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm">
-                    <span class="text-primary font-weight-bolder">
-                        <i class="material-symbols-rounded text-sm">integration_instructions</i> Chat • IA • Analytics
-                    </span>
-                </p>
-            </div>
+<!-- ===== CHARTS ROW 1 ===== -->
+<div class="row mt-3 px-2">
+  <!-- Tickets Trend -->
+  <div class="col-lg-8 col-md-12 mb-3 px-2">
+    <div class="card chart-card h-100">
+      <div class="chart-header d-flex justify-content-between align-items-center">
+        <div>
+          <h6>Tickets ao Longo do Tempo</h6>
+          <span class="text-sub">
+            <span class="{% if tendencia_tickets >= 0 %}text-success{% else %}text-danger{% endif %} font-weight-bold">
+              {% if tendencia_tickets >= 0 %}+{% endif %}{{ tendencia_tickets }}%
+            </span> vs per&iacute;odo anterior &bull; {{ total_tickets|default:"0" }} total
+          </span>
         </div>
+        <span class="badge text-white" style="background:#334155;font-size:.7rem;">12 meses</span>
+      </div>
+      <div class="card-body p-3" style="position:relative;min-height:280px">
+        <canvas id="ticketsChart" height="260"></canvas>
+      </div>
     </div>
-    
-    <!-- WhatsApp Business Card -->
-    <div class="col-xl-6 col-sm-6 mb-xl-0 mb-4">
-        <div class="card cursor-pointer hover-lift" onclick="window.location.href='{% url 'dashboard:whatsapp:dashboard' %}'">
-            <div class="card-header p-2 ps-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-sm mb-0 text-capitalize">WhatsApp Business</p>
-                        <h4 class="mb-0">Conectado</h4>
-                    </div>
-                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
-                        <i class="fab fa-whatsapp opacity-10" style="font-size: 18px;"></i>
-                    </div>
-                </div>
-            </div>
-            <hr class="dark horizontal my-0">
-            <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm">
-                    <span class="text-success font-weight-bolder">
-                        <i class="material-symbols-rounded text-sm">chat</i> Conversas • Templates • Analytics
-                    </span>
-                </p>
-            </div>
-        </div>
+  </div>
+
+  <!-- Status Doughnut -->
+  <div class="col-lg-4 col-md-12 mb-3 px-2">
+    <div class="card chart-card h-100">
+      <div class="chart-header">
+        <h6>Distribui&ccedil;&atilde;o por Status</h6>
+        <span class="text-sub">{{ total_tickets|default:"0" }} tickets total</span>
+      </div>
+      <div class="card-body p-3 d-flex align-items-center justify-content-center" style="min-height:280px">
+        <canvas id="statusChart" height="260"></canvas>
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- ========== SLA QUICK ACCESS SECTION ========== -->
-<div class="row mt-4">
-    <div class="col-12">
-        <h6 class="ms-2 mt-4 mb-3">SLA & Qualidade de Serviço</h6>
-    </div>
-    
-    <!-- SLA Dashboard Card -->
-    <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
-        <div class="card cursor-pointer hover-lift" onclick="window.location.href='{% url 'dashboard:sla_dashboard' %}'">
-            <div class="card-header p-2 ps-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-sm mb-0 text-capitalize">Dashboard SLA</p>
-                        <h4 class="mb-0">Gerenciar</h4>
-                    </div>
-                    <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">schedule</i>
-                    </div>
-                </div>
-            </div>
-            <hr class="dark horizontal my-0">
-            <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm">
-                    <span class="text-warning font-weight-bolder">
-                        <i class="material-symbols-rounded text-sm">visibility</i> Visualizar SLA
-                    </span>
-                </p>
-            </div>
+<!-- ===== TABLE + SIDEBAR ===== -->
+<div class="row px-2">
+  <!-- Tickets Recentes -->
+  <div class="col-lg-8 col-md-12 mb-3 px-2">
+    <div class="card chart-card">
+      <div class="chart-header d-flex justify-content-between align-items-center">
+        <div>
+          <h6>Tickets Recentes</h6>
+          <span class="text-sub"><strong>{{ tickets_fechados|default:"0" }}</strong> finalizados este m&ecirc;s</span>
         </div>
-    </div>
-    
-    <!-- SLA Policies Card -->
-    <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
-        <div class="card cursor-pointer hover-lift" onclick="window.location.href='{% url 'dashboard:sla_policies' %}'">
-            <div class="card-header p-2 ps-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-sm mb-0 text-capitalize">Políticas SLA</p>
-                        <h4 class="mb-0">8 Ativas</h4>
-                    </div>
-                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">policy</i>
-                    </div>
-                </div>
-            </div>
-            <hr class="dark horizontal my-0">
-            <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm">
-                    <span class="text-info font-weight-bolder">
-                        <i class="material-symbols-rounded text-sm">settings</i> Configurar
-                    </span>
-                </p>
-            </div>
+        <a href="{% url 'dashboard:ticket_list' %}" class="btn btn-sm btn-outline-secondary mb-0" style="font-size:.72rem;">Ver Todos</a>
+      </div>
+      <div class="card-body px-0 pb-2 pt-0">
+        <div class="table-responsive">
+          <table class="table tickets-table mb-0">
+            <thead>
+              <tr>
+                <th>Ticket</th>
+                <th>Cliente</th>
+                <th class="text-center">Prioridade</th>
+                <th class="text-center">Status</th>
+                <th class="text-center">Tempo</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ticket in tickets_recentes %}
+              <tr>
+                <td>
+                  <span class="ticket-num">#{{ ticket.numero|default:ticket.pk }}</span>
+                  <div class="ticket-title">{{ ticket.titulo|truncatewords:5 }}</div>
+                </td>
+                <td>
+                  <span class="text-sm">{% if ticket.cliente %}{{ ticket.cliente.nome }}{% else %}--{% endif %}</span>
+                </td>
+                <td class="text-center">
+                  {% if ticket.prioridade == 'critica' %}
+                    <span class="badge-priority" style="background:#fef2f2;color:#dc2626;">Cr&iacute;tica</span>
+                  {% elif ticket.prioridade == 'alta' %}
+                    <span class="badge-priority" style="background:#fff7ed;color:#ea580c;">Alta</span>
+                  {% elif ticket.prioridade == 'media' %}
+                    <span class="badge-priority" style="background:#f0fdfa;color:#0891b2;">M&eacute;dia</span>
+                  {% else %}
+                    <span class="badge-priority" style="background:#f8fafc;color:#64748b;">Baixa</span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  {% if ticket.status == 'resolvido' or ticket.status == 'fechado' %}
+                    <span class="badge-status" style="background:#f0fdf4;color:#16a34a;">{{ ticket.get_status_display }}</span>
+                  {% elif ticket.status == 'em_andamento' %}
+                    <span class="badge-status" style="background:#fffbeb;color:#d97706;">{{ ticket.get_status_display }}</span>
+                  {% elif ticket.status == 'aberto' %}
+                    <span class="badge-status" style="background:#f0fdfa;color:#0891b2;">{{ ticket.get_status_display }}</span>
+                  {% elif ticket.status == 'aguardando_cliente' %}
+                    <span class="badge-status" style="background:#faf5ff;color:#7c3aed;">{{ ticket.get_status_display }}</span>
+                  {% else %}
+                    <span class="badge-status" style="background:#f8fafc;color:#64748b;">{{ ticket.get_status_display }}</span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  <span class="text-xs text-muted">{{ ticket.criado_em|timesince|truncatewords:2 }}</span>
+                </td>
+                <td>
+                  {% if ticket.pk %}
+                  <a href="{% url 'dashboard:ticket_detail' ticket.pk %}" class="text-decoration-none" style="color:#06b6d4;" title="Ver detalhes">
+                    <i class="material-symbols-rounded" style="font-size:18px;">visibility</i>
+                  </a>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="text-center py-5">
+                  <i class="material-symbols-rounded text-muted" style="font-size:42px;">confirmation_number</i>
+                  <p class="text-sm text-muted mb-2 mt-2">Nenhum ticket registrado.</p>
+                  <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-sm text-white" style="background:linear-gradient(135deg,#06b6d4,#0891b2);">
+                    <i class="material-symbols-rounded text-sm me-1">add</i> Criar Ticket
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
+      </div>
     </div>
-    
-    <!-- SLA Alerts Card -->
-    <div class="col-xl-4 col-sm-6">
-        <div class="card cursor-pointer hover-lift" onclick="window.location.href='{% url 'dashboard:sla_alerts' %}'">
-            <div class="card-header p-2 ps-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-sm mb-0 text-capitalize">Alertas SLA</p>
-                        <h4 class="mb-0">329 Ativos</h4>
-                    </div>
-                    <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">warning</i>
-                    </div>
-                </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="col-lg-4 col-md-12 mb-3 px-2">
+    <!-- Equipe -->
+    <div class="card sidebar-card mb-3">
+      <div class="chart-header d-flex justify-content-between align-items-center">
+        <h6 style="color:#334155;font-weight:600;margin:0;font-size:.9rem;">Equipe</h6>
+        <span class="badge text-white" style="background:#22c55e;font-size:.65rem;">{{ agentes_online|default:"0" }} online</span>
+      </div>
+      <div class="card-body p-3 pt-2">
+        {% for perfil in agentes_status %}
+        <div class="d-flex align-items-center {% if not forloop.last %}mb-3{% endif %}">
+          <div class="position-relative">
+            <div class="agent-avatar" style="background:{% cycle '#334155' '#06b6d4' '#22c55e' '#f59e0b' '#8b5cf6' '#ef4444' %};">
+              {{ perfil.user.first_name|default:perfil.user.username|make_list|first|upper }}
             </div>
-            <hr class="dark horizontal my-0">
-            <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm">
-                    <span class="text-danger font-weight-bolder">
-                        <i class="material-symbols-rounded text-sm">notifications</i> Verificar
-                    </span>
-                </p>
-            </div>
+            {% if perfil.status == 'online' %}
+            <span class="online-dot"></span>
+            {% endif %}
+          </div>
+          <div class="ms-3 flex-grow-1">
+            <h6 class="text-sm mb-0" style="color:#334155;">{{ perfil.user.get_full_name|default:perfil.user.username }}</h6>
+            <p class="text-xs text-muted mb-0">{{ perfil.tickets_ativos }} ticket{{ perfil.tickets_ativos|pluralize:"s" }} ativo{{ perfil.tickets_ativos|pluralize:"s" }}</p>
+          </div>
+          <span class="badge" style="font-size:.6rem;{% if perfil.status == 'online' %}background:#dcfce7;color:#16a34a;{% elif perfil.status == 'ocupado' %}background:#fef3c7;color:#d97706;{% else %}background:#f1f5f9;color:#64748b;{% endif %}">
+            {{ perfil.get_status_display }}
+          </span>
         </div>
+        {% empty %}
+        <div class="text-center py-3">
+          <i class="material-symbols-rounded text-muted" style="font-size:28px;">group_off</i>
+          <p class="text-xs text-muted mb-0 mt-1">Nenhum agente dispon&iacute;vel</p>
+        </div>
+        {% endfor %}
+      </div>
     </div>
+
+    <!-- Atividade Recente -->
+    <div class="card sidebar-card">
+      <div class="chart-header">
+        <h6 style="color:#334155;font-weight:600;margin:0;font-size:.9rem;">Atividade Recente</h6>
+      </div>
+      <div class="card-body p-3 pt-2">
+        {% for ticket in tickets_timeline %}
+        <div class="d-flex {% if not forloop.last %}mb-3{% endif %}">
+          <div class="d-flex flex-column align-items-center me-3">
+            <div class="timeline-dot" style="background:{% if ticket.status == 'resolvido' or ticket.status == 'fechado' %}#22c55e{% elif ticket.status == 'em_andamento' %}#f59e0b{% else %}#06b6d4{% endif %};"></div>
+            {% if not forloop.last %}
+            <div class="timeline-line"></div>
+            {% endif %}
+          </div>
+          <div>
+            <a href="{% url 'dashboard:ticket_detail' ticket.pk %}" class="text-sm font-weight-bold text-decoration-none" style="color:#334155;">
+              #{{ ticket.numero }}
+            </a>
+            <span class="text-xs text-muted ms-1">&mdash; {{ ticket.get_status_display }}</span>
+            <p class="text-xs text-muted mb-0">{{ ticket.criado_em|timesince }} atr&aacute;s</p>
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-xs text-muted text-center py-3 mb-0">Nenhuma atividade recente</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- Analytics Dashboard Section -->
-<div class="row mt-4">
-    <div class="col-12">
-        <h6 class="ms-2 mt-4 mb-3">Analytics Avançado</h6>
+<!-- ===== CHARTS ROW 2 ===== -->
+<div class="row px-2">
+  <!-- Top Agentes -->
+  <div class="col-lg-4 col-md-6 mb-3 px-2">
+    <div class="card chart-card h-100">
+      <div class="chart-header">
+        <h6>Top Agentes</h6>
+        <span class="text-sub">Tickets resolvidos</span>
+      </div>
+      <div class="card-body p-3">
+        <canvas id="agentChart" height="220"></canvas>
+      </div>
     </div>
-    
-    <!-- Gráfico de Tickets por Período -->
-    <div class="col-lg-8 col-md-12">
-        <div class="card">
-            <div class="card-header pb-0">
-                <div class="d-flex align-items-center">
-                    <h6 class="mb-0">Tickets ao Longo do Tempo</h6>
-                    <div class="ms-auto">
-                        <select id="chart-period" class="form-select form-select-sm">
-                            <option value="7days">Últimos 7 dias</option>
-                            <option value="30days" selected>Últimos 30 dias</option>
-                            <option value="90days">Últimos 90 dias</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <canvas id="ticketsChart" height="300"></canvas>
-            </div>
-        </div>
+  </div>
+
+  <!-- Atendimentos por Hora -->
+  <div class="col-lg-4 col-md-6 mb-3 px-2">
+    <div class="card chart-card h-100">
+      <div class="chart-header">
+        <h6>Atendimentos por Hora</h6>
+        <span class="text-sub">Fluxo di&aacute;rio</span>
+      </div>
+      <div class="card-body p-3">
+        <canvas id="chart-bars" height="220"></canvas>
+      </div>
     </div>
-    
-    <!-- Distribuição por Status -->
-    <div class="col-lg-4 col-md-12">
-        <div class="card">
-            <div class="card-header pb-0">
-                <h6 class="mb-0">Distribuição por Status</h6>
-            </div>
-            <div class="card-body">
-                <canvas id="statusChart" height="300"></canvas>
-            </div>
-        </div>
+  </div>
+
+  <!-- Heatmap -->
+  <div class="col-lg-4 col-md-12 mb-3 px-2">
+    <div class="card chart-card h-100">
+      <div class="chart-header">
+        <h6>Mapa de Calor</h6>
+        <span class="text-sub">Demanda por dia/hor&aacute;rio</span>
+      </div>
+      <div class="card-body p-3">
+        <div id="heatmapContainer" style="height:220px;overflow-x:auto;"></div>
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- Segunda linha de Analytics -->
-<div class="row mt-4">
-    <!-- Performance por Agente -->
-    <div class="col-lg-6 col-md-12">
-        <div class="card">
-            <div class="card-header pb-0">
-                <h6 class="mb-0">Performance por Agente</h6>
-            </div>
-            <div class="card-body">
-                <canvas id="agentChart" height="300"></canvas>
-            </div>
+<!-- ===== RESUMO FOOTER ===== -->
+<div class="row px-2 mb-4">
+  <div class="col-12 px-2">
+    <div class="card chart-card">
+      <div class="card-body py-3 px-4">
+        <div class="row text-center">
+          <div class="col-md-3 col-6 mb-2 mb-md-0">
+            <p class="text-xs text-muted mb-0">Total Tickets</p>
+            <h5 class="mb-0" style="color:#334155;">{{ total_tickets|default:"0" }}</h5>
+          </div>
+          <div class="col-md-3 col-6 mb-2 mb-md-0">
+            <p class="text-xs text-muted mb-0">Clientes Ativos</p>
+            <h5 class="mb-0" style="color:#334155;">{{ total_clientes|default:"0" }}</h5>
+          </div>
+          <div class="col-md-3 col-6">
+            <p class="text-xs text-muted mb-0">Pol&iacute;ticas SLA</p>
+            <h5 class="mb-0" style="color:#334155;">{{ sla_policies_count|default:"0" }}</h5>
+          </div>
+          <div class="col-md-3 col-6">
+            <p class="text-xs text-muted mb-0">Alertas SLA</p>
+            <h5 class="mb-0" style="color:{% if sla_alerts_count > 0 %}#ef4444{% else %}#334155{% endif %};">{{ sla_alerts_count|default:"0" }}</h5>
+          </div>
         </div>
+      </div>
     </div>
-    
-    <!-- Heatmap de Atendimentos -->
-    <div class="col-lg-6 col-md-12">
-        <div class="card">
-            <div class="card-header pb-0">
-                <h6 class="mb-0">Horários de Maior Demanda</h6>
-            </div>
-            <div class="card-body">
-                <div id="heatmapContainer" style="height: 300px;">
-                    <!-- Heatmap será gerado aqui -->
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-lg-4 col-md-6 mt-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h6 class="mb-0">Atendimentos por Hora</h6>
-                <p class="text-sm">Performance de atendimento diário</p>
-                <div class="pe-2">
-                    <div class="chart">
-                        <canvas id="chart-bars" class="chart-canvas" height="170"></canvas>
-                    </div>
-                </div>
-                <hr class="dark horizontal">
-                <div class="d-flex">
-                    <i class="material-symbols-rounded text-sm my-auto me-1">schedule</i>
-                    <p class="mb-0 text-sm">Dados atualizados em tempo real</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-4 col-md-6 mt-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h6 class="mb-0">Tendência de Tickets</h6>
-                <p class="text-sm">(<span class="font-weight-bolder">+15%</span>) aumento nos atendimentos</p>
-                <div class="pe-2">
-                    <div class="chart">
-                        <canvas id="chart-line" class="chart-canvas" height="170"></canvas>
-                    </div>
-                </div>
-                <hr class="dark horizontal">
-                <div class="d-flex">
-                    <i class="material-symbols-rounded text-sm my-auto me-1">schedule</i>
-                    <p class="mb-0 text-sm">Última atualização: há 2 minutos</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-4 mt-4 mb-3">
-        <div class="card h-100">
-            <div class="card-header pb-0">
-                <h6>Resumo dos Atendimentos</h6>
-                <p class="text-sm">
-                    <i class="fa fa-arrow-up text-success" aria-hidden="true"></i>
-                    <span class="font-weight-bold">24%</span> este mês
-                </p>
-            </div>
-            <div class="card-body p-3">
-                <div class="timeline timeline-one-side">
-                    <div class="timeline-block mb-3">
-                        <span class="timeline-step">
-                            <i class="material-symbols-rounded text-success text-gradient">check_circle</i>
-                        </span>
-                        <div class="timeline-content">
-                            <h6 class="text-dark text-sm font-weight-bold mb-0">Ticket #TK-2024-047 resolvido</h6>
-                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">Hoje, 14:30</p>
-                            <p class="text-sm mt-3 mb-2">
-                                Problema de conectividade resolvido com sucesso. Cliente satisfeito com o atendimento.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="timeline-block mb-3">
-                        <span class="timeline-step">
-                            <i class="material-symbols-rounded text-warning text-gradient">pending</i>
-                        </span>
-                        <div class="timeline-content">
-                            <h6 class="text-dark text-sm font-weight-bold mb-0">Ticket #TK-2024-048 em andamento</h6>
-                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">Hoje, 13:15</p>
-                            <p class="text-sm mt-3 mb-2">
-                                Solicitação de configuração sendo processada pelo agente João Silva.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="timeline-block mb-3">
-                        <span class="timeline-step">
-                            <i class="material-symbols-rounded text-info text-gradient">add_circle</i>
-                        </span>
-                        <div class="timeline-content">
-                            <h6 class="text-dark text-sm font-weight-bold mb-0">Novo ticket #TK-2024-049 criado</h6>
-                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">Hoje, 12:45</p>
-                            <p class="text-sm mt-3 mb-2">
-                                Solicitação de suporte técnico registrada e atribuída ao agente Maria Santos.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mb-4">
-    <div class="col-lg-8 col-md-6 mb-md-0 mb-4">
-        <div class="card">
-            <div class="card-header pb-0">
-                <div class="row">
-                    <div class="col-lg-6 col-7">
-                        <h6>Atendimentos Recentes</h6>
-                        <p class="text-sm mb-0">
-                            <i class="fa fa-check text-info" aria-hidden="true"></i>
-                            <span class="font-weight-bold ms-1">30 finalizados</span> este mês
-                        </p>
-                    </div>
-                    <div class="col-lg-6 col-5 my-auto text-end">
-                        <div class="dropdown float-lg-end pe-4">
-                            <a class="cursor-pointer" id="dropdownTable" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fa fa-ellipsis-v text-secondary"></i>
-                            </a>
-                            <ul class="dropdown-menu px-2 py-3 ms-sm-n4 ms-n5" aria-labelledby="dropdownTable">
-                                <li><a class="dropdown-item border-radius-md" href="{% url 'dashboard:ticket_list' %}">Ver todos os tickets</a></li>
-                                <li><a class="dropdown-item border-radius-md" href="{% url 'dashboard:ticket_list' %}?status=aberto">Filtrar por abertos</a></li>
-                                <li><a class="dropdown-item border-radius-md" href="{% url 'dashboard:export_tickets' %}">Exportar dados</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body px-0 pb-2">
-                <div class="table-responsive">
-                    <table class="table align-items-center mb-0">
-                        <thead>
-                            <tr>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ticket</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cliente</th>
-                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
-                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Data</th>
-                                <th class="text-secondary opacity-7"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for ticket in tickets_recentes %}
-                            <tr>
-                                <td>
-                                    <div class="d-flex px-2 py-1">
-                                        <div class="d-flex flex-column justify-content-center">
-                                            <h6 class="mb-0 text-sm">#{{ ticket.numero|default:ticket.pk }}</h6>
-                                            <p class="text-xs text-secondary mb-0">{% if ticket.categoria %}{{ ticket.categoria.nome }}{% else %}Geral{% endif %}</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <p class="text-xs font-weight-bold mb-0">{% if ticket.cliente %}{{ ticket.cliente.nome }}{% else %}Cliente não definido{% endif %}</p>
-                                    <p class="text-xs text-secondary mb-0">{{ ticket.cliente.email|default:"email@exemplo.com" }}</p>
-                                </td>
-                                <td class="align-middle text-center text-sm">
-                                    {% if ticket.status == 'resolvido' or ticket.status == 'fechado' %}
-                                        <span class="badge badge-sm bg-gradient-success">{{ ticket.get_status_display|default:"Resolvido" }}</span>
-                                    {% elif ticket.status == 'em_andamento' %}
-                                        <span class="badge badge-sm bg-gradient-warning">{{ ticket.get_status_display|default:"Em Andamento" }}</span>
-                                    {% elif ticket.status == 'aberto' %}
-                                        <span class="badge badge-sm bg-gradient-info">{{ ticket.get_status_display|default:"Aberto" }}</span>
-                                    {% else %}
-                                        <span class="badge badge-sm bg-gradient-secondary">{{ ticket.get_status_display|default:"Novo" }}</span>
-                                    {% endif %}
-                                </td>
-                                <td class="align-middle text-center">
-                                    <span class="text-secondary text-xs font-weight-bold">{{ ticket.criado_em|date:"d/m/Y"|default:"08/09/2025" }}</span>
-                                </td>
-                                <td class="align-middle">
-                                    {% if ticket.pk %}
-                                        <a href="{% url 'dashboard:ticket_detail' ticket.pk %}" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="Ver ticket">
-                                            Ver
-                                        </a>
-                                    {% else %}
-                                        <span class="text-secondary font-weight-bold text-xs">-</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td>
-                                    <div class="d-flex px-2 py-1">
-                                        <div class="d-flex flex-column justify-content-center">
-                                            <h6 class="mb-0 text-sm">#TK-2024-001</h6>
-                                            <p class="text-xs text-secondary mb-0">Suporte Técnico</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <p class="text-xs font-weight-bold mb-0">João Silva</p>
-                                    <p class="text-xs text-secondary mb-0">joao@exemplo.com</p>
-                                </td>
-                                <td class="align-middle text-center text-sm">
-                                    <span class="badge badge-sm bg-gradient-success">Resolvido</span>
-                                </td>
-                                <td class="align-middle text-center">
-                                    <span class="text-secondary text-xs font-weight-bold">08/09/2025</span>
-                                </td>
-                                <td class="align-middle">
-                                    <span class="text-secondary font-weight-bold text-xs">Ver</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex px-2 py-1">
-                                        <div class="d-flex flex-column justify-content-center">
-                                            <h6 class="mb-0 text-sm">#TK-2024-002</h6>
-                                            <p class="text-xs text-secondary mb-0">Configuração</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <p class="text-xs font-weight-bold mb-0">Maria Santos</p>
-                                    <p class="text-xs text-secondary mb-0">maria@exemplo.com</p>
-                                </td>
-                                <td class="align-middle text-center text-sm">
-                                    <span class="badge badge-sm bg-gradient-warning">Em Andamento</span>
-                                </td>
-                                <td class="align-middle text-center">
-                                    <span class="text-secondary text-xs font-weight-bold">08/09/2025</span>
-                                </td>
-                                <td class="align-middle">
-                                    <span class="text-secondary font-weight-bold text-xs">Ver</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex px-2 py-1">
-                                        <div class="d-flex flex-column justify-content-center">
-                                            <h6 class="mb-0 text-sm">#TK-2024-003</h6>
-                                            <p class="text-xs text-secondary mb-0">Bug Report</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <p class="text-xs font-weight-bold mb-0">Carlos Lima</p>
-                                    <p class="text-xs text-secondary mb-0">carlos@exemplo.com</p>
-                                </td>
-                                <td class="align-middle text-center text-sm">
-                                    <span class="badge badge-sm bg-gradient-info">Aberto</span>
-                                </td>
-                                <td class="align-middle text-center">
-                                    <span class="text-secondary text-xs font-weight-bold">07/09/2025</span>
-                                </td>
-                                <td class="align-middle">
-                                    <span class="text-secondary font-weight-bold text-xs">Ver</span>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-4 col-md-6">
-        <div class="card h-100">
-            <div class="card-header pb-0">
-                <h6>Status dos Agentes</h6>
-            </div>
-            <div class="card-body p-3">
-                <div class="timeline timeline-one-side">
-                    {% for perfil in agentes_status %}
-                    <div class="timeline-block mb-3">
-                        <span class="timeline-step">
-                            {% if perfil.status == 'online' %}
-                                <i class="material-symbols-rounded text-success text-gradient">person</i>
-                            {% elif perfil.status == 'ocupado' %}
-                                <i class="material-symbols-rounded text-warning text-gradient">person</i>
-                            {% elif perfil.status == 'ausente' %}
-                                <i class="material-symbols-rounded text-info text-gradient">person</i>
-                            {% else %}
-                                <i class="material-symbols-rounded text-secondary text-gradient">person</i>
-                            {% endif %}
-                        </span>
-                        <div class="timeline-content">
-                            <h6 class="text-dark text-sm font-weight-bold mb-0">João Silva</h6>
-                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
-                                Online - 3 tickets ativos
-                            </p>
-                        </div>
-                    </div>
-                    <div class="timeline-block mb-3">
-                        <span class="timeline-step">
-                            <i class="material-symbols-rounded text-warning text-gradient">person</i>
-                        </span>
-                        <div class="timeline-content">
-                            <h6 class="text-dark text-sm font-weight-bold mb-0">Maria Santos</h6>
-                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
-                                Ocupada - 5 tickets ativos
-                            </p>
-                        </div>
-                    </div>
-                    <div class="timeline-block mb-3">
-                        <span class="timeline-step">
-                            <i class="material-symbols-rounded text-success text-gradient">person</i>
-                        </span>
-                        <div class="timeline-content">
-                            <h6 class="text-dark text-sm font-weight-bold mb-0">Carlos Lima</h6>
-                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
-                                Online - 1 ticket ativo
-                            </p>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-    </div>
+  </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
-    // Auto-refresh das métricas a cada 30 segundos
-    function refreshDashboardMetrics() {
-        fetch('{% url "dashboard:ajax_metrics" %}')
-            .then(response => response.json())
-            .then(data => {
-                // Atualizar métricas sem alterar o layout
-                document.querySelector('.col-xl-3:nth-child(2) h4').textContent = data.atendimentos_hoje || '0';
-                document.querySelector('.col-xl-3:nth-child(3) h4').textContent = data.usuarios_ativos || '0';
-                document.querySelector('.col-xl-3:nth-child(4) h4').textContent = data.tickets_abertos || '0';
-                document.querySelector('.col-xl-3:nth-child(5) h4').textContent = (data.taxa_resolucao || '0') + '%';
-                
-                // Atualizar variações percentuais
-                if (data.variacao_atendimentos) {
-                    const variacaoEl = document.querySelector('.col-xl-3:nth-child(2) .text-success');
-                    if (variacaoEl) {
-                        variacaoEl.textContent = '+' + Math.round(data.variacao_atendimentos) + '% ';
-                    }
-                }
-            })
-            .catch(error => console.log('Erro ao atualizar métricas:', error));
-    }
-    
-    // Executar refresh a cada 30 segundos
-    setInterval(refreshDashboardMetrics, 30000);
-    
-    // Sistema de cores Material Dashboard
-    const materialColors = {
-        primary: '#e91e63',
-        success: '#4caf50', 
-        warning: '#ff9800',
-        info: '#00bcd4',
-        danger: '#f44336',
-        dark: '#344767',
-        light: '#f8f9fa'
-    };
+// ===== GREETING =====
+(function() {
+    var h = new Date().getHours();
+    var p = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+    var el = document.getElementById('greeting');
+    if (el) el.textContent = p + ', {{ user.first_name|default:user.username|escapejs }}!';
 
-    // Função para criar gradientes dinâmicos
-    function createGradient(ctx, colorStart, colorEnd, vertical = true) {
-        const gradient = vertical ? 
-            ctx.createLinearGradient(0, 0, 0, 170) : 
-            ctx.createLinearGradient(0, 0, ctx.canvas.width, 0);
-        gradient.addColorStop(0, colorStart);
-        gradient.addColorStop(1, colorEnd);
-        return gradient;
+    var dt = document.getElementById('datetime-now');
+    if (dt) {
+        var now = new Date();
+        dt.textContent = now.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }) +
+            ' \u2014 ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     }
+})();
 
-    // Função para gerar cores baseadas nos dados
-    function generateDataColors(data, baseColor) {
-        const maxValue = Math.max(...data);
-        return data.map(value => {
-            const intensity = value / maxValue;
-            const alpha = 0.3 + (intensity * 0.7); // Varia de 0.3 a 1.0
-            return baseColor.replace('1)', `${alpha})`);
-        });
-    }
+// ===== AUTO-REFRESH KPIs (60s) =====
+setInterval(function() {
+    fetch('/dashboard/api/metrics/', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.error) return;
+            document.querySelectorAll('[data-metric]').forEach(function(el) {
+                var k = el.getAttribute('data-metric');
+                if (data[k] !== undefined) el.textContent = k === 'taxa_resolucao' ? data[k]+'%' : data[k];
+            });
+        }).catch(function() {});
+}, 60000);
 
-    // Gráfico de barras com cores dinâmicas e gradientes
-    var ctx = document.getElementById("chart-bars").getContext("2d");
-    const chartData = {{ atendimentos_por_hora|safe }};
-    
-    // Criar gradiente para as barras
-    const barGradient = createGradient(ctx, 'rgba(233, 30, 99, 0.8)', 'rgba(233, 30, 99, 0.3)');
-    
-    // Cores dinâmicas baseadas nos valores
-    const dynamicColors = generateDataColors(chartData, 'rgba(233, 30, 99, 1)');
-    
-    new Chart(ctx, {
-        type: "bar",
+// ===== PALETTE =====
+var SL = { slate: '#334155', dark: '#1e293b', cyan: '#06b6d4', cyanL: '#22d3ee', green: '#22c55e', amber: '#f59e0b', red: '#ef4444', purple: '#8b5cf6' };
+
+// ===== LINE CHART - Tickets Trend =====
+(function() {
+    var ctx = document.getElementById('ticketsChart');
+    if (!ctx) return;
+    var labels = JSON.parse('{{ meses_labels|escapejs }}');
+    var data = JSON.parse('{{ tickets_por_mes|escapejs }}');
+
+    var g = ctx.getContext('2d').createLinearGradient(0, 0, 0, 260);
+    g.addColorStop(0, 'rgba(6,182,212,0.18)');
+    g.addColorStop(1, 'rgba(6,182,212,0.01)');
+
+    new Chart(ctx.getContext('2d'), {
+        type: 'line',
         data: {
-            labels: ["8h", "10h", "12h", "14h", "16h", "18h", "20h"],
+            labels: labels,
             datasets: [{
-                label: "Atendimentos",
-                tension: 0.4,
-                borderWidth: 2,
-                borderRadius: 8,
-                borderSkipped: false,
-                backgroundColor: dynamicColors,
-                borderColor: materialColors.primary,
-                hoverBackgroundColor: materialColors.primary,
-                hoverBorderColor: materialColors.dark,
-                hoverBorderWidth: 3,
-                data: chartData,
-                maxBarThickness: 8
-            }],
-        },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false,
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(52, 71, 103, 0.9)',
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        borderColor: materialColors.primary,
-                        borderWidth: 1,
-                        cornerRadius: 8,
-                        displayColors: true,
-                        callbacks: {
-                            title: function(context) {
-                                return `Horário: ${context[0].label}`;
-                            },
-                            label: function(context) {
-                                return `Atendimentos: ${context.parsed.y}`;
-                            }
-                        }
-                    }
-                },
-                interaction: {
-                    intersect: false,
-                    mode: 'index',
-                },
-                scales: {
-                    y: {
-                        grid: {
-                            drawBorder: false,
-                            display: true,
-                            drawOnChartArea: true,
-                            drawTicks: false,
-                            borderDash: [5, 5],
-                            color: 'rgba(233, 30, 99, 0.1)'
-                        },
-                        ticks: {
-                            display: true,
-                            color: materialColors.dark,
-                            padding: 10,
-                            font: {
-                                size: 12,
-                                weight: 500,
-                                family: "Inter",
-                                style: 'normal',
-                                lineHeight: 2
-                            },
-                        }
-                    },
-                    x: {
-                        grid: {
-                            drawBorder: false,
-                            display: true,
-                            drawOnChartArea: true,
-                            drawTicks: false,
-                            borderDash: [5, 5],
-                            color: 'rgba(233, 30, 99, 0.1)'
-                        },
-                        ticks: {
-                            display: true,
-                            color: materialColors.dark,
-                            padding: 10,
-                            font: {
-                                size: 12,
-                                weight: 500,
-                                family: "Inter",
-                                style: 'normal',
-                                lineHeight: 2
-                            },
-                        }
-                    },
-                },
-                animation: {
-                    duration: 2000,
-                    easing: 'easeInOutQuart'
-                }
-            },
-        });
-
-    // Gráfico de linha com gradientes e múltiplas cores
-    var ctx2 = document.getElementById("chart-line").getContext("2d");
-    const lineData = {{ tickets_por_mes|safe }};
-    
-    // Criar gradiente para área preenchida
-    const lineGradient = createGradient(ctx2, 'rgba(76, 175, 80, 0.3)', 'rgba(76, 175, 80, 0.05)');
-    
-    new Chart(ctx2, {
-        type: "line",
-        data: {
-            labels: ["Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
-            datasets: [{
-                label: "Tickets Resolvidos",
-                tension: 0.4,
-                borderWidth: 3,
-                pointRadius: 6,
-                pointHoverRadius: 8,
-                pointBackgroundColor: materialColors.success,
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2,
-                pointHoverBackgroundColor: materialColors.success,
-                pointHoverBorderColor: materialColors.dark,
-                pointHoverBorderWidth: 3,
-                borderColor: materialColors.success,
-                backgroundColor: lineGradient,
-                fill: true,
-                data: lineData,
-                maxBarThickness: 6
-            }],
+                label: 'Tickets', data: data,
+                borderColor: SL.cyan, backgroundColor: g, borderWidth: 2.5, fill: true, tension: 0.4,
+                pointRadius: 3, pointHoverRadius: 6, pointBackgroundColor: SL.cyan, pointBorderColor: document.body.classList.contains('dark-version') ? '#1e293b' : '#fff', pointBorderWidth: 2
+            }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            responsive: true, maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    display: false,
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(52, 71, 103, 0.9)',
-                    titleColor: '#fff',
-                    bodyColor: '#fff',
-                    borderColor: materialColors.success,
-                    borderWidth: 1,
-                    cornerRadius: 8,
-                    displayColors: true,
-                    callbacks: {
-                        title: function(context) {
-                            return `Mês: ${context[0].label}`;
-                        },
-                        label: function(context) {
-                            return `Tickets: ${context.parsed.y}`;
-                        }
-                    }
-                }
-            },
-            interaction: {
-                intersect: false,
-                mode: 'index',
+                legend: { display: false },
+                tooltip: { backgroundColor: 'rgba(30,41,59,0.95)', borderColor: SL.cyan, borderWidth: 1, cornerRadius: 8, titleFont: { size: 12 }, bodyFont: { size: 12 } }
             },
             scales: {
-                y: {
-                    grid: {
-                        drawBorder: false,
-                        display: true,
-                        drawOnChartArea: true,
-                        drawTicks: false,
-                        borderDash: [5, 5],
-                        color: 'rgba(76, 175, 80, 0.1)'
-                    },
-                    ticks: {
-                        display: true,
-                        padding: 10,
-                        color: materialColors.dark,
-                        font: {
-                            size: 12,
-                            weight: 500,
-                            family: "Inter",
-                            style: 'normal',
-                            lineHeight: 2
-                        },
-                    }
-                },
-                x: {
-                    grid: {
-                        drawBorder: false,
-                        display: false,
-                        drawOnChartArea: false,
-                        drawTicks: false,
-                        borderDash: [5, 5]
-                    },
-                    ticks: {
-                        display: true,
-                        color: materialColors.dark,
-                        padding: 10,
-                        font: {
-                            size: 12,
-                            weight: 500,
-                            family: "Inter",
-                            style: 'normal',
-                            lineHeight: 2
-                        },
-                    }
-                },
+                y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)', drawBorder: false }, ticks: { font: { size: 11 }, color: '#94a3b8' } },
+                x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#94a3b8' } }
             },
-            animation: {
-                duration: 2500,
-                easing: 'easeInOutQuart'
-            }
-        },
+            animation: { duration: 1000, easing: 'easeOutQuart' }
+        }
     });
-    
-    // Sistema de cores dinâmico para métricas
-    function updateMetricColors() {
-        const metricCards = document.querySelectorAll('.col-xl-3 .card');
-        const colors = [materialColors.primary, materialColors.success, materialColors.warning, materialColors.info];
-        
-        metricCards.forEach((card, index) => {
-            if (colors[index]) {
-                // Adicionar efeito hover
-                card.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-5px)';
-                    this.style.boxShadow = `0 8px 25px rgba(${hexToRgb(colors[index])}, 0.3)`;
-                    this.style.transition = 'all 0.3s ease';
-                });
-                
-                card.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0)';
-                    this.style.boxShadow = '';
-                });
-            }
-        });
-    }
-    
-    // Converter hex para RGB
-    function hexToRgb(hex) {
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? 
-            `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : 
-            '0, 0, 0';
-    }
-    
-    // Atualização em tempo real dos gráficos
-    function refreshChartsData() {
-        // Simular dados em tempo real
-        const now = new Date();
-        const hours = now.getHours();
-        
-        // Destacar hora atual no gráfico de barras
-        const currentHourIndex = Math.floor((hours - 8) / 2);
-        if (currentHourIndex >= 0 && currentHourIndex < 7) {
-            const barColors = dynamicColors.map((color, index) => 
-                index === currentHourIndex ? materialColors.warning : color
-            );
-            // Atualizar cores se necessário
-        }
-    }
-    
-    // Inicialização de animações suaves
-    function initSmoothAnimations() {
-        // Animação de fade-in para os cards
-        const cards = document.querySelectorAll('.card');
-        cards.forEach((card, index) => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            
-            setTimeout(() => {
-                card.style.transition = 'all 0.5s ease';
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-            }, index * 150);
-        });
-        
-        // Animação pulsante para indicadores ativos
-        const activeIndicators = document.querySelectorAll('.text-success, .bg-gradient-success');
-        activeIndicators.forEach(indicator => {
-            indicator.style.animation = 'pulse 2s infinite';
-        });
-    }
-    
-    // Adicionar CSS para animações
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
-        }
-        
-        .chart-container:hover {
-            transform: scale(1.02);
-            transition: transform 0.3s ease;
-        }
-        
-        .timeline-step i {
-            transition: all 0.3s ease;
-        }
-        
-        .timeline-step:hover i {
-            transform: scale(1.2);
-            filter: drop-shadow(0 0 8px currentColor);
-        }
-        
-        .card {
-            transition: all 0.3s ease;
-        }
-        
-        .card:hover {
-            transform: translateY(-2px);
-        }
-    `;
-    document.head.appendChild(style);
-    
-    // Inicializar todas as funcionalidades quando o DOM estiver pronto
-    document.addEventListener('DOMContentLoaded', function() {
-        // Inicializar animações suaves
-        initSmoothAnimations();
-        
-        // Atualizar cores das métricas
-        updateMetricColors();
-        
-        // Ativar todos os tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-        
-        // Adicionar tooltips informativos nos cards de métricas
-        const metricsCards = document.querySelectorAll('.col-xl-3 .card');
-        const tooltipTexts = [
-            'Total de atendimentos realizados hoje - Atualizado em tempo real',
-            'Número de usuários conectados no sistema agora',
-            'Tickets aguardando resolução - Prioridade alta destacada',
-            'Taxa de sucesso dos atendimentos - Meta: 95%'
-        ];
-        
-        metricsCards.forEach((card, index) => {
-            if (tooltipTexts[index]) {
-                card.setAttribute('data-bs-toggle', 'tooltip');
-                card.setAttribute('data-bs-placement', 'top');
-                card.setAttribute('title', tooltipTexts[index]);
-            }
-        });
-        
-        // Atualizar timestamp dinâmico
-        const now = new Date();
-        const timeString = now.toLocaleTimeString('pt-BR', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        // Encontrar elementos que contêm texto específico
-        const updateElements = Array.from(document.querySelectorAll('.text-sm')).filter(el => 
-            el.textContent.includes('atualizados') || el.textContent.includes('atualização')
-        );
-        if (updateElements.length > 0) {
-            updateElements[0].textContent = `Dados atualizados às ${timeString}`;
-        }
-        
-        // Configurar atualização automática dos gráficos
-        setInterval(refreshChartsData, 30000); // Atualiza a cada 30 segundos
-        
-        // Adicionar indicadores de status em tempo real
-        const statusIndicators = document.querySelectorAll('.timeline-step i');
-        statusIndicators.forEach((indicator, index) => {
-            const colors = [materialColors.success, materialColors.warning, materialColors.info];
-            if (colors[index]) {
-                indicator.style.color = colors[index];
-                indicator.style.textShadow = `0 0 8px ${colors[index]}40`;
-            }
-        });
-        
-        // Sistema de notificações visuais
-        function showUpdateNotification() {
-            const notification = document.createElement('div');
-            notification.className = 'alert alert-success alert-dismissible fade show position-fixed';
-            notification.style.cssText = `
-                top: 20px;
-                right: 20px;
-                z-index: 9999;
-                min-width: 300px;
-                background: linear-gradient(45deg, ${materialColors.success}, ${materialColors.info});
-                color: white;
-                border: none;
-                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-            `;
-            notification.innerHTML = `
-                <i class="material-symbols-rounded me-2">check_circle</i>
-                Gráficos atualizados com sucesso!
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
-            `;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
-        }
-        
-        // Mostrar notificação inicial
-        setTimeout(showUpdateNotification, 1000);
-        
-        // ===== ANALYTICS CHARTS =====
-        initializeAnalyticsCharts();
-    });
-    
-    // Inicializar todos os gráficos de analytics
-    function initializeAnalyticsCharts() {
-        console.log('🚀 Inicializando gráficos...');
-        
-        try {
-            console.log('📊 Inicializando Tickets Chart...');
-            initTicketsChart();
-            console.log('✅ Tickets Chart inicializado');
-        } catch (e) {
-            console.error('❌ Erro no Tickets Chart:', e);
-        }
-        
-        try {
-            console.log('📊 Inicializando Status Chart...');
-            initStatusChart();
-            console.log('✅ Status Chart inicializado');
-        } catch (e) {
-            console.error('❌ Erro no Status Chart:', e);
-        }
-        
-        try {
-            console.log('📊 Inicializando Agent Chart...');
-            initAgentChart();
-            console.log('✅ Agent Chart inicializado');
-        } catch (e) {
-            console.error('❌ Erro no Agent Chart:', e);
-        }
-        
-        try {
-            console.log('📊 Inicializando Heatmap...');
-            initHeatmap();
-            console.log('✅ Heatmap inicializado');
-        } catch (e) {
-            console.error('❌ Erro no Heatmap:', e);
-        }
-        
-        console.log('🎉 Inicialização concluída!');
-    }
-    
-    // Gráfico de Tickets ao Longo do Tempo
-    let ticketsChart = null; // Variável global para armazenar instância do gráfico
-    
-    function initTicketsChart() {
-        const ctx = document.getElementById('ticketsChart');
-        if (!ctx) {
-            console.error('❌ Canvas ticketsChart não encontrado!');
-            return;
-        }
-        
-        // Dados iniciais (30 dias por padrão)
-        loadTicketsChart('30days');
-        
-        // Adicionar listener ao select de período
-        const periodSelect = document.getElementById('chart-period');
-        if (periodSelect) {
-            periodSelect.addEventListener('change', function() {
-                loadTicketsChart(this.value);
-            });
-        }
-    }
-    
-    function loadTicketsChart(period) {
-        console.log('📊 Carregando dados para período:', period);
-        
-        // Mostrar loading
-        const ctx = document.getElementById('ticketsChart');
-        const loadingDiv = document.createElement('div');
-        loadingDiv.id = 'chart-loading';
-        loadingDiv.className = 'text-center p-4';
-        loadingDiv.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Carregando...</span></div>';
-        
-        // Inserir loading antes do canvas
-        if (!document.getElementById('chart-loading')) {
-            ctx.parentNode.insertBefore(loadingDiv, ctx);
-        }
-        
-        // Obter CSRF token
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
-                         document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
-                         '{{ csrf_token }}';
-        
-        // Fazer requisição AJAX
-        const url = `/dashboard/api/tickets-chart/?period=${period}`;
-        console.log('🌐 Fazendo requisição para:', url);
-        
-        fetch(url, {
-            method: 'GET',
-            headers: {
-                'X-CSRFToken': csrfToken,
-                'Content-Type': 'application/json',
-            },
-            credentials: 'same-origin'
-        })
-            .then(response => {
-                console.log('📡 Status da resposta:', response.status);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('📊 Dados recebidos:', data);
-                
-                // Remover loading
-                const loading = document.getElementById('chart-loading');
-                if (loading) loading.remove();
-                
-                // Destruir gráfico anterior se existir
-                if (ticketsChart) {
-                    ticketsChart.destroy();
-                }
-                
-                // Criar novo gráfico
-                ticketsChart = new Chart(ctx.getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: data.labels,
-                        datasets: [{
-                            label: 'Tickets Criados',
-                            data: data.data,
-                            borderColor: 'rgb(102, 126, 234)',
-                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0.4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                grid: {
-                                    color: 'rgba(0,0,0,0.1)'
-                                }
-                            },
-                            x: {
-                                grid: {
-                                    display: false
-                                }
-                            }
-                        }
-                    }
-                });
-                
-                console.log('✅ Tickets Chart atualizado para período:', period);
-            })
-            .catch(error => {
-                console.error('❌ Erro ao carregar dados do gráfico:', error);
-                
-                // Remover loading
-                const loading = document.getElementById('chart-loading');
-                if (loading) loading.remove();
-                
-                // Mostrar erro
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'alert alert-danger text-center';
-                errorDiv.innerHTML = '⚠️ Erro ao carregar dados do gráfico. Tente novamente.';
-                ctx.parentNode.insertBefore(errorDiv, ctx);
-            });
-    }
-    
-    // Gráfico de Status (Pizza)
-    function initStatusChart() {
-        const ctx = document.getElementById('statusChart');
-        if (!ctx) {
-            console.error('❌ Canvas statusChart não encontrado!');
-            return;
-        }
-        
-        const statusData = JSON.parse('{{ status_data|escapejs }}');
-        console.log('📊 Dados status_data:', statusData);
-        
-        if (!statusData || typeof statusData !== 'object') {
-            console.error('❌ Dados inválidos para statusChart:', statusData);
-            return;
-        }
-        
-        // Converter dados para formato Chart.js
-        const labels = Object.keys(statusData).map(key => {
-            const labelMap = {
-                'aberto': 'Abertos',
-                'em_andamento': 'Em Andamento',
-                'resolvido': 'Resolvidos', 
-                'fechado': 'Fechados',
-                'aguardando_cliente': 'Aguardando Cliente'
-            };
-            return labelMap[key] || key;
-        });
-        
-        const data = Object.values(statusData);
-        const colors = [
-            'rgba(244, 67, 54, 0.8)',
-            'rgba(255, 193, 7, 0.8)', 
-            'rgba(76, 175, 80, 0.8)',
-            'rgba(158, 158, 158, 0.8)',
-            'rgba(103, 58, 183, 0.8)'
-        ];
-        
-        new Chart(ctx.getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: data,
-                    backgroundColor: colors.slice(0, data.length),
-                    borderWidth: 2,
-                    borderColor: '#fff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 20,
-                            usePointStyle: true
-                        }
-                    }
-                }
-            }
-        });
-    }
-    
-    // Gráfico de Performance por Agente
-    function initAgentChart() {
-        const ctx = document.getElementById('agentChart');
-        if (!ctx) {
-            console.error('❌ Canvas agentChart não encontrado!');
-            return;
-        }
-        
-        const agentData = JSON.parse('{{ agent_performance|escapejs }}');
-        console.log('📊 Dados agent_performance:', agentData);
-        
-        if (!Array.isArray(agentData) || agentData.length === 0) {
-            console.error('❌ Dados inválidos para agentChart:', agentData);
-            return;
-        }
-        
-        const labels = agentData.map(item => item.agente__username || 'N/A');
-        const data = agentData.map(item => item.count);
-        
-        new Chart(ctx.getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Tickets Resolvidos',
-                    data: data,
-                    backgroundColor: [
-                        'rgba(102, 126, 234, 0.8)',
-                        'rgba(118, 75, 162, 0.8)',
-                        'rgba(255, 99, 132, 0.8)',
-                        'rgba(54, 162, 235, 0.8)',
-                        'rgba(75, 192, 192, 0.8)'
-                    ],
-                    borderRadius: 8,
-                    borderSkipped: false,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0,0,0,0.1)'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
-            }
-        });
-    }
-    
-    // Heatmap de Horários
-    function initHeatmap() {
-        const container = document.getElementById('heatmapContainer');
-        if (!container) {
-            console.error('❌ Container heatmapContainer não encontrado!');
-            return;
-        }
-        
-        const hours = ['00h', '02h', '04h', '06h', '08h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'];
-        const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-        
-        // Dados reais do heatmap
-        const heatmapData = JSON.parse('{{ heatmap_data|escapejs }}');
-        console.log('📊 Dados heatmap_data:', heatmapData);
-        
-        if (!Array.isArray(heatmapData) || heatmapData.length === 0) {
-            console.error('❌ Dados inválidos para heatmap:', heatmapData);
-            container.innerHTML = '<p class="text-center text-muted">Dados não disponíveis</p>';
-            return;
-        }
-        
-        let heatmapHTML = '<table class="table table-borderless" style="font-size: 12px;">';
-        heatmapHTML += '<thead><tr><th></th>';
-        hours.forEach(hour => {
-            heatmapHTML += `<th class="text-center" style="padding: 2px;">${hour}</th>`;
-        });
-        heatmapHTML += '</tr></thead><tbody>';
-        
-        days.forEach((day, dayIndex) => {
-            heatmapHTML += `<tr><td style="font-weight: bold; padding: 2px;">${day}</td>`;
-            hours.forEach((hour, hourIndex) => {
-                const value = heatmapData[dayIndex][hourIndex];
-                const intensity = Math.min(value / 50, 1);
-                const bgColor = `rgba(102, 126, 234, ${intensity})`;
-                heatmapHTML += `<td class="text-center" style="padding: 2px; background-color: ${bgColor}; color: ${intensity > 0.5 ? 'white' : 'black'}; border-radius: 4px; margin: 1px;">${value}</td>`;
-            });
-            heatmapHTML += '</tr>';
-        });
-        heatmapHTML += '</tbody></table>';
-        
-        container.innerHTML = heatmapHTML;
-    }
-</script>
+})();
 
-<!-- CSS para efeitos SLA cards -->
-<style>
-    .cursor-pointer {
-        cursor: pointer;
+// ===== DOUGHNUT - Status =====
+(function() {
+    var ctx = document.getElementById('statusChart');
+    if (!ctx) return;
+    var raw = JSON.parse('{{ status_data|escapejs }}');
+    if (!raw) return;
+
+    var cfg = {
+        aberto: { label: 'Abertos', color: SL.cyan },
+        em_andamento: { label: 'Em Andamento', color: SL.amber },
+        resolvido: { label: 'Resolvidos', color: SL.green },
+        fechado: { label: 'Fechados', color: '#94a3b8' }
+    };
+    var keys = Object.keys(raw);
+
+    new Chart(ctx.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: keys.map(function(k) { return (cfg[k] || {}).label || k; }),
+            datasets: [{ data: keys.map(function(k) { return raw[k]; }), backgroundColor: keys.map(function(k) { return (cfg[k] || {}).color || '#e2e8f0'; }), borderWidth: 2, borderColor: document.body.classList.contains('dark-version') ? '#1e293b' : '#fff', hoverOffset: 6 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false, cutout: '68%',
+            plugins: {
+                legend: { position: 'bottom', labels: { padding: 14, usePointStyle: true, pointStyle: 'circle', font: { size: 11 } } },
+                tooltip: { backgroundColor: 'rgba(30,41,59,0.95)', borderColor: SL.cyan, borderWidth: 1, cornerRadius: 8 }
+            }
+        }
+    });
+})();
+
+// ===== BAR - Atendimentos por Hora =====
+(function() {
+    var ctx = document.getElementById('chart-bars');
+    if (!ctx) return;
+    var data = JSON.parse('{{ atendimentos_por_hora|escapejs }}');
+    if (!Array.isArray(data) || !data.length) return;
+    var max = Math.max.apply(null, data.concat([1]));
+    var colors = data.map(function(v) { return 'rgba(6,182,212,' + (0.25 + (v/max)*0.75) + ')'; });
+    var labels = [];
+    for (var i = 0; i < data.length; i++) labels.push(i + 'h');
+
+    new Chart(ctx.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{ data: data, backgroundColor: colors, borderRadius: 4, borderSkipped: false, maxBarThickness: 14 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(30,41,59,0.95)', borderColor: SL.cyan, borderWidth: 1, cornerRadius: 8 } },
+            scales: {
+                y: { grid: { drawBorder: false, color: 'rgba(0,0,0,0.04)' }, ticks: { font: { size: 10 }, color: '#94a3b8' } },
+                x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#94a3b8', maxRotation: 0 } }
+            },
+            animation: { duration: 1000, easing: 'easeOutQuart' }
+        }
+    });
+})();
+
+// ===== BAR HORIZONTAL - Top Agentes =====
+(function() {
+    var ctx = document.getElementById('agentChart');
+    if (!ctx) return;
+    var data = JSON.parse('{{ agent_performance|escapejs }}');
+    if (!Array.isArray(data) || !data.length) {
+        ctx.parentElement.innerHTML = '<div class="text-center py-5"><i class="material-symbols-rounded text-muted" style="font-size:32px">bar_chart</i><p class="text-xs text-muted mt-1">Sem dados de agentes</p></div>';
+        return;
     }
-    
-    .hover-lift {
-        transition: all 0.3s ease;
-    }
-    
-    .hover-lift:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-    }
-    
-    .hover-lift:hover .icon {
-        transform: scale(1.1);
-    }
-</style>
+    var barColors = [SL.slate, SL.cyan, SL.green, SL.amber, SL.purple];
+
+    new Chart(ctx.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: data.map(function(i) { return i.agente__first_name || i.agente__username || 'N/A'; }),
+            datasets: [{ data: data.map(function(i) { return i.count; }), backgroundColor: barColors.slice(0, data.length), borderRadius: 6, borderSkipped: false }]
+        },
+        options: {
+            indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(30,41,59,0.95)', borderColor: SL.cyan, borderWidth: 1, cornerRadius: 8 } },
+            scales: {
+                x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { size: 10 } } },
+                y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+            }
+        }
+    });
+})();
+
+// ===== HEATMAP =====
+(function() {
+    var c = document.getElementById('heatmapContainer');
+    if (!c) return;
+    var data = JSON.parse('{{ heatmap_data|escapejs }}');
+    if (!Array.isArray(data) || !data.length) { c.innerHTML = '<p class="text-center text-muted py-4 text-xs">Dados insuficientes</p>'; return; }
+
+    var hours = ['06','08','10','12','14','16','18','20'];
+    var days = ['Seg','Ter','Qua','Qui','Sex','S\u00e1b','Dom'];
+    var flat = [];
+    for (var d = 0; d < data.length; d++) { if (Array.isArray(data[d])) for (var h = 0; h < data[d].length; h++) flat.push(data[d][h]); }
+    var max = Math.max.apply(null, flat.concat([1]));
+
+    var html = '<table class="table table-borderless heatmap-table mb-0"><thead><tr><th></th>';
+    hours.forEach(function(hr) { html += '<th>' + hr + 'h</th>'; });
+    html += '</tr></thead><tbody>';
+    days.forEach(function(day, di) {
+        html += '<tr><td class="text-muted" style="font-weight:600;white-space:nowrap;">' + day + '</td>';
+        hours.forEach(function(_, hi) {
+            var v = (data[di] && data[di][hi]) ? data[di][hi] : 0;
+            var intensity = v / max;
+            var isDark = document.body.classList.contains('dark-version');
+            var bg = intensity > 0 ? 'rgba(6,182,212,' + (0.1 + intensity*0.85) + ')' : (isDark ? 'rgba(51,65,85,0.3)' : 'rgba(241,245,249,0.5)');
+            var clr = intensity > 0.5 ? '#fff' : (isDark ? '#94a3b8' : '#64748b');
+            html += '<td style="background:' + bg + ';color:' + clr + ';">' + (v || '') + '</td>';
+        });
+        html += '</tr>';
+    });
+    html += '</tbody></table>';
+    c.innerHTML = html;
+})();
+</script>
 {% endblock %}

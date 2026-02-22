@@ -11,9 +11,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # Executar migração de índices criada anteriormente
+        # No-op: índices já aplicados na migração 0008
         migrations.RunSQL(
-            "-- Índices já aplicados na migração 0008",
-            reverse_sql="-- Rollback dos índices na migração 0008"
+            migrations.RunSQL.noop,
+            reverse_sql=migrations.RunSQL.noop,
         ),
     ]

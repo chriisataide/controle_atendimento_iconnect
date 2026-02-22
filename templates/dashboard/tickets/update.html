@@ -1,282 +1,223 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}Editar Ticket #{{ object.numero }} - iConnect{% endblock %}
-
-{% block extra_css %}
-<style>
-  .edit-form-container {
-    margin-bottom: 2rem;
-    padding: 1.5rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 15px;
-    border: none;
-    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .edit-form-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 1px, transparent 1px),
-                radial-gradient(circle at 75% 75%, rgba(255,255,255,0.1) 1px, transparent 1px),
-                radial-gradient(circle at 50% 10%, rgba(255,255,255,0.08) 0.5px, transparent 0.5px);
-    background-size: 100px 100px, 100px 100px, 100px 100px;
-    opacity: 0.3;
-    z-index: 0;
-  }
-
-  .edit-form-container h6 {
-    color: white;
-    font-weight: 600;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    position: relative;
-    z-index: 1;
-    margin-bottom: 0;
-  }
-
-  .form-section {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-top: 1rem;
-    position: relative;
-    z-index: 1;
-  }
-
-  .status-badge {
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .status-aberto { background: #ffebee; color: #c62828; }
-  .status-em_andamento { background: #e3f2fd; color: #1565c0; }
-  .status-aguardando_cliente { background: #fff8e1; color: #ef6c00; }
-  .status-resolvido { background: #e8f5e8; color: #2e7d32; }
-  .status-fechado { background: #f3e5f5; color: #7b1fa2; }
-
-  .priority-badge {
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .priority-baixa { background: #e8f5e8; color: #2e7d32; }
-  .priority-media { background: #fff8e1; color: #ef6c00; }
-  .priority-alta { background: #ffebee; color: #c62828; }
-  .priority-critica { background: #f3e5f5; color: #7b1fa2; }
-</style>
-{% endblock %}
+{% block title %}Editar Ticket #{{ object.numero }} — iConnect{% endblock %}
+{% block page_title %}Editar Ticket{% endblock %}
+{% block breadcrumb_title %}Editar Ticket{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-2">
-  <!-- Page Header -->
-  <div class="ms-3">
-    <h3 class="mb-0 h4 font-weight-bolder">Editar Ticket</h3>
-    <p class="mb-4">Atualize as informações do ticket #{{ object.numero }}</p>
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+      <div class="ms-3">
+        <h3 class="mb-0 h4 font-weight-bolder">Editar Ticket #{{ object.numero }}</h3>
+        <p class="mb-0 text-sm">Atualize as informações do ticket</p>
+      </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end">
+      <a href="{% url 'dashboard:ticket_detail' object.pk %}" class="btn btn-sm btn-outline-secondary mb-0">
+        <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Voltar
+      </a>
+    </div>
   </div>
 
   <div class="row">
-    <div class="col-12">
-      <div class="card my-4">
-        <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-          <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
-            <h6 class="text-white text-capitalize ps-3">
-              <i class="material-symbols-rounded me-2">edit</i>
-              Editar Ticket #{{ object.numero }}
-            </h6>
+    <div class="col-lg-8">
+      <div class="card mb-4">
+        <div class="card-header p-3 pt-2">
+          <div class="icon icon-lg icon-shape shadow text-center border-radius-xl mt-n4 me-3 float-start" style="background: linear-gradient(195deg, #334155, #1e293b);">
+            <i class="material-symbols-rounded opacity-10 text-white">edit</i>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">Informações do Ticket</h6>
+            <div class="d-flex gap-2">
+              {% if object.status == 'aberto' %}
+                <span class="badge bg-gradient-danger">{{ object.get_status_display }}</span>
+              {% elif object.status == 'em_andamento' %}
+                <span class="badge bg-gradient-warning">{{ object.get_status_display }}</span>
+              {% elif object.status == 'resolvido' %}
+                <span class="badge bg-gradient-info">{{ object.get_status_display }}</span>
+              {% else %}
+                <span class="badge bg-gradient-success">{{ object.get_status_display }}</span>
+              {% endif %}
+              {% if object.prioridade == 'critica' %}
+                <span class="badge bg-gradient-danger">{{ object.get_prioridade_display }}</span>
+              {% elif object.prioridade == 'alta' %}
+                <span class="badge bg-gradient-warning">{{ object.get_prioridade_display }}</span>
+              {% else %}
+                <span class="badge" style="background: linear-gradient(195deg, #06b6d4, #0891b2); color: #fff;">{{ object.get_prioridade_display }}</span>
+              {% endif %}
+            </div>
           </div>
         </div>
-        <div class="card-body">
-          <!-- Informações do Ticket -->
-          <div class="edit-form-container">
-            <div class="d-flex justify-content-between align-items-center">
-              <h6 class="mb-0">
-                <i class="material-symbols-rounded me-2">confirmation_number</i>
-                Informações do Ticket #{{ object.numero }}
-              </h6>
-              <div class="d-flex gap-2">
-                <span class="status-badge status-{{ object.status }}">{{ object.get_status_display }}</span>
-                <span class="priority-badge priority-{{ object.prioridade }}">{{ object.get_prioridade_display }}</span>
+        <div class="card-body p-3">
+          {% if form.errors %}
+          <div class="alert alert-danger alert-dismissible fade show text-white text-sm" role="alert">
+            <i class="material-symbols-rounded me-2">error</i>
+            Corrija os erros abaixo.
+            <button type="button" class="btn-close text-white" data-bs-dismiss="alert"></button>
+          </div>
+          {% endif %}
+
+          <form method="post">
+            {% csrf_token %}
+
+            <!-- Informações Básicas -->
+            <h6 class="text-xs text-uppercase mb-3" style="color: #06b6d4;">
+              <i class="material-symbols-rounded text-sm me-1">info</i> Informações Básicas
+            </h6>
+            <div class="row mb-3">
+              <div class="col-md-8">
+                <label class="form-label text-xs text-uppercase mb-1">Título</label>
+                <input type="text" class="form-control form-control-sm" name="titulo" value="{{ object.titulo }}" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label text-xs text-uppercase mb-1">Cliente</label>
+                <select class="form-select form-select-sm" name="cliente" required>
+                  {% for c in clientes %}
+                  <option value="{{ c.id }}" {% if c.id == object.cliente_id %}selected{% endif %}>{{ c.nome }} ({{ c.email }})</option>
+                  {% endfor %}
+                </select>
               </div>
             </div>
-            
-            <div class="form-section">
-              <form method="post">
-                {% csrf_token %}
-                
-                <!-- Informações Básicas -->
-                <div class="row mb-4">
-                  <div class="col-12">
-                    <h6 class="text-primary mb-3">
-                      <i class="material-symbols-rounded me-2">info</i>
-                      Informações Básicas
-                    </h6>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="input-group input-group-outline is-filled mb-3">
-                      <label class="form-label">Título do Ticket</label>
-                      <input type="text" class="form-control" name="titulo" value="{{ object.titulo }}" required>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="input-group input-group-outline is-filled mb-3">
-                      <label class="form-label">Cliente</label>
-                      <select class="form-control" name="cliente" required>
-                        {% for cliente in clientes %}
-                          <option value="{{ cliente.id }}" {% if cliente.id == object.cliente.id %}selected{% endif %}>
-                            {{ cliente.nome }} ({{ cliente.email }})
-                          </option>
-                        {% endfor %}
-                      </select>
-                    </div>
-                  </div>
-                  <div class="col-12">
-                    <div class="input-group input-group-outline is-filled mb-3">
-                      <label class="form-label">Descrição</label>
-                      <textarea class="form-control" rows="4" name="descricao" required>{{ object.descricao }}</textarea>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Classificação -->
-                <div class="row mb-4">
-                  <div class="col-12">
-                    <h6 class="text-primary mb-3">
-                      <i class="material-symbols-rounded me-2">category</i>
-                      Classificação
-                    </h6>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="input-group input-group-outline is-filled mb-3">
-                      <label class="form-label">Categoria</label>
-                      <select class="form-control" name="categoria" required>
-                        {% for categoria in categorias %}
-                          <option value="{{ categoria.id }}" {% if categoria.id == object.categoria.id %}selected{% endif %}>
-                            {{ categoria.nome }}
-                          </option>
-                        {% endfor %}
-                      </select>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="input-group input-group-outline is-filled mb-3">
-                      <label class="form-label">Prioridade</label>
-                      <select class="form-control" name="prioridade" required>
-                        <option value="baixa" {% if object.prioridade == 'baixa' %}selected{% endif %}>Baixa</option>
-                        <option value="media" {% if object.prioridade == 'media' %}selected{% endif %}>Média</option>
-                        <option value="alta" {% if object.prioridade == 'alta' %}selected{% endif %}>Alta</option>
-                        <option value="critica" {% if object.prioridade == 'critica' %}selected{% endif %}>Crítica</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Status e Atribuição -->
-                <div class="row mb-4">
-                  <div class="col-12">
-                    <h6 class="text-primary mb-3">
-                      <i class="material-symbols-rounded me-2">assignment</i>
-                      Status e Atribuição
-                    </h6>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="input-group input-group-outline is-filled mb-3">
-                      <label class="form-label">Status</label>
-                      <select class="form-control" name="status" required>
-                        <option value="aberto" {% if object.status == 'aberto' %}selected{% endif %}>Aberto</option>
-                        <option value="em_andamento" {% if object.status == 'em_andamento' %}selected{% endif %}>Em Andamento</option>
-                        <option value="aguardando_cliente" {% if object.status == 'aguardando_cliente' %}selected{% endif %}>Aguardando Cliente</option>
-                        <option value="resolvido" {% if object.status == 'resolvido' %}selected{% endif %}>Resolvido</option>
-                        <option value="fechado" {% if object.status == 'fechado' %}selected{% endif %}>Fechado</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="input-group input-group-outline is-filled mb-3">
-                      <label class="form-label">Agente Responsável</label>
-                      <select class="form-control" name="agente">
-                        <option value="">Não atribuído</option>
-                        {% for agente in agentes %}
-                          <option value="{{ agente.id }}" {% if object.agente and agente.id == object.agente.id %}selected{% endif %}>
-                            {{ agente.get_full_name|default:agente.username }}
-                          </option>
-                        {% endfor %}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Informações Adicionais -->
-                <div class="row mb-4">
-                  <div class="col-12">
-                    <h6 class="text-primary mb-3">
-                      <i class="material-symbols-rounded me-2">schedule</i>
-                      Informações do Sistema
-                    </h6>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="input-group input-group-outline is-filled mb-3">
-                      <label class="form-label">Data de Criação</label>
-                      <input type="text" class="form-control" value="{{ object.created_at|date:'d/m/Y H:i' }}" readonly>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="input-group input-group-outline is-filled mb-3">
-                      <label class="form-label">Última Atualização</label>
-                      <input type="text" class="form-control" value="{{ object.updated_at|date:'d/m/Y H:i' }}" readonly>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="input-group input-group-outline is-filled mb-3">
-                      <label class="form-label">Número do Ticket</label>
-                      <input type="text" class="form-control" value="{{ object.numero }}" readonly>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Botões de Ação -->
-                <div class="row">
-                  <div class="col-12">
-                    <div class="d-flex justify-content-between align-items-center">
-                      <div class="d-flex gap-2">
-                        <a href="{% url 'dashboard:ticket_detail' object.pk %}" class="btn btn-outline-secondary">
-                          <i class="material-symbols-rounded me-1">arrow_back</i>
-                          Voltar para Detalhes
-                        </a>
-                        <a href="{% url 'dashboard:ticket_list' %}" class="btn btn-outline-secondary">
-                          <i class="material-symbols-rounded me-1">list</i>
-                          Lista de Tickets
-                        </a>
-                      </div>
-                      <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-light" onclick="window.history.back()">
-                          <i class="material-symbols-rounded me-1">close</i>
-                          Cancelar
-                        </button>
-                        <button type="submit" class="btn btn-primary">
-                          <i class="material-symbols-rounded me-1">save</i>
-                          Salvar Alterações
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </form>
+            <div class="row mb-4">
+              <div class="col-12">
+                <label class="form-label text-xs text-uppercase mb-1">Descrição</label>
+                <textarea class="form-control form-control-sm" name="descricao" rows="4" required>{{ object.descricao }}</textarea>
+              </div>
             </div>
+
+            <!-- Classificação -->
+            <h6 class="text-xs text-uppercase mb-3" style="color: #06b6d4;">
+              <i class="material-symbols-rounded text-sm me-1">category</i> Classificação
+            </h6>
+            <div class="row mb-4">
+              <div class="col-md-4">
+                <label class="form-label text-xs text-uppercase mb-1">Categoria</label>
+                <select class="form-select form-select-sm" name="categoria">
+                  <option value="">Sem categoria</option>
+                  {% for cat in categorias %}
+                  <option value="{{ cat.id }}" {% if object.categoria_id == cat.id %}selected{% endif %}>{{ cat.nome }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label text-xs text-uppercase mb-1">Prioridade</label>
+                <select class="form-select form-select-sm" name="prioridade" required>
+                  <option value="baixa" {% if object.prioridade == 'baixa' %}selected{% endif %}>Baixa</option>
+                  <option value="media" {% if object.prioridade == 'media' %}selected{% endif %}>Média</option>
+                  <option value="alta" {% if object.prioridade == 'alta' %}selected{% endif %}>Alta</option>
+                  <option value="critica" {% if object.prioridade == 'critica' %}selected{% endif %}>Crítica</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label text-xs text-uppercase mb-1">Status</label>
+                <select class="form-select form-select-sm" name="status" required>
+                  <option value="aberto" {% if object.status == 'aberto' %}selected{% endif %}>Aberto</option>
+                  <option value="em_andamento" {% if object.status == 'em_andamento' %}selected{% endif %}>Em Andamento</option>
+                  <option value="aguardando_cliente" {% if object.status == 'aguardando_cliente' %}selected{% endif %}>Aguardando Cliente</option>
+                  <option value="resolvido" {% if object.status == 'resolvido' %}selected{% endif %}>Resolvido</option>
+                  <option value="fechado" {% if object.status == 'fechado' %}selected{% endif %}>Fechado</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Atribuição -->
+            <h6 class="text-xs text-uppercase mb-3" style="color: #06b6d4;">
+              <i class="material-symbols-rounded text-sm me-1">assignment_ind</i> Atribuição
+            </h6>
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <label class="form-label text-xs text-uppercase mb-1">Agente Responsável</label>
+                <select class="form-select form-select-sm" name="agente">
+                  <option value="">Não atribuído</option>
+                  {% for ag in agentes %}
+                  <option value="{{ ag.id }}" {% if object.agente_id == ag.id %}selected{% endif %}>{{ ag.get_full_name|default:ag.username }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label text-xs text-uppercase mb-1">Criado em</label>
+                <input type="text" class="form-control form-control-sm" value="{{ object.criado_em|date:'d/m/Y H:i' }}" readonly disabled>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label text-xs text-uppercase mb-1">Nº do Ticket</label>
+                <input type="text" class="form-control form-control-sm" value="{{ object.numero }}" readonly disabled>
+              </div>
+            </div>
+
+            <!-- Ações -->
+            <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+              <div>
+                <a href="{% url 'dashboard:ticket_detail' object.pk %}" class="btn btn-sm btn-outline-secondary mb-0">
+                  <i class="material-symbols-rounded text-sm me-1">close</i> Cancelar
+                </a>
+              </div>
+              <button type="submit" class="btn btn-sm mb-0" style="background: linear-gradient(195deg, #06b6d4, #0891b2); color: #fff;">
+                <i class="material-symbols-rounded text-sm me-1">save</i> Salvar Alterações
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Coluna Info Rápida -->
+    <div class="col-lg-4">
+      <div class="card mb-4">
+        <div class="card-body p-3">
+          <h6 class="text-sm mb-3" style="color: #06b6d4;">
+            <i class="material-symbols-rounded text-sm me-1">info</i> Resumo
+          </h6>
+          <div class="d-flex justify-content-between text-xs mb-2">
+            <span class="text-secondary">Número</span>
+            <span class="font-weight-bold">#{{ object.numero }}</span>
           </div>
+          <div class="d-flex justify-content-between text-xs mb-2">
+            <span class="text-secondary">Cliente</span>
+            <span class="font-weight-bold">{{ object.cliente.nome }}</span>
+          </div>
+          <div class="d-flex justify-content-between text-xs mb-2">
+            <span class="text-secondary">Criado em</span>
+            <span class="font-weight-bold">{{ object.criado_em|date:"d/m/Y H:i" }}</span>
+          </div>
+          <div class="d-flex justify-content-between text-xs mb-2">
+            <span class="text-secondary">Atualizado</span>
+            <span class="font-weight-bold">{{ object.atualizado_em|date:"d/m/Y H:i" }}</span>
+          </div>
+          {% if object.resolvido_em %}
+          <div class="d-flex justify-content-between text-xs mb-2">
+            <span class="text-secondary">Resolvido</span>
+            <span class="font-weight-bold text-success">{{ object.resolvido_em|date:"d/m/Y H:i" }}</span>
+          </div>
+          {% endif %}
+          {% if object.is_escalated %}
+          <div class="d-flex justify-content-between text-xs mb-2">
+            <span class="text-secondary">Escalado para</span>
+            <span class="font-weight-bold text-danger">{{ object.escalated_to.get_full_name|default:"—" }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body p-3">
+          <h6 class="text-sm mb-2" style="color: #06b6d4;">
+            <i class="material-symbols-rounded text-sm me-1">lightbulb</i> Dicas
+          </h6>
+          <ul class="list-unstyled mb-0">
+            <li class="text-xs text-secondary mb-2">
+              <i class="material-symbols-rounded text-xs me-1">check</i>
+              Altere o status para "Em Andamento" ao iniciar o tratamento
+            </li>
+            <li class="text-xs text-secondary mb-2">
+              <i class="material-symbols-rounded text-xs me-1">check</i>
+              Atribua a um agente para rastreamento de SLA
+            </li>
+            <li class="text-xs text-secondary">
+              <i class="material-symbols-rounded text-xs me-1">check</i>
+              Use a categorização para relatórios precisos
+            </li>
+          </ul>
         </div>
       </div>
     </div>

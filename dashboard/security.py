@@ -180,14 +180,23 @@ class SecurityHeadersMiddleware:
         if not settings.DEBUG:
             response['Content-Security-Policy'] = (
                 "default-src 'self'; "
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+                "script-src 'self' 'unsafe-inline' "
                 "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
                 "style-src 'self' 'unsafe-inline' "
                 "https://fonts.googleapis.com https://cdn.jsdelivr.net; "
                 "font-src 'self' https://fonts.gstatic.com; "
                 "img-src 'self' data: https:; "
-                "connect-src 'self';"
+                "connect-src 'self' wss:; "
+                "frame-ancestors 'none'; "
+                "base-uri 'self'; "
+                "form-action 'self';"
             )
+        
+        # Permissions-Policy
+        response['Permissions-Policy'] = (
+            'geolocation=(), microphone=(), camera=(), '
+            'payment=(), usb=(), magnetometer=()'
+        )
         
         return response
 
@@ -195,11 +204,12 @@ class SecurityHeadersMiddleware:
 
 def validate_file_upload(uploaded_file):
     """
-    Valida arquivos enviados pelo usuário
-    
+    Valida arquivos enviados pelo usuário com verificação de extensão,
+    MIME type e magic bytes.
+
     Args:
         uploaded_file: Arquivo enviado
-        
+
     Returns:
         tuple: (is_valid, error_message)
     """
@@ -207,24 +217,78 @@ def validate_file_upload(uploaded_file):
     max_size = 10 * 1024 * 1024
     if uploaded_file.size > max_size:
         return False, "Arquivo muito grande. Máximo 10MB."
-    
-    # Extensões permitidas
-    allowed_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx', '.txt']
-    file_extension = uploaded_file.name.lower().split('.')[-1]
-    if f'.{file_extension}' not in allowed_extensions:
+
+    # Extensões permitidas e seus MIME types esperados
+    ALLOWED_TYPES = {
+        '.jpg':  ['image/jpeg'],
+        '.jpeg': ['image/jpeg'],
+        '.png':  ['image/png'],
+        '.gif':  ['image/gif'],
+        '.pdf':  ['application/pdf'],
+        '.doc':  ['application/msword'],
+        '.docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+        '.txt':  ['text/plain'],
+    }
+
+    # Magic bytes para validação de conteúdo real
+    MAGIC_BYTES = {
+        '.jpg':  [b'\xff\xd8\xff'],
+        '.jpeg': [b'\xff\xd8\xff'],
+        '.png':  [b'\x89PNG\r\n\x1a\n'],
+        '.gif':  [b'GIF87a', b'GIF89a'],
+        '.pdf':  [b'%PDF'],
+    }
+
+    import os
+    file_extension = os.path.splitext(uploaded_file.name.lower())[1]
+
+    if file_extension not in ALLOWED_TYPES:
         return False, f"Tipo de arquivo não permitido: {file_extension}"
-    
-    # Verificar conteúdo malicioso básico
+
+    # Verificar MIME type (Content-Type header)
+    content_type = getattr(uploaded_file, 'content_type', '')
+    if content_type and content_type not in ALLOWED_TYPES[file_extension]:
+        logger.warning(
+            f"Upload rejeitado: extensão {file_extension} com MIME type {content_type}"
+        )
+        return False, "Tipo de arquivo não corresponde à extensão."
+
+    # Verificar magic bytes se disponíveis
+    if file_extension in MAGIC_BYTES and hasattr(uploaded_file, 'read'):
+        header = uploaded_file.read(16)
+        uploaded_file.seek(0)
+
+        expected_magics = MAGIC_BYTES[file_extension]
+        if not any(header.startswith(magic) for magic in expected_magics):
+            logger.warning(
+                f"Upload rejeitado: {uploaded_file.name} falhou verificação de magic bytes"
+            )
+            return False, "Conteúdo do arquivo não corresponde ao tipo declarado."
+
+    # Verificar conteúdo malicioso
     if hasattr(uploaded_file, 'read'):
-        content = uploaded_file.read(1024)  # Ler primeiros 1KB
-        uploaded_file.seek(0)  # Voltar ao início
-        
-        # Verificar por conteúdo suspeito
-        suspicious_patterns = [b'<script', b'javascript:', b'<?php']
+        content = uploaded_file.read(4096)  # Ler primeiros 4KB
+        uploaded_file.seek(0)
+
+        # Padrões perigosos em qualquer tipo de arquivo
+        suspicious_patterns = [
+            b'<script', b'javascript:', b'<?php', b'<%', b'eval(',
+            b'exec(', b'import os', b'subprocess', b'__import__',
+        ]
+        content_lower = content.lower()
         for pattern in suspicious_patterns:
-            if pattern in content.lower():
+            if pattern in content_lower:
+                logger.warning(
+                    f"Upload rejeitado: conteúdo malicioso detectado em {uploaded_file.name}"
+                )
                 return False, "Conteúdo malicioso detectado no arquivo."
-    
+
+    # Sanitizar nome do arquivo (prevenir path traversal)
+    import re
+    safe_name = re.sub(r'[^\w\-.]', '_', uploaded_file.name)
+    if safe_name != uploaded_file.name:
+        uploaded_file.name = safe_name
+
     return True, ""
 
 def generate_csrf_token():

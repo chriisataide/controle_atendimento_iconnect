@@ -1,0 +1,60 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>403 - Acesso Negado | iConnect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container { text-align: center; padding: 2rem; max-width: 600px; }
+        .error-code {
+            font-size: 8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+            margin-bottom: 1rem;
+        }
+        h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; color: #f1f5f9; }
+        p { color: #94a3b8; margin-bottom: 2rem; line-height: 1.6; }
+        .actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.75rem 1.5rem; border-radius: 0.5rem;
+            text-decoration: none; font-weight: 500; font-size: 0.875rem; transition: all 0.2s;
+        }
+        .btn-primary { background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(6,182,212,0.4); }
+        .btn-outline { border: 1px solid #475569; color: #94a3b8; background: transparent; }
+        .btn-outline:hover { border-color: #06b6d4; color: #06b6d4; }
+        .lock-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="error-code">403</div>
+        <h1>Acesso Negado</h1>
+        <p>Você não tem permissão para acessar esta página. Se você acredita que isso é um erro, entre em contato com o administrador do sistema.</p>
+        <div class="actions">
+            <a href="/" class="btn btn-primary">Ir para o Dashboard</a>
+            <a href="/accounts/login/" class="btn btn-outline">Fazer Login</a>
+            <a href="javascript:history.back()" class="btn btn-outline">Voltar</a>
+        </div>
+    </div>
+</body>
+</html>

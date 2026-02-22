@@ -1,423 +1,329 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Políticas SLA - iConnect{% endblock %}
-
-{% block extra_css %}
-<style>
-.sla-card {
-    border-radius: 15px;
-    transition: all 0.3s ease;
-    border: 1px solid #e9ecef;
-}
-
-.sla-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-}
-
-.priority-badge {
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.875rem;
-}
-
-.priority-critical {
-    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
-    color: white;
-}
-
-.priority-high {
-    background: linear-gradient(135deg, #ffa726, #ff9800);
-    color: white;
-}
-
-.priority-medium {
-    background: linear-gradient(135deg, #42a5f5, #2196f3);
-    color: white;
-}
-
-.priority-low {
-    background: linear-gradient(135deg, #66bb6a, #4caf50);
-    color: white;
-}
-
-.sla-metric {
-    text-align: center;
-    padding: 1.5rem;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-    margin-bottom: 1rem;
-}
-
-.sla-metric h3 {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #344767;
-    margin-bottom: 0.5rem;
-}
-
-.sla-metric p {
-    color: #67748e;
-    margin: 0;
-    font-weight: 500;
-}
-
-.category-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-}
-</style>
-{% endblock %}
+{% block title %}Políticas SLA{% endblock %}
+{% block page_title %}Políticas SLA{% endblock %}
+{% block breadcrumb_title %}Políticas SLA{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="row">
-        <div class="col-12">
-            <div class="ms-3">
-                <h3 class="mb-0 h4 font-weight-bolder">Políticas SLA</h3>
-                <p class="mb-4">
-                    Gerencie os níveis de serviço por categoria e prioridade no sistema iConnect.
-                </p>
-            </div>
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Políticas SLA</h3>
+            <p class="mb-0 text-sm">Gerencie os níveis de serviço por categoria e prioridade</p>
         </div>
     </div>
+    <div class="col-lg-4 col-md-5 text-end">
+        <a href="{% url 'dashboard:sla_dashboard' %}" class="btn btn-sm bg-gradient-dark mb-0 me-1">
+            <i class="material-symbols-rounded text-sm me-1">dashboard</i> Dashboard
+        </a>
+        <button class="btn btn-sm bg-gradient-info mb-0" data-bs-toggle="modal" data-bs-target="#newPolicyModal">
+            <i class="material-symbols-rounded text-sm me-1">add</i> Nova Política
+        </button>
+    </div>
+</div>
 
-    <!-- Estatísticas SLA -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-            <div class="card">
-                <div class="card-header p-3 pt-2">
-                    <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary text-center border-radius-xl mt-n4 position-absolute">
-                        <i class="material-icons opacity-10">policy</i>
-                    </div>
-                    <div class="text-end pt-1">
+<!-- KPIs -->
+<div class="row">
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
                         <p class="text-sm mb-0 text-capitalize">Total de Políticas</p>
-                        <h4 class="mb-0">{{ policies_count|default:0 }}</h4>
+                        <h4 class="mb-0">{{ policies_count|default:"0" }}</h4>
                     </div>
-                </div>
-                <hr class="dark horizontal my-0">
-                <div class="card-footer p-3">
-                    <p class="mb-0"><span class="text-primary text-sm font-weight-bolder">{{ active_policies|default:0 }} </span>ativas</p>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">policy</i>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-            <div class="card">
-                <div class="card-header p-3 pt-2">
-                    <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
-                        <i class="material-icons opacity-10">check_circle</i>
-                    </div>
-                    <div class="text-end pt-1">
-                        <p class="text-sm mb-0 text-capitalize">Conformidade Média</p>
-                        <h4 class="mb-0">{{ avg_compliance|default:"95" }}%</h4>
-                    </div>
-                </div>
-                <hr class="dark horizontal my-0">
-                <div class="card-footer p-3">
-                    <p class="mb-0"><span class="text-success text-sm font-weight-bolder">+2% </span>desde ontem</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-            <div class="card">
-                <div class="card-header p-3 pt-2">
-                    <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute">
-                        <i class="material-icons opacity-10">warning</i>
-                    </div>
-                    <div class="text-end pt-1">
-                        <p class="text-sm mb-0 text-capitalize">Alertas Ativos</p>
-                        <h4 class="mb-0">{{ active_alerts|default:0 }}</h4>
-                    </div>
-                </div>
-                <hr class="dark horizontal my-0">
-                <div class="card-footer p-3">
-                    <p class="mb-0"><span class="text-warning text-sm font-weight-bolder">{{ pending_alerts|default:0 }} </span>pendentes</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-            <div class="card">
-                <div class="card-header p-3 pt-2">
-                    <div class="icon icon-lg icon-shape bg-gradient-danger shadow-danger text-center border-radius-xl mt-n4 position-absolute">
-                        <i class="material-icons opacity-10">error</i>
-                    </div>
-                    <div class="text-end pt-1">
-                        <p class="text-sm mb-0 text-capitalize">Violações (30d)</p>
-                        <h4 class="mb-0">{{ violations_30d|default:0 }}</h4>
-                    </div>
-                </div>
-                <hr class="dark horizontal my-0">
-                <div class="card-footer p-3">
-                    <p class="mb-0"><span class="text-danger text-sm font-weight-bolder">-5% </span>vs mês anterior</p>
-                </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-primary font-weight-bolder">{{ active_policies|default:"0" }}</span> ativas</p>
             </div>
         </div>
     </div>
-
-    <!-- Lista de Políticas -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header pb-0">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6>Políticas SLA Configuradas</h6>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newPolicyModal">
-                                <i class="material-icons text-sm me-1">add</i>
-                                Nova Política
-                            </button>
-                            <button class="btn btn-outline-secondary btn-sm">
-                                <i class="material-icons text-sm">filter_list</i>
-                                Filtros
-                            </button>
-                            <button class="btn btn-outline-info btn-sm">
-                                <i class="material-icons text-sm">import_export</i>
-                                Exportar
-                            </button>
-                        </div>
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Conformidade Média</p>
+                        <h4 class="mb-0">{{ avg_compliance|default:"0" }}%</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">check_circle</i>
                     </div>
                 </div>
-                <div class="card-body px-0 pb-2">
-                    {% if sla_policies %}
-                        <div class="table-responsive p-0">
-                            <table class="table align-items-center mb-0">
-                                <thead>
-                                    <tr>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Categoria</th>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Prioridade</th>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Tempo Resposta</th>
-                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Tempo Resolução</th>
-                                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
-                                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for policy in sla_policies %}
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex px-2 py-1">
-                                                <div class="category-icon bg-gradient-{{ policy.category.color|default:'primary' }}">
-                                                    <i class="material-icons text-white">{{ policy.category.icon|default:'category' }}</i>
-                                                </div>
-                                                <div class="d-flex flex-column justify-content-center ms-3">
-                                                    <h6 class="mb-0 text-sm">{{ policy.category.nome }}</h6>
-                                                    <p class="text-xs text-secondary mb-0">{{ policy.category.descricao|truncatechars:50 }}</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="priority-badge priority-{{ policy.prioridade|lower }}">
-                                                {{ policy.get_prioridade_display }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <i class="material-icons text-info me-2">schedule</i>
-                                                <span class="text-sm font-weight-bold">{{ policy.tempo_resposta_horas }}h</span>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <i class="material-icons text-success me-2">done_all</i>
-                                                <span class="text-sm font-weight-bold">{{ policy.tempo_resolucao_horas }}h</span>
-                                            </div>
-                                        </td>
-                                        <td class="align-middle text-center text-sm">
-                                            {% if policy.ativo %}
-                                                <span class="badge badge-sm bg-gradient-success">Ativo</span>
-                                            {% else %}
-                                                <span class="badge badge-sm bg-gradient-secondary">Inativo</span>
-                                            {% endif %}
-                                        </td>
-                                        <td class="align-middle text-center">
-                                            <div class="d-flex justify-content-center gap-2">
-                                                <button class="btn btn-link text-info text-gradient px-3 mb-0" 
-                                                        data-bs-toggle="tooltip" data-bs-placement="top" 
-                                                        title="Editar política"
-                                                        onclick="editPolicy({{ policy.id }})">
-                                                    <i class="material-icons text-sm">edit</i>
-                                                </button>
-                                                <button class="btn btn-link text-success text-gradient px-3 mb-0"
-                                                        data-bs-toggle="tooltip" data-bs-placement="top" 
-                                                        title="Visualizar métricas"
-                                                        onclick="viewMetrics({{ policy.id }})">
-                                                    <i class="material-icons text-sm">analytics</i>
-                                                </button>
-                                                <button class="btn btn-link text-danger text-gradient px-3 mb-0"
-                                                        data-bs-toggle="tooltip" data-bs-placement="top" 
-                                                        title="Excluir política"
-                                                        onclick="deletePolicy({{ policy.id }})">
-                                                    <i class="material-icons text-sm">delete</i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <!-- Estado Vazio -->
-                        <div class="text-center py-5">
-                            <i class="material-icons text-muted" style="font-size: 64px;">policy</i>
-                            <h5 class="text-muted mt-3">Nenhuma política SLA configurada</h5>
-                            <p class="text-muted">Comece criando sua primeira política de SLA para gerenciar níveis de serviço.</p>
-                            <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#newPolicyModal">
-                                <i class="material-icons me-2">add</i>
-                                Criar Primeira Política
-                            </button>
-                        </div>
-                    {% endif %}
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Taxa de cumprimento</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Alertas Ativos</p>
+                        <h4 class="mb-0">{{ active_alerts|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">warning</i>
+                    </div>
                 </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-warning font-weight-bolder">{{ pending_alerts|default:"0" }}</span> pendentes</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Violações (30d)</p>
+                        <h4 class="mb-0">{{ violations_30d|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">error</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Nos últimos 30 dias</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabela de Políticas -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">policy</i>
+                </div>
+                <h6 class="mb-0">Políticas SLA Configuradas</h6>
+            </div>
+            <div class="card-body px-0 pb-2">
+                {% if sla_policies %}
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Política</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Categoria</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Prioridade</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Resposta</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Resolução</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Escalação</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Horário</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for policy in sla_policies %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ policy.name }}</h6>
+                                            <p class="text-xs text-secondary mb-0">ID #{{ policy.id }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if policy.categoria %}
+                                    <span class="text-xs">{{ policy.categoria.nome }}</span>
+                                    {% else %}
+                                    <span class="text-xs text-muted">Todas</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if policy.prioridade == 'critica' %}
+                                    <span class="badge bg-gradient-danger">{{ policy.get_prioridade_display }}</span>
+                                    {% elif policy.prioridade == 'alta' %}
+                                    <span class="badge bg-gradient-warning">{{ policy.get_prioridade_display }}</span>
+                                    {% elif policy.prioridade == 'media' %}
+                                    <span class="badge bg-gradient-info">{{ policy.get_prioridade_display }}</span>
+                                    {% else %}
+                                    <span class="badge bg-gradient-success">{{ policy.get_prioridade_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-sm font-weight-bold">{{ policy.first_response_time }}<span class="text-xs text-muted">min</span></span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-sm font-weight-bold">{{ policy.resolution_time }}<span class="text-xs text-muted">min</span></span>
+                                </td>
+                                <td class="text-center">
+                                    {% if policy.escalation_enabled %}
+                                    <span class="text-sm font-weight-bold">{{ policy.escalation_time }}<span class="text-xs text-muted">min</span></span>
+                                    {% else %}
+                                    <span class="text-xs text-muted">Desabilitada</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if policy.business_hours_only %}
+                                    <span class="text-xs">{{ policy.start_hour|time:"H:i" }}–{{ policy.end_hour|time:"H:i" }}</span>
+                                    {% else %}
+                                    <span class="badge bg-gradient-dark">24/7</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if policy.is_active %}
+                                    <span class="badge bg-gradient-success">Ativo</span>
+                                    {% else %}
+                                    <span class="badge bg-gradient-secondary">Inativo</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-link text-danger px-2 mb-0" onclick="deletePolicy({{ policy.id }}, '{{ policy.name|escapejs }}')" title="Excluir">
+                                        <i class="material-symbols-rounded text-sm">delete</i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="material-symbols-rounded text-muted" style="font-size:64px;">policy</i>
+                    <h5 class="text-muted mt-3">Nenhuma política SLA configurada</h5>
+                    <p class="text-muted">Crie sua primeira política para gerenciar níveis de serviço.</p>
+                    <button class="btn bg-gradient-info mt-2" data-bs-toggle="modal" data-bs-target="#newPolicyModal">
+                        <i class="material-symbols-rounded me-1">add</i> Criar Primeira Política
+                    </button>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
 <!-- Modal Nova Política -->
-<div class="modal fade" id="newPolicyModal" tabindex="-1" aria-labelledby="newPolicyModalLabel" aria-hidden="true">
+<div class="modal fade" id="newPolicyModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="newPolicyModalLabel">
-                    <i class="material-icons me-2" style="vertical-align: middle;">add_circle</i>
+                <h5 class="modal-title">
+                    <i class="material-symbols-rounded me-2" style="vertical-align:middle;">add_circle</i>
                     Nova Política SLA
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="newPolicyForm" method="POST">
+            <form method="POST" action="{% url 'dashboard:sla_policies' %}">
                 {% csrf_token %}
                 <div class="modal-body">
                     <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label text-xs text-uppercase">Nome da Política</label>
+                            <div class="input-group input-group-outline">
+                                <input type="text" name="name" class="form-control" placeholder="Ex: SLA Crítica - Suporte" required>
+                            </div>
+                        </div>
                         <div class="col-md-6">
-                            <label class="form-label">Categoria</label>
-                            <select name="categoria" class="form-select" required>
-                                <option value="">Selecione uma categoria</option>
-                                {% for categoria in categorias %}
-                                    <option value="{{ categoria.id }}">{{ categoria.nome }}</option>
+                            <label class="form-label text-xs text-uppercase">Categoria</label>
+                            <select name="categoria" class="form-select">
+                                <option value="">Todas as categorias</option>
+                                {% for cat in categorias %}
+                                <option value="{{ cat.id }}">{{ cat.nome }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Prioridade</label>
+                            <label class="form-label text-xs text-uppercase">Prioridade</label>
                             <select name="prioridade" class="form-select" required>
-                                <option value="">Selecione a prioridade</option>
-                                <option value="baixa">🟢 Baixa</option>
-                                <option value="media">🟡 Média</option>
-                                <option value="alta">🟠 Alta</option>
-                                <option value="critica">🔴 Crítica</option>
+                                <option value="">Selecione</option>
+                                {% for value, label in prioridades %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Tempo de Resposta (horas)</label>
-                            <input type="number" name="tempo_resposta_horas" class="form-control" min="0.5" step="0.5" required>
+                        <div class="col-md-4">
+                            <label class="form-label text-xs text-uppercase">Tempo Resposta (min)</label>
+                            <div class="input-group input-group-outline">
+                                <input type="number" name="first_response_time" class="form-control" value="240" min="1" required>
+                            </div>
+                            <small class="text-muted">240min = 4h</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-xs text-uppercase">Tempo Resolução (min)</label>
+                            <div class="input-group input-group-outline">
+                                <input type="number" name="resolution_time" class="form-control" value="1440" min="1" required>
+                            </div>
+                            <small class="text-muted">1440min = 24h</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-xs text-uppercase">Tempo Escalação (min)</label>
+                            <div class="input-group input-group-outline">
+                                <input type="number" name="escalation_time" class="form-control" value="480" min="1">
+                            </div>
+                            <small class="text-muted">480min = 8h</small>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Tempo de Resolução (horas)</label>
-                            <input type="number" name="tempo_resolucao_horas" class="form-control" min="1" step="1" required>
+                            <label class="form-label text-xs text-uppercase">% para Alerta</label>
+                            <div class="input-group input-group-outline">
+                                <input type="number" name="warning_percentage" class="form-control" value="80" min="1" max="100">
+                            </div>
                         </div>
-                        <div class="col-12">
-                            <label class="form-label">Descrição</label>
-                            <textarea name="descricao" class="form-control" rows="3" 
-                                      placeholder="Descreva os critérios e condições desta política SLA..."></textarea>
+                        <div class="col-md-3">
+                            <div class="form-check form-switch mt-4">
+                                <input class="form-check-input" type="checkbox" name="business_hours_only" id="businessHours" checked>
+                                <label class="form-check-label" for="businessHours">Horário comercial</label>
+                            </div>
                         </div>
-                        <div class="col-12">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" name="ativo" id="ativoSwitch" checked>
-                                <label class="form-check-label" for="ativoSwitch">
-                                    Política ativa
-                                </label>
+                        <div class="col-md-3">
+                            <div class="form-check form-switch mt-4">
+                                <input class="form-check-input" type="checkbox" name="is_active" id="policyActive" checked>
+                                <label class="form-check-label" for="policyActive">Ativa</label>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="material-icons me-2">save</i>
-                        Salvar Política
+                    <button type="button" class="btn btn-outline-dark btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn bg-gradient-info btn-sm">
+                        <i class="material-symbols-rounded text-sm me-1">save</i> Salvar Política
                     </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-
 {% endblock %}
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-});
-
-// Função para editar política
-function editPolicy(policyId) {
-    // Implementar edição de política
-    console.log('Editando política:', policyId);
-    // Aqui você pode abrir um modal de edição ou redirecionar para página de edição
-}
-
-// Função para visualizar métricas
-function viewMetrics(policyId) {
-    // Implementar visualização de métricas
-    console.log('Visualizando métricas da política:', policyId);
-    // Aqui você pode abrir um modal com gráficos ou redirecionar para dashboard de métricas
-}
-
-// Função para excluir política
-function deletePolicy(policyId) {
-    if (confirm('Tem certeza que deseja excluir esta política SLA?')) {
-        // Implementar exclusão
-        console.log('Excluindo política:', policyId);
-        // Aqui você faria a requisição AJAX para excluir
-    }
-}
-
-// Manipular submissão do formulário de nova política
-document.getElementById('newPolicyForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    
-    // Aqui você faria a requisição AJAX para salvar
-    fetch(window.location.href, {
+function deletePolicy(policyId, policyName) {
+    if (!confirm('Excluir a política "' + policyName + '"?\nEsta ação não pode ser desfeita.')) return;
+    fetch(`/dashboard/api/sla/policies/${policyId}/delete/`, {
         method: 'POST',
-        body: formData,
         headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value 
+                || document.cookie.split('; ').find(c => c.startsWith('csrftoken='))?.split('=')[1] || ''
         }
     })
-    .then(response => response.json())
+    .then(r => r.json())
     .then(data => {
-        if (data.success) {
-            // Fechar modal e recarregar página
-            bootstrap.Modal.getInstance(document.getElementById('newPolicyModal')).hide();
-            location.reload();
-        } else {
-            alert('Erro ao salvar política: ' + (data.error || 'Erro desconhecido'));
-        }
+        if (data.success) { location.reload(); }
+        else { alert('Erro: ' + (data.error || 'Não foi possível excluir')); }
     })
-    .catch(error => {
-        console.error('Erro:', error);
-        alert('Erro ao salvar política');
+    .catch(() => {
+        // Fallback: simplesmente recarrega se API não existe ainda
+        alert('Funcionalidade de exclusão via API em desenvolvimento.');
     });
-});
+}
 </script>
 {% endblock %}

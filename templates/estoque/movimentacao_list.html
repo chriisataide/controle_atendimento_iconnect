@@ -1,436 +1,257 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Movimentações - iConnect{% endblock %}
-
-{% block page_title %}Movimentações de Estoque{% endblock %}
+{% block title %}Movimentações — Estoque{% endblock %}
+{% block page_title %}Movimentações{% endblock %}
 {% block breadcrumb_title %}Movimentações{% endblock %}
 
 {% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Movimentações de Estoque</h3>
+            <p class="mb-0 text-sm">Histórico de entradas, saídas e ajustes de estoque</p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end">
+        <a href="{% url 'estoque:movimentacao_create' %}" class="btn btn-sm bg-gradient-info mb-0">
+            <i class="material-symbols-rounded text-sm me-1">add_circle</i> Nova Movimentação
+        </a>
+    </div>
+</div>
+
+<!-- KPIs -->
 <div class="row">
-    <div class="col-12">
-        <div class="card my-4">
-            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="text-white text-capitalize ps-3">Histórico de Movimentações</h6>
-                        <div class="me-3">
-                            <a href="{% url 'estoque:movimentacao_create' %}" class="btn btn-sm btn-outline-white">
-                                <i class="material-symbols-rounded me-1">add</i>
-                                Nova Movimentação
-                            </a>
-                        </div>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Total Entradas</p>
+                        <h4 class="mb-0 text-success">{{ total_entradas.total|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">arrow_downward</i>
                     </div>
                 </div>
             </div>
-            
-            <!-- Filtros -->
-            <div class="card-body px-0 pb-2">
-                <div class="row px-3 mb-3">
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">R$ <span class="text-success font-weight-bolder">{{ total_entradas.valor|floatformat:2|default:"0,00" }}</span></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Total Saídas</p>
+                        <h4 class="mb-0 text-danger">{{ total_saidas.total|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">arrow_upward</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">R$ <span class="text-danger font-weight-bolder">{{ total_saidas.valor|floatformat:2|default:"0,00" }}</span></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Total Geral</p>
+                        <h4 class="mb-0">{{ total_movimentacoes }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">swap_vert</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Todas as movimentações listadas</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Hoje</p>
+                        <h4 class="mb-0 text-info">{{ movimentacoes_hoje }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">today</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Movimentações de hoje</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body p-3">
+                <form method="get" class="row g-2 align-items-end">
                     <div class="col-md-3">
+                        <label class="form-label text-xs text-uppercase mb-1">Produto</label>
+                        <select name="produto" class="form-select form-select-sm">
+                            <option value="">Todos</option>
+                            {% for p in produtos %}
+                            <option value="{{ p.id }}" {% if request.GET.produto == p.id|stringformat:"d" %}selected{% endif %}>{{ p.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label text-xs text-uppercase mb-1">Tipo</label>
+                        <select name="tipo_operacao" class="form-select form-select-sm">
+                            <option value="">Todos</option>
+                            <option value="entrada" {% if request.GET.tipo_operacao == "entrada" %}selected{% endif %}>Entrada</option>
+                            <option value="saida" {% if request.GET.tipo_operacao == "saida" %}selected{% endif %}>Saída</option>
+                            <option value="ajuste" {% if request.GET.tipo_operacao == "ajuste" %}selected{% endif %}>Ajuste</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label text-xs text-uppercase mb-1">Data Início</label>
                         <div class="input-group input-group-outline">
-                            <input type="text" id="search-input" class="form-control" placeholder="Buscar produto...">
+                            <input type="date" name="data_inicio" class="form-control form-control-sm" value="{{ request.GET.data_inicio }}">
                         </div>
                     </div>
                     <div class="col-md-2">
+                        <label class="form-label text-xs text-uppercase mb-1">Data Fim</label>
                         <div class="input-group input-group-outline">
-                            <select class="form-control" id="tipo-filter">
-                                <option value="">Todos os tipos</option>
-                                <option value="entrada">Entrada</option>
-                                <option value="saida">Saída</option>
-                            </select>
+                            <input type="date" name="data_fim" class="form-control form-control-sm" value="{{ request.GET.data_fim }}">
                         </div>
                     </div>
-                    <div class="col-md-2">
-                        <div class="input-group input-group-outline">
-                            <input type="date" class="form-control" id="data-inicio">
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="input-group input-group-outline">
-                            <input type="date" class="form-control" id="data-fim">
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="input-group input-group-outline">
-                            <select class="form-control" id="usuario-filter">
-                                <option value="">Todos os usuários</option>
-                                {% for usuario in usuarios %}
-                                <option value="{{ usuario.id }}">{{ usuario.get_full_name|default:usuario.username }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-1">
-                        <button class="btn btn-primary btn-sm w-100" onclick="aplicarFiltros()">
-                            <i class="material-symbols-rounded">search</i>
+                    <div class="col-md-3 text-end">
+                        <button type="submit" class="btn btn-sm bg-gradient-primary mb-0">
+                            <i class="material-symbols-rounded text-sm me-1">filter_list</i> Filtrar
                         </button>
+                        <a href="{% url 'estoque:movimentacao_list' %}" class="btn btn-sm btn-outline-dark mb-0 ms-1">Limpar</a>
                     </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabela Movimentações -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">sync_alt</i>
                 </div>
-                
-                <!-- Resumo das Movimentações -->
-                <div class="row px-3 mb-3">
-                    <div class="col-md-3">
-                        <div class="card bg-gradient-success">
-                            <div class="card-body p-3">
-                                <div class="d-flex">
-                                    <div class="icon icon-sm icon-shape bg-white shadow text-center border-radius-sm">
-                                        <i class="material-symbols-rounded text-success">trending_up</i>
-                                    </div>
-                                    <div class="ms-3">
-                                        <p class="text-sm mb-0 text-white opacity-8">Total Entradas</p>
-                                        <h5 class="mb-0 text-white" id="total-entradas">{{ total_entradas|default:"0" }}</h5>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-gradient-danger">
-                            <div class="card-body p-3">
-                                <div class="d-flex">
-                                    <div class="icon icon-sm icon-shape bg-white shadow text-center border-radius-sm">
-                                        <i class="material-symbols-rounded text-danger">trending_down</i>
-                                    </div>
-                                    <div class="ms-3">
-                                        <p class="text-sm mb-0 text-white opacity-8">Total Saídas</p>
-                                        <h5 class="mb-0 text-white" id="total-saidas">{{ total_saidas|default:"0" }}</h5>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-gradient-info">
-                            <div class="card-body p-3">
-                                <div class="d-flex">
-                                    <div class="icon icon-sm icon-shape bg-white shadow text-center border-radius-sm">
-                                        <i class="material-symbols-rounded text-info">sync</i>
-                                    </div>
-                                    <div class="ms-3">
-                                        <p class="text-sm mb-0 text-white opacity-8">Movimentações</p>
-                                        <h5 class="mb-0 text-white" id="total-movimentacoes">{{ total_movimentacoes|default:"0" }}</h5>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-gradient-warning">
-                            <div class="card-body p-3">
-                                <div class="d-flex">
-                                    <div class="icon icon-sm icon-shape bg-white shadow text-center border-radius-sm">
-                                        <i class="material-symbols-rounded text-warning">calendar_today</i>
-                                    </div>
-                                    <div class="ms-3">
-                                        <p class="text-sm mb-0 text-white opacity-8">Hoje</p>
-                                        <h5 class="mb-0 text-white" id="movimentacoes-hoje">{{ movimentacoes_hoje|default:"0" }}</h5>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Tabela de Movimentações -->
+                <h6 class="mb-0">Histórico de Movimentações</h6>
+            </div>
+            <div class="card-body px-0 pb-2">
                 <div class="table-responsive p-0">
-                    <table class="table align-items-center mb-0" id="movimentacoes-table">
+                    <table class="table align-items-center mb-0">
                         <thead>
                             <tr>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Número</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Data/Hora</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Nº</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Produto</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Tipo</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Quantidade</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Estoque Após</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tipo</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Qtd</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Saldo</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Chamado</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Data</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Usuário</th>
-                                <th class="text-secondary opacity-7">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for movimentacao in movimentacoes %}
-                            <tr data-tipo="{{ movimentacao.tipo_movimentacao.tipo|lower }}" 
-                                data-usuario="{{ movimentacao.usuario.id }}"
-                                data-data="{{ movimentacao.data_movimentacao|date:'Y-m-d' }}">
-                                
+                            {% for mov in movimentacoes %}
+                            <tr>
                                 <td>
-                                    <p class="text-xs font-weight-bold mb-0">{{ movimentacao.numero_movimentacao }}</p>
+                                    <span class="text-xs font-weight-bold px-2">{{ mov.numero }}</span>
                                 </td>
-                                
                                 <td>
-                                    <div class="d-flex flex-column justify-content-center">
-                                        <h6 class="mb-0 text-sm">{{ movimentacao.data_movimentacao|date:"d/m/Y" }}</h6>
-                                        <p class="text-xs text-secondary mb-0">{{ movimentacao.data_movimentacao|date:"H:i" }}</p>
-                                    </div>
-                                </td>
-                                
-                                <td>
-                                    <div class="d-flex px-2 py-1">
+                                    <div class="d-flex">
                                         <div class="d-flex flex-column justify-content-center">
-                                            <h6 class="mb-0 text-sm">{{ movimentacao.produto.nome }}</h6>
-                                            <p class="text-xs text-secondary mb-0">{{ movimentacao.produto.codigo }}</p>
+                                            <h6 class="mb-0 text-sm">{{ mov.produto.nome }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ mov.produto.codigo }}</p>
                                         </div>
                                     </div>
                                 </td>
-                                
-                                <td>
-                                    {% if movimentacao.tipo_movimentacao.tipo == 'entrada' %}
-                                    <span class="badge badge-sm bg-gradient-success">
-                                        <i class="material-symbols-rounded text-xs me-1">trending_up</i>
-                                        Entrada
-                                    </span>
+                                <td class="text-center">
+                                    {% if mov.tipo_operacao == 'entrada' %}
+                                    <span class="badge bg-gradient-success">Entrada</span>
+                                    {% elif mov.tipo_operacao == 'saida' %}
+                                    <span class="badge bg-gradient-danger">Saída</span>
+                                    {% elif mov.tipo_operacao == 'ajuste' %}
+                                    <span class="badge bg-gradient-warning">Ajuste</span>
                                     {% else %}
-                                    <span class="badge badge-sm bg-gradient-danger">
-                                        <i class="material-symbols-rounded text-xs me-1">trending_down</i>
-                                        Saída
-                                    </span>
+                                    <span class="badge bg-gradient-info">{{ mov.get_tipo_operacao_display }}</span>
                                     {% endif %}
                                 </td>
-                                
-                                <td>
-                                    <p class="text-xs font-weight-bold mb-0 
-                                       {% if movimentacao.tipo_movimentacao.tipo == 'entrada' %}text-success{% else %}text-danger{% endif %}">
-                                        {% if movimentacao.tipo_movimentacao.tipo == 'entrada' %}+{% else %}-{% endif %}{{ movimentacao.quantidade|floatformat:2 }} {{ movimentacao.produto.unidade_medida.sigla }}
-                                    </p>
+                                <td class="text-center">
+                                    <span class="text-sm font-weight-bold {% if mov.tipo_operacao == 'saida' %}text-danger{% elif mov.tipo_operacao == 'entrada' %}text-success{% endif %}">
+                                        {% if mov.tipo_operacao == 'saida' %}-{% elif mov.tipo_operacao == 'entrada' %}+{% endif %}{{ mov.quantidade|floatformat:1 }}
+                                    </span>
+                                    <br><span class="text-xs text-muted">{{ mov.produto.unidade_medida.sigla }}</span>
                                 </td>
-                                
-                                <td>
-                                    <p class="text-xs font-weight-bold mb-0">{{ movimentacao.estoque_apos_movimentacao|floatformat:2 }} {{ movimentacao.produto.unidade_medida.sigla }}</p>
+                                <td class="text-center">
+                                    <span class="text-sm">{{ mov.estoque_apos_movimentacao|floatformat:1 }}</span>
                                 </td>
-                                
                                 <td>
-                                    <p class="text-xs mb-0">{{ movimentacao.usuario.get_full_name|default:movimentacao.usuario.username }}</p>
+                                    {% if mov.ticket_relacionado %}
+                                    <span class="badge bg-gradient-info">#{{ mov.ticket_relacionado.numero }}</span>
+                                    {% else %}
+                                    <span class="text-xs text-muted">Manual</span>
+                                    {% endif %}
                                 </td>
-                                
-                                <td class="align-middle">
-                                    <div class="d-flex">
-                                        <button type="button" class="btn btn-link text-dark px-2 mb-0" 
-                                                title="Ver detalhes" onclick="verDetalhes({{ movimentacao.pk }})">
-                                            <i class="material-symbols-rounded text-sm">visibility</i>
-                                        </button>
-                                        {% if movimentacao.pode_cancelar %}
-                                        <button type="button" class="btn btn-link text-danger px-2 mb-0" 
-                                                title="Cancelar movimentação" onclick="cancelarMovimentacao({{ movimentacao.pk }})">
-                                            <i class="material-symbols-rounded text-sm">cancel</i>
-                                        </button>
-                                        {% endif %}
-                                    </div>
+                                <td>
+                                    <span class="text-xs">{{ mov.data_movimentacao|date:"d/m/Y H:i" }}</span>
+                                </td>
+                                <td>
+                                    <span class="text-xs">{{ mov.usuario.get_full_name|default:mov.usuario.username }}</span>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="8" class="text-center text-muted py-4">
-                                    <i class="material-symbols-rounded display-4 text-muted mb-3">sync</i>
-                                    <h6>Nenhuma movimentação encontrada</h6>
-                                    <p>Comece registrando sua primeira movimentação de estoque.</p>
-                                    <a href="{% url 'estoque:movimentacao_create' %}" class="btn btn-primary">
-                                        <i class="material-symbols-rounded me-1">add</i>
-                                        Nova Movimentação
-                                    </a>
+                                <td colspan="8" class="text-center py-5">
+                                    <i class="material-symbols-rounded text-muted" style="font-size: 3rem">sync</i>
+                                    <p class="text-sm text-muted mt-2 mb-0">Nenhuma movimentação encontrada</p>
                                 </td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
-                
-                <!-- Paginação -->
-                {% if is_paginated %}
-                <div class="row mt-3 px-3">
-                    <div class="col-sm-12 col-md-5">
-                        <div class="dataTables_info">
-                            Mostrando {{ page_obj.start_index }} a {{ page_obj.end_index }} 
-                            de {{ page_obj.paginator.count }} movimentações
-                        </div>
-                    </div>
-                    <div class="col-sm-12 col-md-7">
-                        <div class="dataTables_paginate paging_simple_numbers">
-                            <ul class="pagination">
-                                {% if page_obj.has_previous %}
-                                <li class="paginate_button page-item previous">
-                                    <a href="?page={{ page_obj.previous_page_number }}" class="page-link">Anterior</a>
-                                </li>
-                                {% endif %}
-                                
-                                {% for num in page_obj.paginator.page_range %}
-                                {% if page_obj.number == num %}
-                                <li class="paginate_button page-item active">
-                                    <a href="#" class="page-link">{{ num }}</a>
-                                </li>
-                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                                <li class="paginate_button page-item">
-                                    <a href="?page={{ num }}" class="page-link">{{ num }}</a>
-                                </li>
-                                {% endif %}
-                                {% endfor %}
-                                
-                                {% if page_obj.has_next %}
-                                <li class="paginate_button page-item next">
-                                    <a href="?page={{ page_obj.next_page_number }}" class="page-link">Próximo</a>
-                                </li>
-                                {% endif %}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
             </div>
+            {% if is_paginated %}
+            <div class="card-footer d-flex justify-content-center">
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page=1">&laquo;</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&lsaquo;</a></li>
+                        {% endif %}
+                        <li class="page-item active"><a class="page-link bg-gradient-primary border-0" href="#">{{ page_obj.number }}</a></li>
+                        {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">&rsaquo;</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">&raquo;</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
-
-<!-- Modal de Detalhes da Movimentação -->
-<div class="modal fade" id="detalhesModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Detalhes da Movimentação</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="detalhes-content">
-                <!-- Conteúdo carregado via AJAX -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Configurar datas padrão (últimos 30 dias)
-    const hoje = new Date();
-    const dataFim = hoje.toISOString().split('T')[0];
-    const dataInicio = new Date(hoje.getTime() - (30 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0];
-    
-    document.getElementById('data-fim').value = dataFim;
-    document.getElementById('data-inicio').value = dataInicio;
-});
-
-function aplicarFiltros() {
-    const search = document.getElementById('search-input').value;
-    const tipo = document.getElementById('tipo-filter').value;
-    const dataInicio = document.getElementById('data-inicio').value;
-    const dataFim = document.getElementById('data-fim').value;
-    const usuario = document.getElementById('usuario-filter').value;
-    
-    const params = new URLSearchParams();
-    if (search) params.append('search', search);
-    if (tipo) params.append('tipo', tipo);
-    if (dataInicio) params.append('data_inicio', dataInicio);
-    if (dataFim) params.append('data_fim', dataFim);
-    if (usuario) params.append('usuario', usuario);
-    
-    window.location.href = '?' + params.toString();
-}
-
-function verDetalhes(movimentacaoId) {
-    fetch(`/estoque/api/movimentacoes/${movimentacaoId}/`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const detalhesHtml = `
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="text-uppercase text-body text-xs font-weight-bolder">Informações da Movimentação</h6>
-                            <p><strong>Número:</strong> ${data.movimentacao.numero_movimentacao}</p>
-                            <p><strong>Data/Hora:</strong> ${data.movimentacao.data_movimentacao}</p>
-                            <p><strong>Tipo:</strong> 
-                                <span class="badge ${data.movimentacao.tipo === 'entrada' ? 'bg-gradient-success' : 'bg-gradient-danger'}">
-                                    ${data.movimentacao.tipo_display}
-                                </span>
-                            </p>
-                            <p><strong>Usuário:</strong> ${data.movimentacao.usuario_nome}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-uppercase text-body text-xs font-weight-bolder">Produto</h6>
-                            <p><strong>Nome:</strong> ${data.movimentacao.produto_nome}</p>
-                            <p><strong>Código:</strong> ${data.movimentacao.produto_codigo}</p>
-                            <p><strong>Quantidade:</strong> ${data.movimentacao.quantidade} ${data.movimentacao.unidade}</p>
-                            <p><strong>Estoque após:</strong> ${data.movimentacao.estoque_apos} ${data.movimentacao.unidade}</p>
-                        </div>
-                    </div>
-                    ${data.movimentacao.observacoes ? `
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <h6 class="text-uppercase text-body text-xs font-weight-bolder">Observações</h6>
-                            <p>${data.movimentacao.observacoes}</p>
-                        </div>
-                    </div>
-                    ` : ''}
-                `;
-                
-                document.getElementById('detalhes-content').innerHTML = detalhesHtml;
-                
-                const modal = new bootstrap.Modal(document.getElementById('detalhesModal'));
-                modal.show();
-            }
-        })
-        .catch(error => {
-            console.error('Erro ao carregar detalhes:', error);
-            alert('Erro ao carregar detalhes da movimentação');
-        });
-}
-
-function cancelarMovimentacao(movimentacaoId) {
-    if (confirm('Tem certeza que deseja cancelar esta movimentação? Esta ação irá reverter o estoque.')) {
-        fetch(`/estoque/api/movimentacoes/${movimentacaoId}/cancelar/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                'Content-Type': 'application/json',
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Erro ao cancelar movimentação: ' + (data.error || 'Erro desconhecido'));
-            }
-        })
-        .catch(error => {
-            console.error('Erro:', error);
-            alert('Erro ao cancelar movimentação');
-        });
-    }
-}
-
-// Filtros em tempo real
-document.getElementById('search-input').addEventListener('input', function() {
-    filtrarTabela();
-});
-
-document.getElementById('tipo-filter').addEventListener('change', function() {
-    filtrarTabela();
-});
-
-function filtrarTabela() {
-    const searchTerm = document.getElementById('search-input').value.toLowerCase();
-    const tipoValue = document.getElementById('tipo-filter').value;
-    const rows = document.querySelectorAll('#movimentacoes-table tbody tr');
-    
-    rows.forEach(row => {
-        if (row.cells.length === 1) return; // Skip empty state row
-        
-        const produto = row.cells[2].textContent.toLowerCase();
-        const tipo = row.getAttribute('data-tipo');
-        
-        let show = true;
-        
-        if (searchTerm && !produto.includes(searchTerm)) {
-            show = false;
-        }
-        
-        if (tipoValue && tipo !== tipoValue) {
-            show = false;
-        }
-        
-        row.style.display = show ? '' : 'none';
-    });
-}
-</script>
 {% endblock %}

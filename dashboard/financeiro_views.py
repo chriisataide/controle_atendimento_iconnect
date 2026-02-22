@@ -17,17 +17,175 @@ from .models import (
 
 @login_required
 def dashboard_financeiro(request):
-    """Dashboard principal do módulo financeiro"""
+    """Dashboard principal do módulo financeiro - integrado com chamados"""
+    from datetime import date
+    from django.db.models import Sum, Count, Avg, F, Q, ExpressionWrapper, DecimalField
+    from django.db.models.functions import TruncMonth, TruncDate
+    import json as _json
+
+    from .models import Ticket, ItemAtendimento
+
+    hoje = date.today()
+    mes_atual = hoje.month
+    ano_atual = hoje.year
+
+    # ── Expressão para valor_total de ItemAtendimento (property → DB expression) ──
+    valor_total_expr = ExpressionWrapper(
+        F('quantidade') * F('valor_unitario') * (1 - F('desconto_percentual') / 100),
+        output_field=DecimalField(max_digits=12, decimal_places=2)
+    )
+
+    # ── KPIs de Receita (baseado em chamados finalizados com itens) ──
+    itens_mes = ItemAtendimento.objects.filter(
+        ticket__fechado_em__month=mes_atual,
+        ticket__fechado_em__year=ano_atual,
+        ticket__status__in=['resolvido', 'fechado'],
+    )
+    receita_chamados_mes = itens_mes.aggregate(
+        total=Sum(valor_total_expr)
+    )['total'] or Decimal('0.00')
+
+    itens_mes_anterior = ItemAtendimento.objects.filter(
+        ticket__fechado_em__month=mes_atual - 1 if mes_atual > 1 else 12,
+        ticket__fechado_em__year=ano_atual if mes_atual > 1 else ano_atual - 1,
+        ticket__status__in=['resolvido', 'fechado'],
+    )
+    receita_mes_anterior = itens_mes_anterior.aggregate(
+        total=Sum(valor_total_expr)
+    )['total'] or Decimal('0.00')
+
+    variacao_receita = ((receita_chamados_mes - receita_mes_anterior) / receita_mes_anterior * 100) if receita_mes_anterior else Decimal('0.00')
+
+    # ── Chamados finalizados no mês ──
+    tickets_finalizados_mes = Ticket.objects.filter(
+        status__in=['resolvido', 'fechado'],
+        fechado_em__month=mes_atual,
+        fechado_em__year=ano_atual,
+    ).count()
+
+    # ── Ticket médio (valor médio por chamado finalizado) ──
+    ticket_medio_valor = Ticket.objects.filter(
+        status__in=['resolvido', 'fechado'],
+        fechado_em__month=mes_atual,
+        fechado_em__year=ano_atual,
+    ).annotate(
+        valor_ticket=Sum(
+            ExpressionWrapper(
+                F('itens_atendimento__quantidade') * F('itens_atendimento__valor_unitario') * (1 - F('itens_atendimento__desconto_percentual') / 100),
+                output_field=DecimalField(max_digits=12, decimal_places=2)
+            )
+        )
+    ).aggregate(media=Avg('valor_ticket'))['media'] or Decimal('0.00')
+
+    # ── Total de produtos/serviços utilizados no mês ──
+    total_itens_mes = itens_mes.count()
+
+    # ── Valor em aberto (tickets abertos/em andamento com itens) ──
+    valor_em_aberto = ItemAtendimento.objects.filter(
+        ticket__status__in=['aberto', 'em_andamento', 'aguardando_cliente'],
+    ).aggregate(total=Sum(valor_total_expr))['total'] or Decimal('0.00')
+
+    # ── Contratos e Faturas ──
+    contratos_ativos = Contrato.objects.filter(status='ativo').count()
+    faturas_vencidas = Fatura.objects.filter(status='vencido').count()
+    faturas_pendentes = Fatura.objects.filter(status='pendente').count()
+    total_pendente = Fatura.objects.filter(
+        status__in=['pendente', 'vencido'],
+    ).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+
+    # ── Receita por categoria de chamado (últimos 3 meses) ──
+    from django.utils import timezone
+    tres_meses_atras = hoje - timezone.timedelta(days=90)
+    receita_por_categoria = ItemAtendimento.objects.filter(
+        ticket__status__in=['resolvido', 'fechado'],
+        ticket__fechado_em__date__gte=tres_meses_atras,
+    ).values(
+        'ticket__categoria__nome'
+    ).annotate(
+        total=Sum(valor_total_expr)
+    ).order_by('-total')[:6]
+    cat_labels = [r['ticket__categoria__nome'] or 'Sem Categoria' for r in receita_por_categoria]
+    cat_values = [float(r['total'] or 0) for r in receita_por_categoria]
+
+    # ── Evolução mensal de receita de chamados (últimos 6 meses) ──
+    seis_meses_atras = hoje.replace(day=1) - timezone.timedelta(days=180)
+    evolucao_mensal = ItemAtendimento.objects.filter(
+        ticket__status__in=['resolvido', 'fechado'],
+        ticket__fechado_em__date__gte=seis_meses_atras,
+    ).annotate(
+        mes=TruncMonth('ticket__fechado_em')
+    ).values('mes').annotate(
+        total=Sum(valor_total_expr),
+        qtd_tickets=Count('ticket', distinct=True)
+    ).order_by('mes')
+    evolucao_labels = [e['mes'].strftime('%b/%y') for e in evolucao_mensal] if evolucao_mensal else ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun']
+    evolucao_valores = [float(e['total'] or 0) for e in evolucao_mensal] if evolucao_mensal else [0]*6
+    evolucao_tickets = [e['qtd_tickets'] for e in evolucao_mensal] if evolucao_mensal else [0]*6
+
+    # ── Top 10 produtos/serviços mais faturados ──
+    top_produtos = ItemAtendimento.objects.filter(
+        ticket__status__in=['resolvido', 'fechado'],
+        ticket__fechado_em__month=mes_atual,
+        ticket__fechado_em__year=ano_atual,
+    ).values(
+        'produto__nome', 'produto__codigo', 'tipo_item'
+    ).annotate(
+        total_faturado=Sum(valor_total_expr),
+        quantidade_total=Sum('quantidade'),
+        qtd_chamados=Count('ticket', distinct=True),
+    ).order_by('-total_faturado')[:10]
+
+    # ── Últimos chamados finalizados com valor ──
+    ultimos_chamados = Ticket.objects.filter(
+        status__in=['resolvido', 'fechado'],
+    ).annotate(
+        valor_total=Sum(
+            ExpressionWrapper(
+                F('itens_atendimento__quantidade') * F('itens_atendimento__valor_unitario') * (1 - F('itens_atendimento__desconto_percentual') / 100),
+                output_field=DecimalField(max_digits=12, decimal_places=2)
+            )
+        )
+    ).filter(valor_total__isnull=False).select_related(
+        'cliente', 'agente', 'categoria'
+    ).order_by('-fechado_em')[:10]
+
+    # ── Top 5 clientes por faturamento ──
+    top_clientes = ItemAtendimento.objects.filter(
+        ticket__status__in=['resolvido', 'fechado'],
+        ticket__fechado_em__month=mes_atual,
+        ticket__fechado_em__year=ano_atual,
+    ).values(
+        'ticket__cliente__nome', 'ticket__cliente__empresa'
+    ).annotate(
+        total_faturado=Sum(valor_total_expr),
+        qtd_chamados=Count('ticket', distinct=True),
+    ).order_by('-total_faturado')[:5]
+
     context = {
         'title': 'Dashboard Financeiro',
         'page': 'financeiro_dashboard',
-        # Dados placeholder - substituir por dados reais
-        'total_receitas': Decimal('15750.00'),
-        'total_despesas': Decimal('8230.00'),
-        'total_pendente': Decimal('3420.00'),
-        'contratos_ativos': 25,
-        'faturas_vencidas': 5,
-        'ticket_medio': Decimal('630.00'),
+        # KPIs
+        'receita_chamados_mes': receita_chamados_mes,
+        'variacao_receita': variacao_receita,
+        'tickets_finalizados_mes': tickets_finalizados_mes,
+        'ticket_medio_valor': ticket_medio_valor,
+        'total_itens_mes': total_itens_mes,
+        'valor_em_aberto': valor_em_aberto,
+        # Contratos/Faturas
+        'contratos_ativos': contratos_ativos,
+        'faturas_vencidas': faturas_vencidas,
+        'faturas_pendentes': faturas_pendentes,
+        'total_pendente': total_pendente,
+        # Gráficos JSON
+        'cat_labels_json': _json.dumps(cat_labels),
+        'cat_values_json': _json.dumps(cat_values),
+        'evolucao_labels_json': _json.dumps(evolucao_labels),
+        'evolucao_valores_json': _json.dumps(evolucao_valores),
+        'evolucao_tickets_json': _json.dumps(evolucao_tickets),
+        # Tabelas
+        'top_produtos': top_produtos,
+        'ultimos_chamados': ultimos_chamados,
+        'top_clientes': top_clientes,
     }
     return render(request, 'financeiro/dashboard.html', context)
 
@@ -51,11 +209,23 @@ def faturas_lista(request):
     """Lista de faturas"""
     # Buscar faturas reais do banco
     faturas = Fatura.objects.select_related('contrato__cliente').all()
-    
+
+    # Agregar totais por status
+    totais = Fatura.objects.aggregate(
+        pagas=Sum('valor', filter=Q(status='pago')),
+        pendentes=Sum('valor', filter=Q(status='pendente')),
+        vencidas=Sum('valor', filter=Q(status='vencido')),
+        total=Sum('valor'),
+    )
+
     context = {
         'title': 'Faturas',
         'page': 'faturas',
         'faturas': faturas,
+        'faturas_pagas_total': totais['pagas'] or Decimal('0.00'),
+        'faturas_pendentes_total': totais['pendentes'] or Decimal('0.00'),
+        'faturas_vencidas_total': totais['vencidas'] or Decimal('0.00'),
+        'faturas_total': totais['total'] or Decimal('0.00'),
     }
     return render(request, 'financeiro/faturas_lista.html', context)
 
@@ -63,13 +233,71 @@ def faturas_lista(request):
 @login_required
 def movimentacoes_lista(request):
     """Lista de movimentações financeiras"""
+    import json as _json
+    from django.db.models.functions import TruncMonth
+
     # Buscar movimentações reais do banco
     movimentacoes = MovimentacaoFinanceira.objects.select_related('categoria', 'usuario').all()
-    
+
+    # Agregar totais
+    totais = MovimentacaoFinanceira.objects.aggregate(
+        receitas=Sum('valor', filter=Q(tipo='receita')),
+        despesas=Sum('valor', filter=Q(tipo='despesa')),
+    )
+    total_receitas = totais['receitas'] or Decimal('0.00')
+    total_despesas = totais['despesas'] or Decimal('0.00')
+    saldo = total_receitas - total_despesas
+    resultado_pct = ((total_receitas - total_despesas) / total_despesas * 100) if total_despesas else Decimal('0.00')
+
+    # Dados de fluxo de caixa mensal (últimos 6 meses)
+    from datetime import date
+    hoje = date.today()
+    seis_meses_atras = hoje.replace(day=1) - timedelta(days=180)
+    fluxo_mensal = (
+        MovimentacaoFinanceira.objects
+        .filter(data_movimentacao__gte=seis_meses_atras)
+        .annotate(mes=TruncMonth('data_movimentacao'))
+        .values('mes', 'tipo')
+        .annotate(total=Sum('valor'))
+        .order_by('mes')
+    )
+    meses_labels = []
+    receitas_mensal = []
+    despesas_mensal = []
+    meses_map = {}
+    for item in fluxo_mensal:
+        mes_key = item['mes'].strftime('%b')
+        if mes_key not in meses_map:
+            meses_map[mes_key] = {'receita': 0, 'despesa': 0}
+        meses_map[mes_key][item['tipo']] = float(item['total'])
+    for mes_key, vals in meses_map.items():
+        meses_labels.append(mes_key)
+        receitas_mensal.append(vals['receita'])
+        despesas_mensal.append(vals['despesa'])
+
+    # Distribuição por categoria
+    cat_data = (
+        MovimentacaoFinanceira.objects
+        .values('categoria__nome')
+        .annotate(total=Sum('valor'))
+        .order_by('-total')[:6]
+    )
+    cat_labels = [c['categoria__nome'] or 'Sem Categoria' for c in cat_data]
+    cat_values = [float(c['total']) for c in cat_data]
+
     context = {
         'title': 'Movimentações',
         'page': 'movimentacoes',
         'movimentacoes': movimentacoes,
+        'total_receitas': total_receitas,
+        'total_despesas': total_despesas,
+        'saldo': saldo,
+        'resultado_pct': resultado_pct,
+        'fluxo_labels_json': _json.dumps(meses_labels if meses_labels else ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun']),
+        'fluxo_receitas_json': _json.dumps(receitas_mensal if receitas_mensal else [0, 0, 0, 0, 0, 0]),
+        'fluxo_despesas_json': _json.dumps(despesas_mensal if despesas_mensal else [0, 0, 0, 0, 0, 0]),
+        'cat_labels_json': _json.dumps(cat_labels if cat_labels else []),
+        'cat_values_json': _json.dumps(cat_values if cat_values else []),
     }
     return render(request, 'financeiro/movimentacoes_lista.html', context)
 
@@ -77,9 +305,109 @@ def movimentacoes_lista(request):
 @login_required
 def relatorios_financeiros(request):
     """Página de relatórios financeiros"""
+    import json as _json
+    from django.db.models import Avg
+    from django.db.models.functions import TruncMonth
+    from datetime import date
+
+    hoje = date.today()
+
+    # Resumo executivo
+    receita_total = MovimentacaoFinanceira.objects.filter(
+        tipo='receita'
+    ).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+
+    despesa_total = MovimentacaoFinanceira.objects.filter(
+        tipo='despesa'
+    ).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+
+    lucro_liquido = receita_total - despesa_total
+    margem = (lucro_liquido / receita_total * 100) if receita_total else Decimal('0.00')
+
+    valor_atraso = Fatura.objects.filter(
+        status='vencido'
+    ).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+    pct_atraso = (valor_atraso / receita_total * 100) if receita_total else Decimal('0.00')
+
+    # KPIs
+    ticket_medio = Fatura.objects.filter(
+        status='pago'
+    ).aggregate(media=Avg('valor'))['media'] or Decimal('0.00')
+
+    total_faturas = Fatura.objects.count()
+    faturas_vencidas = Fatura.objects.filter(status='vencido').count()
+    taxa_inadimplencia = (faturas_vencidas / total_faturas * 100) if total_faturas else 0
+
+    # Top clientes por receita (baseado em faturas pagas)
+    from .models import Cliente
+    top_clientes = (
+        Fatura.objects
+        .filter(status='pago')
+        .values('contrato__cliente__nome')
+        .annotate(receita=Sum('valor'))
+        .order_by('-receita')[:10]
+    )
+
+    # Principais despesas por categoria
+    top_despesas = (
+        MovimentacaoFinanceira.objects
+        .filter(tipo='despesa')
+        .values('categoria__nome')
+        .annotate(total=Sum('valor'))
+        .order_by('-total')[:5]
+    )
+
+    # Dados para gráficos - evolução mensal (últimos 6 meses)
+    seis_meses_atras = hoje.replace(day=1) - timedelta(days=180)
+    evolucao = (
+        MovimentacaoFinanceira.objects
+        .filter(data_movimentacao__gte=seis_meses_atras)
+        .annotate(mes=TruncMonth('data_movimentacao'))
+        .values('mes', 'tipo')
+        .annotate(total=Sum('valor'))
+        .order_by('mes')
+    )
+    meses_map = {}
+    for item in evolucao:
+        mes_key = item['mes'].strftime('%b')
+        if mes_key not in meses_map:
+            meses_map[mes_key] = {'receita': 0, 'despesa': 0}
+        meses_map[mes_key][item['tipo']] = float(item['total'])
+    evolucao_labels = list(meses_map.keys()) if meses_map else ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun']
+    evolucao_receitas = [meses_map[m]['receita'] for m in evolucao_labels] if meses_map else [0]*6
+    evolucao_despesas = [meses_map[m]['despesa'] for m in evolucao_labels] if meses_map else [0]*6
+    evolucao_lucro = [r - d for r, d in zip(evolucao_receitas, evolucao_despesas)]
+
+    # Distribuição receitas por categoria
+    dist_receitas = (
+        MovimentacaoFinanceira.objects
+        .filter(tipo='receita')
+        .values('categoria__nome')
+        .annotate(total=Sum('valor'))
+        .order_by('-total')[:5]
+    )
+    dist_labels = [d['categoria__nome'] or 'Outros' for d in dist_receitas]
+    dist_values = [float(d['total']) for d in dist_receitas]
+
     context = {
         'title': 'Relatórios Financeiros',
         'page': 'relatorios',
+        'receita_total': receita_total,
+        'despesa_total': despesa_total,
+        'lucro_liquido': lucro_liquido,
+        'margem': margem,
+        'valor_atraso': valor_atraso,
+        'pct_atraso': pct_atraso,
+        'ticket_medio': ticket_medio,
+        'taxa_inadimplencia': taxa_inadimplencia,
+        'top_clientes': top_clientes,
+        'top_despesas': top_despesas,
+        'evolucao_labels_json': _json.dumps(evolucao_labels),
+        'evolucao_receitas_json': _json.dumps(evolucao_receitas),
+        'evolucao_despesas_json': _json.dumps(evolucao_despesas),
+        'evolucao_lucro_json': _json.dumps(evolucao_lucro),
+        'dist_labels_json': _json.dumps(dist_labels if dist_labels else []),
+        'dist_values_json': _json.dumps(dist_values if dist_values else []),
     }
     return render(request, 'financeiro/relatorios.html', context)
 
@@ -112,23 +440,48 @@ def api_gerar_relatorio(request):
     """API para gerar relatórios personalizados"""
     if request.method == 'POST':
         try:
-            # Aqui implementar a lógica de geração de relatórios
-            # Por enquanto retorna dados placeholder
-            
+            import json as _json
+            from datetime import date, timedelta
+
+            body = _json.loads(request.body) if request.content_type == 'application/json' else request.POST
+            data_inicio_str = body.get('data_inicio')
+            data_fim_str = body.get('data_fim')
+
+            # Default: mês corrente
+            hoje = date.today()
+            if data_inicio_str:
+                data_inicio = date.fromisoformat(data_inicio_str)
+            else:
+                data_inicio = hoje.replace(day=1)
+            if data_fim_str:
+                data_fim = date.fromisoformat(data_fim_str)
+            else:
+                data_fim = hoje
+
+            movs = MovimentacaoFinanceira.objects.filter(
+                data_movimentacao__range=[data_inicio, data_fim]
+            )
+
+            total_receitas = movs.filter(tipo='receita').aggregate(
+                t=Sum('valor'))['t'] or Decimal('0.00')
+            total_despesas = movs.filter(tipo='despesa').aggregate(
+                t=Sum('valor'))['t'] or Decimal('0.00')
+            saldo = total_receitas - total_despesas
+
             relatorio_data = {
-                'periodo': '01/09/2025 - 17/09/2025',
-                'total_receitas': '15750.00',
-                'total_despesas': '8230.00',
-                'saldo': '7520.00',
-                'transacoes': 47,
+                'periodo': f'{data_inicio.strftime("%d/%m/%Y")} - {data_fim.strftime("%d/%m/%Y")}',
+                'total_receitas': str(total_receitas),
+                'total_despesas': str(total_despesas),
+                'saldo': str(saldo),
+                'transacoes': movs.count(),
                 'status': 'success'
             }
-            
+
             return JsonResponse(relatorio_data)
-            
+
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
-    
+
     return JsonResponse({'error': 'Método não permitido'}, status=405)
 
 

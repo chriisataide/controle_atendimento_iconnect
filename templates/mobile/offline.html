@@ -1,105 +1,71 @@
 {% extends 'mobile/base.html' %}
-{% load static %}
 
-{% block title %}Offline - iConnect{% endblock %}
+{% block title %}Offline - iConnect Mobile{% endblock %}
+{% block bar_title %}Sem Conexão{% endblock %}
+{% block bar_subtitle %}Modo Offline{% endblock %}
+{% block fab %}{% endblock %}
 
 {% block content %}
-<div class="container-fluid px-3 py-4">
-    <div class="row justify-content-center">
-        <div class="col-12 col-md-6">
-            <div class="card border-0 shadow-lg">
-                <div class="card-body text-center p-5">
-                    <!-- Ícone Offline -->
-                    <div class="mb-4">
-                        <i class="fas fa-wifi-slash text-warning" style="font-size: 4rem;"></i>
-                    </div>
-                    
-                    <!-- Título -->
-                    <h2 class="h3 mb-4 text-dark fw-bold">Você está offline</h2>
-                    
-                    <!-- Mensagem -->
-                    <p class="text-muted mb-4">
-                        {{ offline_message|default:"Verifique sua conexão com a internet para acessar todas as funcionalidades." }}
-                    </p>
-                    
-                    <!-- Status da Conexão -->
-                    <div class="alert alert-warning border-0 mb-4" role="alert">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            <span id="connection-status">Verificando conexão...</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Funcionalidades Offline -->
-                    <div class="text-start mb-4">
-                        <h5 class="mb-3">Disponível offline:</h5>
-                        <ul class="list-unstyled">
-                            <li class="mb-2">
-                                <i class="fas fa-check text-success me-2"></i>
-                                Visualizar tickets salvos
-                            </li>
-                            <li class="mb-2">
-                                <i class="fas fa-check text-success me-2"></i>
-                                Rascunhos de comentários
-                            </li>
-                            <li class="mb-2">
-                                <i class="fas fa-check text-success me-2"></i>
-                                Fotos capturadas
-                            </li>
-                            <li class="mb-2">
-                                <i class="fas fa-times text-danger me-2"></i>
-                                Chat em tempo real
-                            </li>
-                            <li class="mb-2">
-                                <i class="fas fa-times text-danger me-2"></i>
-                                Atualizações de status
-                            </li>
-                        </ul>
-                    </div>
-                    
-                    <!-- Botões de Ação -->
-                    <div class="d-flex flex-column gap-3">
-                        <button class="btn btn-primary btn-lg" onclick="checkConnection()">
-                            <i class="fas fa-sync-alt me-2"></i>
-                            Tentar Reconectar
-                        </button>
-                        
-                        <a href="{% url 'mobile_tickets' %}" class="btn btn-outline-secondary">
-                            <i class="fas fa-list me-2"></i>
-                            Ver Tickets Salvos
-                        </a>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Dicas Offline -->
-            <div class="card border-0 shadow-sm mt-4">
-                <div class="card-body">
-                    <h6 class="fw-bold mb-3">
-                        <i class="fas fa-lightbulb text-warning me-2"></i>
-                        Dicas para trabalhar offline
-                    </h6>
-                    <ul class="list-unstyled small text-muted">
-                        <li class="mb-2">• Seus dados serão sincronizados quando voltar online</li>
-                        <li class="mb-2">• Fotos e comentários ficam salvos localmente</li>
-                        <li class="mb-2">• Use o modo avião para economizar bateria</li>
-                        <li class="mb-2">• Mantenha o app aberto para melhor sincronização</li>
-                    </ul>
-                </div>
-            </div>
+<div style="text-align:center; padding:48px 16px;">
+    <span class="material-symbols-rounded" style="font-size:64px; color:var(--slate-300); display:block; margin-bottom:16px;">cloud_off</span>
+    <h2 style="font-size:1.15rem; font-weight:700; color:var(--slate-800); margin-bottom:8px;">Você está offline</h2>
+    <p style="font-size:.875rem; color:var(--slate-500); margin-bottom:24px;">
+        {{ offline_message|default:"Verifique sua conexão com a internet para acessar todas as funcionalidades." }}
+    </p>
+
+    <!-- Connection Status -->
+    <div id="connStatus" style="display:inline-flex; align-items:center; gap:8px; padding:10px 20px; border-radius:24px; font-size:.85rem; font-weight:600; margin-bottom:24px;">
+        <span class="material-symbols-rounded" style="font-size:18px;" id="connIcon">wifi_off</span>
+        <span id="connText">Verificando...</span>
+    </div>
+</div>
+
+<!-- Available Offline -->
+<div class="m-card">
+    <div class="m-card-header">
+        <h3><span class="material-symbols-rounded">offline_bolt</span> Disponível Offline</h3>
+    </div>
+    <div class="m-card-body">
+        <div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--slate-100);">
+            <span class="material-symbols-rounded" style="font-size:20px; color:var(--green-500);">check_circle</span>
+            <span style="font-size:.85rem;">Tickets salvos em cache</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--slate-100);">
+            <span class="material-symbols-rounded" style="font-size:20px; color:var(--green-500);">check_circle</span>
+            <span style="font-size:.85rem;">Rascunhos de comentários</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--slate-100);">
+            <span class="material-symbols-rounded" style="font-size:20px; color:var(--green-500);">check_circle</span>
+            <span style="font-size:.85rem;">Fotos capturadas localmente</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--slate-100);">
+            <span class="material-symbols-rounded" style="font-size:20px; color:var(--red-500);">cancel</span>
+            <span style="font-size:.85rem; color:var(--slate-400);">Chat em tempo real</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; padding:8px 0;">
+            <span class="material-symbols-rounded" style="font-size:20px; color:var(--red-500);">cancel</span>
+            <span style="font-size:.85rem; color:var(--slate-400);">Atualizações de status</span>
         </div>
     </div>
 </div>
 
-<!-- Loading Overlay -->
-<div id="loading-overlay" class="position-fixed top-0 start-0 w-100 h-100 d-none" 
-     style="background: rgba(255,255,255,0.9); z-index: 9999;">
-    <div class="d-flex align-items-center justify-content-center h-100">
-        <div class="text-center">
-            <div class="spinner-border text-primary mb-3" role="status">
-                <span class="visually-hidden">Carregando...</span>
-            </div>
-            <p class="text-muted">Reconectando...</p>
+<!-- Actions -->
+<div style="display:flex; flex-direction:column; gap:10px; margin-top:16px;">
+    <button class="btn-m btn-cyan-m btn-block" onclick="tryReconnect()">
+        <span class="material-symbols-rounded">refresh</span> Tentar Reconectar
+    </button>
+    <a href="{% url 'mobile:mobile_ticket_list' %}" class="btn-m btn-outline-m btn-block" style="text-decoration:none;">
+        <span class="material-symbols-rounded">list_alt</span> Ver Tickets Salvos
+    </a>
+</div>
+
+<!-- Tips -->
+<div class="m-card" style="margin-top:16px; border-left:3px solid var(--amber-500);">
+    <div class="m-card-body" style="display:flex; align-items:flex-start; gap:10px;">
+        <span class="material-symbols-rounded" style="font-size:22px; color:var(--amber-500);">tips_and_updates</span>
+        <div style="font-size:.8rem; color:var(--slate-500); line-height:1.5;">
+            Seus dados serão sincronizados automaticamente quando a conexão for restabelecida.
+            Fotos e comentários salvos localmente serão enviados em seguida.
         </div>
     </div>
 </div>
@@ -107,116 +73,28 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    checkConnectionStatus();
-    
-    // Verificar conexão periodicamente
-    setInterval(checkConnectionStatus, 5000);
-    
-    // Eventos de conexão
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-});
-
-function checkConnectionStatus() {
-    const statusEl = document.getElementById('connection-status');
-    
+function updateStatus() {
+    const s = document.getElementById('connStatus');
+    const icon = document.getElementById('connIcon');
+    const text = document.getElementById('connText');
     if (navigator.onLine) {
-        statusEl.innerHTML = '<i class="fas fa-wifi text-success me-2"></i>Conexão disponível';
-        statusEl.parentElement.className = 'alert alert-success border-0 mb-4';
-        
-        // Tentar sincronizar dados pendentes
-        syncPendingData();
+        s.style.background = 'var(--green-100)'; s.style.color = '#15803d';
+        icon.textContent = 'wifi'; text.textContent = 'Conexão disponível';
     } else {
-        statusEl.innerHTML = '<i class="fas fa-wifi-slash text-warning me-2"></i>Sem conexão';
-        statusEl.parentElement.className = 'alert alert-warning border-0 mb-4';
+        s.style.background = 'var(--amber-100)'; s.style.color = '#b45309';
+        icon.textContent = 'wifi_off'; text.textContent = 'Sem conexão';
     }
 }
+updateStatus();
+window.addEventListener('online', () => { updateStatus(); showToast('Conexão restaurada!', 'success'); setTimeout(() => location.href = '{% url "mobile:mobile_dashboard" %}', 1500); });
+window.addEventListener('offline', updateStatus);
 
-function checkConnection() {
-    const loadingOverlay = document.getElementById('loading-overlay');
-    loadingOverlay.classList.remove('d-none');
-    
-    // Simular tentativa de reconexão
-    setTimeout(function() {
-        if (navigator.onLine) {
-            // Redirecionar para página principal se online
-            window.location.href = "{% url 'mobile_tickets' %}";
-        } else {
-            loadingOverlay.classList.add('d-none');
-            showToast('Ainda sem conexão. Tente novamente em alguns instantes.', 'warning');
-        }
+function tryReconnect() {
+    document.querySelector('.btn-cyan-m').innerHTML = '<span class="spinner" style="width:18px;height:18px;border-width:2px;"></span> Reconectando...';
+    setTimeout(() => {
+        if (navigator.onLine) { location.href = '{% url "mobile:mobile_dashboard" %}'; }
+        else { showToast('Ainda sem conexão', 'error'); document.querySelector('.btn-cyan-m').innerHTML = '<span class="material-symbols-rounded">refresh</span> Tentar Reconectar'; }
     }, 2000);
-}
-
-function handleOnline() {
-    showToast('Conexão restabelecida! Sincronizando dados...', 'success');
-    checkConnectionStatus();
-    
-    // Redirecionar após sincronização
-    setTimeout(function() {
-        window.location.href = "{% url 'mobile_tickets' %}";
-    }, 2000);
-}
-
-function handleOffline() {
-    showToast('Conexão perdida. Trabalhando no modo offline.', 'warning');
-    checkConnectionStatus();
-}
-
-function syncPendingData() {
-    // Verificar se há dados pendentes no localStorage
-    const pendingComments = localStorage.getItem('pendingComments');
-    const pendingPhotos = localStorage.getItem('pendingPhotos');
-    const pendingStatusUpdates = localStorage.getItem('pendingStatusUpdates');
-    
-    if (pendingComments || pendingPhotos || pendingStatusUpdates) {
-        console.log('Sincronizando dados pendentes...');
-        
-        // Aqui você implementaria a lógica de sincronização
-        // Por exemplo, enviar comentários, fotos e atualizações pendentes
-        
-        // Simular sincronização
-        setTimeout(function() {
-            // Limpar dados sincronizados
-            if (pendingComments) localStorage.removeItem('pendingComments');
-            if (pendingPhotos) localStorage.removeItem('pendingPhotos');
-            if (pendingStatusUpdates) localStorage.removeItem('pendingStatusUpdates');
-            
-            showToast('Dados sincronizados com sucesso!', 'success');
-        }, 1000);
-    }
-}
-
-function showToast(message, type = 'info') {
-    // Criar elemento de toast
-    const toast = document.createElement('div');
-    toast.className = `alert alert-${type} position-fixed top-0 start-50 translate-middle-x mt-3`;
-    toast.style.zIndex = '10000';
-    toast.innerHTML = `
-        <div class="d-flex align-items-center">
-            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
-            ${message}
-        </div>
-    `;
-    
-    document.body.appendChild(toast);
-    
-    // Remover após 4 segundos
-    setTimeout(function() {
-        toast.remove();
-    }, 4000);
-}
-
-// Service Worker para cache offline
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/static/js/sw.js')
-        .then(function(registration) {
-            console.log('Service Worker registrado:', registration.scope);
-        })
-        .catch(function(error) {
-            console.log('Erro ao registrar Service Worker:', error);
-        });
 }
 </script>
 {% endblock %}

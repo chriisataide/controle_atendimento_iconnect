@@ -1,188 +1,600 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}{{ title }}{% endblock %}
+{% block title %}Mobile & PWA - iConnect{% endblock %}
+
+{% block page_title %}Mobile & PWA{% endblock %}
+{% block breadcrumb_title %}Mobile & PWA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pwa-hero {
+        border-radius: 16px;
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        padding: 2.5rem 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .pwa-hero::after {
+        content: '';
+        position: absolute;
+        top: -40px;
+        right: -40px;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: rgba(6,182,212,0.12);
+    }
+    .pwa-hero::before {
+        content: '';
+        position: absolute;
+        bottom: -50px;
+        left: -30px;
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        background: rgba(6,182,212,0.07);
+    }
+    .pwa-hero h2 { color: #fff; font-weight: 800; position: relative; z-index: 1; }
+    .pwa-hero p { color: #94a3b8; position: relative; z-index: 1; }
+
+    .feature-card {
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        padding: 1.5rem;
+        background: #fff;
+        transition: all 0.2s;
+        height: 100%;
+    }
+    .feature-card:hover {
+        border-color: #06b6d4;
+        box-shadow: 0 4px 15px rgba(6,182,212,0.1);
+        transform: translateY(-2px);
+    }
+    .feature-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-bottom: 1rem;
+    }
+    .feature-icon i {
+        font-size: 24px;
+        color: #fff;
+    }
+    .feature-card h6 {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #334155;
+        margin-bottom: 6px;
+    }
+    .feature-card p {
+        font-size: 0.78rem;
+        color: #64748b;
+        margin-bottom: 0;
+        line-height: 1.5;
+    }
+
+    .status-card {
+        border-radius: 12px;
+        border: none;
+    }
+    .status-card .card-header {
+        background: #fff;
+        border-bottom: 1px solid #f1f5f9;
+        border-radius: 12px 12px 0 0;
+        padding: 1rem 1.25rem;
+    }
+    .status-card .card-header h6 {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #334155;
+        margin-bottom: 0;
+    }
+
+    .status-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .status-item:last-child { border-bottom: none; }
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .status-badge {
+        font-size: 0.7rem;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+
+    .install-card {
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        padding: 1.5rem;
+        background: #fff;
+        text-align: center;
+        transition: all 0.2s;
+        height: 100%;
+    }
+    .install-card:hover {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        transform: translateY(-1px);
+    }
+    .install-card .platform-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+    }
+    .install-card .platform-icon i {
+        font-size: 28px;
+        color: #fff;
+    }
+    .install-card h6 {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #334155;
+        margin-bottom: 6px;
+    }
+    .install-card p {
+        font-size: 0.76rem;
+        color: #64748b;
+        margin-bottom: 0;
+        line-height: 1.5;
+    }
+
+    .section-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        font-weight: 700;
+        color: #06b6d4;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .section-label i { font-size: 18px; }
+
+    .btn-pwa-install {
+        background: linear-gradient(135deg, #06b6d4, #0891b2);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 28px;
+        font-weight: 700;
+        font-size: 0.88rem;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-pwa-install:hover {
+        background: linear-gradient(135deg, #0891b2, #0e7490);
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(6,182,212,0.3);
+    }
+
+    .mobile-link {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .mobile-link:hover {
+        border-color: #06b6d4;
+        box-shadow: 0 4px 15px rgba(6,182,212,0.1);
+        transform: translateY(-1px);
+    }
+    .mobile-link .link-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .mobile-link h6 {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #334155;
+        margin-bottom: 2px;
+    }
+    .mobile-link p {
+        font-size: 0.72rem;
+        color: #94a3b8;
+        margin-bottom: 0;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="row">
-        <div class="col-lg-8 mx-auto">
-            <div class="card">
-                <div class="card-header pb-0">
-                    <div class="d-flex align-items-center">
-                        <p class="mb-0">{{ title }}</p>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <h5 class="mb-3">📱 O que é um PWA (Progressive Web App)?</h5>
-                            <p class="text-muted">
-                                PWA (Progressive Web App) é uma aplicação web que funciona como um aplicativo nativo. 
-                                Você pode instalar nosso sistema diretamente no seu dispositivo e usar offline.
-                            </p>
-                            
-                            <div class="mt-4">
-                                <h6>🚀 Vantagens do PWA:</h6>
-                                <ul class="text-muted">
-                                    <li><strong>Instalação rápida:</strong> Sem precisar da App Store</li>
-                                    <li><strong>Funciona offline:</strong> Acesse dados mesmo sem internet</li>
-                                    <li><strong>Notificações:</strong> Receba alertas importantes</li>
-                                    <li><strong>Atualizações automáticas:</strong> Sempre na versão mais recente</li>
-                                    <li><strong>Economia de espaço:</strong> Menor que apps nativos</li>
-                                </ul>
-                            </div>
+<div class="container-fluid py-2">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-lg-8 col-md-7">
+            <div class="ms-3">
+                <h3 class="mb-0 h4 font-weight-bolder">Mobile & PWA</h3>
+                <p class="mb-0 text-sm text-secondary">Acesse o iConnect como aplicativo no seu dispositivo</p>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+            <a href="{% url 'dashboard:pwa_install_guide' %}" class="btn btn-outline-primary btn-sm mb-0 me-2">
+                <i class="material-symbols-rounded text-sm me-1">menu_book</i> Guia de Instalação
+            </a>
+            <a href="/mobile/" target="_blank" class="btn bg-gradient-primary btn-sm mb-0">
+                <i class="material-symbols-rounded text-sm me-1">smartphone</i> Interface Mobile
+            </a>
+        </div>
+    </div>
 
-                            <div class="mt-4">
-                                <h6>📲 Como instalar:</h6>
-                                <div class="row mt-3">
-                                    <div class="col-md-6">
-                                        <div class="card bg-gradient-light">
-                                            <div class="card-body text-center">
-                                                <i class="fas fa-desktop text-primary text-3xl mb-2"></i>
-                                                <h6>Desktop (Chrome/Edge)</h6>
-                                                <p class="text-sm mb-0">
-                                                    Procure o ícone de "instalar" na barra de endereços ou no menu ⋮
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="card bg-gradient-light">
-                                            <div class="card-body text-center">
-                                                <i class="fas fa-mobile-alt text-success text-3xl mb-2"></i>
-                                                <h6>Mobile (Android/iOS)</h6>
-                                                <p class="text-sm mb-0">
-                                                    Toque no menu do navegador e selecione "Adicionar à tela inicial"
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="mt-4">
-                                <h6>🛠️ Status do PWA:</h6>
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <div class="card text-center">
-                                            <div class="card-body">
-                                                <span class="badge bg-gradient-success" id="pwa-installable">
-                                                    ✅ Instalável
-                                                </span>
-                                                <p class="text-xs mt-1 mb-0">Manifest configurado</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="card text-center">
-                                            <div class="card-body">
-                                                <span class="badge bg-gradient-success" id="pwa-service-worker">
-                                                    ✅ Offline Ready
-                                                </span>
-                                                <p class="text-xs mt-1 mb-0">Service Worker ativo</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="card text-center">
-                                            <div class="card-body">
-                                                <span class="badge bg-gradient-info" id="pwa-notifications">
-                                                    🔔 Notificações
-                                                </span>
-                                                <p class="text-xs mt-1 mb-0">Push habilitado</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="mt-4 text-center">
-                                <button class="btn bg-gradient-primary" id="install-pwa" style="display: none;">
-                                    <i class="fas fa-download me-2"></i>
-                                    Instalar PWA
-                                </button>
-                                
-                                <div class="mt-3">
-                                    <a href="{% url 'dashboard:pwa_install_guide' %}" class="btn bg-gradient-info btn-sm">
-                                        <i class="fas fa-book me-2"></i>
-                                        Guia Detalhado de Instalação
-                                    </a>
-                                </div>
-                            </div>
+    <!-- Hero Card -->
+    <div class="row mx-1 mb-4">
+        <div class="col-12">
+            <div class="pwa-hero">
+                <div class="row align-items-center">
+                    <div class="col-lg-7">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="material-symbols-rounded me-2" style="color: #06b6d4; font-size: 32px;">install_mobile</i>
+                            <span class="text-uppercase fw-bold" style="color: #06b6d4; font-size: 0.72rem; letter-spacing: 1.5px;">Progressive Web App</span>
                         </div>
+                        <h2 class="mb-3">Instale o iConnect no seu dispositivo</h2>
+                        <p class="mb-4" style="max-width: 500px;">
+                            Transforme o sistema em um aplicativo nativo. Funciona offline, é rápido e recebe notificações push — tudo sem passar pela App Store.
+                        </p>
+                        <button class="btn-pwa-install" id="install-pwa" style="display: none;">
+                            <i class="material-symbols-rounded" style="font-size: 20px;">download</i>
+                            Instalar Aplicativo
+                        </button>
+                        <span id="pwa-installed-msg" style="display: none; color: #22c55e; font-weight: 600; font-size: 0.85rem;">
+                            <i class="material-symbols-rounded align-middle me-1" style="font-size: 18px;">check_circle</i>
+                            App já está instalado!
+                        </span>
+                    </div>
+                    <div class="col-lg-5 text-center d-none d-lg-block" style="position: relative; z-index: 1;">
+                        <i class="material-symbols-rounded" style="font-size: 120px; color: rgba(6,182,212,0.2);">phone_iphone</i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Vantagens -->
+    <div class="row mx-1 mb-4">
+        <div class="col-12 mb-3">
+            <div class="section-label ms-1">
+                <i class="material-symbols-rounded">stars</i>
+                Vantagens do PWA
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="feature-card">
+                <div class="feature-icon" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">
+                    <i class="material-symbols-rounded">download</i>
+                </div>
+                <h6>Instalação Instantânea</h6>
+                <p>Sem App Store, sem downloads pesados. Instale direto do navegador em segundos.</p>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="feature-card">
+                <div class="feature-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                    <i class="material-symbols-rounded">wifi_off</i>
+                </div>
+                <h6>Funciona Offline</h6>
+                <p>Acesse dados em cache mesmo sem conexão com a internet. Service Worker gerencia tudo.</p>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="feature-card">
+                <div class="feature-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                    <i class="material-symbols-rounded">notifications_active</i>
+                </div>
+                <h6>Notificações Push</h6>
+                <p>Receba alertas em tempo real sobre tickets, atualizações e eventos importantes.</p>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="feature-card">
+                <div class="feature-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                    <i class="material-symbols-rounded">update</i>
+                </div>
+                <h6>Atualização Automática</h6>
+                <p>Sempre na versão mais recente sem intervenção. Atualizações são transparentes.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status do PWA + Como Instalar -->
+    <div class="row mx-1 mb-4">
+        <!-- Status -->
+        <div class="col-lg-5 mb-4">
+            <div class="card status-card shadow-sm h-100">
+                <div class="card-header border-0 d-flex align-items-center">
+                    <h6><i class="material-symbols-rounded me-2 align-middle" style="font-size: 18px; color: #22c55e;">monitor_heart</i>Status do PWA</h6>
+                </div>
+                <div class="card-body pt-0">
+                    <div class="status-item">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="status-dot" style="background: #22c55e;"></span>
+                            <span class="text-sm">Manifest Configurado</span>
+                        </div>
+                        <span class="status-badge" id="pwa-manifest-status" style="background: rgba(34,197,94,0.1); color: #16a34a;">Ativo</span>
+                    </div>
+                    <div class="status-item">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="status-dot" id="sw-dot" style="background: #94a3b8;"></span>
+                            <span class="text-sm">Service Worker</span>
+                        </div>
+                        <span class="status-badge" id="pwa-service-worker" style="background: rgba(100,116,139,0.1); color: #64748b;">Verificando...</span>
+                    </div>
+                    <div class="status-item">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="status-dot" id="notif-dot" style="background: #94a3b8;"></span>
+                            <span class="text-sm">Notificações Push</span>
+                        </div>
+                        <span class="status-badge" id="pwa-notifications" style="background: rgba(100,116,139,0.1); color: #64748b; cursor: pointer;">Verificando...</span>
+                    </div>
+                    <div class="status-item">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="status-dot" id="install-dot" style="background: #94a3b8;"></span>
+                            <span class="text-sm">Instalação</span>
+                        </div>
+                        <span class="status-badge" id="pwa-installable" style="background: rgba(100,116,139,0.1); color: #64748b;">Verificando...</span>
+                    </div>
+                    <div class="status-item">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="status-dot" id="https-dot" style="background: #94a3b8;"></span>
+                            <span class="text-sm">HTTPS</span>
+                        </div>
+                        <span class="status-badge" id="pwa-https" style="background: rgba(100,116,139,0.1); color: #64748b;">Verificando...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Como instalar -->
+        <div class="col-lg-7 mb-4">
+            <div class="row h-100">
+                <div class="col-12 mb-3">
+                    <div class="section-label ms-1">
+                        <i class="material-symbols-rounded">touch_app</i>
+                        Como Instalar
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="install-card">
+                        <div class="platform-icon" style="background: linear-gradient(135deg, #334155, #1e293b);">
+                            <i class="material-symbols-rounded">desktop_windows</i>
+                        </div>
+                        <h6>Desktop</h6>
+                        <p>Chrome ou Edge: clique no ícone de instalar na barra de endereços</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="install-card">
+                        <div class="platform-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                            <i class="material-symbols-rounded">android</i>
+                        </div>
+                        <h6>Android</h6>
+                        <p>Menu (⋮) do Chrome e selecione "Adicionar à tela inicial"</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="install-card">
+                        <div class="platform-icon" style="background: linear-gradient(135deg, #64748b, #475569);">
+                            <i class="material-symbols-rounded">phone_iphone</i>
+                        </div>
+                        <h6>iOS (Safari)</h6>
+                        <p>Toque Compartilhar e "Adicionar à Tela de Início"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Links Rápidos -->
+    <div class="row mx-1 mb-4">
+        <div class="col-12 mb-3">
+            <div class="section-label ms-1">
+                <i class="material-symbols-rounded">link</i>
+                Recursos Mobile
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <a href="/mobile/" target="_blank" class="mobile-link">
+                <div class="link-icon" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">
+                    <i class="material-symbols-rounded" style="color: #fff; font-size: 22px;">tablet_android</i>
+                </div>
+                <div class="flex-grow-1">
+                    <h6>Interface Mobile</h6>
+                    <p>Versão otimizada para dispositivos móveis</p>
+                </div>
+                <i class="material-symbols-rounded text-secondary" style="font-size: 18px;">open_in_new</i>
+            </a>
+        </div>
+        <div class="col-md-4 mb-3">
+            <a href="{% url 'dashboard:pwa_install_guide' %}" class="mobile-link">
+                <div class="link-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                    <i class="material-symbols-rounded" style="color: #fff; font-size: 22px;">menu_book</i>
+                </div>
+                <div class="flex-grow-1">
+                    <h6>Guia de Instalação</h6>
+                    <p>Passo a passo detalhado para cada plataforma</p>
+                </div>
+                <i class="material-symbols-rounded text-secondary" style="font-size: 18px;">arrow_forward</i>
+            </a>
+        </div>
+        <div class="col-md-4 mb-3">
+            <a href="{% url 'dashboard:index' %}" class="mobile-link">
+                <div class="link-icon" style="background: linear-gradient(135deg, #334155, #1e293b);">
+                    <i class="material-symbols-rounded" style="color: #fff; font-size: 22px;">dashboard</i>
+                </div>
+                <div class="flex-grow-1">
+                    <h6>Dashboard Principal</h6>
+                    <p>Voltar ao painel de controle</p>
+                </div>
+                <i class="material-symbols-rounded text-secondary" style="font-size: 18px;">arrow_forward</i>
+            </a>
+        </div>
+    </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-// PWA Installation
-let deferredPrompt;
-
-window.addEventListener('beforeinstallprompt', (e) => {
-    console.log('PWA: beforeinstallprompt event fired');
-    e.preventDefault();
-    deferredPrompt = e;
-    document.getElementById('install-pwa').style.display = 'inline-block';
-});
-
-document.getElementById('install-pwa').addEventListener('click', async () => {
-    console.log('PWA: install button clicked');
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log(`PWA: User response to the install prompt: ${outcome}`);
-        deferredPrompt = null;
-        document.getElementById('install-pwa').style.display = 'none';
-    }
-});
-
-window.addEventListener('appinstalled', (evt) => {
-    console.log('PWA: app installed successfully');
-    document.getElementById('install-pwa').style.display = 'none';
-});
-
-// Check PWA status
 document.addEventListener('DOMContentLoaded', function() {
-    // Check if running as PWA
-    if (window.matchMedia('(display-mode: standalone)').matches || 
-        window.navigator.standalone === true) {
-        document.body.classList.add('pwa-mode');
+    // ── PWA Install prompt ──
+    let deferredPrompt;
+    const installBtn = document.getElementById('install-pwa');
+    const installedMsg = document.getElementById('pwa-installed-msg');
+    const installableBadge = document.getElementById('pwa-installable');
+    const installDot = document.getElementById('install-dot');
+
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+        installedMsg.style.display = 'inline-flex';
+        installableBadge.textContent = 'Instalado';
+        installableBadge.style.background = 'rgba(34,197,94,0.1)';
+        installableBadge.style.color = '#16a34a';
+        installDot.style.background = '#22c55e';
     }
-    
-    // Check Service Worker
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.style.display = 'inline-flex';
+        installableBadge.textContent = 'Disponível';
+        installableBadge.style.background = 'rgba(6,182,212,0.1)';
+        installableBadge.style.color = '#0891b2';
+        installDot.style.background = '#06b6d4';
+    });
+
+    installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                installBtn.style.display = 'none';
+                installedMsg.style.display = 'inline-flex';
+                installableBadge.textContent = 'Instalado';
+                installableBadge.style.background = 'rgba(34,197,94,0.1)';
+                installableBadge.style.color = '#16a34a';
+                installDot.style.background = '#22c55e';
+            }
+            deferredPrompt = null;
+        }
+    });
+
+    window.addEventListener('appinstalled', () => {
+        installBtn.style.display = 'none';
+        installedMsg.style.display = 'inline-flex';
+    });
+
+    // ── Service Worker ──
+    const swBadge = document.getElementById('pwa-service-worker');
+    const swDot = document.getElementById('sw-dot');
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistration().then(function(registration) {
-            if (registration) {
-                document.getElementById('pwa-service-worker').textContent = '✅ Service Worker Ativo';
-                document.getElementById('pwa-service-worker').className = 'badge bg-gradient-success';
+        navigator.serviceWorker.getRegistration().then(function(reg) {
+            if (reg) {
+                swBadge.textContent = 'Ativo';
+                swBadge.style.background = 'rgba(34,197,94,0.1)';
+                swBadge.style.color = '#16a34a';
+                swDot.style.background = '#22c55e';
             } else {
-                document.getElementById('pwa-service-worker').textContent = '⚠️ Service Worker Inativo';
-                document.getElementById('pwa-service-worker').className = 'badge bg-gradient-warning';
+                swBadge.textContent = 'Inativo';
+                swBadge.style.background = 'rgba(245,158,11,0.1)';
+                swBadge.style.color = '#d97706';
+                swDot.style.background = '#f59e0b';
             }
         });
+    } else {
+        swBadge.textContent = 'Não Suportado';
+        swBadge.style.background = 'rgba(239,68,68,0.1)';
+        swBadge.style.color = '#ef4444';
+        swDot.style.background = '#ef4444';
     }
-    
-    // Check Notification permission
+
+    // ── Notifications ──
+    const notifBadge = document.getElementById('pwa-notifications');
+    const notifDot = document.getElementById('notif-dot');
     if ('Notification' in window) {
-        if (Notification.permission === 'granted') {
-            document.getElementById('pwa-notifications').textContent = '🔔 Notificações Ativadas';
-            document.getElementById('pwa-notifications').className = 'badge bg-gradient-success';
-        } else if (Notification.permission === 'denied') {
-            document.getElementById('pwa-notifications').textContent = '🔕 Notificações Bloqueadas';
-            document.getElementById('pwa-notifications').className = 'badge bg-gradient-danger';
-        } else {
-            document.getElementById('pwa-notifications').textContent = '⚠️ Pedir Permissão';
-            document.getElementById('pwa-notifications').className = 'badge bg-gradient-warning';
-            document.getElementById('pwa-notifications').style.cursor = 'pointer';
-            document.getElementById('pwa-notifications').addEventListener('click', function() {
-                Notification.requestPermission().then(function(permission) {
-                    location.reload();
-                });
-            });
+        function updateNotifUI(permission) {
+            if (permission === 'granted') {
+                notifBadge.textContent = 'Ativadas';
+                notifBadge.style.background = 'rgba(34,197,94,0.1)';
+                notifBadge.style.color = '#16a34a';
+                notifBadge.style.cursor = 'default';
+                notifDot.style.background = '#22c55e';
+            } else if (permission === 'denied') {
+                notifBadge.textContent = 'Bloqueadas';
+                notifBadge.style.background = 'rgba(239,68,68,0.1)';
+                notifBadge.style.color = '#ef4444';
+                notifBadge.style.cursor = 'default';
+                notifDot.style.background = '#ef4444';
+            } else {
+                notifBadge.textContent = 'Pedir Permissão';
+                notifBadge.style.background = 'rgba(245,158,11,0.1)';
+                notifBadge.style.color = '#d97706';
+                notifBadge.style.cursor = 'pointer';
+                notifDot.style.background = '#f59e0b';
+            }
         }
+        updateNotifUI(Notification.permission);
+        notifBadge.addEventListener('click', function() {
+            if (Notification.permission === 'default') {
+                Notification.requestPermission().then(updateNotifUI);
+            }
+        });
+    } else {
+        notifBadge.textContent = 'Não Suportado';
+        notifBadge.style.background = 'rgba(239,68,68,0.1)';
+        notifBadge.style.color = '#ef4444';
+        notifDot.style.background = '#ef4444';
+    }
+
+    // ── HTTPS ──
+    const httpsBadge = document.getElementById('pwa-https');
+    const httpsDot = document.getElementById('https-dot');
+    if (location.protocol === 'https:') {
+        httpsBadge.textContent = 'Seguro';
+        httpsBadge.style.background = 'rgba(34,197,94,0.1)';
+        httpsBadge.style.color = '#16a34a';
+        httpsDot.style.background = '#22c55e';
+    } else {
+        httpsBadge.textContent = 'HTTP (dev)';
+        httpsBadge.style.background = 'rgba(245,158,11,0.1)';
+        httpsBadge.style.color = '#d97706';
+        httpsDot.style.background = '#f59e0b';
+    }
+
+    // ── Installable fallback ──
+    if (!deferredPrompt && !window.matchMedia('(display-mode: standalone)').matches) {
+        setTimeout(function() {
+            if (installableBadge.textContent === 'Verificando...') {
+                installableBadge.textContent = 'Via Navegador';
+                installableBadge.style.background = 'rgba(100,116,139,0.1)';
+                installableBadge.style.color = '#64748b';
+                installDot.style.background = '#94a3b8';
+            }
+        }, 3000);
     }
 });
 </script>

@@ -58,7 +58,7 @@ def get_dashboard_metrics():
         
         # Tickets recentes (últimos 10)
         tickets_recentes = Ticket.objects.select_related(
-            'cliente', 'categoria'
+            'cliente', 'categoria', 'agente'
         ).order_by('-criado_em')[:10]
         
         # Status dos agentes

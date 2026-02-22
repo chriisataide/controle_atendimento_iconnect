@@ -28,6 +28,7 @@ from .models import Ticket
 @login_required
 def estoque_dashboard(request):
     """Dashboard principal do módulo de estoque"""
+    from .models import ItemAtendimento
     
     # Métricas principais
     total_produtos = Produto.objects.filter(status='ativo').count()
@@ -82,6 +83,51 @@ def estoque_dashboard(request):
     
     movimentacoes_por_dia.reverse()
     
+    # ── Dados de consumo via atendimentos ──
+    from django.db.models import ExpressionWrapper, DecimalField
+    from django.db.models.functions import TruncMonth
+    from datetime import date
+    
+    mes_atual = hoje.month
+    ano_atual = hoje.year
+    
+    # Consumo de estoque em atendimentos (mês)
+    consumo_atendimentos_mes = ItemAtendimento.objects.filter(
+        tipo_item='produto',
+        adicionado_em__month=mes_atual,
+        adicionado_em__year=ano_atual,
+    ).aggregate(
+        total_itens=Count('id'),
+        total_quantidade=Sum('quantidade'),
+    )
+    
+    # Top 10 produtos consumidos em atendimentos (mês)
+    top_consumo_atendimentos = ItemAtendimento.objects.filter(
+        tipo_item='produto',
+        adicionado_em__month=mes_atual,
+        adicionado_em__year=ano_atual,
+    ).values(
+        'produto__nome', 'produto__codigo', 'produto__estoque_atual',
+        'produto__unidade_medida__sigla'
+    ).annotate(
+        qtd_consumida=Sum('quantidade'),
+        qtd_chamados=Count('ticket', distinct=True),
+    ).order_by('-qtd_consumida')[:10]
+    
+    # Últimas movimentações de atendimento
+    ultimas_mov_atendimento = MovimentacaoEstoque.objects.filter(
+        ticket_relacionado__isnull=False,
+    ).select_related(
+        'produto', 'ticket_relacionado', 'usuario'
+    ).order_by('-data_movimentacao')[:10]
+    
+    # Produtos com estoque crítico (lista)
+    lista_criticos = Produto.objects.filter(
+        controla_estoque=True,
+        estoque_atual__lte=F('estoque_minimo'),
+        status='ativo'
+    ).select_related('categoria', 'unidade_medida').order_by('estoque_atual')[:10]
+    
     context = {
         'title': 'Dashboard de Estoque',
         'current_page': 'estoque_dashboard',
@@ -92,6 +138,11 @@ def estoque_dashboard(request):
         'produtos_mais_movimentados': produtos_mais_movimentados,
         'alertas_pendentes': alertas_pendentes,
         'movimentacoes_por_dia': json.dumps(movimentacoes_por_dia),
+        # Novos dados de atendimentos
+        'consumo_atendimentos_mes': consumo_atendimentos_mes,
+        'top_consumo_atendimentos': top_consumo_atendimentos,
+        'ultimas_mov_atendimento': ultimas_mov_atendimento,
+        'lista_criticos': lista_criticos,
     }
     
     return render(request, 'estoque/dashboard.html', context)
@@ -258,6 +309,16 @@ class MovimentacaoListView(ListView):
         context['title'] = 'Movimentações de Estoque'
         context['current_page'] = 'estoque_movimentacoes'
         context['produtos'] = Produto.objects.filter(status='ativo').order_by('nome')
+        
+        # Totais para KPIs
+        qs = self.get_queryset()
+        context['total_entradas'] = qs.filter(tipo_operacao='entrada').aggregate(
+            total=Count('id'), valor=Sum('valor_total'))
+        context['total_saidas'] = qs.filter(tipo_operacao='saida').aggregate(
+            total=Count('id'), valor=Sum('valor_total'))
+        context['total_movimentacoes'] = qs.count()
+        context['movimentacoes_hoje'] = qs.filter(
+            data_movimentacao__date=timezone.now().date()).count()
         return context
 
 

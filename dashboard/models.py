@@ -1,8 +1,14 @@
 from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
 from decimal import Decimal
+import uuid
+import logging
 
 # Importar modelos de estoque
-from .models_estoque import *
+from .models_estoque import *  # noqa: F401,F403
+
+logger = logging.getLogger('dashboard')
 
 # ----------------------
 # Modelo de Ponto de Venda
@@ -48,16 +54,14 @@ class PontoDeVenda(models.Model):
 
     def __str__(self):
         return f"{self.nome_fantasia} ({self.cnpj})"
-from django.db import models
-from django.contrib.auth.models import User
-from django.utils import timezone
-import uuid
 
 
 class Cliente(models.Model):
+    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='cliente_profile', help_text="Conta de usuario vinculada")
     nome = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     telefone = models.CharField(max_length=20, blank=True)
+    celular = models.CharField(max_length=20, blank=True)
     empresa = models.CharField(max_length=100, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     
@@ -168,28 +172,56 @@ class WorkflowRule(models.Model):
 
 
 class Ticket(models.Model):
-    numero = models.CharField(max_length=10, unique=True, blank=True)
+    # --- Tipo ITIL ---
+    TIPO_CHOICES = [
+        ('incidente', 'Incidente'),
+        ('requisicao', 'Requisicao de Servico'),
+        ('problema', 'Problema'),
+        ('mudanca', 'Mudanca'),
+    ]
+
+    numero = models.CharField(max_length=10, unique=True, blank=True, db_index=True)
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='tickets')
     agente = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='tickets_agente')
     categoria = models.ForeignKey(CategoriaTicket, on_delete=models.SET_NULL, null=True, blank=True)
     
     titulo = models.CharField(max_length=200)
     descricao = models.TextField()
-    tags = models.CharField(max_length=500, blank=True, help_text="Tags separadas por vírgula")
-    status = models.CharField(max_length=20, choices=StatusTicket.choices, default=StatusTicket.ABERTO)
-    prioridade = models.CharField(max_length=10, choices=PrioridadeTicket.choices, default=PrioridadeTicket.MEDIA)
+    tags = models.CharField(max_length=500, blank=True, help_text="Tags separadas por virgula")
+    tipo = models.CharField(max_length=15, choices=TIPO_CHOICES, default='incidente')
+    status = models.CharField(max_length=20, choices=StatusTicket.choices, default=StatusTicket.ABERTO, db_index=True)
+    prioridade = models.CharField(max_length=10, choices=PrioridadeTicket.choices, default=PrioridadeTicket.MEDIA, db_index=True)
     origem = models.CharField(max_length=20, default='web', help_text="web, email, whatsapp, slack")
     
+    # --- Hierarquia e vinculacao ---
+    parent_ticket = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='sub_tickets', help_text="Ticket pai (sub-tickets)"
+    )
+    related_tickets = models.ManyToManyField(
+        'self', blank=True, symmetrical=True, help_text="Tickets vinculados"
+    )
+    merged_into = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='merged_from', help_text="Ticket de destino do merge"
+    )
+
+    # --- Watchers / Followers ---
+    watchers = models.ManyToManyField(
+        User, blank=True, related_name='watched_tickets',
+        help_text="Usuarios que acompanham este ticket"
+    )
+
     # Campos relacionados ao SLA
     sla_policy = models.ForeignKey(SLAPolicy, on_delete=models.SET_NULL, null=True, blank=True)
     sla_deadline = models.DateTimeField(null=True, blank=True, help_text="Prazo de resposta SLA")
-    sla_resolution_deadline = models.DateTimeField(null=True, blank=True, help_text="Prazo de resolução SLA")
+    sla_resolution_deadline = models.DateTimeField(null=True, blank=True, help_text="Prazo de resolucao SLA")
     first_response_at = models.DateTimeField(null=True, blank=True)
     is_escalated = models.BooleanField(default=False)
     escalated_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='escalated_tickets')
     escalated_at = models.DateTimeField(null=True, blank=True)
     
-    criado_em = models.DateTimeField(auto_now_add=True)
+    criado_em = models.DateTimeField(auto_now_add=True, db_index=True)
     atualizado_em = models.DateTimeField(auto_now=True)
     resolvido_em = models.DateTimeField(null=True, blank=True)
     fechado_em = models.DateTimeField(null=True, blank=True)
@@ -201,13 +233,12 @@ class Ticket(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.numero:
-            # Gerar número do ticket automaticamente
-            import random
-            import string
-            self.numero = ''.join(random.choices(string.digits, k=4))
-            # Verificar se já existe e gerar novo se necessário
-            while Ticket.objects.filter(numero=self.numero).exists():
-                self.numero = ''.join(random.choices(string.digits, k=4))
+            # Gerar número do ticket sequencial (formato: TK-00001)
+            from django.db.models import Max
+            ultimo = Ticket.objects.aggregate(
+                max_num=Max('id')
+            )['max_num'] or 0
+            self.numero = f'TK-{ultimo + 1:05d}'
         
         # Atualizar timestamps baseado no status
         if self.status == StatusTicket.RESOLVIDO and not self.resolvido_em:
@@ -319,9 +350,26 @@ class SLAAlert(models.Model):
 
 
 class InteracaoTicket(models.Model):
+    TIPO_CHOICES = [
+        ('resposta', 'Resposta'),
+        ('nota_interna', 'Nota Interna'),
+        ('sistema', 'Sistema'),
+        ('status_change', 'Mudança de Status'),
+    ]
+    
+    CANAL_CHOICES = [
+        ('web', 'Web'),
+        ('email', 'Email'),
+        ('whatsapp', 'WhatsApp'),
+        ('chat', 'Chat'),
+        ('api', 'API'),
+    ]
+    
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='interacoes')
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     mensagem = models.TextField()
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='resposta', db_index=True)
+    canal = models.CharField(max_length=15, choices=CANAL_CHOICES, default='web')
     eh_publico = models.BooleanField(default=True)  # Visível para o cliente
     criado_em = models.DateTimeField(auto_now_add=True)
     
@@ -329,6 +377,10 @@ class InteracaoTicket(models.Model):
         verbose_name = "Interação"
         verbose_name_plural = "Interações"
         ordering = ['criado_em']
+        indexes = [
+            models.Index(fields=['ticket', 'criado_em']),
+            models.Index(fields=['tipo', 'criado_em']),
+        ]
     
     def __str__(self):
         return f"Interação em {self.ticket.numero} por {self.usuario.username}"
@@ -589,7 +641,8 @@ class AutomationSettings(models.Model):
 
 
 class KnowledgeBase(models.Model):
-    """Base de conhecimento para chatbot"""
+    """DEPRECADO - Use ArtigoConhecimento de models_knowledge.py como KB principal.
+    Mantido para compatibilidade com migrations existentes."""
     title = models.CharField(max_length=200)
     content = models.TextField()
     keywords = models.JSONField(help_text="Lista de palavras-chave para busca")
@@ -603,8 +656,8 @@ class KnowledgeBase(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = "Base de Conhecimento"
-        verbose_name_plural = "Base de Conhecimento"
+        verbose_name = "Base de Conhecimento (Deprecado)"
+        verbose_name_plural = "Base de Conhecimento (Deprecado)"
         ordering = ['-view_count', '-created_at']
     
     def __str__(self):
@@ -639,6 +692,7 @@ class Notification(models.Model):
         ('ticket_assigned', 'Ticket Atribuído'),
         ('ticket_status_change', 'Mudança de Status'),
         ('sla_warning', 'Alerta de SLA'),
+        ('sla_breach', 'SLA Violado'),
         ('new_interaction', 'Nova Interação'),
         ('system_alert', 'Alerta do Sistema'),
     ]
@@ -900,9 +954,9 @@ class CentroCusto(models.Model):
     @property
     def orcamento_utilizado_mes_atual(self):
         """Calcula o orçamento utilizado no mês atual"""
-        from datetime import datetime
-        mes_atual = datetime.now().month
-        ano_atual = datetime.now().year
+        agora = timezone.now()
+        mes_atual = agora.month
+        ano_atual = agora.year
         
         total = MovimentacaoFinanceira.objects.filter(
             centro_custo=self,
@@ -941,11 +995,11 @@ class CentroCusto(models.Model):
     
     def get_movimentacoes_mes(self, mes=None, ano=None):
         """Retorna as movimentações do mês especificado"""
-        from datetime import datetime
+        agora = timezone.now()
         if not mes:
-            mes = datetime.now().month
+            mes = agora.month
         if not ano:
-            ano = datetime.now().year
+            ano = agora.year
             
         return MovimentacaoFinanceira.objects.filter(
             centro_custo=self,
@@ -954,14 +1008,732 @@ class CentroCusto(models.Model):
         ).order_by('-data_movimentacao')
 
 
-# ========== IMPORTAR MODELOS DE CHAT ==========
+# ========== MODELOS DE PRODUTIVIDADE ==========
+
+class CannedResponse(models.Model):
+    """Respostas prontas / Macros para agentes"""
+    titulo = models.CharField(max_length=200)
+    corpo = models.TextField(help_text="Suporta variaveis: {{cliente_nome}}, {{ticket_numero}}, {{agente_nome}}")
+    categoria = models.CharField(max_length=100, blank=True)
+    atalho = models.CharField(max_length=50, blank=True, help_text="Atalho de teclado, ex: /saudacao")
+    criado_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='canned_responses')
+    compartilhado = models.BooleanField(default=True, help_text="Visivel para todos os agentes")
+    uso_count = models.PositiveIntegerField(default=0)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Resposta Pronta"
+        verbose_name_plural = "Respostas Prontas"
+        ordering = ['-uso_count', 'titulo']
+
+    def __str__(self):
+        return self.titulo
+
+    def render(self, ticket=None, agente=None):
+        """Renderiza o corpo substituindo variaveis"""
+        text = self.corpo
+        if ticket:
+            text = text.replace("{{ticket_numero}}", ticket.numero or "")
+            text = text.replace("{{cliente_nome}}", ticket.cliente.nome if ticket.cliente else "")
+        if agente:
+            text = text.replace("{{agente_nome}}", agente.get_full_name() or agente.username)
+        return text
 
 
+class TicketTemplate(models.Model):
+    """Templates de ticket com pre-preenchimento"""
+    nome = models.CharField(max_length=200)
+    descricao = models.TextField(blank=True)
+    titulo_padrao = models.CharField(max_length=200, blank=True)
+    descricao_padrao = models.TextField(blank=True)
+    categoria = models.ForeignKey(CategoriaTicket, on_delete=models.SET_NULL, null=True, blank=True)
+    prioridade = models.CharField(max_length=10, choices=PrioridadeTicket.choices, default=PrioridadeTicket.MEDIA)
+    tipo = models.CharField(max_length=15, choices=Ticket.TIPO_CHOICES, default='incidente')
+    tags_padrao = models.CharField(max_length=500, blank=True)
+    ativo = models.BooleanField(default=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Template de Ticket"
+        verbose_name_plural = "Templates de Ticket"
+        ordering = ['nome']
+
+    def __str__(self):
+        return self.nome
 
 
+class CustomField(models.Model):
+    """Campos customizados para tickets"""
+    FIELD_TYPES = [
+        ('text', 'Texto'),
+        ('number', 'Numero'),
+        ('date', 'Data'),
+        ('select', 'Selecao'),
+        ('checkbox', 'Checkbox'),
+        ('textarea', 'Area de texto'),
+    ]
+    nome = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=110, unique=True)
+    tipo = models.CharField(max_length=10, choices=FIELD_TYPES)
+    obrigatorio = models.BooleanField(default=False)
+    opcoes = models.JSONField(default=list, blank=True, help_text="Lista de opcoes para tipo select")
+    placeholder = models.CharField(max_length=200, blank=True)
+    ordem = models.PositiveIntegerField(default=0)
+    ativo = models.BooleanField(default=True)
 
-# ========== IMPORTAR MODELOS DE CHAT ==========
-from .models_chat import (
+    class Meta:
+        verbose_name = "Campo Customizado"
+        verbose_name_plural = "Campos Customizados"
+        ordering = ['ordem']
+
+    def __str__(self):
+        return self.nome
+
+
+class TicketCustomFieldValue(models.Model):
+    """Valor de campo customizado para um ticket"""
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='custom_values')
+    field = models.ForeignKey(CustomField, on_delete=models.CASCADE)
+    value = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "Valor de Campo Customizado"
+        verbose_name_plural = "Valores de Campos Customizados"
+        unique_together = ('ticket', 'field')
+
+    def __str__(self):
+        return f"{self.field.nome}: {self.value}"
+
+
+class StatusTransition(models.Model):
+    """Regras de transicao de status validas"""
+    from_status = models.CharField(max_length=20, choices=StatusTicket.choices)
+    to_status = models.CharField(max_length=20, choices=StatusTicket.choices)
+    requires_role = models.CharField(max_length=20, blank=True, help_text="Role necessaria: admin, supervisor, agente")
+    ativo = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "Transicao de Status"
+        verbose_name_plural = "Transicoes de Status"
+        unique_together = ('from_status', 'to_status')
+
+    def __str__(self):
+        return f"{self.from_status} -> {self.to_status}"
+
+
+# ===========================================================================
+# FASE 4 — Webhooks, API Keys, Time Tracking, Tags, Portal Cliente
+# ===========================================================================
+
+class Tag(models.Model):
+    """Tags reutilizaveis para tickets"""
+    nome = models.CharField(max_length=50, unique=True)
+    cor = models.CharField(max_length=7, default='#06b6d4', help_text="Hex color")
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Tag"
+        verbose_name_plural = "Tags"
+        ordering = ['nome']
+
+    def __str__(self):
+        return self.nome
+
+
+class WebhookEndpoint(models.Model):
+    """Endpoints de webhook para notificacoes outbound"""
+    EVENTS = [
+        ('ticket_created', 'Ticket Criado'),
+        ('ticket_updated', 'Ticket Atualizado'),
+        ('ticket_resolved', 'Ticket Resolvido'),
+        ('ticket_closed', 'Ticket Fechado'),
+        ('ticket_assigned', 'Ticket Atribuido'),
+        ('sla_warning', 'SLA Warning'),
+        ('sla_breach', 'SLA Breach'),
+        ('comment_added', 'Comentario Adicionado'),
+    ]
+
+    nome = models.CharField(max_length=100)
+    url = models.URLField()
+    secret = models.CharField(max_length=255, blank=True, help_text="HMAC secret para assinatura")
+    events = models.JSONField(default=list, help_text="Lista de eventos para notificar")
+    headers = models.JSONField(default=dict, blank=True, help_text="Headers customizados")
+    is_active = models.BooleanField(default=True)
+    criado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    last_triggered = models.DateTimeField(null=True, blank=True)
+    failure_count = models.IntegerField(default=0)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Webhook Endpoint"
+        verbose_name_plural = "Webhook Endpoints"
+
+    def __str__(self):
+        return f"{self.nome} ({self.url})"
+
+
+class WebhookDelivery(models.Model):
+    """Log de entregas de webhook"""
+    webhook = models.ForeignKey(WebhookEndpoint, on_delete=models.CASCADE, related_name='deliveries')
+    event = models.CharField(max_length=50)
+    payload = models.JSONField()
+    response_status = models.IntegerField(null=True)
+    response_body = models.TextField(blank=True)
+    success = models.BooleanField(default=False)
+    duration_ms = models.IntegerField(null=True)
+    attempt = models.IntegerField(default=1)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Webhook Delivery"
+        verbose_name_plural = "Webhook Deliveries"
+        ordering = ['-criado_em']
+        indexes = [
+            models.Index(fields=['-criado_em']),
+            models.Index(fields=['webhook', 'success']),
+        ]
+
+
+class APIKey(models.Model):
+    """Chave de API para integracoes de terceiros"""
+    nome = models.CharField(max_length=100)
+    key_hash = models.CharField(max_length=128, unique=True, db_index=True)
+    prefix = models.CharField(max_length=8, unique=True, help_text="Primeiros 8 chars da chave")
+    criado_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='api_keys')
+    permissions = models.JSONField(default=list, help_text='Ex: ["tickets.read", "tickets.write"]')
+    rate_limit = models.IntegerField(default=1000, help_text="Requests por dia")
+    is_active = models.BooleanField(default=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    last_used = models.DateTimeField(null=True, blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "API Key"
+        verbose_name_plural = "API Keys"
+
+    def __str__(self):
+        return f"{self.nome} ({self.prefix}...)"
+
+    @classmethod
+    def generate_key(cls):
+        import secrets
+        import hashlib
+        raw_key = secrets.token_urlsafe(48)
+        key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
+        prefix = raw_key[:8]
+        return raw_key, key_hash, prefix
+
+    def is_valid(self):
+        if not self.is_active:
+            return False
+        if self.expires_at and self.expires_at < timezone.now():
+            return False
+        return True
+
+
+class TimeEntry(models.Model):
+    """Registro de tempo gasto em tickets"""
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='time_entries')
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='time_entries')
+    minutos = models.PositiveIntegerField()
+    descricao = models.TextField(blank=True)
+    data = models.DateField(default=timezone.now)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Registro de Tempo"
+        verbose_name_plural = "Registros de Tempo"
+        ordering = ['-data', '-criado_em']
+
+    def __str__(self):
+        return f"{self.usuario} - {self.minutos}min em {self.ticket}"
+
+    @property
+    def horas(self):
+        return round(self.minutos / 60, 1)
+
+
+class Holiday(models.Model):
+    """Feriados para calculo de SLA business hours"""
+    nome = models.CharField(max_length=100)
+    data = models.DateField(unique=True)
+    recorrente = models.BooleanField(default=False, help_text="Repete anualmente")
+
+    class Meta:
+        verbose_name = "Feriado"
+        verbose_name_plural = "Feriados"
+        ordering = ['data']
+
+    def __str__(self):
+        return f"{self.nome} ({self.data})"
+
+
+class EscalationChain(models.Model):
+    """Cadeia de escalonamento multi-nivel"""
+    nome = models.CharField(max_length=100)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "Cadeia de Escalonamento"
+        verbose_name_plural = "Cadeias de Escalonamento"
+
+    def __str__(self):
+        return self.nome
+
+
+class EscalationLevel(models.Model):
+    """Nivel individual na cadeia de escalonamento"""
+    chain = models.ForeignKey(EscalationChain, on_delete=models.CASCADE, related_name='levels')
+    nivel = models.PositiveIntegerField()
+    destino = models.ForeignKey(User, on_delete=models.CASCADE, help_text="Usuario que recebe a escalonamento")
+    timeout_minutos = models.PositiveIntegerField(default=60, help_text="Minutos antes de escalar para proximo nivel")
+    notificar_email = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "Nivel de Escalonamento"
+        verbose_name_plural = "Niveis de Escalonamento"
+        ordering = ['chain', 'nivel']
+        unique_together = ('chain', 'nivel')
+
+    def __str__(self):
+        return f"{self.chain.nome} - Nivel {self.nivel}: {self.destino}"
+
+
+# ===========================================================================
+# FASE 5 — IA & Automacao Inteligente
+# ===========================================================================
+
+class AIConfiguration(models.Model):
+    """Configuracao de provedor de IA"""
+    PROVIDERS = [
+        ('openai', 'OpenAI'),
+        ('anthropic', 'Anthropic (Claude)'),
+        ('local', 'Modelo Local'),
+        ('google', 'Google AI'),
+    ]
+    provider = models.CharField(max_length=20, choices=PROVIDERS, unique=True)
+    api_key = models.CharField(max_length=255)
+    model_name = models.CharField(max_length=100, default='gpt-4o-mini')
+    temperature = models.FloatField(default=0.3)
+    max_tokens = models.IntegerField(default=1000)
+    is_active = models.BooleanField(default=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Configuracao de IA"
+        verbose_name_plural = "Configuracoes de IA"
+
+    def __str__(self):
+        return f"{self.get_provider_display()} - {self.model_name}"
+
+
+class AIInteraction(models.Model):
+    """Log de interacoes com IA"""
+    TIPOS = [
+        ('categorization', 'Auto-categorizacao'),
+        ('priority', 'Predicao de Prioridade'),
+        ('response', 'Sugestao de Resposta'),
+        ('summary', 'Resumo de Conversa'),
+        ('sentiment', 'Analise de Sentimento'),
+        ('duplicate', 'Deteccao de Duplicata'),
+        ('triage', 'Auto-triagem'),
+        ('chatbot', 'Chatbot'),
+    ]
+    tipo = models.CharField(max_length=20, choices=TIPOS)
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, null=True, blank=True, related_name='ai_interactions')
+    input_text = models.TextField()
+    output_text = models.TextField()
+    confidence = models.FloatField(null=True, blank=True)
+    provider = models.CharField(max_length=20, blank=True)
+    model_used = models.CharField(max_length=100, blank=True)
+    tokens_used = models.IntegerField(default=0)
+    processing_time_ms = models.IntegerField(default=0)
+    accepted_by_user = models.BooleanField(null=True, blank=True)
+    usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Interacao IA"
+        verbose_name_plural = "Interacoes IA"
+        ordering = ['-criado_em']
+        indexes = [
+            models.Index(fields=['tipo', '-criado_em']),
+            models.Index(fields=['ticket', '-criado_em']),
+        ]
+
+
+class ScheduledRule(models.Model):
+    """Regras agendadas (cron-based automation)"""
+    nome = models.CharField(max_length=200)
+    descricao = models.TextField(blank=True)
+    cron_expression = models.CharField(max_length=50, help_text="Ex: 0 9 * * 1 (seg 9h)")
+    conditions = models.JSONField(default=dict, help_text="Filtros para selecionar tickets")
+    actions = models.JSONField(default=list, help_text="Acoes a executar")
+    is_active = models.BooleanField(default=True)
+    last_run = models.DateTimeField(null=True, blank=True)
+    run_count = models.IntegerField(default=0)
+    max_executions_per_hour = models.IntegerField(default=100)
+    criado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Regra Agendada"
+        verbose_name_plural = "Regras Agendadas"
+
+    def __str__(self):
+        return self.nome
+
+
+# ===========================================================================
+# FASE 6 — Analytics & Relatorios Enterprise
+# ===========================================================================
+
+class ScheduledReport(models.Model):
+    """Relatorios agendados por email"""
+    FREQUENCY_CHOICES = [
+        ('daily', 'Diario'),
+        ('weekly', 'Semanal'),
+        ('monthly', 'Mensal'),
+    ]
+    FORMAT_CHOICES = [
+        ('pdf', 'PDF'),
+        ('excel', 'Excel'),
+        ('csv', 'CSV'),
+    ]
+    nome = models.CharField(max_length=200)
+    report_type = models.CharField(max_length=50, help_text="Tipo do relatorio (tickets, sla, financial, performance)")
+    frequency = models.CharField(max_length=10, choices=FREQUENCY_CHOICES, default='weekly')
+    output_format = models.CharField(max_length=10, choices=FORMAT_CHOICES, default='pdf')
+    recipients = models.JSONField(default=list, help_text="Lista de emails destinatarios")
+    filters = models.JSONField(default=dict, blank=True, help_text="Filtros customizados")
+    is_active = models.BooleanField(default=True)
+    last_sent = models.DateTimeField(null=True, blank=True)
+    next_run = models.DateTimeField(null=True, blank=True)
+    criado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Relatorio Agendado"
+        verbose_name_plural = "Relatorios Agendados"
+
+    def __str__(self):
+        return f"{self.nome} ({self.get_frequency_display()})"
+
+
+class SharedDashboard(models.Model):
+    """Dashboards compartilhaveis via URL publica"""
+    nome = models.CharField(max_length=200)
+    token = models.CharField(max_length=64, unique=True, db_index=True)
+    dashboard_config = models.JSONField(default=dict, help_text="Configuracao dos widgets/metricas")
+    is_active = models.BooleanField(default=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    view_count = models.IntegerField(default=0)
+    criado_por = models.ForeignKey(User, on_delete=models.CASCADE)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Dashboard Compartilhado"
+        verbose_name_plural = "Dashboards Compartilhados"
+
+    def __str__(self):
+        return self.nome
+
+    def save(self, *args, **kwargs):
+        if not self.token:
+            import secrets
+            self.token = secrets.token_urlsafe(48)
+        super().save(*args, **kwargs)
+
+    def is_valid(self):
+        if not self.is_active:
+            return False
+        if self.expires_at and self.expires_at < timezone.now():
+            return False
+        return True
+
+
+class KPIAlert(models.Model):
+    """Alertas de KPI — notifica quando metricas cruzam thresholds"""
+    METRIC_CHOICES = [
+        ('csat_below', 'CSAT abaixo de'),
+        ('sla_compliance_below', 'SLA Compliance abaixo de'),
+        ('queue_above', 'Fila acima de'),
+        ('avg_resolution_above', 'Tempo medio resolucao acima de'),
+        ('open_tickets_above', 'Tickets abertos acima de'),
+    ]
+    nome = models.CharField(max_length=200)
+    metric = models.CharField(max_length=30, choices=METRIC_CHOICES)
+    threshold = models.FloatField(help_text="Valor limite para disparo")
+    recipients = models.JSONField(default=list, help_text="Emails notificados")
+    is_active = models.BooleanField(default=True)
+    last_triggered = models.DateTimeField(null=True, blank=True)
+    trigger_count = models.IntegerField(default=0)
+    cooldown_minutes = models.IntegerField(default=60, help_text="Minutos entre alertas")
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Alerta de KPI"
+        verbose_name_plural = "Alertas de KPI"
+
+    def __str__(self):
+        return f"{self.nome}: {self.get_metric_display()} {self.threshold}"
+
+
+# ===========================================================================
+# FASE 7 — Omnichannel & Integracoes
+# ===========================================================================
+
+class EmailAccount(models.Model):
+    """Conta de email para recebimento inbound"""
+    PROTOCOL_CHOICES = [
+        ('imap', 'IMAP'),
+        ('pop3', 'POP3'),
+    ]
+    nome = models.CharField(max_length=100)
+    email = models.EmailField(unique=True)
+    protocol = models.CharField(max_length=4, choices=PROTOCOL_CHOICES, default='imap')
+    server = models.CharField(max_length=255)
+    port = models.IntegerField(default=993)
+    username = models.CharField(max_length=255)
+    password = models.CharField(max_length=255)
+    use_ssl = models.BooleanField(default=True)
+    folder = models.CharField(max_length=100, default='INBOX')
+    is_active = models.BooleanField(default=True)
+    last_checked = models.DateTimeField(null=True, blank=True)
+    auto_create_ticket = models.BooleanField(default=True)
+    default_category = models.ForeignKey(CategoriaTicket, on_delete=models.SET_NULL, null=True, blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Conta de Email"
+        verbose_name_plural = "Contas de Email"
+
+    def __str__(self):
+        return f"{self.nome} ({self.email})"
+
+
+class InboundEmail(models.Model):
+    """Email recebido — pode gerar ticket ou interacao"""
+    email_account = models.ForeignKey(EmailAccount, on_delete=models.CASCADE, related_name='emails')
+    message_id = models.CharField(max_length=255, unique=True)
+    from_email = models.EmailField()
+    from_name = models.CharField(max_length=200, blank=True)
+    subject = models.CharField(max_length=500)
+    body_text = models.TextField(blank=True)
+    body_html = models.TextField(blank=True)
+    in_reply_to = models.CharField(max_length=255, blank=True)
+    references = models.TextField(blank=True)
+    ticket = models.ForeignKey(Ticket, on_delete=models.SET_NULL, null=True, blank=True, related_name='inbound_emails')
+    processed = models.BooleanField(default=False)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Email Recebido"
+        verbose_name_plural = "Emails Recebidos"
+        ordering = ['-criado_em']
+
+    def __str__(self):
+        return f"{self.from_email}: {self.subject}"
+
+
+class EmailTemplate(models.Model):
+    """Templates de email editaveis"""
+    TEMPLATE_TYPES = [
+        ('ticket_created', 'Ticket Criado'),
+        ('ticket_resolved', 'Ticket Resolvido'),
+        ('ticket_closed', 'Ticket Fechado'),
+        ('ticket_assigned', 'Ticket Atribuido'),
+        ('ticket_reply', 'Resposta de Ticket'),
+        ('sla_warning', 'Aviso de SLA'),
+        ('satisfaction_survey', 'Pesquisa de Satisfacao'),
+        ('welcome', 'Boas-vindas'),
+        ('password_reset', 'Reset de Senha'),
+    ]
+    tipo = models.CharField(max_length=30, choices=TEMPLATE_TYPES, unique=True)
+    assunto = models.CharField(max_length=200)
+    corpo_html = models.TextField(help_text="HTML com variaveis: {{cliente_nome}}, {{ticket_numero}}, etc.")
+    corpo_texto = models.TextField(blank=True, help_text="Versao texto plano")
+    is_active = models.BooleanField(default=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Template de Email"
+        verbose_name_plural = "Templates de Email"
+
+    def __str__(self):
+        return f"{self.get_tipo_display()}"
+
+    def render(self, context: dict) -> tuple:
+        """Renderiza template com variaveis"""
+        subject = self.assunto
+        body = self.corpo_html
+        for key, value in context.items():
+            placeholder = "{{" + key + "}}"
+            subject = subject.replace(placeholder, str(value))
+            body = body.replace(placeholder, str(value))
+        return subject, body
+
+
+# ===========================================================================
+# FASE 9 — Features Premium
+# ===========================================================================
+
+class CustomerHealthScore(models.Model):
+    """Score de saude do cliente — identifica clientes em risco"""
+    cliente = models.OneToOneField(Cliente, on_delete=models.CASCADE, related_name='health_score')
+    score = models.FloatField(default=100.0, help_text="0-100, onde 100 = saudavel")
+    ticket_frequency_score = models.FloatField(default=100.0)
+    satisfaction_score = models.FloatField(default=100.0)
+    resolution_time_score = models.FloatField(default=100.0)
+    escalation_score = models.FloatField(default=100.0)
+    risk_level = models.CharField(max_length=10, choices=[
+        ('low', 'Baixo'),
+        ('medium', 'Medio'),
+        ('high', 'Alto'),
+        ('critical', 'Critico'),
+    ], default='low')
+    last_calculated = models.DateTimeField(auto_now=True)
+    factors = models.JSONField(default=dict, help_text="Detalhamento dos fatores")
+
+    class Meta:
+        verbose_name = "Health Score do Cliente"
+        verbose_name_plural = "Health Scores dos Clientes"
+
+    def __str__(self):
+        return f"{self.cliente.nome}: {self.score:.0f} ({self.risk_level})"
+
+    def calculate(self):
+        """Recalcular score baseado em metricas"""
+        from datetime import timedelta
+        now = timezone.now()
+        last_90d = now - timedelta(days=90)
+        tickets = self.cliente.tickets.filter(criado_em__gte=last_90d)
+        total = tickets.count()
+
+        # Frequência de tickets (muitos tickets = score mais baixo)
+        if total == 0:
+            self.ticket_frequency_score = 100
+        elif total <= 3:
+            self.ticket_frequency_score = 90
+        elif total <= 10:
+            self.ticket_frequency_score = 70
+        else:
+            self.ticket_frequency_score = max(30, 100 - total * 3)
+
+        # Satisfação
+        try:
+            from .models_satisfacao import AvaliacaoSatisfacao
+            avg_sat = AvaliacaoSatisfacao.objects.filter(
+                ticket__cliente=self.cliente,
+                criado_em__gte=last_90d
+            ).aggregate(avg=models.Avg('nota_atendimento'))['avg']
+            self.satisfaction_score = (avg_sat / 5 * 100) if avg_sat else 80
+        except Exception:
+            self.satisfaction_score = 80
+
+        # Tempo de resolução
+        resolved = tickets.filter(resolvido_em__isnull=False)
+        if resolved.exists():
+            avg_delta = resolved.aggregate(
+                avg=models.Avg(models.F('resolvido_em') - models.F('criado_em'))
+            )['avg']
+            if avg_delta:
+                hours = avg_delta.total_seconds() / 3600
+                self.resolution_time_score = max(20, 100 - hours * 2)
+            else:
+                self.resolution_time_score = 80
+        else:
+            self.resolution_time_score = 80
+
+        # Escalonamentos
+        escalated = tickets.filter(is_escalated=True).count()
+        self.escalation_score = max(20, 100 - escalated * 15)
+
+        # Score final (média ponderada)
+        self.score = (
+            self.ticket_frequency_score * 0.2
+            + self.satisfaction_score * 0.35
+            + self.resolution_time_score * 0.25
+            + self.escalation_score * 0.2
+        )
+
+        # Risk level
+        if self.score >= 80:
+            self.risk_level = 'low'
+        elif self.score >= 60:
+            self.risk_level = 'medium'
+        elif self.score >= 40:
+            self.risk_level = 'high'
+        else:
+            self.risk_level = 'critical'
+
+        self.factors = {
+            'ticket_frequency': self.ticket_frequency_score,
+            'satisfaction': self.satisfaction_score,
+            'resolution_time': self.resolution_time_score,
+            'escalation': self.escalation_score,
+        }
+        self.save()
+
+
+class GamificationBadge(models.Model):
+    """Badges de gamificacao para agentes"""
+    nome = models.CharField(max_length=100)
+    descricao = models.TextField()
+    icone = models.CharField(max_length=50, default='fas fa-trophy')
+    cor = models.CharField(max_length=7, default='#06b6d4')
+    criteria = models.JSONField(help_text="Criterios para ganhar: {'metric': 'tickets_resolved', 'threshold': 100}")
+    pontos = models.IntegerField(default=10)
+
+    class Meta:
+        verbose_name = "Badge"
+        verbose_name_plural = "Badges"
+
+    def __str__(self):
+        return self.nome
+
+
+class AgentBadge(models.Model):
+    """Badges conquistadas por agentes"""
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='badges')
+    badge = models.ForeignKey(GamificationBadge, on_delete=models.CASCADE)
+    earned_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Badge do Agente"
+        verbose_name_plural = "Badges dos Agentes"
+        unique_together = ('usuario', 'badge')
+
+    def __str__(self):
+        return f"{self.usuario} - {self.badge.nome}"
+
+
+class AgentLeaderboard(models.Model):
+    """Leaderboard de agentes — atualizado periodicamente"""
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='leaderboard')
+    pontos_total = models.IntegerField(default=0)
+    tickets_resolved = models.IntegerField(default=0)
+    avg_satisfaction = models.FloatField(default=0)
+    avg_resolution_hours = models.FloatField(default=0)
+    first_response_rate = models.FloatField(default=0, help_text="% respondidos dentro do SLA")
+    rank = models.IntegerField(default=0)
+    periodo = models.CharField(max_length=7, help_text="YYYY-MM")
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Leaderboard"
+        verbose_name_plural = "Leaderboard"
+        ordering = ['-pontos_total']
+
+    def __str__(self):
+        return f"#{self.rank} {self.usuario} - {self.pontos_total}pts"
+
+
+# ========== IMPORTAR MODELOS AUXILIARES ==========
+from .models_chat import (  # noqa: E402, F401
     ChatRoom, ChatParticipant, ChatMessage, ChatMessageReadReceipt,
     ChatReaction, ChatSettings, ChatBot
 )

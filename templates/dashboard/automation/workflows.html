@@ -1,0 +1,448 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Workflows - iConnect{% endblock %}
+{% block page_title %}Workflows Automáticos{% endblock %}
+{% block breadcrumb_title %}Automação / Workflows{% endblock %}
+
+{% block content %}
+<!-- ===== HEADER + AÇÕES ===== -->
+<div class="row">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Workflows Automáticos</h3>
+            <p class="mb-0 text-sm">Crie e gerencie fluxos de trabalho automatizados com condições e ações</p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+        <a href="{% url 'dashboard:automation' %}" class="btn btn-outline-primary btn-sm mb-0 me-2">
+            <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Voltar
+        </a>
+        <button class="btn bg-gradient-primary btn-sm mb-0" data-bs-toggle="modal" data-bs-target="#newWorkflowModal">
+            <i class="material-symbols-rounded text-sm me-1">add</i> Novo Workflow
+        </button>
+    </div>
+</div>
+
+<!-- ===== KPI CARDS ===== -->
+<div class="row mt-4">
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Total de Workflows</p>
+                        <h4 class="mb-0">{{ total_workflows|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">account_tree</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-primary font-weight-bolder">{{ total_workflows|default:"0" }}</span> configurados</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Ativos</p>
+                        <h4 class="mb-0">{{ active_workflows|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">play_circle</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-success font-weight-bolder">{{ active_workflows|default:"0" }}</span> em execução</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Execuções</p>
+                        <h4 class="mb-0">{{ total_executions|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">bolt</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-info font-weight-bolder">{{ total_executions|default:"0" }}</span> processadas</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Taxa de Sucesso</p>
+                        <h4 class="mb-0">{{ success_rate|default:"0" }}%</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">speed</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-warning font-weight-bolder">{{ success_rate|default:"0" }}%</span> das execuções</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== TEMPLATES RÁPIDOS ===== -->
+<div class="row mt-4">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header pb-0 pt-3 px-3">
+                <div class="d-flex align-items-center">
+                    <div>
+                        <h6 class="mb-0">Templates Rápidos</h6>
+                        <p class="text-sm text-muted mb-0">Use um template como base para criar um workflow</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Template</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Descrição</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Evento</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">Auto-Atribuir Críticos</h6>
+                                            <p class="text-xs text-secondary mb-0">Prioridade 9</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><p class="text-xs font-weight-bold mb-0">Atribui tickets de alta prioridade ao melhor agente</p></td>
+                                <td class="align-middle text-center"><span class="badge badge-sm bg-gradient-info">Ticket Criado</span></td>
+                                <td class="align-middle text-center">
+                                    <button class="btn btn-link text-info text-sm mb-0 px-0 use-tpl" data-tpl="auto_assign_high_priority">
+                                        <i class="material-symbols-rounded text-sm">add_circle</i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">Escalar Antigos</h6>
+                                            <p class="text-xs text-secondary mb-0">Prioridade 8</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><p class="text-xs font-weight-bold mb-0">Escala tickets sem resposta há mais de 48 horas</p></td>
+                                <td class="align-middle text-center"><span class="badge badge-sm bg-gradient-warning">Ticket Atualizado</span></td>
+                                <td class="align-middle text-center">
+                                    <button class="btn btn-link text-info text-sm mb-0 px-0 use-tpl" data-tpl="escalate_old_tickets">
+                                        <i class="material-symbols-rounded text-sm">add_circle</i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">Fechar Resolvidos</h6>
+                                            <p class="text-xs text-secondary mb-0">Prioridade 4</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><p class="text-xs font-weight-bold mb-0">Fecha tickets resolvidos após 48h sem interação</p></td>
+                                <td class="align-middle text-center"><span class="badge badge-sm bg-gradient-success">Status Alterado</span></td>
+                                <td class="align-middle text-center">
+                                    <button class="btn btn-link text-info text-sm mb-0 px-0 use-tpl" data-tpl="close_resolved_tickets">
+                                        <i class="material-symbols-rounded text-sm">add_circle</i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== TABELA DE WORKFLOWS ===== -->
+<div class="row">
+    <div class="col-12">
+        <div class="card my-4">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="text-white text-capitalize ps-3 mb-0">Todos os Workflows</h6>
+                        <div class="me-3">
+                            <button class="btn btn-outline-white btn-sm mb-0" data-bs-toggle="modal" data-bs-target="#newWorkflowModal">
+                                <i class="material-symbols-rounded text-sm">add</i>&nbsp;&nbsp;Novo Workflow
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Workflow</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Evento Gatilho</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Prioridade</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Atualizado</th>
+                                <th class="text-secondary opacity-7"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for wf in workflows %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ wf.name }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ wf.description|truncatewords:12|default:"Sem descrição" }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-sm bg-gradient-info">{{ wf.get_trigger_event_display }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">{{ wf.priority }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    {% if wf.is_active %}
+                                    <span class="badge badge-sm bg-gradient-success">Ativo</span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-gradient-secondary">Inativo</span>
+                                    {% endif %}
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">{{ wf.updated_at|timesince }} atrás</span>
+                                </td>
+                                <td class="align-middle">
+                                    <div class="dropdown">
+                                        <button class="btn btn-link text-secondary mb-0" data-bs-toggle="dropdown">
+                                            <i class="material-symbols-rounded">more_vert</i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a class="dropdown-item toggle-wf" href="javascript:;" data-id="{{ wf.id }}">
+                                                    {% if wf.is_active %}Desativar{% else %}Ativar{% endif %}
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item text-danger delete-wf" href="javascript:;" data-id="{{ wf.id }}">Excluir</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5">
+                                    <i class="material-symbols-rounded text-secondary mb-2" style="font-size:48px">account_tree</i>
+                                    <p class="text-secondary text-sm mb-2">Nenhum workflow criado</p>
+                                    <button class="btn btn-sm bg-gradient-primary" data-bs-toggle="modal" data-bs-target="#newWorkflowModal">
+                                        <i class="material-symbols-rounded text-sm me-1">add</i> Criar Primeiro Workflow
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL: NOVO WORKFLOW ===== -->
+<div class="modal fade" id="newWorkflowModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title">
+                    <i class="material-symbols-rounded align-middle me-1">add_circle</i> Novo Workflow
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newWorkflowForm">
+                    {% csrf_token %}
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Nome</label>
+                            <input type="text" class="form-control" name="name" id="wfName" placeholder="Ex: Escalar tickets críticos" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Prioridade (1-10)</label>
+                            <input type="number" class="form-control" name="priority" id="wfPriority" value="5" min="1" max="10">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Descrição</label>
+                            <textarea class="form-control" name="description" id="wfDesc" rows="2" placeholder="O que este workflow faz..."></textarea>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
+                            <label class="form-label">Evento Gatilho</label>
+                            <select class="form-select" name="trigger_event" id="wfTrigger" required>
+                                <option value="">Selecione...</option>
+                                <option value="ticket_created">Ticket Criado</option>
+                                <option value="ticket_updated">Ticket Atualizado</option>
+                                <option value="status_changed">Status Alterado</option>
+                                <option value="agent_assigned">Agente Atribuído</option>
+                                <option value="interaction_added">Interação Adicionada</option>
+                                <option value="sla_warning">Aviso de SLA</option>
+                                <option value="sla_breach">Violação de SLA</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
+                            <label class="form-label">Condições (JSON)</label>
+                            <textarea class="form-control font-monospace" name="conditions" id="wfCond" rows="3" placeholder='{"prioridade": "critica"}'>{}</textarea>
+                            <p class="text-xs text-muted mt-1 mb-0">Chaves: prioridade, status, categoria, has_agent, time_since_creation</p>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Ações (JSON)</label>
+                            <textarea class="form-control font-monospace" name="actions" id="wfActions" rows="3" placeholder='[{"type": "assign_agent", "value": "auto"}]'>[]</textarea>
+                            <p class="text-xs text-muted mt-1 mb-0">Tipos: change_status, change_priority, assign_agent, send_notification, add_comment, escalate</p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-sm btn-outline-secondary mb-0" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-sm bg-gradient-primary mb-0" id="saveWorkflowBtn">
+                    <i class="material-symbols-rounded text-sm me-1">save</i> Salvar Workflow
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var TEMPLATES = {
+    auto_assign_high_priority: {
+        name: 'Auto-Atribuir Tickets Críticos',
+        description: 'Atribui automaticamente tickets de prioridade alta/crítica ao melhor agente disponível',
+        trigger_event: 'ticket_created',
+        conditions: JSON.stringify({ prioridade: 'critica' }, null, 2),
+        actions: JSON.stringify([{ type: 'assign_agent', value: 'auto' }], null, 2)
+    },
+    escalate_old_tickets: {
+        name: 'Escalar Tickets Antigos',
+        description: 'Escala tickets abertos sem resposta há mais de 48 horas',
+        trigger_event: 'ticket_updated',
+        conditions: JSON.stringify({ status: 'aberto', time_since_creation: '48h' }, null, 2),
+        actions: JSON.stringify([{ type: 'escalate', value: 'supervisor' }, { type: 'change_priority', value: 'alta' }], null, 2)
+    },
+    close_resolved_tickets: {
+        name: 'Fechar Tickets Resolvidos',
+        description: 'Fecha automaticamente tickets com status resolvido após 48h sem interações',
+        trigger_event: 'status_changed',
+        conditions: JSON.stringify({ status: 'resolvido', time_since_creation: '48h' }, null, 2),
+        actions: JSON.stringify([{ type: 'change_status', value: 'fechado' }, { type: 'add_comment', value: 'Ticket fechado automaticamente.' }], null, 2)
+    }
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    /* Templates rápidos */
+    document.querySelectorAll('.use-tpl').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var tpl = TEMPLATES[this.dataset.tpl];
+            if (!tpl) return;
+            document.getElementById('wfName').value = tpl.name;
+            document.getElementById('wfDesc').value = tpl.description;
+            document.getElementById('wfTrigger').value = tpl.trigger_event;
+            document.getElementById('wfCond').value = tpl.conditions;
+            document.getElementById('wfActions').value = tpl.actions;
+            var modal = new bootstrap.Modal(document.getElementById('newWorkflowModal'));
+            modal.show();
+        });
+    });
+
+    /* Salvar workflow */
+    document.getElementById('saveWorkflowBtn').addEventListener('click', function() {
+        var form = document.getElementById('newWorkflowForm');
+        var fd = new FormData(form);
+        var data = { action: 'create' };
+        fd.forEach(function(v, k) { data[k] = v; });
+        try { JSON.parse(data.conditions || '{}'); } catch(e) { alert('Condições: JSON inválido'); return; }
+        try { JSON.parse(data.actions || '[]'); } catch(e) { alert('Ações: JSON inválido'); return; }
+        if (!data.name || !data.trigger_event) { alert('Nome e gatilho são obrigatórios'); return; }
+
+        var btn = this;
+        btn.disabled = true;
+
+        fetch('{% url "dashboard:automation_workflows" %}', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': fd.get('csrfmiddlewaretoken'), 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify(data)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res.success) location.reload();
+            else { alert(res.error || 'Erro'); btn.disabled = false; }
+        })
+        .catch(function() { alert('Erro de conexão'); btn.disabled = false; });
+    });
+
+    /* Toggle ativar/desativar */
+    document.querySelectorAll('.toggle-wf').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            fetch('{% url "dashboard:automation_workflows" %}', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ action: 'toggle', workflow_id: this.dataset.id })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) { if (res.success) location.reload(); else alert(res.error || 'Erro'); });
+        });
+    });
+
+    /* Excluir */
+    document.querySelectorAll('.delete-wf').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            if (!confirm('Excluir este workflow?')) return;
+            fetch('{% url "dashboard:automation_workflows" %}', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ action: 'delete', workflow_id: this.dataset.id })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) { if (res.success) location.reload(); else alert(res.error || 'Erro'); });
+        });
+    });
+});
+</script>
+{% endblock %}

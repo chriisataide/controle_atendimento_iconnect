@@ -110,12 +110,18 @@ def mobile_dashboard(request):
         
         if customer:
             my_tickets = Ticket.objects.filter(cliente=customer).order_by('-criado_em')[:10]
+            customer_tickets = Ticket.objects.filter(cliente=customer)
         else:
             my_tickets = []
+            customer_tickets = Ticket.objects.none()
         
         context = {
             'my_tickets': my_tickets,
             'customer': customer,
+            'total_tickets': customer_tickets.count(),
+            'open_tickets': customer_tickets.filter(status='aberto').count(),
+            'in_progress_tickets': customer_tickets.filter(status='em_andamento').count(),
+            'resolved_tickets': customer_tickets.filter(status='resolvido').count(),
             'is_agent': False,
             'is_mobile': True
         }
@@ -195,10 +201,10 @@ def mobile_ticket_detail(request, ticket_id):
             customer = Cliente.objects.get(email=request.user.email)
             if ticket.cliente != customer:
                 messages.error(request, 'Você não tem permissão para ver este ticket.')
-                return redirect('mobile:dashboard')
+                return redirect('mobile:mobile_dashboard')
         except Cliente.DoesNotExist:
             messages.error(request, 'Você não tem permissão para ver este ticket.')
-            return redirect('mobile:dashboard')
+            return redirect('mobile:mobile_dashboard')
     
     # Adicionar comentário
     if request.method == 'POST' and 'comment' in request.POST:
@@ -514,9 +520,26 @@ def mobile_offline(request):
 
 @login_required
 def mobile_notifications(request):
-    """Notificações mobile (placeholder)"""
+    """Notificações mobile"""
+    notifications = []
+    try:
+        from .models import Notification
+        
+        # Marcar todas como lidas via POST
+        if request.method == 'POST':
+            Notification.objects.filter(user=request.user, read=False).update(
+                read=True, read_at=timezone.now()
+            )
+            return JsonResponse({'success': True})
+        
+        notifications = Notification.objects.filter(
+            user=request.user
+        ).order_by('-created_at')[:50]
+    except Exception:
+        pass
+    
     context = {
         'is_mobile': True,
-        'notifications': [],  # Placeholder - implementar lógica de notificações
+        'notifications': notifications,
     }
     return render(request, 'mobile/notifications.html', context)

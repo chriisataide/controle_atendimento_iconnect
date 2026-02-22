@@ -8,7 +8,7 @@
     <meta name="csrf-token" content="{{ csrf_token }}">
     
     <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#667eea">
+    <meta name="theme-color" content="#334155">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="iConnect">
@@ -64,7 +64,7 @@
                 window.addEventListener('load', function() {
                       navigator.serviceWorker.register("{% static 'service-worker.js' %}")
                         .then(function(registration) {
-                            console.log('ServiceWorker registrado com sucesso:', registration.scope);
+                            // SW registrado com sucesso
                         }, function(err) {
                             console.warn('ServiceWorker falhou:', err);
                         });
@@ -96,8 +96,6 @@
             border: 1px solid rgba(0,0,0,0.15) !important;
             border-radius: 0.375rem !important;
             box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important;
-            /* REMOVIDO display: none !important; para permitir funcionamento do Bootstrap */
-            /* opacity, transform e transition podem ser mantidos para animação, mas não bloquear exibição */
             opacity: 0;
             transform: translateY(-10px);
             transition: all 0.15s ease-in-out;
@@ -107,6 +105,30 @@
             opacity: 1 !important;
             visibility: visible !important;
             transform: translateY(0) !important;
+        }
+
+        /* Fix navbar - garantir que dropdowns não sejam cortados */
+        .navbar-main,
+        .navbar-main .container-fluid,
+        .navbar-main .navbar-collapse,
+        .navbar-main .navbar-nav {
+            overflow: visible !important;
+        }
+        /* Quando dropdown está aberto, remove blur que cria stacking context */
+        .navbar-main.dropdown-open {
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        /* Z-index alto para dropdowns da navbar */
+        .navbar-main .dropdown-menu.show {
+            z-index: 9998 !important;
+        }
+        /* Modais sempre acima de tudo */
+        .modal-backdrop {
+            z-index: 10000 !important;
+        }
+        .modal {
+            z-index: 10001 !important;
         }
         
         .dropdown-item {
@@ -139,6 +161,775 @@
         #dropdownMenuButton:hover {
             color: #0d6efd !important;
         }
+
+        /* ===== SETTINGS MEGA DROPDOWN ===== */
+        .settings-dropdown {
+            min-width: 320px !important;
+            max-height: 85vh !important;
+            overflow-y: auto !important;
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 12px !important;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.12) !important;
+        }
+        .settings-dropdown .settings-header {
+            background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+            color: #fff;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .settings-dropdown .settings-header .material-icons {
+            font-size: 22px;
+            opacity: 0.9;
+        }
+        .settings-dropdown .settings-header h6 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            color: #fff !important;
+        }
+        .settings-dropdown .settings-section {
+            padding: 10px 12px 4px;
+        }
+        .settings-dropdown .settings-section-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            padding: 0 8px 6px;
+            margin: 0;
+        }
+        .settings-dropdown .settings-item {
+            display: flex !important;
+            align-items: center;
+            padding: 10px 12px !important;
+            border-radius: 8px !important;
+            margin: 2px 0;
+            transition: all 0.15s ease;
+            cursor: pointer;
+            gap: 12px;
+            text-decoration: none !important;
+            color: #334155 !important;
+            white-space: normal !important;
+        }
+        .settings-dropdown .settings-item:hover {
+            background-color: #f1f5f9 !important;
+        }
+        .settings-dropdown .settings-item .item-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .settings-dropdown .settings-item .item-icon .material-icons {
+            font-size: 20px;
+            color: #fff;
+        }
+        .settings-dropdown .settings-item .item-icon.icon-admin { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+        .settings-dropdown .settings-item .item-icon.icon-django { background: linear-gradient(135deg, #10b981, #059669); }
+        .settings-dropdown .settings-item .item-icon.icon-theme { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .settings-dropdown .settings-item .item-icon.icon-sidebar { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .settings-dropdown .settings-item .item-icon.icon-keyboard { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        .settings-dropdown .settings-item .item-icon.icon-export { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+        .settings-dropdown .settings-item .item-icon.icon-system { background: linear-gradient(135deg, #64748b, #475569); }
+        .settings-dropdown .settings-item .item-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .settings-dropdown .settings-item .item-info .item-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin: 0;
+            line-height: 1.3;
+        }
+        .settings-dropdown .settings-item .item-info .item-desc {
+            font-size: 11px;
+            color: #94a3b8;
+            margin: 0;
+            line-height: 1.3;
+        }
+        .settings-dropdown .settings-item .item-action {
+            flex-shrink: 0;
+        }
+        /* Toggle switch */
+        .settings-toggle {
+            position: relative;
+            width: 40px;
+            height: 22px;
+            appearance: none;
+            -webkit-appearance: none;
+            background: #cbd5e1;
+            border-radius: 11px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            outline: none;
+            border: none;
+            flex-shrink: 0;
+        }
+        .settings-toggle::before {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease;
+        }
+        .settings-toggle:checked {
+            background: #06b6d4;
+        }
+        .settings-toggle:checked::before {
+            transform: translateX(18px);
+        }
+        .settings-dropdown .settings-divider {
+            height: 1px;
+            background: #e2e8f0;
+            margin: 4px 12px;
+        }
+        .settings-dropdown .settings-footer {
+            padding: 10px 12px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .settings-dropdown .settings-footer span {
+            font-size: 11px;
+            color: #94a3b8;
+        }
+        .settings-dropdown .settings-footer .material-icons {
+            font-size: 14px;
+            color: #06b6d4;
+        }
+
+        /* ===== USER PROFILE DROPDOWN ===== */
+        .navbar-user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #e2e8f0;
+            transition: border-color 0.2s ease;
+        }
+        .navbar-user-avatar:hover {
+            border-color: #06b6d4;
+        }
+        .user-dropdown {
+            min-width: 300px !important;
+            max-height: 85vh !important;
+            overflow-y: auto !important;
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 12px !important;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.12) !important;
+        }
+        .user-dropdown-header {
+            background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-radius: 12px 12px 0 0;
+        }
+        .user-avatar-wrapper {
+            position: relative;
+            flex-shrink: 0;
+        }
+        .user-avatar-img {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(255,255,255,0.3);
+        }
+        .user-avatar-placeholder {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid rgba(255,255,255,0.3);
+        }
+        .user-avatar-placeholder .material-icons {
+            font-size: 28px;
+            color: #fff;
+        }
+        .user-status-dot {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #22c55e;
+            border: 2px solid #1e293b;
+        }
+        .user-header-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .user-header-name {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff !important;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .user-header-role {
+            margin: 0;
+            font-size: 11px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.8);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .user-header-email {
+            margin: 2px 0 0;
+            font-size: 12px;
+            color: rgba(255,255,255,0.65);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .user-dropdown-progress {
+            padding: 12px 16px;
+            background: #f8fafc;
+        }
+        .user-dropdown-progress .progress-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .user-dropdown-progress .progress-label span {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .user-dropdown-progress .progress-value {
+            font-weight: 700;
+            color: #06b6d4 !important;
+        }
+        .user-dropdown-progress .progress-bar-wrapper {
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .user-dropdown-progress .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #334155, #06b6d4);
+            border-radius: 2px;
+            transition: width 0.6s ease;
+        }
+        .user-dropdown-divider {
+            height: 1px;
+            background: #e2e8f0;
+            margin: 0;
+        }
+        .user-dropdown-section {
+            padding: 8px 10px;
+        }
+        .user-dropdown-item {
+            display: flex !important;
+            align-items: center;
+            padding: 10px 12px !important;
+            border-radius: 8px !important;
+            margin: 2px 0;
+            transition: all 0.15s ease;
+            cursor: pointer;
+            gap: 12px;
+            text-decoration: none !important;
+            color: #334155 !important;
+            white-space: normal !important;
+        }
+        .user-dropdown-item:hover {
+            background-color: #f1f5f9 !important;
+        }
+        .udd-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .udd-icon .material-icons {
+            font-size: 20px;
+            color: #fff;
+        }
+        .udd-icon.icon-profile { background: linear-gradient(135deg, #334155, #1e293b); }
+        .udd-icon.icon-tickets { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        .udd-icon.icon-notifs { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .udd-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .udd-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin: 0;
+            line-height: 1.3;
+        }
+        .udd-desc {
+            font-size: 11px;
+            color: #94a3b8;
+            margin: 0;
+            line-height: 1.3;
+        }
+        .udd-arrow {
+            font-size: 16px !important;
+            color: #94a3b8;
+            flex-shrink: 0;
+        }
+        .user-dropdown-detail {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 12px;
+        }
+        .user-dropdown-detail .material-icons {
+            font-size: 16px;
+            color: #94a3b8;
+        }
+        .user-dropdown-detail span {
+            font-size: 12px;
+            color: #64748b;
+        }
+        .user-dropdown-footer {
+            padding: 8px 10px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            border-radius: 0 0 12px 12px;
+        }
+        .user-dropdown-logout {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px !important;
+            border-radius: 8px !important;
+            color: #ef4444 !important;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none !important;
+            transition: all 0.15s ease;
+        }
+        .user-dropdown-logout:hover {
+            background: rgba(239,68,68,0.08) !important;
+        }
+        .user-dropdown-logout .material-icons {
+            font-size: 18px;
+        }
+
+        /* Dark mode for user dropdown */
+        .dark-version .navbar-user-avatar {
+            border-color: var(--border-color);
+        }
+        .dark-version .user-dropdown {
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3) !important;
+        }
+        .dark-version .user-dropdown-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+        .dark-version .user-status-dot {
+            border-color: #1e293b;
+        }
+        .dark-version .user-dropdown-progress {
+            background: var(--bg-primary);
+        }
+        .dark-version .user-dropdown-progress .progress-label span {
+            color: var(--text-secondary);
+        }
+        .dark-version .user-dropdown-progress .progress-bar-wrapper {
+            background: var(--border-color);
+        }
+        .dark-version .user-dropdown-divider {
+            background: var(--border-color);
+        }
+        .dark-version .user-dropdown-item {
+            color: var(--text-primary) !important;
+        }
+        .dark-version .user-dropdown-item:hover {
+            background-color: rgba(6, 182, 212, 0.1) !important;
+        }
+        .dark-version .udd-desc {
+            color: #64748b;
+        }
+        .dark-version .udd-arrow {
+            color: #64748b;
+        }
+        .dark-version .user-dropdown-detail .material-icons {
+            color: #64748b;
+        }
+        .dark-version .user-dropdown-detail span {
+            color: var(--text-secondary);
+        }
+        .dark-version .user-dropdown-footer {
+            background: var(--bg-primary);
+            border-top-color: var(--border-color);
+        }
+        .dark-version .user-dropdown-logout:hover {
+            background: rgba(239,68,68,0.15) !important;
+        }
+
+        /* ===== TOAST NOTIFICATIONS SYSTEM ===== */
+        .toast-container-custom {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+            max-width: 420px;
+            width: 100%;
+        }
+        .toast-notification {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 4px solid #94a3b8;
+            pointer-events: all;
+            animation: toastSlideIn 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+            opacity: 0;
+            transform: translateX(40px);
+            max-width: 100%;
+        }
+        .toast-notification.toast-removing {
+            animation: toastSlideOut 0.3s ease-in forwards;
+        }
+        .toast-notification.toast-success {
+            border-left-color: #22c55e;
+        }
+        .toast-notification.toast-error {
+            border-left-color: #ef4444;
+        }
+        .toast-notification.toast-warning {
+            border-left-color: #f59e0b;
+        }
+        .toast-notification.toast-info {
+            border-left-color: #06b6d4;
+        }
+        .toast-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .toast-icon .material-icons {
+            font-size: 20px;
+            color: #fff;
+        }
+        .toast-success .toast-icon { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .toast-error .toast-icon { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .toast-warning .toast-icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .toast-info .toast-icon { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        .toast-body {
+            flex: 1;
+            min-width: 0;
+        }
+        .toast-title {
+            font-size: 13px;
+            font-weight: 700;
+            margin: 0 0 2px;
+            color: #1e293b;
+        }
+        .toast-message {
+            font-size: 13px;
+            color: #475569;
+            margin: 0;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+        .toast-close {
+            background: none;
+            border: none;
+            padding: 2px;
+            cursor: pointer;
+            color: #94a3b8;
+            flex-shrink: 0;
+            border-radius: 6px;
+            transition: all 0.15s ease;
+            line-height: 1;
+        }
+        .toast-close:hover {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+        .toast-close .material-icons {
+            font-size: 18px;
+        }
+        .toast-progress {
+            position: absolute;
+            bottom: 0;
+            left: 4px;
+            right: 0;
+            height: 3px;
+            border-radius: 0 0 12px 0;
+            overflow: hidden;
+        }
+        .toast-progress-bar {
+            height: 100%;
+            border-radius: 3px;
+            animation: toastProgress 5s linear forwards;
+        }
+        .toast-success .toast-progress-bar { background: #22c55e; }
+        .toast-error .toast-progress-bar { background: #ef4444; }
+        .toast-warning .toast-progress-bar { background: #f59e0b; }
+        .toast-info .toast-progress-bar { background: #06b6d4; }
+        @keyframes toastSlideIn {
+            from { opacity: 0; transform: translateX(40px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes toastSlideOut {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(40px) scale(0.95); }
+        }
+        @keyframes toastProgress {
+            from { width: 100%; }
+            to { width: 0%; }
+        }
+        /* Dark mode toasts */
+        .dark-version .toast-notification {
+            background: var(--bg-card);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.25);
+        }
+        .dark-version .toast-title {
+            color: var(--text-primary);
+        }
+        .dark-version .toast-message {
+            color: var(--text-secondary);
+        }
+        .dark-version .toast-close {
+            color: #64748b;
+        }
+        .dark-version .toast-close:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary);
+        }
+
+        /* Dark mode for settings dropdown */
+        .dark-version .settings-dropdown {
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3) !important;
+        }
+        .dark-version .settings-dropdown .settings-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+        .dark-version .settings-dropdown .settings-item {
+            color: var(--text-primary) !important;
+        }
+        .dark-version .settings-dropdown .settings-item:hover {
+            background-color: rgba(6, 182, 212, 0.1) !important;
+        }
+        .dark-version .settings-dropdown .settings-item .item-info .item-desc {
+            color: #64748b;
+        }
+        .dark-version .settings-dropdown .settings-section-label {
+            color: #64748b;
+        }
+        .dark-version .settings-dropdown .settings-divider {
+            background: var(--border-color);
+        }
+        .dark-version .settings-dropdown .settings-footer {
+            background: var(--bg-primary);
+            border-top-color: var(--border-color);
+        }
+        .dark-version .settings-toggle {
+            background: #475569;
+        }
+        .dark-version .settings-toggle:checked {
+            background: #06b6d4;
+        }
+        /* Enhanced modal styles */
+        .settings-modal .modal-content {
+            border: none;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+        .settings-modal .modal-header {
+            background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+            color: #fff;
+            border: none;
+            padding: 20px 24px;
+        }
+        .settings-modal .modal-header .modal-title {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .settings-modal .modal-header .btn-close {
+            filter: invert(1);
+        }
+        .settings-modal .modal-body {
+            padding: 24px;
+        }
+        .settings-modal .modal-footer {
+            border-top: 1px solid #e2e8f0;
+            padding: 12px 24px;
+        }
+        .shortcut-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            transition: background 0.15s;
+        }
+        .shortcut-row:hover { background: #f1f5f9; }
+        .shortcut-row .shortcut-label {
+            font-size: 13px;
+            color: #334155;
+            font-weight: 500;
+        }
+        .shortcut-row .shortcut-keys {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .shortcut-row .shortcut-keys kbd {
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 11px;
+            font-weight: 600;
+            font-family: 'Inter', monospace;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .shortcut-row .shortcut-keys .key-sep {
+            font-size: 10px;
+            color: #94a3b8;
+        }
+        .sysinfo-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .sysinfo-card h6 {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #94a3b8;
+            margin-bottom: 12px;
+        }
+        .sysinfo-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+        }
+        .sysinfo-row:not(:last-child) {
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .sysinfo-row .sysinfo-label {
+            font-size: 13px;
+            color: #64748b;
+        }
+        .sysinfo-row .sysinfo-value {
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+        }
+        .dark-version .settings-modal .modal-body { background: var(--bg-card); color: var(--text-primary); }
+        .dark-version .shortcut-row:hover { background: rgba(6, 182, 212, 0.08); }
+        .dark-version .shortcut-row .shortcut-label { color: var(--text-primary); }
+        .dark-version .shortcut-row .shortcut-keys kbd { background: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color); }
+        .dark-version .sysinfo-card { border-color: var(--border-color); }
+        .dark-version .sysinfo-row:not(:last-child) { border-bottom-color: var(--border-color); }
+        .dark-version .sysinfo-row .sysinfo-label { color: #64748b; }
+        .dark-version .sysinfo-row .sysinfo-value { color: var(--text-primary); }
+        .dark-version .settings-modal .modal-footer { border-top-color: var(--border-color); }
+        
+        /* ===== SIDEBAR REDESIGN - Slate+Cyan ===== */
+        
+        /* Quick-access links */
+        .sidebar-quick-link {
+            display: flex;
+            align-items: center;
+            padding: 10px 16px;
+            border-radius: 10px;
+            margin: 2px 12px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #334155;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .sidebar-quick-link:hover {
+            background: rgba(6,182,212,0.08);
+            color: #06b6d4;
+        }
+        .sidebar-quick-link.active {
+            background: linear-gradient(135deg, #334155, #1e293b);
+            color: #fff !important;
+            box-shadow: 0 4px 12px rgba(51,65,85,0.3);
+        }
+        .sidebar-quick-link .sq-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0;
+            flex-shrink: 0;
+        }
+        .sidebar-quick-link .sq-icon i { font-size: 18px; }
+        .sidebar-quick-link.active .sq-icon { background: rgba(255,255,255,0.15); }
+        
+        /* Section divider */
+        .sidebar-section-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #94a3b8;
+            padding: 16px 16px 4px 16px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+        .sidebar-section-label .section-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
         
         /* Sidebar Dropdown Styles */
         .sidebar-dropdown {
@@ -150,38 +941,41 @@
             align-items: center;
             justify-content: space-between;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
         
         .sidebar-dropdown-toggle:hover {
-            background-color: rgba(0,0,0,0.05) !important;
+            background-color: rgba(6,182,212,0.06) !important;
         }
         
         .sidebar-dropdown-toggle .dropdown-arrow {
-            transition: transform 0.3s ease;
+            transition: transform 0.25s ease;
             font-size: 14px;
+            color: #94a3b8;
         }
         
         .sidebar-dropdown-toggle.expanded .dropdown-arrow {
             transform: rotate(180deg);
+            color: #06b6d4;
         }
         
         .sidebar-dropdown-menu {
             max-height: 0 !important;
             overflow: hidden !important;
-            transition: max-height 0.3s ease !important;
-            background: rgba(0,0,0,0.02) !important;
-            border-radius: 8px !important;
-            margin: 4px 0 !important;
+            transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease, visibility 0s 0.3s !important;
+            background: transparent !important;
+            border-radius: 0 !important;
+            margin: 0 !important;
             opacity: 0;
             visibility: hidden;
         }
         
         .sidebar-dropdown-menu.show {
-            max-height: 500px !important;
-            padding: 8px 0 !important;
+            max-height: 600px !important;
+            padding: 2px 0 4px !important;
             opacity: 1 !important;
             visibility: visible !important;
+            transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease, visibility 0s 0s !important;
         }
         
         .sidebar-dropdown-menu .nav-item {
@@ -189,39 +983,105 @@
         }
         
         .sidebar-dropdown-menu .nav-link {
-            /* Opções alinhadas mais à esquerda para aproveitar espaço */
-            padding: 8px 12px 8px 20px !important; /* reduzido de 45px para 20px */
-            font-size: 13px;
-            border-radius: 6px;
-            margin: 2px 8px;
+            padding: 7px 12px 7px 16px !important;
+            font-size: 12.5px;
+            border-radius: 8px;
+            margin: 1px 12px;
             display: flex;
             align-items: center;
+            color: #64748b;
+            font-weight: 400;
+            transition: all 0.15s ease;
         }
 
         .sidebar-dropdown-menu .nav-link:hover {
-            background-color: rgba(0,0,0,0.05) !important;
+            background-color: rgba(6,182,212,0.06) !important;
+            color: #334155 !important;
+        }
+        
+        .sidebar-dropdown-menu .nav-link.active {
+            background: linear-gradient(135deg, #334155, #1e293b) !important;
+            color: #fff !important;
+            box-shadow: 0 2px 8px rgba(51,65,85,0.25);
+        }
+        .sidebar-dropdown-menu .nav-link.active i.material-icons {
+            opacity: 1 !important;
+            color: #fff !important;
         }
 
-        /* Ajustes do ícone das opções para ficar colado à esquerda do texto */
         .sidebar-dropdown-menu .nav-link i.material-icons {
             margin-right: 8px;
             font-size: 16px;
-            opacity: 0.6;
+            opacity: 0.5;
             min-width: 20px;
             text-align: center;
         }
 
         .sidebar-dropdown-header {
             cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 8px;
-            margin: 4px 4px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            margin: 2px 8px;
             transition: all 0.2s ease;
         }
 
         .sidebar-dropdown-header:hover {
-            background-color: rgba(0,0,0,0.05);
+            background-color: rgba(6,182,212,0.06);
         }
+        
+        .sidebar-dropdown-header h6 {
+            font-size: 11px !important;
+            letter-spacing: 0.3px;
+        }
+        
+        .sidebar-dropdown-header .material-icons.opacity-5.me-2 {
+            font-size: 18px;
+        }
+        
+        /* Sidebar badge */
+        .sb-badge {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 6px;
+            margin-left: auto;
+            line-height: 1.3;
+        }
+        .sb-badge-cyan { background: rgba(6,182,212,0.12); color: #06b6d4; }
+        .sb-badge-red { background: rgba(239,68,68,0.12); color: #ef4444; }
+        .sb-badge-green { background: rgba(34,197,94,0.12); color: #22c55e; }
+        .sb-badge-amber { background: rgba(245,158,11,0.12); color: #d97706; }
+        .sb-badge-slate { background: rgba(51,65,85,0.12); color: #334155; }
+        .sb-badge-purple { background: rgba(139,92,246,0.12); color: #8b5cf6; }
+        
+        /* Sidebar footer */
+        .sidebar-footer {
+            border-top: 1px solid #f1f5f9;
+            padding: 12px 12px 8px;
+            margin-top: auto;
+        }
+        .sidebar-footer-link {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            color: #64748b;
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+        .sidebar-footer-link:hover {
+            background: rgba(0,0,0,0.04);
+            color: #334155;
+        }
+        .sidebar-footer-link i { font-size: 18px; margin-right: 8px; opacity: 0.6; }
+        .sidebar-footer-link.text-danger:hover { background: rgba(239,68,68,0.06); }
+        
+        /* Scrollbar sidebar */
+        #sidenav-collapse-main::-webkit-scrollbar { width: 3px; }
+        #sidenav-collapse-main::-webkit-scrollbar-track { background: transparent; }
+        #sidenav-collapse-main::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+        #sidenav-collapse-main::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -234,66 +1094,36 @@
         <div class="sidenav-header">
             <i class="fas fa-times p-3 cursor-pointer text-dark opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
             <a class="navbar-brand px-4 py-3 m-0" href="{% url 'dashboard:index' %}">
-                <img src="{% static 'img/icodev-logo.png' %}" class="navbar-brand-img" width="26" height="26" alt="main_logo" style="border-radius: 4px;">
+                <img src="{% static 'img/icodev-logo.png' %}" class="navbar-brand-img" width="26" height="26" alt="main_logo" style="border-radius: 6px; background: #fff; padding: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
                 <span class="ms-1 text-sm text-dark">iConnect</span>
             </a>
         </div>
         <hr class="horizontal dark mt-0 mb-2">
         
         {% block sidebar %}
-        <div class="collapse navbar-collapse w-auto" id="sidenav-collapse-main">
+        <div class="collapse navbar-collapse w-auto h-auto" id="sidenav-collapse-main" style="overflow-y:auto; max-height:calc(100vh - 90px);">
             <ul class="navbar-nav">
                 
-                <!-- ========== PAINEL DASHBOARD'S ========== -->
-                <li class="nav-item sidebar-dropdown mt-3">
-                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="dashboards" onclick="toggleSidebarDropdown(event,this,'dashboards')">
-                        <div class="d-flex align-items-center justify-content-between w-100">
-                            <span class="d-flex align-items-center">
-                                <i class="material-icons opacity-5 me-2">dashboard</i>
-                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Painel Dashboard's</h6>
-                            </span>
-                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
-                        </div>
-                    </div>
-                    <div class="sidebar-dropdown-menu" id="dropdown-dashboards">
-                        <ul class="navbar-nav">
-                            <li class="nav-item">
-                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'index' %}active bg-gradient-primary text-white{% endif %}" href="{% url 'dashboard:index' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">view_quilt</i>
-                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Dashboard Tickets</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'agente_dashboard' %}active bg-gradient-info text-white{% endif %}" href="{% url 'dashboard:agente_dashboard' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">headset_mic</i>
-                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Dashboard Agente</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'sla_dashboard' in request.resolver_match.url_name %}active bg-gradient-warning text-white{% endif %}" href="{% url 'dashboard:sla_dashboard' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">schedule</i>
-                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Dashboard SLA</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'dashboard_financeiro' in request.resolver_match.url_name %}active bg-gradient-success text-white{% endif %}" href="{% url 'financeiro:dashboard_financeiro' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">account_balance</i>
-                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Dashboard Financeiro</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'executive_dashboard' in request.resolver_match.url_name %}active bg-gradient-dark text-white{% endif %}" href="{% url 'dashboard:executive_dashboard' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">business_center</i>
-                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Dashboard Executivo</span>
-                                    <span class="badge badge-sm bg-gradient-dark ms-auto">CEO</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
+                <!-- ===== ACESSO RÁPIDO (sem dropdown) ===== -->
+                <li class="nav-item">
+                    <a class="sidebar-quick-link {% if request.resolver_match.url_name == 'index' or request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard:index' %}">
+                        <span class="sq-icon"><i class="material-icons">space_dashboard</i></span>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="sidebar-quick-link {% if request.resolver_match.url_name == 'ticket_create' %}active{% endif %}" href="{% url 'dashboard:ticket_create' %}">
+                        <span class="sq-icon" style="{% if request.resolver_match.url_name != 'ticket_create' %}background:rgba(6,182,212,0.1);{% endif %}"><i class="material-icons" style="{% if request.resolver_match.url_name != 'ticket_create' %}color:#06b6d4;{% endif %}">add_circle</i></span>
+                        Novo Ticket
+                    </a>
                 </li>
 
-                <!-- ========== TICKETS ========== -->
-                <li class="nav-item sidebar-dropdown mt-3">
+                <!-- ======================================== -->
+                <!--           ATENDIMENTO                    -->
+                <!-- ======================================== -->
+                <li class="nav-item"><p class="sidebar-section-label"><span class="section-dot" style="background:#06b6d4;"></span>Atendimento</p></li>
+                
+                <li class="nav-item sidebar-dropdown">
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="tickets" onclick="toggleSidebarDropdown(event,this,'tickets')">
                         <div class="d-flex align-items-center justify-content-between w-100">
                             <span class="d-flex align-items-center">
@@ -306,74 +1136,44 @@
                     <div class="sidebar-dropdown-menu" id="dropdown-tickets">
                         <ul class="navbar-nav">
                             <li class="nav-item">
-                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'ticket_create' %}active bg-gradient-success text-white{% endif %}" href="{% url 'dashboard:ticket_create' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">add_circle</i>
-                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Criar Ticket</span>
+                                <a class="nav-link {% if request.resolver_match.url_name == 'ticket_list' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:ticket_list' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">list_alt</i>
+                                    <span class="nav-link-text ms-1">Todos os Tickets</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'ticket_list' %}active bg-gradient-info text-white{% endif %}" href="{% url 'dashboard:ticket_list' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">list_alt</i>
-                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Todos os Tickets</span>
+                                <a class="nav-link {% if request.resolver_match.url_name == 'ticket_kanban' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:ticket_kanban' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">view_kanban</i>
+                                    <span class="nav-link-text ms-1">Kanban Board</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'agente_tickets' %}active bg-gradient-warning text-white{% endif %}" href="{% url 'dashboard:agente_tickets' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">assignment_ind</i>
-                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Meus Tickets - Agente</span>
+                                <a class="nav-link {% if request.resolver_match.url_name == 'agente_tickets' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:agente_tickets' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">assignment_ind</i>
+                                    <span class="nav-link-text ms-1">Meus Tickets (Agente)</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'cliente_tickets' %}active bg-gradient-secondary text-white{% endif %}" href="{% url 'dashboard:cliente_tickets' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">person_pin</i>
-                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Meus Tickets - Cliente</span>
+                                <a class="nav-link {% if request.resolver_match.url_name == 'cliente_tickets' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:cliente_tickets' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">person_pin</i>
+                                    <span class="nav-link-text ms-1">Meus Tickets (Cliente)</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'export_tickets' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:export_tickets' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">file_download</i>
+                                    <span class="nav-link-text ms-1">Exportar Tickets</span>
                                 </a>
                             </li>
                         </ul>
                     </div>
                 </li>
 
-                <!-- ========== CLIENTE ========== -->
-                <li class="nav-item sidebar-dropdown mt-3">
-                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="cliente" onclick="toggleSidebarDropdown(event,this,'cliente')">
-                        <div class="d-flex align-items-center justify-content-between w-100">
-                            <span class="d-flex align-items-center">
-                                <i class="material-icons opacity-5 me-2">account_circle</i>
-                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Cliente</h6>
-                            </span>
-                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
-                        </div>
-                    </div>
-                    <div class="sidebar-dropdown-menu" id="dropdown-cliente">
-                        <ul class="navbar-nav">
-                            <li class="nav-item">
-                                <a class="nav-link text-dark {% if request.resolver_match.url_name|default:'' == 'cliente_portal' %}active bg-gradient-primary text-white{% endif %}" href="{% url 'dashboard:cliente_portal' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">dashboard</i>
-                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Portal Cliente</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark {% if request.resolver_match and request.resolver_match.url_name|default:'' == 'pontodevenda_create' %}active bg-gradient-success text-white{% endif %}" href="{% url 'dashboard:pontodevenda_create' %}">
-                                    <i class="material-icons opacity-5">add_business</i>
-                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Novo Ponto de Venda</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark {% if request.resolver_match and request.resolver_match.url_name|default:'' == 'pontodevenda_list' %}active bg-gradient-info text-white{% endif %}" href="{% url 'dashboard:pontodevenda_list' %}">
-                                    <i class="material-icons opacity-5">store</i>
-                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Lista de Pontos de Venda</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
-
-                <!-- ========== SLA & QUALIDADE ========== -->
-                <li class="nav-item sidebar-dropdown mt-3">
+                <li class="nav-item sidebar-dropdown">
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="sla" onclick="toggleSidebarDropdown(event,this,'sla')">
                         <div class="d-flex align-items-center justify-content-between w-100">
                             <span class="d-flex align-items-center">
-                                <i class="material-icons opacity-5 me-2">high_quality</i>
+                                <i class="material-icons opacity-5 me-2">verified</i>
                                 <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">SLA & Qualidade</h6>
                             </span>
                             <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
@@ -382,23 +1182,29 @@
                     <div class="sidebar-dropdown-menu" id="dropdown-sla">
                         <ul class="navbar-nav">
                             <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'sla_policies' in request.resolver_match.url_name %}active bg-gradient-info text-white{% endif %}" href="{% url 'dashboard:sla_policies' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">policy</i>
+                                <a class="nav-link {% if 'sla_dashboard' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:sla_dashboard' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">speed</i>
+                                    <span class="nav-link-text ms-1">Dashboard SLA</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'sla_policies' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:sla_policies' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">policy</i>
                                     <span class="nav-link-text ms-1">Políticas SLA</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'sla_alerts' in request.resolver_match.url_name %}active bg-gradient-danger text-white{% endif %}" href="{% url 'dashboard:sla_alerts' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">warning</i>
+                                <a class="nav-link {% if 'sla_alerts' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:sla_alerts' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">warning_amber</i>
                                     <span class="nav-link-text ms-1">Alertas SLA</span>
                                     {% if sla_alerts_count and sla_alerts_count > 0 %}
-                                    <span class="badge badge-sm bg-gradient-danger ms-auto">{{ sla_alerts_count }}</span>
+                                    <span class="sb-badge sb-badge-red ms-auto">{{ sla_alerts_count }}</span>
                                     {% endif %}
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'sla_reports' in request.resolver_match.url_name %}active bg-gradient-success text-white{% endif %}" href="{% url 'dashboard:sla_reports' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">analytics</i>
+                                <a class="nav-link {% if 'sla_reports' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:sla_reports' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">analytics</i>
                                     <span class="nav-link-text ms-1">Relatórios SLA</span>
                                 </a>
                             </li>
@@ -406,62 +1212,65 @@
                     </div>
                 </li>
 
-                <!-- ========== ESTOQUE ========== -->
-                <li class="nav-item sidebar-dropdown mt-3">
-                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="estoque" onclick="toggleSidebarDropdown(event,this,'estoque')">
+                <!-- ======================================== -->
+                <!--           CLIENTES & VENDAS              -->
+                <!-- ======================================== -->
+                <li class="nav-item"><p class="sidebar-section-label"><span class="section-dot" style="background:#22c55e;"></span>Clientes</p></li>
+                
+                <li class="nav-item sidebar-dropdown">
+                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="clientes" onclick="toggleSidebarDropdown(event,this,'clientes')">
                         <div class="d-flex align-items-center justify-content-between w-100">
                             <span class="d-flex align-items-center">
-                                <i class="material-icons opacity-5 me-2">inventory</i>
-                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Estoque</h6>
+                                <i class="material-icons opacity-5 me-2">people_alt</i>
+                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Clientes & PDV</h6>
                             </span>
                             <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
                         </div>
                     </div>
-                    <div class="sidebar-dropdown-menu" id="dropdown-estoque">
+                    <div class="sidebar-dropdown-menu" id="dropdown-clientes">
                         <ul class="navbar-nav">
                             <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'estoque_dashboard' in request.resolver_match.url_name %}active bg-gradient-primary text-white{% endif %}" href="{% url 'estoque:dashboard' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">dashboard</i>
-                                    <span class="nav-link-text ms-1">Dashboard</span>
+                                <a class="nav-link {% if request.resolver_match.url_name|default:'' == 'cliente_portal' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:cliente_portal' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">dashboard</i>
+                                    <span class="nav-link-text ms-1">Portal do Cliente</span>
+                                </a>
+                            </li>
+                            {% if user.is_staff or user.is_superuser %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name|default:'' == 'cliente_list' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:cliente_list' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">group</i>
+                                    <span class="nav-link-text ms-1">Lista de Clientes</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'produto' in request.resolver_match.url_name %}active bg-gradient-success text-white{% endif %}" href="{% url 'estoque:produto_list' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">inventory_2</i>
-                                    <span class="nav-link-text ms-1">Produtos</span>
+                                <a class="nav-link {% if request.resolver_match.url_name|default:'' == 'cliente_create' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:cliente_create' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">person_add</i>
+                                    <span class="nav-link-text ms-1">Novo Cliente</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name|default:'' == 'pontodevenda_list' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:pontodevenda_list' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">store</i>
+                                    <span class="nav-link-text ms-1">Pontos de Venda</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'movimentacao' in request.resolver_match.url_name %}active bg-gradient-info text-white{% endif %}" href="{% url 'estoque:movimentacao_list' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">sync</i>
-                                    <span class="nav-link-text ms-1">Movimentações</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" href="{% url 'estoque:movimentacao_create' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">add_circle</i>
-                                    <span class="nav-link-text ms-1">Nova Movimentação</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" href="{% url 'estoque:produto_list' %}?estoque_critico=true" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">warning</i>
-                                    <span class="nav-link-text ms-1">Produtos Críticos</span>
-                                    <span class="badge badge-sm bg-gradient-danger ms-auto">!</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'relatorio' in request.resolver_match.url_name %}active bg-gradient-warning text-white{% endif %}" href="{% url 'estoque:relatorios' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">assessment</i>
-                                    <span class="nav-link-text ms-1">Relatórios</span>
+                                <a class="nav-link {% if request.resolver_match.url_name|default:'' == 'pontodevenda_create' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:pontodevenda_create' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">add_business</i>
+                                    <span class="nav-link-text ms-1">Novo PDV</span>
                                 </a>
                             </li>
                         </ul>
                     </div>
                 </li>
 
-                <!-- ========== FINANCEIRO ========== -->
-                <li class="nav-item sidebar-dropdown mt-3">
+                <!-- ======================================== -->
+                <!--           FINANCEIRO & ESTOQUE           -->
+                <!-- ======================================== -->
+                <li class="nav-item"><p class="sidebar-section-label"><span class="section-dot" style="background:#f59e0b;"></span>Financeiro & Estoque</p></li>
+                
+                <li class="nav-item sidebar-dropdown">
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="financeiro" onclick="toggleSidebarDropdown(event,this,'financeiro')">
                         <div class="d-flex align-items-center justify-content-between w-100">
                             <span class="d-flex align-items-center">
@@ -474,76 +1283,103 @@
                     <div class="sidebar-dropdown-menu" id="dropdown-financeiro">
                         <ul class="navbar-nav">
                             <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'contratos_lista' in request.resolver_match.url_name %}active bg-gradient-primary text-white{% endif %}" href="{% url 'financeiro:contratos_lista' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">description</i>
+                                <a class="nav-link {% if 'dashboard_financeiro' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'financeiro:dashboard_financeiro' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">monitoring</i>
+                                    <span class="nav-link-text ms-1">Dashboard</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'contratos_lista' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'financeiro:contratos_lista' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">description</i>
                                     <span class="nav-link-text ms-1">Contratos</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'faturas_lista' in request.resolver_match.url_name %}active bg-gradient-info text-white{% endif %}" href="{% url 'financeiro:faturas_lista' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">receipt_long</i>
+                                <a class="nav-link {% if 'faturas_lista' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'financeiro:faturas_lista' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">receipt_long</i>
                                     <span class="nav-link-text ms-1">Faturas</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'movimentacoes_lista' in request.resolver_match.url_name %}active bg-gradient-warning text-white{% endif %}" href="{% url 'financeiro:movimentacoes_lista' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">sync_alt</i>
+                                <a class="nav-link {% if 'movimentacoes_lista' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'financeiro:movimentacoes_lista' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">sync_alt</i>
                                     <span class="nav-link-text ms-1">Movimentações</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'centros_custo' in request.resolver_match.url_name %}active bg-gradient-secondary text-white{% endif %}" href="{% url 'financeiro:centros_custo_lista' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">account_balance</i>
+                                <a class="nav-link {% if 'centros_custo' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'financeiro:centros_custo_lista' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">pie_chart</i>
                                     <span class="nav-link-text ms-1">Centros de Custo</span>
-                                    <span class="badge badge-sm bg-gradient-info ms-auto">Novo</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'relatorios' in request.resolver_match.url_name %}active bg-gradient-danger text-white{% endif %}" href="{% url 'financeiro:relatorios_financeiros' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">assessment</i>
-                                    <span class="nav-link-text ms-1">Relatórios Financeiros</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
-                
-                <!-- ========== ANALÍTICOS ========== -->
-                <li class="nav-item sidebar-dropdown mt-3">
-                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="analiticos" onclick="toggleSidebarDropdown(event,this,'analiticos')">
-                        <div class="d-flex align-items-center justify-content-between w-100">
-                            <span class="d-flex align-items-center">
-                                <i class="material-icons opacity-5 me-2">analytics</i>
-                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Analíticos</h6>
-                            </span>
-                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
-                        </div>
-                    </div>
-                    <div class="sidebar-dropdown-menu" id="dropdown-analiticos">
-                        <ul class="navbar-nav">
-                            <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'search' in request.resolver_match.url_name %}active bg-gradient-primary text-white{% endif %}" href="{% url 'dashboard:search' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">search</i>
-                                    <span class="nav-link-text ms-1">Busca Avançada</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'reports' in request.resolver_match.url_name %}active bg-gradient-info text-white{% endif %}" href="{% url 'dashboard:reports' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">assessment</i>
-                                    <span class="nav-link-text ms-1">Relatórios Avançados</span>
+                                <a class="nav-link {% if 'relatorios_financeiros' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'financeiro:relatorios_financeiros' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">assessment</i>
+                                    <span class="nav-link-text ms-1">Relatórios</span>
                                 </a>
                             </li>
                         </ul>
                     </div>
                 </li>
 
-                <!-- ========== COMUNICAÇÃO ========== -->
-                <li class="nav-item sidebar-dropdown mt-3">
+                <li class="nav-item sidebar-dropdown">
+                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="estoque" onclick="toggleSidebarDropdown(event,this,'estoque')">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <span class="d-flex align-items-center">
+                                <i class="material-icons opacity-5 me-2">inventory_2</i>
+                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Estoque</h6>
+                            </span>
+                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                        </div>
+                    </div>
+                    <div class="sidebar-dropdown-menu" id="dropdown-estoque">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'estoque_dashboard' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'estoque:dashboard' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">monitoring</i>
+                                    <span class="nav-link-text ms-1">Dashboard</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'produto' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'estoque:produto_list' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">inventory</i>
+                                    <span class="nav-link-text ms-1">Produtos</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'movimentacao' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'estoque:movimentacao_list' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">sync</i>
+                                    <span class="nav-link-text ms-1">Movimentações</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" href="{% url 'estoque:produto_list' %}?estoque_critico=true" onclick="event.stopPropagation()">
+                                    <i class="material-icons">warning_amber</i>
+                                    <span class="nav-link-text ms-1">Estoque Crítico</span>
+                                    <span class="sb-badge sb-badge-red ms-auto">!</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'relatorio' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'estoque:relatorios' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">assessment</i>
+                                    <span class="nav-link-text ms-1">Relatórios</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+                <!-- ======================================== -->
+                <!--           COMUNICAÇÃO                    -->
+                <!-- ======================================== -->
+                <li class="nav-item"><p class="sidebar-section-label"><span class="section-dot" style="background:#8b5cf6;"></span>Comunicação</p></li>
+                
+                <li class="nav-item sidebar-dropdown">
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="comunicacao" onclick="toggleSidebarDropdown(event,this,'comunicacao')">
                         <div class="d-flex align-items-center justify-content-between w-100">
                             <span class="d-flex align-items-center">
                                 <i class="material-icons opacity-5 me-2">forum</i>
-                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Comunicação</h6>
+                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Chat & Mensagens</h6>
                             </span>
                             <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
                         </div>
@@ -551,25 +1387,100 @@
                     <div class="sidebar-dropdown-menu" id="dropdown-comunicacao">
                         <ul class="navbar-nav">
                             <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'communication_center' in request.resolver_match.url_name %}active bg-gradient-primary text-white{% endif %}" href="{% url 'dashboard:communication_center' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">forum</i>
-                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">Central de Comunicação</span>
-                                    <span class="badge badge-sm bg-gradient-info ms-auto">Unificado</span>
+                                <a class="nav-link {% if 'communication_center' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:communication_center' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">hub</i>
+                                    <span class="nav-link-text ms-1">Central Unificada</span>
+                                    <span class="sb-badge sb-badge-cyan ms-auto">Hub</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'whatsapp' in request.resolver_match.namespace %}active bg-gradient-success text-white{% endif %}" href="{% url 'dashboard:whatsapp:dashboard' %}" onclick="event.stopPropagation()">
-                                    <i class="fab fa-whatsapp opacity-5" style="font-size: 18px;"></i>
-                                    <span class="nav-link-text ms-1" onclick="event.stopPropagation()">WhatsApp Business</span>
-                                    <span class="badge badge-sm bg-gradient-success ms-auto">Novo</span>
+                                <a class="nav-link {% if 'chat_dashboard' in request.resolver_match.url_name or 'chat_room' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:chat_dashboard' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">chat</i>
+                                    <span class="nav-link-text ms-1">Chat Avançado</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'chatbot' or request.resolver_match.url_name == 'chatbot_settings' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:chatbot' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">smart_toy</i>
+                                    <span class="nav-link-text ms-1">Chatbot IA</span>
+                                    <span class="sb-badge sb-badge-purple ms-auto">IA</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'whatsapp' in request.resolver_match.url_name|default:'' or 'whatsapp' in request.resolver_match.namespace|default:'' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:whatsapp:dashboard' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">smartphone</i>
+                                    <span class="nav-link-text ms-1">WhatsApp Business</span>
+                                    <span class="sb-badge sb-badge-green ms-auto">API</span>
                                 </a>
                             </li>
                         </ul>
                     </div>
                 </li>
 
-                <!-- ========== AUTOMAÇÃO ========== -->
-                <li class="nav-item sidebar-dropdown mt-3">
+                <!-- ======================================== -->
+                <!--           ANÁLISE & RELATÓRIOS           -->
+                <!-- ======================================== -->
+                <li class="nav-item"><p class="sidebar-section-label"><span class="section-dot" style="background:#334155;"></span>Análise</p></li>
+                
+                <li class="nav-item sidebar-dropdown">
+                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="analise" onclick="toggleSidebarDropdown(event,this,'analise')">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <span class="d-flex align-items-center">
+                                <i class="material-icons opacity-5 me-2">insights</i>
+                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Dashboards & Relatórios</h6>
+                            </span>
+                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                        </div>
+                    </div>
+                    <div class="sidebar-dropdown-menu" id="dropdown-analise">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'agente_dashboard' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:agente_dashboard' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">headset_mic</i>
+                                    <span class="nav-link-text ms-1">Dashboard Agente</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'executive_dashboard' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:executive_dashboard' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">business_center</i>
+                                    <span class="nav-link-text ms-1">Dashboard Executivo</span>
+                                    <span class="sb-badge sb-badge-slate ms-auto">CEO</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'analytics_dashboard' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:analytics_dashboard' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">analytics</i>
+                                    <span class="nav-link-text ms-1">Analytics</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'reports' or 'report' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:reports' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">summarize</i>
+                                    <span class="nav-link-text ms-1">Relatórios Avançados</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'relatorio_itens_atendimento' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:relatorio_itens_atendimento' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">inventory_2</i>
+                                    <span class="nav-link-text ms-1">Itens de Atendimento</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'search' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:search' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">search</i>
+                                    <span class="nav-link-text ms-1">Busca Avançada</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+                <!-- ======================================== -->
+                <!--           CONFIGURAÇÕES                  -->
+                <!-- ======================================== -->
+                <li class="nav-item"><p class="sidebar-section-label"><span class="section-dot" style="background:#94a3b8;"></span>Configurações</p></li>
+                
+                <li class="nav-item sidebar-dropdown">
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="automacao" onclick="toggleSidebarDropdown(event,this,'automacao')">
                         <div class="d-flex align-items-center justify-content-between w-100">
                             <span class="d-flex align-items-center">
@@ -582,54 +1493,35 @@
                     <div class="sidebar-dropdown-menu" id="dropdown-automacao">
                         <ul class="navbar-nav">
                             <li class="nav-item">
-                                <a class="nav-link text-dark {% if 'automation' in request.resolver_match.url_name %}active bg-gradient-dark text-white{% endif %}" href="{% url 'dashboard:automation' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">precision_manufacturing</i>
-                                    <span class="nav-link-text ms-1">Automation Engine</span>
-                                    <span class="badge badge-sm bg-gradient-success ms-auto">Pro</span>
+                                <a class="nav-link {% if request.resolver_match.url_name == 'automation' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:automation' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">smart_toy</i>
+                                    <span class="nav-link-text ms-1">Motor de Automação</span>
+                                    <span class="sb-badge sb-badge-amber ms-auto">Pro</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'automation_rules' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:automation_rules' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">rule</i>
+                                    <span class="nav-link-text ms-1">Regras</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'automation_workflows' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:automation_workflows' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">account_tree</i>
+                                    <span class="nav-link-text ms-1">Workflows</span>
                                 </a>
                             </li>
                         </ul>
                     </div>
                 </li>
 
-                <!-- ========== MOBILE & PWA ========== -->
-                <li class="nav-item sidebar-dropdown mt-3">
-                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="mobile" onclick="toggleSidebarDropdown(event,this,'mobile')">
-                        <div class="d-flex align-items-center justify-content-between w-100">
-                            <span class="d-flex align-items-center">
-                                <i class="material-icons opacity-5 me-2">smartphone</i>
-                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Mobile & PWA</h6>
-                            </span>
-                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
-                        </div>
-                    </div>
-                    <div class="sidebar-dropdown-menu" id="dropdown-mobile">
-                        <ul class="navbar-nav">
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" href="{% url 'dashboard:pwa_info' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">phone_android</i>
-                                    <span class="nav-link-text ms-1">App Móvel</span>
-                                    <span class="badge badge-sm bg-gradient-info ms-auto">PWA</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" href="/mobile/" target="_blank" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">tablet_android</i>
-                                    <span class="nav-link-text ms-1">Interface Mobile</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
-                
-                <!-- ========== SISTEMA ========== -->
                 {% if user.is_superuser or user.is_staff %}
-                <li class="nav-item sidebar-dropdown mt-3">
+                <li class="nav-item sidebar-dropdown">
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="sistema" onclick="toggleSidebarDropdown(event,this,'sistema')">
                         <div class="d-flex align-items-center justify-content-between w-100">
                             <span class="d-flex align-items-center">
-                                <i class="material-icons opacity-5 me-2">computer</i>
-                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Sistema</h6>
+                                <i class="material-icons opacity-5 me-2">settings</i>
+                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Sistema & Usuários</h6>
                             </span>
                             <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
                         </div>
@@ -637,14 +1529,33 @@
                     <div class="sidebar-dropdown-menu" id="dropdown-sistema">
                         <ul class="navbar-nav">
                             <li class="nav-item">
-                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'admin_dashboard' %}active bg-gradient-danger text-white{% endif %}" href="{% url 'dashboard:admin_dashboard' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">admin_panel_settings</i>
+                                <a class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:admin_dashboard' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">admin_panel_settings</i>
                                     <span class="nav-link-text ms-1">Painel Admin</span>
                                 </a>
                             </li>
                             <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'user_list' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:user_list' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">people</i>
+                                    <span class="nav-link-text ms-1">Usuários</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'user_create' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:user_create' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">person_add</i>
+                                    <span class="nav-link-text ms-1">Novo Usuário</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" href="{% url 'dashboard:pwa_info' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">phone_android</i>
+                                    <span class="nav-link-text ms-1">Mobile / PWA</span>
+                                    <span class="sb-badge sb-badge-cyan ms-auto">PWA</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link text-dark" href="/admin/" target="_blank" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">settings</i>
+                                    <i class="material-icons">terminal</i>
                                     <span class="nav-link-text ms-1">Django Admin</span>
                                 </a>
                             </li>
@@ -653,49 +1564,19 @@
                 </li>
                 {% endif %}
 
-                <!-- ========== USUÁRIO ========== -->
-                <li class="nav-item sidebar-dropdown mt-3">
-                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="usuario" onclick="toggleSidebarDropdown(event,this,'usuario')">
-                        <div class="d-flex align-items-center justify-content-between w-100">
-                            <span class="d-flex align-items-center">
-                                <i class="material-icons opacity-5 me-2">person</i>
-                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Usuário</h6>
-                            </span>
-                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
-                        </div>
-                    </div>
-                    <div class="sidebar-dropdown-menu" id="dropdown-usuario">
-                        <ul class="navbar-nav">
-                            <li class="nav-item">
-                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'user_create' %}active bg-gradient-success text-white{% endif %}" href="{% url 'dashboard:user_create' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">person_add</i>
-                                    <span class="nav-link-text ms-1">Criar Usuário</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'user_list' %}active bg-gradient-info text-white{% endif %}" href="{% url 'dashboard:user_list' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">people</i>
-                                    <span class="nav-link-text ms-1">Lista de Usuários</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark {% if request.resolver_match.url_name == 'profile' %}active bg-gradient-primary text-white{% endif %}" href="{% url 'dashboard:profile' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons opacity-5">account_circle</i>
-                                    <span class="nav-link-text ms-1">Perfil</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
-                
-                <!-- ========== LOGOUT ========== -->
-                <li class="nav-item mt-4 mb-3">
-                    <a class="nav-link text-danger d-flex align-items-center" href="{% url 'logout' %}">
-                        <i class="material-icons opacity-5 me-2">exit_to_app</i>
-                        <span class="nav-link-text ms-1 font-weight-bold">Sair do Sistema</span>
-                    </a>
-                </li>
             </ul>
+            
+            <!-- ===== FOOTER DA SIDEBAR ===== -->
+            <div class="sidebar-footer">
+                <a class="sidebar-footer-link" href="{% url 'dashboard:profile' %}">
+                    <i class="material-icons">account_circle</i>
+                    <span>{{ user.get_full_name|default:user.username|truncatewords:2 }}</span>
+                </a>
+                <a class="sidebar-footer-link text-danger" href="{% url 'logout' %}">
+                    <i class="material-icons">logout</i>
+                    <span>Sair</span>
+                </a>
+            </div>
         </div>
         {% endblock %}
     </aside>
@@ -731,92 +1612,237 @@
                         <li class="nav-item px-3 d-flex align-items-center">
                             <a href="{% url 'dashboard:notifications' %}" class="nav-link text-body p-0 position-relative" id="notificationButton" title="Central de Notificações">
                                 <i class="material-icons">notifications</i>
+                                {% if unread_notifications_count and unread_notifications_count > 0 %}
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationBadge" style="font-size: 10px;">
-                                    12
+                                    {{ unread_notifications_count }}
                                 </span>
+                                {% endif %}
                             </a>
                         </li>
                         <li class="nav-item dropdown px-3 d-flex align-items-center">
                             <a href="javascript:;" class="nav-link text-body p-0" id="configDropdownButton" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="material-icons">settings</i>
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end px-2 py-3" aria-labelledby="configDropdownButton">
-                                <li>
-                                    <h6 class="dropdown-header">Configurações</h6>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
+                            <div class="dropdown-menu dropdown-menu-end settings-dropdown" aria-labelledby="configDropdownButton">
+                                <!-- Header -->
+                                <div class="settings-header">
+                                    <i class="material-icons">settings</i>
+                                    <h6>Configurações</h6>
+                                </div>
+
                                 {% if user.is_superuser or user.is_staff %}
-                                <li>
-                                    <a class="dropdown-item border-radius-md" href="{% url 'dashboard:admin_dashboard' %}">
-                                        <i class="material-icons me-2">security</i>
-                                        Painel Administrativo
+                                <!-- Admin Section -->
+                                <div class="settings-section">
+                                    <p class="settings-section-label">Administração</p>
+                                    <a class="settings-item" href="{% url 'dashboard:admin_dashboard' %}">
+                                        <div class="item-icon icon-admin">
+                                            <i class="material-icons">security</i>
+                                        </div>
+                                        <div class="item-info">
+                                            <p class="item-title">Painel Administrativo</p>
+                                            <p class="item-desc">Gerenciar sistema e usuários</p>
+                                        </div>
+                                        <i class="material-icons" style="font-size:16px;color:#94a3b8;">chevron_right</i>
                                     </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item border-radius-md" href="/admin/" target="_blank">
-                                        <i class="material-icons me-2">tune</i>
-                                        Django Admin
+                                    <a class="settings-item" href="/admin/" target="_blank">
+                                        <div class="item-icon icon-django">
+                                            <i class="material-icons">tune</i>
+                                        </div>
+                                        <div class="item-info">
+                                            <p class="item-title">Django Admin</p>
+                                            <p class="item-desc">Configurações avançadas</p>
+                                        </div>
+                                        <i class="material-icons" style="font-size:16px;color:#94a3b8;">open_in_new</i>
                                     </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
+                                </div>
+                                <div class="settings-divider"></div>
                                 {% endif %}
-                                <li>
-                                    <a class="dropdown-item border-radius-md" href="#" onclick="toggleTheme()">
-                                        <i class="material-icons me-2" id="theme-icon">brightness_6</i>
-                                        <span id="theme-text">Modo Escuro</span>
+
+                                <!-- Appearance Section -->
+                                <div class="settings-section">
+                                    <p class="settings-section-label">Aparência</p>
+                                    <div class="settings-item" onclick="toggleTheme()" style="cursor:pointer;">
+                                        <div class="item-icon icon-theme">
+                                            <i class="material-icons" id="theme-icon">brightness_6</i>
+                                        </div>
+                                        <div class="item-info">
+                                            <p class="item-title" id="theme-text">Modo Escuro</p>
+                                            <p class="item-desc" id="theme-desc">Alternar tema claro/escuro</p>
+                                        </div>
+                                        <div class="item-action">
+                                            <input type="checkbox" class="settings-toggle" id="theme-toggle" onclick="event.stopPropagation(); toggleTheme();">
+                                        </div>
+                                    </div>
+                                    <div class="settings-item" onclick="toggleSidebar()" style="cursor:pointer;">
+                                        <div class="item-icon icon-sidebar">
+                                            <i class="material-icons" id="sidebar-icon">menu_open</i>
+                                        </div>
+                                        <div class="item-info">
+                                            <p class="item-title" id="sidebar-text">Colapsar Menu</p>
+                                            <p class="item-desc" id="sidebar-desc">Recolher barra lateral</p>
+                                        </div>
+                                        <div class="item-action">
+                                            <input type="checkbox" class="settings-toggle" id="sidebar-toggle" onclick="event.stopPropagation(); toggleSidebar();">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="settings-divider"></div>
+
+                                <!-- Tools Section -->
+                                <div class="settings-section">
+                                    <p class="settings-section-label">Ferramentas</p>
+                                    <a class="settings-item" href="#" onclick="event.preventDefault(); showKeyboardShortcuts();">
+                                        <div class="item-icon icon-keyboard">
+                                            <i class="material-icons">keyboard</i>
+                                        </div>
+                                        <div class="item-info">
+                                            <p class="item-title">Atalhos do Teclado</p>
+                                            <p class="item-desc">Navegação rápida com teclas</p>
+                                        </div>
+                                        <i class="material-icons" style="font-size:16px;color:#94a3b8;">chevron_right</i>
                                     </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item border-radius-md" href="#" onclick="toggleSidebar()">
-                                        <i class="material-icons me-2">menu</i>
-                                        Colapsar Menu
+                                    {% if user.is_superuser %}
+                                    <a class="settings-item" href="{% url 'dashboard:export_tickets' %}">
+                                        <div class="item-icon icon-export">
+                                            <i class="material-icons">file_download</i>
+                                        </div>
+                                        <div class="item-info">
+                                            <p class="item-title">Exportar Dados</p>
+                                            <p class="item-desc">Baixar relatórios e tickets</p>
+                                        </div>
+                                        <i class="material-icons" style="font-size:16px;color:#94a3b8;">chevron_right</i>
                                     </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item border-radius-md" href="#" onclick="showKeyboardShortcuts()">
-                                        <i class="material-icons me-2">keyboard</i>
-                                        Atalhos do Teclado
+                                    <a class="settings-item" href="#" onclick="event.preventDefault(); showSystemInfo();">
+                                        <div class="item-icon icon-system">
+                                            <i class="material-icons">info</i>
+                                        </div>
+                                        <div class="item-info">
+                                            <p class="item-title">Info do Sistema</p>
+                                            <p class="item-desc">Versão, status e detalhes</p>
+                                        </div>
+                                        <i class="material-icons" style="font-size:16px;color:#94a3b8;">chevron_right</i>
                                     </a>
-                                </li>
-                                {% if user.is_superuser %}
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item border-radius-md" href="{% url 'dashboard:export_tickets' %}">
-                                        <i class="material-icons me-2">file_download</i>
-                                        Exportar Dados
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item border-radius-md" href="#" onclick="showSystemInfo()">
-                                        <i class="material-icons me-2">info</i>
-                                        Info do Sistema
-                                    </a>
-                                </li>
-                                {% endif %}
-                            </ul>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Footer -->
+                                <div class="settings-footer">
+                                    <i class="material-icons">verified</i>
+                                    <span>iConnect v1.0.0</span>
+                                </div>
+                            </div>
                         </li>
                         <li class="nav-item dropdown pe-3 d-flex align-items-center">
                             <a href="javascript:;" class="nav-link text-body p-0" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                {% if user_perfil and user_perfil.avatar %}
+                                <img src="{{ user_perfil.avatar.url }}" alt="Avatar" class="navbar-user-avatar">
+                                {% else %}
                                 <i class="material-icons">account_circle</i>
+                                {% endif %}
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end px-2 py-3" aria-labelledby="dropdownMenuButton">
-                                <li>
-                                    <h6 class="dropdown-header">Olá, {{ user.get_full_name|default:user.username }}!</h6>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item border-radius-md" href="{% url 'dashboard:profile' %}">
-                                        <i class="material-icons me-2">person</i>
-                                        Meu Perfil
+                            <div class="dropdown-menu dropdown-menu-end user-dropdown" aria-labelledby="dropdownMenuButton">
+                                <!-- Header com info do usuário -->
+                                <div class="user-dropdown-header">
+                                    <div class="user-avatar-wrapper">
+                                        {% if user_perfil and user_perfil.avatar %}
+                                        <img src="{{ user_perfil.avatar.url }}" alt="Avatar" class="user-avatar-img">
+                                        {% else %}
+                                        <div class="user-avatar-placeholder">
+                                            <i class="material-icons">person</i>
+                                        </div>
+                                        {% endif %}
+                                        <span class="user-status-dot"></span>
+                                    </div>
+                                    <div class="user-header-info">
+                                        <h6 class="user-header-name">{{ user.get_full_name|default:user.username }}</h6>
+                                        <p class="user-header-role">
+                                            {% if user.is_superuser %}Administrador
+                                            {% elif user.is_staff %}Supervisor
+                                            {% else %}Agente{% endif %}
+                                        </p>
+                                        <p class="user-header-email">{{ user.email|default:"Email não cadastrado" }}</p>
+                                    </div>
+                                </div>
+
+                                <!-- Perfil completude -->
+                                {% if user_perfil %}
+                                <div class="user-dropdown-progress">
+                                    <div class="progress-label">
+                                        <span>Perfil completo</span>
+                                        <span class="progress-value">{{ user_perfil.perfil_completo_percentual }}%</span>
+                                    </div>
+                                    <div class="progress-bar-wrapper">
+                                        <div class="progress-bar-fill" style="width: {{ user_perfil.perfil_completo_percentual }}%"></div>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <div class="user-dropdown-divider"></div>
+
+                                <!-- Ações rápidas -->
+                                <div class="user-dropdown-section">
+                                    <a class="user-dropdown-item" href="{% url 'dashboard:profile' %}">
+                                        <div class="udd-icon icon-profile">
+                                            <i class="material-icons">person</i>
+                                        </div>
+                                        <div class="udd-info">
+                                            <p class="udd-title">Meu Perfil</p>
+                                            <p class="udd-desc">Editar informações pessoais</p>
+                                        </div>
+                                        <i class="material-icons udd-arrow">chevron_right</i>
                                     </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item border-radius-md text-danger" href="{% url 'logout' %}">
-                                        <i class="material-icons me-2 text-danger">exit_to_app</i>
-                                        Sair
+                                    <a class="user-dropdown-item" href="{% url 'dashboard:ticket_list' %}?agente={{ user.id }}">
+                                        <div class="udd-icon icon-tickets">
+                                            <i class="material-icons">confirmation_number</i>
+                                        </div>
+                                        <div class="udd-info">
+                                            <p class="udd-title">Meus Tickets</p>
+                                            <p class="udd-desc">Tickets atribuídos a mim</p>
+                                        </div>
+                                        <i class="material-icons udd-arrow">chevron_right</i>
                                     </a>
-                                </li>
-                            </ul>
+                                    <a class="user-dropdown-item" href="{% url 'dashboard:notifications' %}">
+                                        <div class="udd-icon icon-notifs">
+                                            <i class="material-icons">notifications</i>
+                                        </div>
+                                        <div class="udd-info">
+                                            <p class="udd-title">Notificações</p>
+                                            <p class="udd-desc">Centro de notificações</p>
+                                        </div>
+                                        <i class="material-icons udd-arrow">chevron_right</i>
+                                    </a>
+                                </div>
+
+                                <div class="user-dropdown-divider"></div>
+
+                                <!-- Info adicional -->
+                                <div class="user-dropdown-section">
+                                    {% if user_perfil and user_perfil.cargo %}
+                                    <div class="user-dropdown-detail">
+                                        <i class="material-icons">work</i>
+                                        <span>{{ user_perfil.cargo }}</span>
+                                    </div>
+                                    {% endif %}
+                                    {% if user_perfil and user_perfil.departamento %}
+                                    <div class="user-dropdown-detail">
+                                        <i class="material-icons">business</i>
+                                        <span>{{ user_perfil.get_departamento_display }}</span>
+                                    </div>
+                                    {% endif %}
+                                    <div class="user-dropdown-detail">
+                                        <i class="material-icons">schedule</i>
+                                        <span>Último login: {{ user.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Sair -->
+                                <div class="user-dropdown-footer">
+                                    <a class="user-dropdown-logout" href="{% url 'logout' %}">
+                                        <i class="material-icons">logout</i>
+                                        <span>Sair da conta</span>
+                                    </a>
+                                </div>
+                            </div>
                         </li>
                     </ul>
                 </div>
@@ -824,19 +1850,18 @@
         </nav>
         <!-- End Navbar -->
 
-        <!-- Messages -->
+        <!-- Toast Container para mensagens -->
+        <div id="toast-container" class="toast-container-custom"></div>
+
+        <!-- Messages (renderizadas como toasts via JS) -->
         {% if messages %}
-            <div class="container-fluid">
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
                 {% for message in messages %}
-                    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
-                        <span class="material-icons-round opacity-10">
-                            {% if message.tags == 'success' %}check_circle{% elif message.tags == 'error' %}error{% else %}info{% endif %}
-                        </span>
-                        <span class="text-sm">{{ message }}</span>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
+                showToastMessage("{{ message|escapejs }}", "{{ message.tags|default:'info' }}");
                 {% endfor %}
-            </div>
+            });
+        </script>
         {% endif %}
 
         <div class="container-fluid py-2">
@@ -849,7 +1874,7 @@
     <script>
         // Verificar se Bootstrap carregou, se não, usar CDN
         if (typeof bootstrap === 'undefined') {
-            console.log('Bootstrap local não carregou, carregando CDN...');
+            console.warn('Bootstrap local não carregou, carregando CDN...');
             const script = document.createElement('script');
             script.src = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js';
             script.integrity = 'sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz';
@@ -878,22 +1903,83 @@
     
     <!-- Configurações personalizadas -->
     <script>
+        // ===== TOAST NOTIFICATION SYSTEM =====
+        function showToastMessage(message, type) {
+            type = type || 'info';
+            // Mapear tags Django para tipos
+            if (type === 'error' || type === 'danger') type = 'error';
+            else if (type === 'success') type = 'success';
+            else if (type === 'warning') type = 'warning';
+            else type = 'info';
+
+            var iconMap = {
+                success: 'check_circle',
+                error: 'error',
+                warning: 'warning',
+                info: 'info'
+            };
+            var titleMap = {
+                success: 'Sucesso',
+                error: 'Erro',
+                warning: 'Atenção',
+                info: 'Informação'
+            };
+
+            var container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                container.className = 'toast-container-custom';
+                document.body.appendChild(container);
+            }
+
+            var toast = document.createElement('div');
+            toast.className = 'toast-notification toast-' + type;
+            toast.style.position = 'relative';
+            toast.innerHTML =
+                '<div class="toast-icon"><i class="material-icons">' + iconMap[type] + '</i></div>' +
+                '<div class="toast-body">' +
+                    '<p class="toast-title">' + titleMap[type] + '</p>' +
+                    '<p class="toast-message">' + message + '</p>' +
+                '</div>' +
+                '<button class="toast-close" onclick="dismissToast(this.parentElement)"><i class="material-icons">close</i></button>' +
+                '<div class="toast-progress"><div class="toast-progress-bar"></div></div>';
+
+            container.appendChild(toast);
+
+            // Auto-remove after 5s
+            setTimeout(function() {
+                dismissToast(toast);
+            }, 5000);
+        }
+
+        function dismissToast(toast) {
+            if (!toast || toast.classList.contains('toast-removing')) return;
+            toast.classList.add('toast-removing');
+            setTimeout(function() {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 300);
+        }
+
         // Função para alternar tema (modo escuro/claro)
         function toggleTheme() {
             const body = document.body;
             const themeIcon = document.getElementById('theme-icon');
             const themeText = document.getElementById('theme-text');
+            const themeToggle = document.getElementById('theme-toggle');
             const isDark = body.classList.contains('dark-version');
             
             if (isDark) {
                 body.classList.remove('dark-version');
-                themeIcon.textContent = 'dark_mode';
-                themeText.textContent = 'Modo Escuro';
+                if (themeIcon) themeIcon.textContent = 'dark_mode';
+                if (themeText) themeText.textContent = 'Modo Escuro';
+                if (themeToggle) themeToggle.checked = false;
                 localStorage.setItem('theme', 'light');
             } else {
                 body.classList.add('dark-version');
-                themeIcon.textContent = 'light_mode';
-                themeText.textContent = 'Modo Claro';
+                if (themeIcon) themeIcon.textContent = 'light_mode';
+                if (themeText) themeText.textContent = 'Modo Claro';
+                if (themeToggle) themeToggle.checked = true;
                 localStorage.setItem('theme', 'dark');
             }
         }
@@ -902,14 +1988,23 @@
         function toggleSidebar() {
             const sidenav = document.getElementById('sidenav-main');
             const main = document.querySelector('.main-content');
+            const sidebarIcon = document.getElementById('sidebar-icon');
+            const sidebarText = document.getElementById('sidebar-text');
+            const sidebarToggle = document.getElementById('sidebar-toggle');
             
             if (sidenav.classList.contains('collapsed')) {
                 sidenav.classList.remove('collapsed');
                 main.classList.remove('sidebar-collapsed');
+                if (sidebarIcon) sidebarIcon.textContent = 'menu_open';
+                if (sidebarText) sidebarText.textContent = 'Colapsar Menu';
+                if (sidebarToggle) sidebarToggle.checked = false;
                 localStorage.setItem('sidebar', 'expanded');
             } else {
                 sidenav.classList.add('collapsed');
                 main.classList.add('sidebar-collapsed');
+                if (sidebarIcon) sidebarIcon.textContent = 'menu';
+                if (sidebarText) sidebarText.textContent = 'Expandir Menu';
+                if (sidebarToggle) sidebarToggle.checked = true;
                 localStorage.setItem('sidebar', 'collapsed');
             }
         }
@@ -917,33 +2012,61 @@
         // Função para mostrar atalhos do teclado
         function showKeyboardShortcuts() {
             const shortcuts = `
-                <div class="modal fade" id="shortcutsModal" tabindex="-1">
-                    <div class="modal-dialog">
+                <div class="modal fade settings-modal" id="shortcutsModal" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title">Atalhos do Teclado</h5>
+                                <h5 class="modal-title">
+                                    <i class="material-icons">keyboard</i>
+                                    Atalhos do Teclado
+                                </h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
-                                <div class="row">
-                                    <div class="col-6">
-                                        <h6>Navegação</h6>
-                                        <p><kbd>Alt</kbd> + <kbd>D</kbd> - Dashboard</p>
-                                        <p><kbd>Alt</kbd> + <kbd>T</kbd> - Tickets</p>
-                                        <p><kbd>Alt</kbd> + <kbd>N</kbd> - Novo Ticket</p>
-                                        <p><kbd>Alt</kbd> + <kbd>P</kbd> - Perfil</p>
-                                    </div>
-                                    <div class="col-6">
-                                        <h6>Ações</h6>
-                                        <p><kbd>Ctrl</kbd> + <kbd>S</kbd> - Salvar</p>
-                                        <p><kbd>Esc</kbd> - Fechar Modal</p>
-                                        <p><kbd>Enter</kbd> - Confirmar</p>
-                                        <p><kbd>/</kbd> - Buscar</p>
-                                    </div>
+                                <h6 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;margin-bottom:10px;">
+                                    <i class="material-icons" style="font-size:14px;vertical-align:middle;margin-right:4px;">explore</i>
+                                    Navegação
+                                </h6>
+                                <div class="shortcut-row">
+                                    <span class="shortcut-label">Dashboard</span>
+                                    <span class="shortcut-keys"><kbd>Alt</kbd><span class="key-sep">+</span><kbd>D</kbd></span>
+                                </div>
+                                <div class="shortcut-row">
+                                    <span class="shortcut-label">Lista de Tickets</span>
+                                    <span class="shortcut-keys"><kbd>Alt</kbd><span class="key-sep">+</span><kbd>T</kbd></span>
+                                </div>
+                                <div class="shortcut-row">
+                                    <span class="shortcut-label">Novo Ticket</span>
+                                    <span class="shortcut-keys"><kbd>Alt</kbd><span class="key-sep">+</span><kbd>N</kbd></span>
+                                </div>
+                                <div class="shortcut-row">
+                                    <span class="shortcut-label">Meu Perfil</span>
+                                    <span class="shortcut-keys"><kbd>Alt</kbd><span class="key-sep">+</span><kbd>P</kbd></span>
+                                </div>
+                                <hr style="margin:14px 0;">
+                                <h6 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;margin-bottom:10px;">
+                                    <i class="material-icons" style="font-size:14px;vertical-align:middle;margin-right:4px;">bolt</i>
+                                    Ações Rápidas
+                                </h6>
+                                <div class="shortcut-row">
+                                    <span class="shortcut-label">Salvar Formulário</span>
+                                    <span class="shortcut-keys"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>S</kbd></span>
+                                </div>
+                                <div class="shortcut-row">
+                                    <span class="shortcut-label">Fechar Modal</span>
+                                    <span class="shortcut-keys"><kbd>Esc</kbd></span>
+                                </div>
+                                <div class="shortcut-row">
+                                    <span class="shortcut-label">Confirmar Ação</span>
+                                    <span class="shortcut-keys"><kbd>Enter</kbd></span>
+                                </div>
+                                <div class="shortcut-row">
+                                    <span class="shortcut-label">Buscar</span>
+                                    <span class="shortcut-keys"><kbd>/</kbd></span>
                                 </div>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Fechar</button>
                             </div>
                         </div>
                     </div>
@@ -967,41 +2090,69 @@
         // Função para mostrar informações do sistema
         function showSystemInfo() {
             const systemInfo = `
-                <div class="modal fade" id="systemInfoModal" tabindex="-1">
-                    <div class="modal-dialog">
+                <div class="modal fade settings-modal" id="systemInfoModal" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title">Informações do Sistema</h5>
+                                <h5 class="modal-title">
+                                    <i class="material-icons">info</i>
+                                    Informações do Sistema
+                                </h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
-                                <div class="row">
-                                    <div class="col-12">
-                                        <h6>Sistema de Atendimento iConnect</h6>
-                                        <p><strong>Versão:</strong> 1.0.0</p>
-                                        <p><strong>Framework:</strong> Django 5.2.6</p>
-                                        <p><strong>Tema:</strong> Material Dashboard</p>
-                                        <p><strong>Status:</strong> <span class="badge bg-success">Online</span></p>
-                                        <hr>
-                                        <h6>Usuário Atual</h6>
-                                        <p><strong>Nome:</strong> {{ user.get_full_name|default:user.username }}</p>
-                                        <p><strong>Email:</strong> {{ user.email }}</p>
-                                        <p><strong>Tipo:</strong> 
-                                            {% if user.is_superuser %}
-                                                <span class="badge bg-danger">Administrador</span>
-                                            {% elif user.is_staff %}
-                                                <span class="badge bg-warning">Staff</span>
-                                            {% else %}
-                                                <span class="badge bg-primary">Usuário</span>
-                                            {% endif %}
-                                        </p>
-                                        <hr>
-                                        <p><small class="text-muted">Desenvolvido para gestão eficiente de atendimento ao cliente</small></p>
+                                <div class="sysinfo-card">
+                                    <h6><i class="material-icons" style="font-size:14px;vertical-align:middle;margin-right:4px;">dns</i> Plataforma</h6>
+                                    <div class="sysinfo-row">
+                                        <span class="sysinfo-label">Sistema</span>
+                                        <span class="sysinfo-value">iConnect Atendimento</span>
                                     </div>
+                                    <div class="sysinfo-row">
+                                        <span class="sysinfo-label">Versão</span>
+                                        <span class="sysinfo-value">1.0.0</span>
+                                    </div>
+                                    <div class="sysinfo-row">
+                                        <span class="sysinfo-label">Framework</span>
+                                        <span class="sysinfo-value">Django 5.2.6</span>
+                                    </div>
+                                    <div class="sysinfo-row">
+                                        <span class="sysinfo-label">Tema</span>
+                                        <span class="sysinfo-value">Material Dashboard</span>
+                                    </div>
+                                    <div class="sysinfo-row">
+                                        <span class="sysinfo-label">Status</span>
+                                        <span class="sysinfo-value"><span class="badge bg-success" style="font-size:11px;">Online</span></span>
+                                    </div>
+                                </div>
+                                <div class="sysinfo-card">
+                                    <h6><i class="material-icons" style="font-size:14px;vertical-align:middle;margin-right:4px;">person</i> Usuário Atual</h6>
+                                    <div class="sysinfo-row">
+                                        <span class="sysinfo-label">Nome</span>
+                                        <span class="sysinfo-value">{{ user.get_full_name|default:user.username }}</span>
+                                    </div>
+                                    <div class="sysinfo-row">
+                                        <span class="sysinfo-label">Email</span>
+                                        <span class="sysinfo-value">{{ user.email|default:"Não definido" }}</span>
+                                    </div>
+                                    <div class="sysinfo-row">
+                                        <span class="sysinfo-label">Tipo</span>
+                                        <span class="sysinfo-value">
+                                            {% if user.is_superuser %}
+                                                <span class="badge bg-danger" style="font-size:11px;">Administrador</span>
+                                            {% elif user.is_staff %}
+                                                <span class="badge bg-warning" style="font-size:11px;">Staff</span>
+                                            {% else %}
+                                                <span class="badge bg-primary" style="font-size:11px;">Usuário</span>
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div style="text-align:center;padding:8px 0 0;">
+                                    <small style="color:#94a3b8;font-size:11px;">Desenvolvido para gestão eficiente de atendimento ao cliente</small>
                                 </div>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Fechar</button>
                             </div>
                         </div>
                     </div>
@@ -1021,23 +2172,60 @@
             const modal = new bootstrap.Modal(document.getElementById('systemInfoModal'));
             modal.show();
         }
+
+        // Nada adicional de posicionamento necessário
         
         // Carrega preferências salvas
         document.addEventListener('DOMContentLoaded', function() {
             // Carrega tema salvo
             const savedTheme = localStorage.getItem('theme');
+            const themeToggle = document.getElementById('theme-toggle');
             if (savedTheme === 'dark') {
                 document.body.classList.add('dark-version');
-                document.getElementById('theme-icon').textContent = 'light_mode';
-                document.getElementById('theme-text').textContent = 'Modo Claro';
+                const themeIcon = document.getElementById('theme-icon');
+                const themeText = document.getElementById('theme-text');
+                if (themeIcon) themeIcon.textContent = 'light_mode';
+                if (themeText) themeText.textContent = 'Modo Claro';
+                if (themeToggle) themeToggle.checked = true;
+            } else {
+                if (themeToggle) themeToggle.checked = false;
             }
             
             // Carrega estado do sidebar
             const savedSidebar = localStorage.getItem('sidebar');
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            const sidebarIcon = document.getElementById('sidebar-icon');
+            const sidebarText = document.getElementById('sidebar-text');
             if (savedSidebar === 'collapsed') {
                 document.getElementById('sidenav-main').classList.add('collapsed');
                 document.querySelector('.main-content').classList.add('sidebar-collapsed');
+                if (sidebarIcon) sidebarIcon.textContent = 'menu';
+                if (sidebarText) sidebarText.textContent = 'Expandir Menu';
+                if (sidebarToggle) sidebarToggle.checked = true;
+            } else {
+                if (sidebarToggle) sidebarToggle.checked = false;
             }
+
+            // Remove blur da navbar quando dropdown abre (blur cria stacking context que prende o dropdown)
+            const navbar = document.getElementById('navbarBlur');
+            document.querySelectorAll('.navbar-main .nav-item.dropdown').forEach(function(dropdownEl) {
+                dropdownEl.addEventListener('shown.bs.dropdown', function() {
+                    if (navbar) navbar.classList.add('dropdown-open');
+                });
+                dropdownEl.addEventListener('hidden.bs.dropdown', function() {
+                    if (navbar) navbar.classList.remove('dropdown-open');
+                });
+            });
+
+            // Gera data-tooltip para itens da sidebar (usado no modo colapsado)
+            document.querySelectorAll('.sidebar-quick-link').forEach(function(link) {
+                const text = link.textContent.trim();
+                if (text) link.setAttribute('data-tooltip', text);
+            });
+            document.querySelectorAll('.sidebar-dropdown-header').forEach(function(header) {
+                const h6 = header.querySelector('h6');
+                if (h6) header.setAttribute('data-tooltip', h6.textContent.trim());
+            });
             
             // Adiciona atalhos de teclado
             document.addEventListener('keydown', function(e) {
@@ -1074,35 +2262,602 @@
         });
     </script>
     
-    <!-- CSS adicional para tema escuro e sidebar colapsado -->
+    <!-- CSS adicional para tema escuro Slate+Cyan e sidebar colapsado -->
     <style>
+        /* ====== DARK THEME — Slate + Cyan ====== */
         .dark-version {
-            background-color: #1a1a1a !important;
-            color: #ffffff !important;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --bg-sidebar: #0f172a;
+            --bg-navbar: rgba(15, 23, 42, 0.85);
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --accent: #06b6d4;
+            --accent-glow: rgba(6, 182, 212, 0.15);
+            background-color: var(--bg-primary) !important;
+            color: var(--text-primary) !important;
         }
-        
+
         .dark-version .sidenav {
-            background-color: #2d2d2d !important;
+            background: linear-gradient(195deg, #0f172a 0%, #1e293b 100%) !important;
+            border-right: 1px solid var(--border-color) !important;
         }
-        
+
+        .dark-version .sidenav .nav-link.active {
+            background: linear-gradient(195deg, #06b6d4, #0891b2) !important;
+        }
+
         .dark-version .navbar-main {
-            background-color: #333333 !important;
+            background: var(--bg-navbar) !important;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color) !important;
         }
-        
+
         .dark-version .card {
-            background-color: #3a3a3a !important;
-            color: #ffffff !important;
+            background: var(--bg-card) !important;
+            color: var(--text-primary) !important;
+            border: 1px solid var(--border-color) !important;
         }
-        
+
+        .dark-version .card .card-header {
+            background: transparent !important;
+            border-bottom: 1px solid var(--border-color) !important;
+        }
+
+        .dark-version .card-body { color: var(--text-primary) !important; }
+
+        .dark-version .table { color: var(--text-primary) !important; }
+        .dark-version .table thead th {
+            color: var(--text-secondary) !important;
+            border-color: var(--border-color) !important;
+        }
+        .dark-version .table td { border-color: var(--border-color) !important; }
+        .dark-version .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(6, 182, 212, 0.04) !important;
+        }
+
+        .dark-version .text-dark { color: var(--text-primary) !important; }
+        .dark-version .text-muted { color: var(--text-secondary) !important; }
+        .dark-version .opacity-8 { color: var(--text-secondary) !important; }
+
+        .dark-version .form-control,
+        .dark-version .form-select {
+            background-color: var(--bg-primary) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        .dark-version .form-label { color: var(--text-secondary) !important; }
+
+        .dark-version .dropdown-menu {
+            background: var(--bg-card) !important;
+            border: 1px solid var(--border-color) !important;
+        }
+        .dark-version .dropdown-item { color: var(--text-primary) !important; }
+        .dark-version .dropdown-item:hover {
+            background: var(--accent-glow) !important;
+            color: var(--accent) !important;
+        }
+
+        .dark-version .modal-content {
+            background: var(--bg-card) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-primary) !important;
+        }
+
+        .dark-version .btn-close { filter: invert(1); }
+
+        .dark-version hr { border-color: var(--border-color) !important; }
+
+        .dark-version .page-link {
+            background: var(--bg-card) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        .dark-version .breadcrumb-item a { color: var(--accent) !important; }
+
+        .dark-version a.text-dark:hover { color: var(--accent) !important; }
+
+        /* ====== DARK MODE — Sidebar customizado ====== */
+        .dark-version .sidebar-quick-link {
+            color: var(--text-primary);
+        }
+        .dark-version .sidebar-quick-link:hover {
+            background: var(--accent-glow);
+            color: var(--accent);
+        }
+        .dark-version .sidebar-quick-link.active {
+            background: linear-gradient(135deg, #06b6d4, #0891b2) !important;
+            color: #fff !important;
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        }
+        .dark-version .sidebar-quick-link.active .sq-icon {
+            background: rgba(255,255,255,0.15);
+        }
+        .dark-version .sidebar-section-label {
+            color: var(--text-secondary);
+        }
+        .dark-version .sidebar-dropdown-toggle:hover {
+            background-color: var(--accent-glow) !important;
+        }
+        .dark-version .sidebar-dropdown-toggle .dropdown-arrow {
+            color: var(--text-secondary);
+        }
+        .dark-version .sidebar-dropdown-toggle.expanded .dropdown-arrow {
+            color: var(--accent);
+        }
+        .dark-version .sidebar-dropdown-header h6 {
+            color: var(--text-secondary) !important;
+        }
+        .dark-version .sidebar-dropdown-header .material-icons.opacity-5.me-2 {
+            color: var(--text-secondary) !important;
+        }
+        .dark-version .sidebar-dropdown-menu .nav-link {
+            color: var(--text-secondary);
+        }
+        .dark-version .sidebar-dropdown-menu .nav-link:hover {
+            background-color: var(--accent-glow) !important;
+            color: var(--text-primary) !important;
+        }
+        .dark-version .sidebar-dropdown-menu .nav-link.active {
+            background: linear-gradient(135deg, #06b6d4, #0891b2) !important;
+            color: #fff !important;
+            box-shadow: 0 2px 8px rgba(6, 182, 212, 0.25);
+        }
+        .dark-version .sidebar-dropdown-menu .nav-link.active i.material-icons {
+            color: #fff !important;
+            opacity: 1 !important;
+        }
+        .dark-version .sidebar-dropdown-menu .nav-link i.material-icons {
+            color: var(--text-secondary);
+        }
+        .dark-version .sb-badge-slate {
+            background: rgba(148, 163, 184, 0.12);
+            color: var(--text-secondary);
+        }
+        .dark-version .sidebar-footer {
+            border-top-color: var(--border-color);
+        }
+        .dark-version .sidebar-footer-link {
+            color: var(--text-secondary);
+        }
+        .dark-version .sidebar-footer-link:hover {
+            background: var(--accent-glow);
+            color: var(--text-primary);
+        }
+        .dark-version #sidenav-collapse-main::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+        }
+        .dark-version #sidenav-collapse-main::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+        .dark-version .input-group.input-group-outline .form-control {
+            border-color: var(--border-color) !important;
+        }
+        .dark-version .input-group.input-group-outline .form-control:focus {
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 0 2px var(--accent-glow) !important;
+        }
+        .dark-version .input-group.input-group-outline .form-label {
+            color: var(--text-secondary) !important;
+        }
+        .dark-version .bg-gray-100 {
+            background-color: var(--bg-primary) !important;
+        }
+
+        /* ====== DARK MODE — Catch-all Global Overrides ====== */
+
+        /* Inline color overrides (textos escuros que ficam invisíveis) */
+        .dark-version [style*="color:#334155"],
+        .dark-version [style*="color: #334155"] { color: var(--text-primary) !important; }
+        .dark-version [style*="color:#1e293b"],
+        .dark-version [style*="color: #1e293b"] { color: var(--text-primary) !important; }
+        .dark-version [style*="color:#344767"],
+        .dark-version [style*="color: #344767"] { color: var(--text-primary) !important; }
+
+        /* Inline backgrounds claros */
+        .dark-version [style*="background: #f8fafc"],
+        .dark-version [style*="background:#f8fafc"],
+        .dark-version [style*="background-color: #f8fafc"],
+        .dark-version [style*="background: #f1f5f9"],
+        .dark-version [style*="background:#f1f5f9"],
+        .dark-version [style*="background-color: #f8f9fa"],
+        .dark-version [style*="background: #f8f9fa"],
+        .dark-version [style*="background:#f8f9fa"] {
+            background: var(--bg-primary) !important;
+        }
+
+        /* Bootstrap utility overrides */
+        .dark-version .bg-white { background-color: var(--bg-card) !important; }
+        .dark-version .bg-light { background-color: var(--bg-secondary) !important; }
+        .dark-version .badge.bg-light { background-color: var(--bg-primary) !important; }
+        .dark-version .badge.bg-light.text-dark { color: var(--text-primary) !important; }
+        .dark-version .sidenav.bg-white { background: linear-gradient(195deg, #0f172a 0%, #1e293b 100%) !important; }
+        .dark-version .text-body { color: var(--text-primary) !important; }
+
+        /* Card footer/header genéricos */
+        .dark-version .card-footer { background: transparent !important; border-top-color: var(--border-color) !important; }
+        .dark-version .card-header { border-bottom-color: var(--border-color) !important; }
+        .dark-version .card-header.bg-white { background-color: var(--bg-card) !important; }
+
+        /* Table hover */
+        .dark-version .table-hover tbody tr:hover { background-color: rgba(6,182,212,0.04) !important; }
+
+        /* Alert boxes */
+        .dark-version .alert { border-color: var(--border-color) !important; }
+        .dark-version .alert-info { background: rgba(6,182,212,0.1) !important; color: var(--text-primary) !important; border-color: rgba(6,182,212,0.3) !important; }
+        .dark-version .alert-success { background: rgba(34,197,94,0.1) !important; color: var(--text-primary) !important; border-color: rgba(34,197,94,0.3) !important; }
+        .dark-version .alert-warning { background: rgba(245,158,11,0.1) !important; color: var(--text-primary) !important; border-color: rgba(245,158,11,0.3) !important; }
+        .dark-version .alert-danger { background: rgba(239,68,68,0.1) !important; color: var(--text-primary) !important; border-color: rgba(239,68,68,0.3) !important; }
+
+        /* Pagination */
+        .dark-version .page-item .page-link {
+            background: var(--bg-card) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--border-color) !important;
+        }
+        .dark-version .page-item.active .page-link {
+            background: var(--accent) !important;
+            border-color: var(--accent) !important;
+            color: #fff !important;
+        }
+
+        /* List group */
+        .dark-version .list-group-item {
+            background-color: var(--bg-card) !important;
+            border-color: var(--border-color) !important;
+            color: var(--text-primary) !important;
+        }
+
+        /* Toast & Offcanvas */
+        .dark-version .toast { background: var(--bg-card) !important; border-color: var(--border-color) !important; color: var(--text-primary) !important; }
+        .dark-version .offcanvas { background-color: var(--bg-card) !important; color: var(--text-primary) !important; }
+
+        /* Accordion */
+        .dark-version .accordion-item { background-color: var(--bg-card) !important; border-color: var(--border-color) !important; }
+        .dark-version .accordion-button { background-color: var(--bg-secondary) !important; color: var(--text-primary) !important; }
+        .dark-version .accordion-button:not(.collapsed) { background-color: rgba(6,182,212,0.1) !important; color: var(--accent) !important; }
+
+        /* Nav tabs/pills */
+        .dark-version .nav-tabs { border-bottom-color: var(--border-color) !important; }
+        .dark-version .nav-tabs .nav-link { color: var(--text-secondary) !important; }
+        .dark-version .nav-tabs .nav-link.active { color: var(--accent) !important; border-color: var(--border-color) var(--border-color) var(--bg-card) !important; background-color: var(--bg-card) !important; }
+        .dark-version .nav-pills .nav-link { color: var(--text-secondary) !important; }
+        .dark-version .nav-pills .nav-link.active { background-color: var(--accent) !important; color: #fff !important; }
+
+        /* Dropdown header/divider */
+        .dark-version .dropdown-header { color: var(--text-secondary) !important; }
+        .dark-version .dropdown-divider { border-color: var(--border-color) !important; }
+
+        /* Progress bar */
+        .dark-version .progress { background-color: var(--border-color) !important; }
+
+        /* kbd styling */
+        .dark-version kbd {
+            background-color: var(--bg-primary) !important;
+            border-color: var(--border-color) !important;
+            color: var(--text-primary) !important;
+            box-shadow: 0 1px 0 rgba(255,255,255,0.1), inset 0 0 0 2px var(--bg-secondary) !important;
+        }
+
+        /* btn-outline variants */
+        .dark-version .btn-outline-secondary {
+            color: var(--text-secondary) !important;
+            border-color: var(--border-color) !important;
+        }
+        .dark-version .btn-outline-secondary:hover {
+            background-color: var(--bg-secondary) !important;
+            color: var(--text-primary) !important;
+        }
+        .dark-version .btn-outline-primary {
+            color: var(--accent) !important;
+            border-color: var(--accent) !important;
+        }
+        .dark-version .btn-outline-primary:hover {
+            background-color: rgba(6,182,212,0.15) !important;
+            color: #fff !important;
+        }
+        .dark-version .btn-light {
+            background-color: var(--bg-secondary) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        /* Breadcrumb */
+        .dark-version .breadcrumb-item a.text-dark { opacity: 0.7 !important; }
+
+        /* Texto genérico */
+        .dark-version p.text-sm { color: var(--text-secondary); }
+        .dark-version .text-secondary { color: var(--text-secondary) !important; }
+        .dark-version .opacity-5 { color: var(--text-secondary) !important; }
+
+        /* ====== DARK MODE — Dashboard index.html ====== */
+        .dark-version .kpi-value { color: var(--text-primary) !important; }
+        .dark-version .kpi-label { color: var(--text-secondary) !important; }
+        .dark-version .kpi-var.neutral { color: var(--text-secondary) !important; }
+        .dark-version .kpi-card:hover { box-shadow: 0 8px 25px rgba(6,182,212,0.1) !important; }
+        .dark-version .chart-card { border: 1px solid var(--border-color) !important; }
+        .dark-version .chart-header { border-bottom-color: var(--border-color) !important; }
+        .dark-version .chart-header h6 { color: var(--text-primary) !important; }
+        .dark-version .ticket-num { color: var(--text-primary) !important; }
+        .dark-version .ticket-title { color: var(--text-secondary) !important; }
+        .dark-version .tickets-table th { border-bottom-color: var(--border-color) !important; }
+        .dark-version .tickets-table td { border-bottom-color: var(--border-color) !important; }
+        .dark-version .tickets-table tr:hover td { background: rgba(6,182,212,0.04) !important; }
+        .dark-version .sidebar-card { border: 1px solid var(--border-color) !important; }
+        .dark-version .online-dot { border-color: var(--bg-card) !important; }
+        .dark-version .timeline-line { background: var(--border-color) !important; }
+        .dark-version .alert-urgent {
+            background: var(--bg-card) !important;
+            border-color: rgba(239,68,68,0.2) !important;
+            border-left-color: #ef4444 !important;
+        }
+        .dark-version .alert-urgent .urgent-count { color: var(--text-primary) !important; }
+        .dark-version .alert-urgent .urgent-tickets { color: var(--text-secondary) !important; }
+        .dark-version .alert-urgent .urgent-tickets a { color: #f87171 !important; }
+        .dark-version .alert-urgent .more-count { color: #64748b !important; }
+        /* Badges com inline backgrounds claros - dark mode */
+        .dark-version .badge-priority[style*="#fef2f2"] { background: rgba(220,38,38,0.15) !important; }
+        .dark-version .badge-priority[style*="#fff7ed"] { background: rgba(234,88,12,0.15) !important; }
+        .dark-version .badge-priority[style*="#f0fdfa"] { background: rgba(8,145,178,0.15) !important; }
+        .dark-version .badge-priority[style*="#f8fafc"] { background: rgba(100,116,139,0.15) !important; }
+        .dark-version .badge-status[style*="#f0fdf4"] { background: rgba(22,163,74,0.15) !important; }
+        .dark-version .badge-status[style*="#fffbeb"] { background: rgba(217,119,6,0.15) !important; }
+        .dark-version .badge-status[style*="#faf5ff"] { background: rgba(124,58,237,0.15) !important; }
+        .dark-version .badge-status[style*="#f0fdfa"] { background: rgba(8,145,178,0.15) !important; }
+        .dark-version .badge-status[style*="#f8fafc"] { background: rgba(100,116,139,0.15) !important; }
+        /* Equipe status badges */
+        .dark-version .badge[style*="background:#dcfce7"] { background: rgba(22,197,94,0.15) !important; }
+        .dark-version .badge[style*="background:#fef3c7"] { background: rgba(217,119,6,0.15) !important; }
+        .dark-version .badge[style*="background:#f1f5f9"] { background: rgba(100,116,139,0.15) !important; }
+
+        /* ====== DARK MODE — Notifications ====== */
+        .dark-version .notification-item-full { border-bottom-color: var(--border-color) !important; }
+        .dark-version .notification-item-full:hover { background-color: rgba(6,182,212,0.04) !important; }
+        .dark-version .notification-item-full.unread { background-color: rgba(6,182,212,0.08) !important; border-left-color: var(--accent) !important; }
+        .dark-version .notification-title-full { color: var(--text-primary) !important; }
+        .dark-version .notification-message-full { color: var(--text-secondary) !important; }
+        .dark-version .notification-icon.new_ticket { background: rgba(25,118,210,0.15) !important; }
+        .dark-version .notification-icon.ticket_assigned { background: rgba(0,137,123,0.15) !important; }
+        .dark-version .notification-icon.ticket_status_change { background: rgba(123,31,162,0.15) !important; }
+        .dark-version .notification-icon.sla_warning { background: rgba(245,124,0,0.15) !important; }
+        .dark-version .notification-icon.sla_breach { background: rgba(198,40,40,0.15) !important; }
+        .dark-version .notification-icon.new_interaction { background: rgba(56,142,60,0.15) !important; }
+        .dark-version .notification-icon.system_alert { background: rgba(57,73,171,0.15) !important; }
+
+        /* ====== DARK MODE — Componente Notification Panel ====== */
+        .dark-version .notification-panel {
+            background: var(--bg-card) !important;
+            border-color: var(--border-color) !important;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4) !important;
+        }
+        .dark-version .notification-panel-header { border-bottom-color: var(--border-color) !important; }
+        .dark-version .notification-panel-title { color: var(--text-primary) !important; }
+        .dark-version .notification-panel-footer { border-top-color: var(--border-color) !important; }
+        .dark-version .notification-item { border-bottom-color: var(--border-color) !important; }
+        .dark-version .notification-item:hover { background-color: rgba(6,182,212,0.04) !important; }
+        .dark-version .notification-item.unread { background-color: rgba(6,182,212,0.08) !important; border-left-color: var(--accent) !important; }
+        .dark-version .notification-title { color: var(--text-primary) !important; }
+        .dark-version .notification-message { color: var(--text-secondary) !important; }
+        .dark-version .notification-badge { border-color: var(--bg-card) !important; }
+        .dark-version .notification-icon.new-ticket { background: rgba(25,118,210,0.15) !important; }
+        .dark-version .notification-icon.sla-warning { background: rgba(245,124,0,0.15) !important; }
+        .dark-version .notification-icon.sla-breach { background: rgba(198,40,40,0.15) !important; }
+        .dark-version .notification-icon.message { background: rgba(56,142,60,0.15) !important; }
+
+        /* ====== DARK MODE — Profile ====== */
+        .dark-version .profile-avatar { border-color: var(--bg-card) !important; }
+        .dark-version .avatar-upload-icon { background: var(--bg-secondary) !important; color: var(--text-primary) !important; }
+        .dark-version .stats-item h4 { color: var(--text-primary) !important; }
+        .dark-version .stats-item p { color: var(--text-secondary) !important; }
+        .dark-version .collapsible-section { border-color: var(--border-color) !important; }
+        .dark-version .collapsible-header { background: var(--bg-secondary) !important; border-bottom-color: var(--border-color) !important; }
+        .dark-version .collapsible-header:hover { background: rgba(6,182,212,0.08) !important; }
+        .dark-version .collapsible-header h5 { color: var(--text-primary) !important; }
+        .dark-version .collapsible-content { background: var(--bg-card) !important; }
+        .dark-version .section-title { color: var(--text-primary) !important; }
+        .dark-version .info-card { background: var(--bg-primary) !important; border-color: var(--border-color) !important; }
+        .dark-version .info-card:hover { background: rgba(6,182,212,0.06) !important; }
+        .dark-version .info-card h6 { color: var(--text-secondary) !important; }
+        .dark-version .info-card p { color: var(--text-primary) !important; }
+        .dark-version .progress-item { background: var(--bg-primary) !important; border-color: var(--border-color) !important; color: var(--text-secondary) !important; }
+        .dark-version .progress-item.completed { background: rgba(34,197,94,0.1) !important; border-color: rgba(34,197,94,0.2) !important; }
+        .dark-version .profile-form-label { color: var(--text-secondary) !important; }
+        .dark-version .profile-form-control { background: var(--bg-primary) !important; color: var(--text-primary) !important; border-color: var(--border-color) !important; }
+        .dark-version .profile-form-control:focus { border-color: var(--accent) !important; }
+        .dark-version .profile-form-control[readonly] { background: var(--bg-secondary) !important; }
+        .dark-version .password-strength,
+        .dark-version .profile-completion-bar { background: var(--border-color) !important; }
+        .dark-version .timeline-content { background: var(--bg-primary) !important; border-color: var(--border-color) !important; }
+        .dark-version .timeline-content h6 { color: var(--text-primary) !important; }
+        .dark-version .timeline-content p { color: var(--text-secondary) !important; }
+        .dark-version .timeline-marker { border-color: var(--bg-card) !important; box-shadow: 0 0 0 2px var(--border-color) !important; }
+        .dark-version .activity-timeline::before { background: var(--border-color) !important; }
+
+        /* ====== DARK MODE — Tickets detail/create ====== */
+        .dark-version .badge[style*="background: #e2e8f0"] { background: var(--border-color) !important; color: var(--text-primary) !important; }
+        .dark-version .rounded[style*="background: #f1f5f9"],
+        .dark-version .rounded[style*="background: #f8fafc"],
+        .dark-version .rounded[style*="background:#f1f5f9"],
+        .dark-version .rounded[style*="background:#f8fafc"] { background: var(--bg-primary) !important; }
+        .dark-version .ticket-form-section { background: var(--bg-primary) !important; border-color: var(--border-color) !important; }
+        .dark-version .produto-tipo { background: var(--bg-primary) !important; color: var(--text-secondary) !important; }
+        .dark-version .form-header-bar { background: var(--bg-secondary) !important; border-color: var(--border-color) !important; }
+
+        /* ====== DARK MODE — Chatbot ====== */
+        .dark-version .chat-container,
+        .dark-version .chat-messages,
+        .dark-version .chat-input-area,
+        .dark-version .message-bubble.bot { background: var(--bg-card) !important; color: var(--text-primary) !important; }
+        .dark-version .chat-sidebar { background: var(--bg-secondary) !important; }
+        .dark-version .chat-input { background: var(--bg-primary) !important; color: var(--text-primary) !important; border-color: var(--border-color) !important; }
+        .dark-version .typing-indicator { background: var(--bg-primary) !important; }
+        .dark-version .suggestion-chips { background: var(--bg-primary) !important; }
+        .dark-version .chat-empty-state { background: var(--bg-primary) !important; }
+        .dark-version .chatbot-config-card { background: var(--bg-card) !important; }
+        .dark-version .chatbot-stat-card { background: var(--bg-primary) !important; }
+
+        /* ====== DARK MODE — Executive/Admin Dashboard ====== */
+        .dark-version .card-footer p { color: var(--text-secondary) !important; }
+
+        /* ====== DARK MODE — User list/form ====== */
+        .dark-version .form-section-header { background: var(--bg-primary) !important; }
+        .dark-version .permission-item { background: var(--bg-primary) !important; border-color: var(--border-color) !important; }
+
+        /* ====== DARK MODE — Loading shimmer ====== */
+        .dark-version .chart-loading::after {
+            background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-primary) 50%, var(--bg-secondary) 75%) !important;
+        }
+        .dark-version .metric-card::before {
+            background: linear-gradient(90deg, transparent, rgba(6,182,212,0.05), transparent) !important;
+        }
+
+        /* ====== DARK MODE — Heatmap cells sem intensidade ====== */
+        .dark-version .heatmap-table td[style*="rgba(241,245,249"] { background: rgba(51,65,85,0.3) !important; }
+
+        /* ====== DARK MODE — PWA/SLA/Other ====== */
+        .dark-version .pwa-step-card { background: var(--bg-primary) !important; }
+        .dark-version .pwa-info-box { background: var(--bg-primary) !important; border-left-color: var(--accent) !important; }
+        .dark-version .notification-center-card { background: var(--bg-card) !important; }
+
+        /* Transition suave */
+        body, .sidenav, .navbar-main, .card, .card-header, .card-body,
+        .form-control, .form-select, .table {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        /* ====== SIDEBAR COLLAPSED ====== */
         .sidenav.collapsed {
-            width: 60px !important;
-            transition: all 0.3s ease;
+            width: 72px !important;
+            min-width: 72px !important;
+            transition: width 0.3s ease;
+            overflow: visible !important;
         }
-        
+        /* Esconde textos, labels, badges, setas, separadores */
         .sidenav.collapsed .nav-link-text,
         .sidenav.collapsed .navbar-brand span,
-        .sidenav.collapsed h6 {
+        .sidenav.collapsed .sidebar-section-label,
+        .sidenav.collapsed .sidebar-dropdown-header h6,
+        .sidenav.collapsed .sb-badge,
+        .sidenav.collapsed .dropdown-arrow,
+        .sidenav.collapsed .sidebar-footer-link span,
+        .sidenav.collapsed hr.horizontal {
+            display: none !important;
+        }
+        /* Logo - esconde texto, centraliza imagem */
+        .sidenav.collapsed .sidenav-header {
+            padding: 0 !important;
+        }
+        .sidenav.collapsed .navbar-brand {
+            padding: 16px 0 !important;
+            justify-content: center;
+            display: flex;
+        }
+        .sidenav.collapsed .navbar-brand img {
+            margin: 0 !important;
+        }
+        /* Quick links - só ícone centralizado */
+        .sidenav.collapsed .sidebar-quick-link {
+            justify-content: center;
+            padding: 10px 0;
+            margin: 2px 8px;
+            font-size: 0;
+        }
+        .sidenav.collapsed .sidebar-quick-link .sq-icon {
+            margin-right: 0;
+        }
+        /* Dropdown headers - só ícone centralizado */
+        .sidenav.collapsed .sidebar-dropdown-header {
+            padding: 8px 0;
+            margin: 2px 8px;
+            display: flex;
+            justify-content: center;
+        }
+        .sidenav.collapsed .sidebar-dropdown-header .d-flex {
+            justify-content: center !important;
+        }
+        .sidenav.collapsed .sidebar-dropdown-header .material-icons.opacity-5.me-2 {
+            margin-right: 0 !important;
+        }
+        /* Dropdown menus - popup ao hover quando colapsado */
+        .sidenav.collapsed .sidebar-dropdown-menu {
+            position: absolute !important;
+            left: 72px !important;
+            top: 0 !important;
+            width: 200px;
+            max-height: none !important;
+            background: #fff !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important;
+            border: 1px solid #e2e8f0 !important;
+            padding: 8px 0 !important;
+            z-index: 9999;
+        }
+        .sidenav.collapsed .sidebar-dropdown-menu.show {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+        .sidenav.collapsed .sidebar-dropdown-menu .nav-link {
+            margin: 1px 8px;
+        }
+        .sidenav.collapsed .sidebar-dropdown-menu .nav-link .nav-link-text {
+            display: inline !important;
+        }
+        .sidenav.collapsed .sidebar-dropdown-menu .nav-link i.material-icons {
             display: none;
+        }
+        /* Footer links - só ícone */
+        .sidenav.collapsed .sidebar-footer {
+            padding: 8px;
+        }
+        .sidenav.collapsed .sidebar-footer-link {
+            justify-content: center;
+            padding: 8px;
+        }
+        .sidenav.collapsed .sidebar-footer-link .material-icons {
+            margin-right: 0 !important;
+        }
+        /* Hover expand - mostra tooltip com nome */
+        .sidenav.collapsed .nav-item {
+            position: relative;
+        }
+        .sidenav.collapsed .sidebar-quick-link::after,
+        .sidenav.collapsed .sidebar-dropdown-header::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 72px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #1e293b;
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.15s ease, visibility 0.15s ease;
+            z-index: 10000;
+            pointer-events: none;
+        }
+        .sidenav.collapsed .sidebar-quick-link:hover::after,
+        .sidenav.collapsed .sidebar-dropdown-header:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+        /* Dark mode collapsed */
+        .dark-version .sidenav.collapsed .sidebar-dropdown-menu {
+            background: var(--bg-card) !important;
+            border-color: var(--border-color) !important;
+        }
+        .dark-version .sidenav.collapsed .sidebar-quick-link::after,
+        .dark-version .sidenav.collapsed .sidebar-dropdown-header::after {
+            background: #0f172a;
         }
         
         /* Estilos do botão de notificação */
@@ -1179,8 +2934,8 @@
         }
         
         .main-content.sidebar-collapsed {
-            margin-left: 80px !important;
-            transition: all 0.3s ease;
+            margin-left: 88px !important;
+            transition: margin-left 0.3s ease;
         }
         
         kbd {
@@ -1206,7 +2961,7 @@
                 try {
                     const registration = await navigator.serviceWorker.register('/static/sw.js');
                     
-                    console.log('✅ Service Worker registrado:', registration.scope);
+                    // SW registrado com sucesso
                     
                     // Verificar atualizações
                     registration.addEventListener('updatefound', () => {
@@ -1284,7 +3039,7 @@
 
                 if (permission !== 'granted') return;
 
-                console.log('✅ Notificações push permitidas');
+                // Notificações push permitidas
 
                 // Registrar para push notifications
                 const registration = await navigator.serviceWorker.ready;
@@ -1293,7 +3048,7 @@
                 });
 
                 // Aqui você pode enviar a subscription para o servidor se necessário
-                console.log('Push subscription:', subscription);
+                // Push subscription pronta
             } catch (err) {
                 console.warn('Falha ao inicializar push notifications:', err);
             }
@@ -1398,25 +3153,6 @@
                 this.style.transform = 'scale(1)';
             });
             
-            // Simular atualização de notificações
-            simulateNotificationUpdates();
-        }
-        
-        // Simular atualizações de notificações
-        function simulateNotificationUpdates() {
-            const notificationBadge = document.getElementById('notificationBadge');
-            if (!notificationBadge) return;
-            
-            // Atualizar contador periodicamente
-            setInterval(() => {
-                const currentCount = parseInt(notificationBadge.textContent);
-                const randomChange = Math.random() > 0.7;
-                
-                if (randomChange) {
-                    const newCount = Math.max(0, currentCount + (Math.random() > 0.5 ? 1 : -1));
-                    updateNotificationBadge(newCount);
-                }
-            }, 30000); // A cada 30 segundos
         }
         
         // Atualizar badge de notificação
@@ -1461,7 +3197,7 @@
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('{% static "js/sw.js" %}')
                     .then((registration) => {
-                        console.log('Service Worker registrado com sucesso:', registration);
+                        // SW registrado com sucesso
                         
                         // Verifica por atualizações do service worker
                         registration.addEventListener('updatefound', () => {
@@ -1475,7 +3211,7 @@
                         });
                     })
                     .catch((error) => {
-                        console.log('Falha ao registrar Service Worker:', error);
+                        console.error('Falha ao registrar Service Worker:', error);
                     });
             });
         }
@@ -1676,24 +3412,38 @@
             const currentUrl = window.location.pathname;
             // Array de pares [padrão, id] do mais específico para o mais genérico
             const urlToDropdown = [
-                ['/dashboard/ticket/', 'tickets'],
+                // Tickets
+                ['/dashboard/tickets/', 'tickets'],
                 ['/dashboard/agente/tickets/', 'tickets'],
                 ['/dashboard/cliente/tickets/', 'tickets'],
-                ['/dashboard/cliente/portal/', 'cliente'],
-                ['/dashboard/agente/', 'dashboards'],
-                ['/dashboard/sla/', 'dashboards'],
-                ['/financeiro/dashboard/', 'dashboards'],
-                ['/dashboard/search/', 'analiticos'],
-                ['/dashboard/reports/', 'analiticos'],
+                ['/dashboard/export/', 'tickets'],
+                // SLA
+                ['/dashboard/sla/', 'sla'],
+                // Clientes & PDV
+                ['/dashboard/cliente/', 'clientes'],
+                ['/dashboard/clientes/', 'clientes'],
+                ['/dashboard/pontosdevenda/', 'clientes'],
+                // Financeiro
+                ['/financeiro/', 'financeiro'],
+                // Estoque
+                ['/estoque/', 'estoque'],
+                // Comunicação
+                ['/dashboard/communication/', 'comunicacao'],
                 ['/dashboard/chat/', 'comunicacao'],
                 ['/dashboard/chatbot/', 'comunicacao'],
-                ['/mobile/', 'mobile'],
+                ['/dashboard/whatsapp/', 'comunicacao'],
+                // Análise & Relatórios
+                ['/dashboard/agente/', 'analise'],
+                ['/dashboard/executive/', 'analise'],
+                ['/dashboard/analytics/', 'analise'],
+                ['/dashboard/reports/', 'analise'],
+                ['/dashboard/relatorios/', 'analise'],
+                ['/dashboard/search/', 'analise'],
+                // Configurações
+                ['/dashboard/automation/', 'automacao'],
                 ['/dashboard/admin/', 'sistema'],
-                ['/dashboard/user/', 'usuario'],
-                ['/dashboard/profile/', 'usuario'],
-                ['/dashboard/', 'dashboards'],
-                ['/financeiro/', 'financeiro'],
-                ['/dashboard/sla/', 'sla']
+                ['/dashboard/users/', 'sistema'],
+                ['/dashboard/pwa/', 'sistema'],
             ];
             for (const [urlPattern, dropdownId] of urlToDropdown) {
                 if (currentUrl.startsWith(urlPattern)) {

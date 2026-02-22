@@ -1,269 +1,225 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}WhatsApp Business - Dashboard{% endblock %}
-
-{% block extra_css %}
-<link href="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.min.css" rel="stylesheet">
-<style>
-    .whatsapp-card {
-        border-left: 4px solid #25D366;
-    }
-    .metric-card {
-        background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
-        color: white;
-    }
-    .chat-preview {
-        max-height: 200px;
-        overflow-y: auto;
-    }
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
-    }
-    .account-summary {
-        border: 1px solid #e3e6f0;
-        border-radius: 0.35rem;
-        margin-bottom: 1rem;
-    }
-</style>
-{% endblock %}
+{% block title %}WhatsApp Business - iConnect{% endblock %}
+{% block page_title %}WhatsApp{% endblock %}
+{% block breadcrumb_title %}WhatsApp Business{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">
-            <i class="fab fa-whatsapp text-success"></i> WhatsApp Business
-        </h1>
-        <div class="btn-group">
-            <a href="{% url 'dashboard:whatsapp:conversations' %}" class="btn btn-primary">
-                <i class="fas fa-comments"></i> Conversas
-            </a>
-            <a href="{% url 'dashboard:whatsapp:analytics' %}" class="btn btn-outline-primary">
-                <i class="fas fa-chart-bar"></i> Analytics
-            </a>
+<!-- ===== HEADER + AÇÕES RÁPIDAS ===== -->
+<div class="row">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">WhatsApp Business</h3>
+            <p class="mb-0 text-sm">Gerencie conversas, contatos e templates de mensagens do WhatsApp</p>
         </div>
     </div>
+    <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+        <a href="{% url 'dashboard:whatsapp:conversations' %}" class="btn bg-gradient-primary btn-sm mb-0 me-2">
+            <i class="material-symbols-rounded text-sm me-1">chat</i> Conversas
+        </a>
+        <a href="{% url 'dashboard:whatsapp:contacts' %}" class="btn btn-outline-primary btn-sm mb-0">
+            <i class="material-symbols-rounded text-sm me-1">contacts</i> Contatos
+        </a>
+    </div>
+</div>
 
-    <!-- Métricas Principais -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Conversas Ativas
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ conversas_ativas }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-comments fa-2x text-gray-300"></i>
-                        </div>
+<!-- ===== KPI CARDS ===== -->
+<div class="row mt-4">
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Total Conversas</p>
+                        <h4 class="mb-0">{{ total_conversas|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">question_answer</i>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Total Conversas
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_conversas }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-list fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Mensagens Hoje
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ mensagens_hoje }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-envelope fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Contas Ativas
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ accounts|length }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-phone fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-success font-weight-bolder">{{ total_conversas|default:"0" }}</span> total geral</p>
             </div>
         </div>
     </div>
-
-    <!-- Contas WhatsApp -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Contas WhatsApp Business</h6>
-                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addAccountModal">
-                        <i class="fas fa-plus"></i> Nova Conta
-                    </button>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Conversas Ativas</p>
+                        <h4 class="mb-0">{{ conversas_ativas|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">forum</i>
+                    </div>
                 </div>
-                <div class="card-body">
-                    {% if accounts %}
-                        <div class="row">
-                            {% for account in accounts %}
-                            <div class="col-lg-6 mb-3">
-                                <div class="account-summary p-3">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h6 class="mb-0">{{ account.nome }}</h6>
-                                        <span class="badge bg-success">Ativo</span>
-                                    </div>
-                                    <p class="text-muted mb-2">{{ account.phone_number_id }}</p>
-                                    
-                                    <!-- Métricas da conta -->
-                                    {% for data in analytics_data %}
-                                        {% if data.account.id == account.id %}
-                                        <div class="row text-center">
-                                            <div class="col-3">
-                                                <small class="text-muted">Enviadas</small>
-                                                <div class="font-weight-bold">{{ data.mensagens_enviadas }}</div>
-                                            </div>
-                                            <div class="col-3">
-                                                <small class="text-muted">Recebidas</small>
-                                                <div class="font-weight-bold">{{ data.mensagens_recebidas }}</div>
-                                            </div>
-                                            <div class="col-3">
-                                                <small class="text-muted">Conversas</small>
-                                                <div class="font-weight-bold">{{ data.conversas_iniciadas }}</div>
-                                            </div>
-                                            <div class="col-3">
-                                                <small class="text-muted">Tickets</small>
-                                                <div class="font-weight-bold">{{ data.tickets_criados }}</div>
-                                            </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-info font-weight-bolder">{{ conversas_ativas|default:"0" }}</span> em andamento</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Mensagens Hoje</p>
+                        <h4 class="mb-0">{{ mensagens_hoje|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">sms</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-warning font-weight-bolder">{{ mensagens_hoje|default:"0" }}</span> enviadas/recebidas</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Contas Ativas</p>
+                        <h4 class="mb-0">{{ accounts.count|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">smartphone</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-primary font-weight-bolder">{{ accounts.count|default:"0" }}</span> integradas</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== ANALYTICS POR CONTA ===== -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="text-white text-capitalize ps-3 mb-0">Desempenho por Conta (últimos 7 dias)</h6>
+                        <div class="me-3">
+                            <a href="{% url 'dashboard:whatsapp:analytics' %}" class="btn btn-outline-white btn-sm mb-0">
+                                <i class="material-symbols-rounded text-sm">analytics</i>&nbsp;&nbsp;Analytics Completo
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Conta</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Enviadas</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Recebidas</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Conversas</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tickets</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in analytics_data %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="icon icon-sm icon-shape bg-gradient-success shadow text-center border-radius-md me-2">
+                                            <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">smartphone</i>
                                         </div>
-                                        {% endif %}
-                                    {% endfor %}
-                                </div>
-                            </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ item.account.nome|default:item.account.phone_number_id }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ item.account.phone_number_id }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-sm font-weight-bold">{{ item.mensagens_enviadas|default:"0" }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-sm font-weight-bold">{{ item.mensagens_recebidas|default:"0" }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-sm font-weight-bold">{{ item.conversas_iniciadas|default:"0" }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="badge badge-sm bg-gradient-info">{{ item.tickets_criados|default:"0" }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    <i class="material-symbols-rounded opacity-5 d-block mb-2" style="font-size:48px">smartphone</i>
+                                    <p class="text-sm text-muted mb-0">Nenhuma conta WhatsApp Business configurada</p>
+                                </td>
+                            </tr>
                             {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="fab fa-whatsapp fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">Nenhuma conta configurada</h5>
-                            <p class="text-muted">Configure sua primeira conta do WhatsApp Business para começar.</p>
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAccountModal">
-                                <i class="fas fa-plus"></i> Adicionar Conta
-                            </button>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Links Rápidos -->
-    <div class="row">
-        <div class="col-lg-4 mb-4">
-            <div class="card whatsapp-card shadow h-100">
-                <div class="card-body text-center">
-                    <i class="fas fa-comments fa-3x text-success mb-3"></i>
-                    <h5>Gerenciar Conversas</h5>
-                    <p class="text-muted">Visualize e responda conversas ativas do WhatsApp</p>
-                    <a href="{% url 'dashboard:whatsapp:conversations' %}" class="btn btn-success">
-                        <i class="fas fa-arrow-right"></i> Acessar
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-4 mb-4">
-            <div class="card whatsapp-card shadow h-100">
-                <div class="card-body text-center">
-                    <i class="fas fa-users fa-3x text-primary mb-3"></i>
-                    <h5>Contatos</h5>
-                    <p class="text-muted">Gerencie contatos e informações dos clientes</p>
-                    <a href="{% url 'dashboard:whatsapp:contacts' %}" class="btn btn-primary">
-                        <i class="fas fa-arrow-right"></i> Acessar
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-4 mb-4">
-            <div class="card whatsapp-card shadow h-100">
-                <div class="card-body text-center">
-                    <i class="fas fa-file-alt fa-3x text-warning mb-3"></i>
-                    <h5>Templates</h5>
-                    <p class="text-muted">Crie e gerencie templates de mensagens</p>
-                    <a href="{% url 'dashboard:whatsapp:templates' %}" class="btn btn-warning">
-                        <i class="fas fa-arrow-right"></i> Acessar
-                    </a>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal para adicionar conta -->
-<div class="modal fade" id="addAccountModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Nova Conta WhatsApp Business</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<!-- ===== ATALHOS ===== -->
+<div class="row mt-4 mb-4">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <a href="{% url 'dashboard:whatsapp:conversations' %}" class="card card-body border shadow-none p-3 d-flex flex-row align-items-center text-decoration-none">
+            <div class="icon icon-sm icon-shape bg-gradient-success shadow text-center border-radius-md me-3">
+                <i class="material-symbols-rounded opacity-10 text-white" style="font-size:16px">chat</i>
             </div>
-            <div class="modal-body">
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
-                    Para configurar uma conta, você precisa ter acesso ao WhatsApp Business API e as credenciais da Meta.
-                </div>
-                <!-- Aqui seria o formulário de criação de conta -->
-                <p class="text-muted">Entre em contato com o administrador do sistema para configurar uma nova conta.</p>
+            <div>
+                <h6 class="mb-0 text-sm">Conversas</h6>
+                <p class="text-xs text-muted mb-0">Ver todas as conversas</p>
             </div>
-        </div>
+        </a>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+        <a href="{% url 'dashboard:whatsapp:contacts' %}" class="card card-body border shadow-none p-3 d-flex flex-row align-items-center text-decoration-none">
+            <div class="icon icon-sm icon-shape bg-gradient-info shadow text-center border-radius-md me-3">
+                <i class="material-symbols-rounded opacity-10 text-white" style="font-size:16px">contacts</i>
+            </div>
+            <div>
+                <h6 class="mb-0 text-sm">Contatos</h6>
+                <p class="text-xs text-muted mb-0">Gerenciar contatos</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+        <a href="{% url 'dashboard:whatsapp:templates' %}" class="card card-body border shadow-none p-3 d-flex flex-row align-items-center text-decoration-none">
+            <div class="icon icon-sm icon-shape bg-gradient-warning shadow text-center border-radius-md me-3">
+                <i class="material-symbols-rounded opacity-10 text-white" style="font-size:16px">description</i>
+            </div>
+            <div>
+                <h6 class="mb-0 text-sm">Templates</h6>
+                <p class="text-xs text-muted mb-0">Modelos de mensagens</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+        <a href="{% url 'dashboard:whatsapp:auto_responses' %}" class="card card-body border shadow-none p-3 d-flex flex-row align-items-center text-decoration-none">
+            <div class="icon icon-sm icon-shape bg-gradient-primary shadow text-center border-radius-md me-3">
+                <i class="material-symbols-rounded opacity-10 text-white" style="font-size:16px">auto_fix_high</i>
+            </div>
+            <div>
+                <h6 class="mb-0 text-sm">Respostas Auto</h6>
+                <p class="text-xs text-muted mb-0">Automações de resposta</p>
+            </div>
+        </a>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.min.js"></script>
-<script>
-// Atualização automática de estatísticas
-function updateStats() {
-    fetch('{% url "dashboard:whatsapp:api_stats" %}')
-        .then(response => response.json())
-        .then(data => {
-            // Atualizar métricas em tempo real
-            console.log('Stats atualizadas:', data);
-        })
-        .catch(error => console.error('Erro ao buscar stats:', error));
-}
-
-// Atualizar a cada 30 segundos
-setInterval(updateStats, 30000);
-</script>
 {% endblock %}

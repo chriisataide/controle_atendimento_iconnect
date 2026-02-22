@@ -19,6 +19,67 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Stop words em português para o TfidfVectorizer
+# Fonte: NLTK + palavras comuns em tickets de suporte
+PORTUGUESE_STOP_WORDS = [
+    'a', 'ao', 'aos', 'aquela', 'aquelas', 'aquele', 'aqueles', 'aquilo',
+    'as', 'até', 'com', 'como', 'da', 'das', 'de', 'dela', 'delas',
+    'dele', 'deles', 'depois', 'do', 'dos', 'e', 'ela', 'elas', 'ele',
+    'eles', 'em', 'entre', 'era', 'eram', 'essa', 'essas', 'esse',
+    'esses', 'esta', 'estas', 'este', 'estes', 'eu', 'foi', 'for',
+    'foram', 'fosse', 'fossem', 'há', 'isso', 'isto', 'já', 'lhe',
+    'lhes', 'lo', 'mais', 'mas', 'me', 'mesmo', 'meu', 'meus', 'minha',
+    'minhas', 'muito', 'na', 'nas', 'nem', 'no', 'nos', 'nós', 'nossa',
+    'nossas', 'nosso', 'nossos', 'num', 'numa', 'não', 'o', 'onde', 'os',
+    'ou', 'para', 'pela', 'pelas', 'pelo', 'pelos', 'por', 'qual',
+    'quando', 'que', 'quem', 'se', 'sem', 'ser', 'será', 'seu', 'seus',
+    'sido', 'sob', 'sobre', 'sua', 'suas', 'são', 'só', 'também', 'te',
+    'tem', 'tendo', 'ter', 'teu', 'teus', 'ti', 'tinha', 'tinham',
+    'toda', 'todas', 'todo', 'todos', 'tu', 'tua', 'tuas', 'tudo', 'um',
+    'uma', 'umas', 'uns', 'vai', 'vos', 'à', 'às', 'é',
+]
+
+
+# Análise de sentimento simplificada para português
+# TextBlob usa modelo em inglês — inadequado para tickets em pt-BR
+_PALAVRAS_POSITIVAS = {
+    'obrigado', 'obrigada', 'agradeço', 'excelente', 'ótimo', 'otimo',
+    'bom', 'boa', 'maravilhoso', 'parabéns', 'parabens', 'perfeito',
+    'satisfeito', 'satisfeita', 'resolvido', 'funciona', 'funcionando',
+    'rápido', 'rapido', 'eficiente', 'incrível', 'incrivel', 'sucesso',
+    'adorei', 'gostei', 'recomendo', 'atencioso', 'ajudou', 'fantástico',
+}
+
+_PALAVRAS_NEGATIVAS = {
+    'problema', 'erro', 'bug', 'falha', 'quebrado', 'lento', 'demora',
+    'péssimo', 'pessimo', 'horrível', 'horrivel', 'ruim', 'insatisfeito',
+    'insatisfeita', 'reclamação', 'reclamacao', 'urgente', 'crítico',
+    'critico', 'grave', 'inaceitável', 'inaceitavel', 'absurdo', 'pior',
+    'travando', 'trava', 'caiu', 'fora', 'indisponível', 'indisponivel',
+    'não funciona', 'nao funciona', 'frustrado', 'frustrada', 'raiva',
+    'decepcionado', 'decepcionada', 'cancelar', 'desistir',
+}
+
+
+def analisar_sentimento_pt(texto: str) -> float:
+    """Análise de sentimento simples para português.
+
+    Retorna valor entre -1.0 (muito negativo) e 1.0 (muito positivo).
+    Usa contagem de palavras-chave com fallback para TextBlob.
+    """
+    texto_lower = texto.lower()
+    palavras = set(texto_lower.split())
+
+    score_pos = len(palavras & _PALAVRAS_POSITIVAS)
+    score_neg = len(palavras & _PALAVRAS_NEGATIVAS)
+
+    total = score_pos + score_neg
+    if total == 0:
+        # Fallback: usar TextBlob (melhor que nada para palavras universais)
+        return TextBlob(texto).sentiment.polarity
+
+    return (score_pos - score_neg) / total
+
 class TicketPredictor:
     """Sistema de ML para previsão de tickets"""
     
@@ -35,7 +96,7 @@ class TicketPredictor:
         # Encoders e Vectorizers
         self.priority_encoder = LabelEncoder()
         self.category_encoder = LabelEncoder()
-        self.text_vectorizer = TfidfVectorizer(max_features=1000, stop_words='english')
+        self.text_vectorizer = TfidfVectorizer(max_features=1000, stop_words=PORTUGUESE_STOP_WORDS)
         
     def prepare_data(self):
         """Prepara dados para treinamento"""
@@ -62,8 +123,8 @@ class TicketPredictor:
             # Texto combinado para análise
             text = f"{ticket.titulo} {ticket.descricao}"
             
-            # Análise de sentimento
-            sentiment = TextBlob(text).sentiment.polarity
+            # Análise de sentimento (português)
+            sentiment = analisar_sentimento_pt(text)
             
             # Horário de criação
             hour = ticket.criado_em.hour
@@ -227,7 +288,7 @@ class TicketPredictor:
         
         # Preparar features
         texto_completo = f"{titulo} {descricao}"
-        sentiment = TextBlob(texto_completo).sentiment.polarity
+        sentiment = analisar_sentimento_pt(texto_completo)
         
         now = timezone.now()
         hora_criacao = now.hour

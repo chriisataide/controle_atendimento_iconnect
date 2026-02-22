@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Regras de Automação - iConnect{% endblock %}
+{% block page_title %}Regras de Automação{% endblock %}
+{% block breadcrumb_title %}Automação / Regras{% endblock %}
+
+{% block content %}
+<!-- ===== HEADER + AÇÕES ===== -->
+<div class="row">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Regras de Automação</h3>
+            <p class="mb-0 text-sm">Gerencie regras que automatizam ações com base em eventos do sistema</p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+        <a href="{% url 'dashboard:automation' %}" class="btn btn-outline-primary btn-sm mb-0 me-2">
+            <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Voltar
+        </a>
+        <button class="btn bg-gradient-primary btn-sm mb-0" data-bs-toggle="modal" data-bs-target="#newRuleModal">
+            <i class="material-symbols-rounded text-sm me-1">add</i> Nova Regra
+        </button>
+    </div>
+</div>
+
+<!-- ===== KPI CARDS ===== -->
+<div class="row mt-4">
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Total de Regras</p>
+                        <h4 class="mb-0">{{ total_rules|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">rule</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-primary font-weight-bolder">{{ total_rules|default:"0" }}</span> configuradas</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Ativas</p>
+                        <h4 class="mb-0">{{ active_rules|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">check_circle</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-success font-weight-bolder">{{ active_rules|default:"0" }}</span> em execução</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Inativas</p>
+                        <h4 class="mb-0">{{ inactive_rules|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-secondary shadow-secondary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">pause_circle</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-secondary font-weight-bolder">{{ inactive_rules|default:"0" }}</span> desativadas</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Execuções</p>
+                        <h4 class="mb-0">{{ total_executions|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">bolt</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-info font-weight-bolder">{{ total_executions|default:"0" }}</span> processadas</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== TABELA DE REGRAS ===== -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card my-4">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="text-white text-capitalize ps-3 mb-0">Lista de Regras</h6>
+                        <div class="me-3">
+                            <button class="btn btn-outline-white btn-sm mb-0" data-bs-toggle="modal" data-bs-target="#newRuleModal">
+                                <i class="material-symbols-rounded text-sm">add</i>&nbsp;&nbsp;Nova Regra
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Regra</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Evento Gatilho</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Prioridade</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Criada em</th>
+                                <th class="text-secondary opacity-7"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rule in rules %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ rule.name }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ rule.description|truncatewords:10|default:"Sem descrição" }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-sm bg-gradient-info">{{ rule.get_trigger_event_display }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">{{ rule.priority }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    {% if rule.is_active %}
+                                    <span class="badge badge-sm bg-gradient-success">Ativa</span>
+                                    {% else %}
+                                    <span class="badge badge-sm bg-gradient-secondary">Inativa</span>
+                                    {% endif %}
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">{{ rule.created_at|date:"d/m/Y" }}</span>
+                                </td>
+                                <td class="align-middle">
+                                    <div class="dropdown">
+                                        <button class="btn btn-link text-secondary mb-0" data-bs-toggle="dropdown">
+                                            <i class="material-symbols-rounded">more_vert</i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a class="dropdown-item toggle-rule" href="javascript:;" data-id="{{ rule.id }}">
+                                                    {% if rule.is_active %}Desativar{% else %}Ativar{% endif %}
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item text-danger delete-rule" href="javascript:;" data-id="{{ rule.id }}">Excluir</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5">
+                                    <i class="material-symbols-rounded text-secondary mb-2" style="font-size:48px">rule</i>
+                                    <p class="text-secondary text-sm mb-2">Nenhuma regra criada</p>
+                                    <button class="btn btn-sm bg-gradient-primary" data-bs-toggle="modal" data-bs-target="#newRuleModal">
+                                        <i class="material-symbols-rounded text-sm me-1">add</i> Criar Primeira Regra
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL: NOVA REGRA ===== -->
+<div class="modal fade" id="newRuleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title">
+                    <i class="material-symbols-rounded align-middle me-1">add_circle</i> Nova Regra de Automação
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newRuleForm">
+                    {% csrf_token %}
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Nome da Regra</label>
+                            <input type="text" class="form-control" name="name" placeholder="Ex: Auto-atribuir tickets críticos" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Prioridade (1-10)</label>
+                            <input type="number" class="form-control" name="priority" value="5" min="1" max="10">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Descrição</label>
+                            <textarea class="form-control" name="description" rows="2" placeholder="Descreva o que esta regra faz..."></textarea>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
+                            <label class="form-label">Evento Gatilho</label>
+                            <select class="form-select" name="trigger_event" required>
+                                <option value="">Selecione o evento...</option>
+                                <option value="ticket_created">Ticket Criado</option>
+                                <option value="ticket_updated">Ticket Atualizado</option>
+                                <option value="status_changed">Status Alterado</option>
+                                <option value="agent_assigned">Agente Atribuído</option>
+                                <option value="interaction_added">Interação Adicionada</option>
+                                <option value="sla_warning">Aviso de SLA</option>
+                                <option value="sla_breach">Violação de SLA</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
+                            <label class="form-label">Condições (JSON)</label>
+                            <textarea class="form-control font-monospace" name="conditions" rows="3" placeholder='{"prioridade": "critica", "status": "aberto"}'>{}</textarea>
+                            <p class="text-xs text-muted mt-1 mb-0">Chaves: prioridade, status, categoria, has_agent, time_since_creation</p>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Ações (JSON)</label>
+                            <textarea class="form-control font-monospace" name="actions" rows="3" placeholder='[{"type": "change_status", "value": "em_andamento"}]'>[]</textarea>
+                            <p class="text-xs text-muted mt-1 mb-0">Tipos: change_status, change_priority, assign_agent, send_notification, add_comment, escalate</p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-sm btn-outline-secondary mb-0" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-sm bg-gradient-primary mb-0" id="saveRuleBtn">
+                    <i class="material-symbols-rounded text-sm me-1">save</i> Salvar Regra
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    /* Salvar regra */
+    document.getElementById('saveRuleBtn').addEventListener('click', function() {
+        var form = document.getElementById('newRuleForm');
+        var formData = new FormData(form);
+        var data = { action: 'create' };
+        formData.forEach(function(v, k) { data[k] = v; });
+
+        try { JSON.parse(data.conditions || '{}'); } catch(e) { alert('Condições: JSON inválido'); return; }
+        try { JSON.parse(data.actions || '[]'); } catch(e) { alert('Ações: JSON inválido'); return; }
+        if (!data.name || !data.trigger_event) { alert('Nome e evento são obrigatórios'); return; }
+
+        var btn = this;
+        btn.disabled = true;
+
+        fetch('{% url "dashboard:automation_rules" %}', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': formData.get('csrfmiddlewaretoken'), 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify(data)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res.success) { location.reload(); }
+            else { alert(res.error || 'Erro ao salvar'); btn.disabled = false; }
+        })
+        .catch(function() { alert('Erro de conexão'); btn.disabled = false; });
+    });
+
+    /* Toggle ativar/desativar */
+    document.querySelectorAll('.toggle-rule').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var id = this.dataset.id;
+            fetch('{% url "dashboard:automation_rules" %}', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ action: 'toggle', rule_id: id })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) { if (res.success) location.reload(); else alert(res.error || 'Erro'); });
+        });
+    });
+
+    /* Excluir regra */
+    document.querySelectorAll('.delete-rule').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            if (!confirm('Excluir esta regra?')) return;
+            var id = this.dataset.id;
+            fetch('{% url "dashboard:automation_rules" %}', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ action: 'delete', rule_id: id })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) { if (res.success) location.reload(); else alert(res.error || 'Erro'); });
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,348 +1,376 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Dashboard SLA - Controle de Atendimento{% endblock %}
-
-{% block head_extra %}
-<style>
-.sla-metric-card {
-    transition: all 0.3s ease;
-    border-left: 4px solid transparent;
-}
-
-.sla-metric-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.sla-metric-card.on-track { border-left-color: #28a745; }
-.sla-metric-card.warning { border-left-color: #ffc107; }
-.sla-metric-card.breached { border-left-color: #dc3545; }
-.sla-metric-card.escalated { border-left-color: #6f42c1; }
-
-.progress-sla {
-    height: 8px;
-    border-radius: 4px;
-}
-
-.critical-ticket-item {
-    border-left: 3px solid #dc3545;
-    padding: 12px;
-    margin-bottom: 8px;
-    background: #fff;
-    border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.sla-status-badge {
-    font-size: 0.75rem;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-weight: 600;
-}
-
-.sla-status-on-track { background-color: #d4edda; color: #155724; }
-.sla-status-warning { background-color: #fff3cd; color: #856404; }
-.sla-status-breached { background-color: #f8d7da; color: #721c24; }
-.sla-status-escalated { background-color: #e2e3f1; color: #383d41; }
-
-.time-remaining {
-    font-weight: bold;
-    font-size: 1.1rem;
-}
-
-.time-remaining.critical { color: #dc3545; }
-.time-remaining.warning { color: #ffc107; }
-.time-remaining.ok { color: #28a745; }
-</style>
-{% endblock %}
+{% block title %}Dashboard SLA{% endblock %}
+{% block page_title %}Dashboard SLA{% endblock %}
+{% block breadcrumb_title %}Dashboard SLA{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h2 class="mb-0">Dashboard SLA</h2>
-                    <p class="text-muted mb-0">Monitoramento de acordos de nível de serviço em tempo real</p>
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Dashboard SLA</h3>
+            <p class="mb-0 text-sm">Monitoramento de acordos de nível de serviço em tempo real</p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end">
+        <button class="btn btn-sm bg-gradient-dark mb-0 me-1" onclick="refreshSLAData()">
+            <i class="material-symbols-rounded text-sm me-1">refresh</i> Atualizar
+        </button>
+        <button class="btn btn-sm bg-gradient-info mb-0" onclick="runSLAMonitor()">
+            <i class="material-symbols-rounded text-sm me-1">play_arrow</i> Executar Monitor
+        </button>
+    </div>
+</div>
+
+<!-- KPIs -->
+<div class="row">
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">No Prazo</p>
+                        <h4 class="mb-0" id="on-track-count">{{ dashboard_data.sla_stats.on_track|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">check_circle</i>
+                    </div>
                 </div>
-                <div>
-                    <button class="btn btn-primary btn-sm" onclick="refreshSLAData()">
-                        <i class="material-icons">refresh</i> Atualizar
-                    </button>
-                    <button class="btn btn-success btn-sm" onclick="runSLAMonitor()">
-                        <i class="material-icons">play_arrow</i> Executar Monitor
-                    </button>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Tickets dentro do SLA</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Em Alerta</p>
+                        <h4 class="mb-0" id="warning-count">{{ dashboard_data.sla_stats.warnings|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">warning</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Próximos ao vencimento</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Violados</p>
+                        <h4 class="mb-0" id="breached-count">{{ dashboard_data.sla_stats.breached|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">error</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">SLA descumprido</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Escalados</p>
+                        <h4 class="mb-0" id="escalated-count">{{ dashboard_data.sla_stats.escalated|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">trending_up</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Escalonados para supervisor</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Compliance Rate + Ações Rápidas -->
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">speed</i>
+                </div>
+                <h6 class="mb-0">Taxa de Cumprimento de SLA</h6>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-4 text-center">
+                        <div class="position-relative d-inline-block">
+                            <canvas id="complianceGauge" width="160" height="160"></canvas>
+                            <div class="position-absolute top-50 start-50 translate-middle">
+                                <h3 class="mb-0 font-weight-bolder" id="compliance-rate">{{ dashboard_data.compliance_rate|floatformat:1|default:"0" }}%</h3>
+                                <small class="text-muted">Compliance</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="icon icon-sm icon-shape bg-gradient-dark shadow text-center border-radius-md me-2">
+                                        <i class="material-symbols-rounded text-white opacity-10" style="font-size:14px;">confirmation_number</i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-muted mb-0">Tickets Ativos</p>
+                                        <h6 class="mb-0" id="total-active">{{ dashboard_data.total_active_tickets|default:"0" }}</h6>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="icon icon-sm icon-shape bg-gradient-warning shadow text-center border-radius-md me-2">
+                                        <i class="material-symbols-rounded text-white opacity-10" style="font-size:14px;">notifications</i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-muted mb-0">Alertas (24h)</p>
+                                        <h6 class="mb-0" id="alerts-24h">{{ dashboard_data.alerts_last_24h|default:"0" }}</h6>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="icon icon-sm icon-shape bg-gradient-primary shadow text-center border-radius-md me-2">
+                                        <i class="material-symbols-rounded text-white opacity-10" style="font-size:14px;">call_made</i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-muted mb-0">Escalações (24h)</p>
+                                        <h6 class="mb-0" id="escalations-24h">{{ dashboard_data.escalations_last_24h|default:"0" }}</h6>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="icon icon-sm icon-shape bg-gradient-danger shadow text-center border-radius-md me-2">
+                                        <i class="material-symbols-rounded text-white opacity-10" style="font-size:14px;">gpp_bad</i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-muted mb-0">Tickets Críticos</p>
+                                        <h6 class="mb-0" id="critical-count">{{ dashboard_data.critical_tickets|length|default:"0" }}</h6>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Métricas Principais -->
-    <div class="row mb-4" id="sla-metrics">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card sla-metric-card on-track">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                No Prazo
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="on-track-count">
-                                {{ dashboard_data.sla_stats.on_track }}
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="material-icons text-success" style="font-size: 2rem;">schedule</i>
-                        </div>
-                    </div>
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">bolt</i>
                 </div>
+                <h6 class="mb-0">Ações Rápidas</h6>
+            </div>
+            <div class="card-body d-flex flex-column justify-content-center">
+                <a href="{% url 'dashboard:sla_policies' %}" class="btn bg-gradient-dark btn-sm w-100 mb-2">
+                    <i class="material-symbols-rounded text-sm me-1">policy</i> Gerenciar Políticas
+                </a>
+                <a href="{% url 'dashboard:sla_alerts' %}" class="btn bg-gradient-warning btn-sm w-100 mb-2">
+                    <i class="material-symbols-rounded text-sm me-1">notifications_active</i> Ver Alertas
+                </a>
+                <a href="{% url 'dashboard:sla_reports' %}" class="btn bg-gradient-info btn-sm w-100 mb-2">
+                    <i class="material-symbols-rounded text-sm me-1">analytics</i> Relatórios SLA
+                </a>
             </div>
         </div>
+    </div>
+</div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card sla-metric-card warning">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Alerta
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="warning-count">
-                                {{ dashboard_data.sla_stats.warnings }}
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="material-icons text-warning" style="font-size: 2rem;">warning</i>
-                        </div>
-                    </div>
+<!-- Distribuição SLA (gráfico de barras) -->
+<div class="row">
+    <div class="col-lg-7 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-success shadow-success shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">bar_chart</i>
                 </div>
+                <h6 class="mb-0">Distribuição de Status SLA</h6>
             </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card sla-metric-card breached">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                                Violados
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="breached-count">
-                                {{ dashboard_data.sla_stats.breached }}
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="material-icons text-danger" style="font-size: 2rem;">error</i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card sla-metric-card escalated">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Escalados
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="escalated-count">
-                                {{ dashboard_data.sla_stats.escalated }}
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="material-icons text-info" style="font-size: 2rem;">trending_up</i>
-                        </div>
-                    </div>
-                </div>
+            <div class="card-body">
+                <canvas id="slaDistributionChart" height="250"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- Compliance Rate e Estatísticas -->
-    <div class="row mb-4">
-        <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">Taxa de Cumprimento de SLA</h6>
+    <!-- Políticas Ativas -->
+    <div class="col-lg-5 mb-4">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">policy</i>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="text-center">
-                                <div class="h2 text-primary mb-2" id="compliance-rate">
-                                    {{ dashboard_data.compliance_rate|floatformat:1 }}%
-                                </div>
-                                <div class="progress progress-sla mb-3">
-                                    <div class="progress-bar bg-primary" role="progressbar" 
-                                         style="width: {{ dashboard_data.compliance_rate }}%"
-                                         id="compliance-progress"></div>
-                                </div>
-                                <p class="text-muted mb-0">Taxa de Cumprimento Geral</p>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="small">
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span>Tickets Ativos:</span>
-                                    <span class="font-weight-bold" id="total-active">{{ dashboard_data.total_active_tickets }}</span>
-                                </div>
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span>Alertas (24h):</span>
-                                    <span class="font-weight-bold text-warning" id="alerts-24h">{{ dashboard_data.alerts_last_24h }}</span>
-                                </div>
-                                <div class="d-flex justify-content-between">
-                                    <span>Escalações (24h):</span>
-                                    <span class="font-weight-bold text-info" id="escalations-24h">{{ dashboard_data.escalations_last_24h }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <h6 class="mb-0">Políticas SLA Ativas</h6>
             </div>
-        </div>
-        
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">Ações Rápidas</h6>
-                </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <a href="{% url 'dashboard:sla_policies' %}" class="btn btn-outline-primary btn-sm">
-                            <i class="material-icons">settings</i> Gerenciar Políticas SLA
-                        </a>
-                        <a href="{% url 'dashboard:sla_alerts' %}" class="btn btn-outline-warning btn-sm">
-                            <i class="material-icons">notifications</i> Ver Alertas Ativos
-                        </a>
-                        <a href="{% url 'dashboard:sla_reports' %}" class="btn btn-outline-info btn-sm">
-                            <i class="material-icons">assessment</i> Relatórios SLA
-                        </a>
-                        <button class="btn btn-outline-success btn-sm" onclick="exportSLAReport()">
-                            <i class="material-icons">file_download</i> Exportar Dados
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tickets Críticos -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="m-0 font-weight-bold text-primary">Tickets Críticos (Próximos ao Vencimento)</h6>
-                        <span class="badge badge-danger" id="critical-count">{{ dashboard_data.critical_tickets|length }}</span>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div id="critical-tickets-list">
-                        {% if dashboard_data.critical_tickets %}
-                            {% for ticket_data in dashboard_data.critical_tickets %}
-                            <div class="critical-ticket-item" data-ticket-id="{{ ticket_data.ticket.id }}">
-                                <div class="row align-items-center">
-                                    <div class="col-md-3">
-                                        <div class="font-weight-bold text-primary">
-                                            #{{ ticket_data.ticket.numero }}
-                                        </div>
-                                        <div class="text-muted small">
-                                            {{ ticket_data.ticket.titulo|truncatechars:40 }}
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Política</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Resposta</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Resolução</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for policy in sla_policies %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ policy.name }}</h6>
+                                            <p class="text-xs text-secondary mb-0">
+                                                {% if policy.categoria %}{{ policy.categoria.nome }} · {% endif %}{{ policy.get_prioridade_display }}
+                                            </p>
                                         </div>
                                     </div>
-                                    <div class="col-md-2">
-                                        <div class="small text-muted">Cliente</div>
-                                        <div>{{ ticket_data.ticket.cliente.nome|truncatechars:20 }}</div>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <div class="small text-muted">Agente</div>
-                                        <div>
-                                            {% if ticket_data.ticket.agente %}
-                                                {{ ticket_data.ticket.agente.get_full_name|truncatechars:15 }}
-                                            {% else %}
-                                                <span class="text-warning">Não atribuído</span>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <div class="small text-muted">Status SLA</div>
-                                        <span class="sla-status-badge sla-status-{{ ticket_data.sla_history.status }}">
-                                            {{ ticket_data.sla_history.get_status_display }}
-                                        </span>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <div class="small text-muted">Tempo Restante</div>
-                                        <div class="time-remaining {% if ticket_data.percentage_elapsed >= 90 %}critical{% elif ticket_data.percentage_elapsed >= 70 %}warning{% else %}ok{% endif %}">
-                                            {% if ticket_data.time_remaining %}
-                                                {{ ticket_data.time_remaining|floatformat:0 }}m
-                                            {% else %}
-                                                Vencido
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-1">
-                                        <div class="dropdown">
-                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
-                                                    data-bs-toggle="dropdown">
-                                                <i class="material-icons">more_vert</i>
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="{% url 'dashboard:ticket_detail' ticket_data.ticket.id %}">Ver Ticket</a></li>
-                                                <li><a class="dropdown-item" href="#" onclick="viewSLADetails({{ ticket_data.ticket.id }})">Detalhes SLA</a></li>
-                                                {% if ticket_data.sla_history.status == 'warning' %}
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li><a class="dropdown-item text-danger" href="#" onclick="escalateTicket({{ ticket_data.ticket.id }})">Escalar Agora</a></li>
-                                                {% endif %}
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Barra de progresso SLA -->
-                                <div class="mt-2">
-                                    <div class="progress progress-sla">
-                                        <div class="progress-bar 
-                                            {% if ticket_data.percentage_elapsed >= 90 %}bg-danger{% elif ticket_data.percentage_elapsed >= 70 %}bg-warning{% else %}bg-success{% endif %}"
-                                             role="progressbar" style="width: {{ ticket_data.percentage_elapsed }}%">
-                                        </div>
-                                    </div>
-                                    <div class="small text-muted mt-1">
-                                        {{ ticket_data.percentage_elapsed|floatformat:1 }}% do tempo SLA decorrido
-                                    </div>
-                                </div>
-                            </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-xs font-weight-bold">{{ policy.first_response_time }}min</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-xs font-weight-bold">{{ policy.resolution_time }}min</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center py-3">
+                                    <p class="text-sm text-muted mb-0">Nenhuma política ativa</p>
+                                </td>
+                            </tr>
                             {% endfor %}
-                        {% else %}
-                            <div class="text-center py-4">
-                                <i class="material-icons text-success" style="font-size: 3rem;">check_circle</i>
-                                <p class="text-muted mt-2">Nenhum ticket crítico no momento!</p>
-                                <p class="small text-muted">Todos os SLAs estão sendo cumpridos adequadamente.</p>
-                            </div>
-                        {% endif %}
-                    </div>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal de Detalhes SLA -->
-<div class="modal fade" id="slaDetailsModal" tabindex="-1">
+<!-- Tickets Críticos -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">local_fire_department</i>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Tickets Críticos — Próximos ao Vencimento</h6>
+                    <span class="badge bg-gradient-danger">{{ dashboard_data.critical_tickets|length|default:"0" }}</span>
+                </div>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0" id="critical-tickets-list">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ticket</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cliente</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Agente</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status SLA</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">% Decorrido</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for td in dashboard_data.critical_tickets %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">#{{ td.ticket.numero }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ td.ticket.titulo|truncatechars:40 }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="text-xs">{{ td.ticket.cliente.nome|default:"-"|truncatechars:20 }}</span></td>
+                                <td>
+                                    <span class="text-xs">
+                                        {% if td.ticket.agente %}{{ td.ticket.agente.get_full_name|truncatechars:18 }}{% else %}<span class="text-warning">Não atribuído</span>{% endif %}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    {% if td.sla_history.status == 'breached' %}
+                                    <span class="badge bg-gradient-danger">Violado</span>
+                                    {% elif td.sla_history.status == 'warning' %}
+                                    <span class="badge bg-gradient-warning">Alerta</span>
+                                    {% elif td.sla_history.status == 'escalated' %}
+                                    <span class="badge bg-gradient-primary">Escalado</span>
+                                    {% else %}
+                                    <span class="badge bg-gradient-success">{{ td.sla_history.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <span class="text-xs font-weight-bold {% if td.percentage_elapsed >= 90 %}text-danger{% elif td.percentage_elapsed >= 70 %}text-warning{% else %}text-success{% endif %}">
+                                            {{ td.percentage_elapsed|floatformat:0 }}%
+                                        </span>
+                                        <div class="progress w-75 mt-1" style="height:4px;">
+                                            <div class="progress-bar {% if td.percentage_elapsed >= 90 %}bg-gradient-danger{% elif td.percentage_elapsed >= 70 %}bg-gradient-warning{% else %}bg-gradient-success{% endif %}" style="width:{{ td.percentage_elapsed|floatformat:0 }}%"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <a href="{% url 'dashboard:ticket_detail' td.ticket.id %}" class="btn btn-link text-info px-2 mb-0" title="Ver ticket">
+                                        <i class="material-symbols-rounded text-sm">visibility</i>
+                                    </a>
+                                    <button class="btn btn-link text-dark px-2 mb-0" onclick="viewSLADetails({{ td.ticket.id }})" title="Detalhes SLA">
+                                        <i class="material-symbols-rounded text-sm">info</i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <i class="material-symbols-rounded text-success mb-2" style="font-size:48px;">verified</i>
+                                    <p class="text-sm text-muted mb-0">Nenhum ticket crítico no momento</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detalhes SLA -->
+<div class="modal fade" id="slaDetailModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Detalhes do SLA</h5>
+                <h5 class="modal-title">Detalhes SLA do Ticket</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" id="sla-details-content">
-                <div class="text-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Carregando...</span>
-                    </div>
+            <div class="modal-body" id="slaDetailContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-info" role="status"></div>
+                    <p class="text-sm text-muted mt-2">Carregando...</p>
                 </div>
             </div>
         </div>
@@ -350,254 +378,159 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-// Atualização automática dos dados a cada 30 segundos
-let autoRefreshInterval;
-
-function startAutoRefresh() {
-    autoRefreshInterval = setInterval(refreshSLAData, 30000);
-}
-
-function stopAutoRefresh() {
-    if (autoRefreshInterval) {
-        clearInterval(autoRefreshInterval);
-    }
-}
-
-async function refreshSLAData() {
-    try {
-        const response = await fetch('{% url "dashboard:api_sla_dashboard_data" %}');
-        const data = await response.json();
-        
-        if (data.success) {
-            updateDashboardUI(data.data);
-            showToast('Dados atualizados com sucesso', 'success');
-        } else {
-            showToast('Erro ao atualizar dados: ' + data.error, 'error');
+document.addEventListener('DOMContentLoaded', function() {
+    // --- Compliance Gauge (Doughnut) ---
+    const compRate = {{ dashboard_data.compliance_rate|floatformat:1|default:"0" }};
+    new Chart(document.getElementById('complianceGauge'), {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [compRate, 100 - compRate],
+                backgroundColor: ['#06b6d4', '#e9ecef'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            cutout: '75%',
+            responsive: false,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } }
         }
-    } catch (error) {
-        console.error('Erro ao atualizar dados SLA:', error);
-        showToast('Erro de conexão ao atualizar dados', 'error');
-    }
-}
+    });
 
-function updateDashboardUI(dashboardData) {
-    // Atualiza métricas principais
-    document.getElementById('on-track-count').textContent = dashboardData.sla_stats.on_track;
-    document.getElementById('warning-count').textContent = dashboardData.sla_stats.warnings;
-    document.getElementById('breached-count').textContent = dashboardData.sla_stats.breached;
-    document.getElementById('escalated-count').textContent = dashboardData.sla_stats.escalated;
-    
-    // Atualiza taxa de compliance
-    const complianceRate = dashboardData.compliance_rate.toFixed(1);
-    document.getElementById('compliance-rate').textContent = complianceRate + '%';
-    document.getElementById('compliance-progress').style.width = complianceRate + '%';
-    
-    // Atualiza estatísticas
-    document.getElementById('total-active').textContent = dashboardData.total_active_tickets;
-    document.getElementById('alerts-24h').textContent = dashboardData.alerts_last_24h;
-    document.getElementById('escalations-24h').textContent = dashboardData.escalations_last_24h;
-    
-    // Atualiza lista de tickets críticos
-    updateCriticalTicketsList(dashboardData.critical_tickets);
-}
-
-function updateCriticalTicketsList(criticalTickets) {
-    const container = document.getElementById('critical-tickets-list');
-    const countBadge = document.getElementById('critical-count');
-    
-    countBadge.textContent = criticalTickets.length;
-    
-    if (criticalTickets.length === 0) {
-        container.innerHTML = `
-            <div class="text-center py-4">
-                <i class="material-icons text-success" style="font-size: 3rem;">check_circle</i>
-                <p class="text-muted mt-2">Nenhum ticket crítico no momento!</p>
-                <p class="small text-muted">Todos os SLAs estão sendo cumpridos adequadamente.</p>
-            </div>
-        `;
-        return;
-    }
-    
-    container.innerHTML = criticalTickets.map(ticketData => {
-        const ticket = ticketData.ticket_data;
-        const timeClass = ticketData.percentage_elapsed >= 90 ? 'critical' : 
-                         ticketData.percentage_elapsed >= 70 ? 'warning' : 'ok';
-        const progressClass = ticketData.percentage_elapsed >= 90 ? 'bg-danger' : 
-                             ticketData.percentage_elapsed >= 70 ? 'bg-warning' : 'bg-success';
-        
-        return `
-            <div class="critical-ticket-item" data-ticket-id="${ticket.numero}">
-                <div class="row align-items-center">
-                    <div class="col-md-3">
-                        <div class="font-weight-bold text-primary">#${ticket.numero}</div>
-                        <div class="text-muted small">${ticket.titulo.substring(0, 40)}...</div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="small text-muted">Cliente</div>
-                        <div>${ticket.cliente.substring(0, 20)}</div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="small text-muted">Agente</div>
-                        <div>${ticket.agente || '<span class="text-warning">Não atribuído</span>'}</div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="small text-muted">Status SLA</div>
-                        <span class="sla-status-badge sla-status-${ticketData.sla_history?.status || 'warning'}">
-                            ${ticketData.sla_history?.status || 'Warning'}
-                        </span>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="small text-muted">Tempo Restante</div>
-                        <div class="time-remaining ${timeClass}">
-                            ${ticketData.time_remaining_str || 'Vencido'}
-                        </div>
-                    </div>
-                    <div class="col-md-1">
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
-                                    data-bs-toggle="dropdown">
-                                <i class="material-icons">more_vert</i>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="/tickets/${ticket.numero}/">Ver Ticket</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="viewSLADetails('${ticket.numero}')">Detalhes SLA</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-2">
-                    <div class="progress progress-sla">
-                        <div class="progress-bar ${progressClass}" role="progressbar" 
-                             style="width: ${ticketData.percentage_elapsed}%"></div>
-                    </div>
-                    <div class="small text-muted mt-1">
-                        ${ticketData.percentage_elapsed.toFixed(1)}% do tempo SLA decorrido
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-async function runSLAMonitor() {
-    try {
-        showToast('Executando monitoramento de SLA...', 'info');
-        
-        const response = await fetch('{% url "dashboard:api_run_sla_monitor" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+    // --- Distribution Bar Chart ---
+    new Chart(document.getElementById('slaDistributionChart'), {
+        type: 'bar',
+        data: {
+            labels: ['No Prazo', 'Alerta', 'Violado', 'Escalado'],
+            datasets: [{
+                label: 'Tickets',
+                data: [
+                    {{ dashboard_data.sla_stats.on_track|default:"0" }},
+                    {{ dashboard_data.sla_stats.warnings|default:"0" }},
+                    {{ dashboard_data.sla_stats.breached|default:"0" }},
+                    {{ dashboard_data.sla_stats.escalated|default:"0" }}
+                ],
+                backgroundColor: ['#66bb6a', '#ffa726', '#ef5350', '#42a5f5'],
+                borderRadius: 6,
+                maxBarThickness: 40
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 } }, grid: { color: '#f0f0f0' } },
+                x: { ticks: { font: { size: 11 } }, grid: { display: false } }
             }
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showToast(`Monitor executado: ${data.stats.tickets_monitored} tickets verificados, ${data.stats.warnings_sent} alertas, ${data.stats.escalations_made} escalações`, 'success');
-            await refreshSLAData();
-        } else {
-            showToast('Erro ao executar monitor: ' + data.error, 'error');
         }
-    } catch (error) {
-        console.error('Erro ao executar monitor SLA:', error);
-        showToast('Erro de conexão ao executar monitor', 'error');
-    }
+    });
+
+    // Auto-refresh cada 60 segundos
+    setInterval(refreshSLAData, 60000);
+});
+
+function refreshSLAData() {
+    fetch("{% url 'dashboard:api_sla_dashboard_data' %}")
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const d = data.data;
+                document.getElementById('on-track-count').textContent = d.sla_stats?.on_track || 0;
+                document.getElementById('warning-count').textContent = d.sla_stats?.warnings || 0;
+                document.getElementById('breached-count').textContent = d.sla_stats?.breached || 0;
+                document.getElementById('escalated-count').textContent = d.sla_stats?.escalated || 0;
+                document.getElementById('compliance-rate').textContent = (d.compliance_rate || 0).toFixed(1) + '%';
+                document.getElementById('total-active').textContent = d.total_active_tickets || 0;
+                document.getElementById('alerts-24h').textContent = d.alerts_last_24h || 0;
+                document.getElementById('escalations-24h').textContent = d.escalations_last_24h || 0;
+                document.getElementById('critical-count').textContent = (d.critical_tickets || []).length;
+            }
+        }).catch(e => console.error('Erro ao atualizar SLA:', e));
 }
 
-async function viewSLADetails(ticketId) {
-    const modal = new bootstrap.Modal(document.getElementById('slaDetailsModal'));
-    const content = document.getElementById('sla-details-content');
-    
+function runSLAMonitor() {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content 
+        || document.cookie.split('; ').find(c => c.startsWith('csrftoken='))?.split('=')[1] || '';
+    fetch("{% url 'dashboard:api_run_sla_monitor' %}", {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const s = data.stats;
+            alert(`Monitor executado!\n${s.tickets_monitored} tickets monitorados\n${s.warnings_sent} alertas enviados\n${s.breaches_detected} violações detectadas\n${s.escalations_made} escalações`);
+            refreshSLAData();
+        } else {
+            alert('Erro: ' + (data.error || 'Erro desconhecido'));
+        }
+    }).catch(e => alert('Erro ao executar monitor: ' + e));
+}
+
+function viewSLADetails(ticketId) {
+    const modal = new bootstrap.Modal(document.getElementById('slaDetailModal'));
+    const content = document.getElementById('slaDetailContent');
+    content.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-info"></div><p class="text-sm text-muted mt-2">Carregando...</p></div>';
     modal.show();
     
-    try {
-        const response = await fetch(`{% url "dashboard:api_ticket_sla_details" 0 %}`.replace('0', ticketId));
-        const data = await response.json();
-        
-        if (data.success) {
-            const slaData = data.data;
-            content.innerHTML = `
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6>Informações do Ticket</h6>
-                        <table class="table table-sm">
-                            <tr><td><strong>Número:</strong></td><td>#${slaData.ticket.numero}</td></tr>
-                            <tr><td><strong>Título:</strong></td><td>${slaData.ticket.titulo}</td></tr>
-                            <tr><td><strong>Status:</strong></td><td>${slaData.ticket.status}</td></tr>
-                            <tr><td><strong>Prioridade:</strong></td><td>${slaData.ticket.prioridade}</td></tr>
-                        </table>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>Prazos SLA</h6>
-                        <table class="table table-sm">
-                            <tr><td><strong>Primeira Resposta:</strong></td><td>${new Date(slaData.deadlines.first_response).toLocaleString()}</td></tr>
-                            <tr><td><strong>Resolução:</strong></td><td>${new Date(slaData.deadlines.resolution).toLocaleString()}</td></tr>
-                            <tr><td><strong>Escalação:</strong></td><td>${new Date(slaData.deadlines.escalation).toLocaleString()}</td></tr>
-                        </table>
-                    </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-12">
-                        <h6>Métricas de Performance</h6>
-                        <div class="progress mb-2">
-                            <div class="progress-bar ${slaData.metrics.sla_percentage_elapsed >= 90 ? 'bg-danger' : slaData.metrics.sla_percentage_elapsed >= 70 ? 'bg-warning' : 'bg-success'}" 
-                                 role="progressbar" style="width: ${slaData.metrics.sla_percentage_elapsed}%">
-                                ${slaData.metrics.sla_percentage_elapsed.toFixed(1)}%
-                            </div>
+    const baseUrl = "{% url 'dashboard:api_ticket_sla_details' 0 %}".replace('/0/', '/' + ticketId + '/');
+    fetch(baseUrl)
+        .then(r => r.json())
+        .then(resp => {
+            if (resp.success) {
+                const d = resp.data;
+                const statusBadge = {
+                    'on_track': 'bg-gradient-success',
+                    'warning': 'bg-gradient-warning',
+                    'breached': 'bg-gradient-danger',
+                    'escalated': 'bg-gradient-primary',
+                    'completed': 'bg-gradient-dark'
+                };
+                content.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-sm text-muted">Ticket</h6>
+                            <p class="mb-1"><strong>#${d.ticket.numero}</strong> — ${d.ticket.titulo}</p>
+                            <span class="badge bg-gradient-dark">${d.ticket.status}</span>
+                            <span class="badge bg-gradient-info">${d.ticket.prioridade}</span>
                         </div>
-                        <p><strong>Tempo Restante:</strong> ${slaData.time_remaining}</p>
-                        <p><strong>Status:</strong> 
-                            <span class="badge ${slaData.status === 'on_track' ? 'badge-success' : slaData.status === 'warning' ? 'badge-warning' : 'badge-danger'}">
-                                ${slaData.status}
-                            </span>
-                        </p>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-sm text-muted">Política SLA</h6>
+                            <p class="mb-1"><strong>${d.sla_policy.name}</strong></p>
+                            <span class="text-xs">Resposta: ${d.sla_policy.first_response_time}min · Resolução: ${d.sla_policy.resolution_time}min</span>
+                        </div>
                     </div>
-                </div>
-            `;
-        } else {
-            content.innerHTML = `<div class="alert alert-danger">Erro ao carregar detalhes: ${data.error}</div>`;
-        }
-    } catch (error) {
-        content.innerHTML = `<div class="alert alert-danger">Erro de conexão</div>`;
-    }
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-3">
+                            <p class="text-xs text-muted mb-1">Status</p>
+                            <span class="badge ${statusBadge[d.status] || 'bg-gradient-dark'}">${d.status}</span>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <p class="text-xs text-muted mb-1">Tempo Restante</p>
+                            <h5 class="mb-0">${d.time_remaining || 'N/A'}</h5>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <p class="text-xs text-muted mb-1">% Decorrido</p>
+                            <h5 class="mb-0">${(d.metrics.sla_percentage_elapsed || 0).toFixed(1)}%</h5>
+                        </div>
+                    </div>
+                    <div class="progress mt-2" style="height:8px;">
+                        <div class="progress-bar ${d.metrics.sla_percentage_elapsed >= 90 ? 'bg-danger' : d.metrics.sla_percentage_elapsed >= 70 ? 'bg-warning' : 'bg-success'}" style="width:${Math.min(d.metrics.sla_percentage_elapsed || 0, 100)}%"></div>
+                    </div>
+                `;
+            } else {
+                content.innerHTML = `<div class="text-center py-4"><i class="material-symbols-rounded text-muted" style="font-size:48px;">info</i><p class="text-sm text-muted mt-2">${resp.error || 'Dados não disponíveis'}</p></div>`;
+            }
+        }).catch(e => {
+            content.innerHTML = '<div class="text-center py-4"><p class="text-sm text-danger">Erro ao carregar dados</p></div>';
+        });
 }
-
-function exportSLAReport() {
-    showToast('Funcionalidade de exportação será implementada em breve', 'info');
-}
-
-function showToast(message, type = 'info') {
-    // Implementar sistema de toast/notificação
-    console.log(`[${type.toUpperCase()}] ${message}`);
-    
-    // Ou usar uma biblioteca de toast como Toastify
-    if (typeof Toastify !== 'undefined') {
-        Toastify({
-            text: message,
-            duration: 3000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            backgroundColor: type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'
-        }).showToast();
-    }
-}
-
-// Inicializa auto-refresh quando a página carrega
-document.addEventListener('DOMContentLoaded', function() {
-    startAutoRefresh();
-});
-
-// Para auto-refresh quando a página não está visível
-document.addEventListener('visibilitychange', function() {
-    if (document.hidden) {
-        stopAutoRefresh();
-    } else {
-        startAutoRefresh();
-    }
-});
 </script>
 {% endblock %}

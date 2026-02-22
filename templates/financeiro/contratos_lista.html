@@ -1,83 +1,93 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Contratos - Sistema Financeiro{% endblock %}
-
+{% block title %}Contratos{% endblock %}
 {% block page_title %}Contratos{% endblock %}
 {% block breadcrumb_title %}Contratos{% endblock %}
 
 {% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Contratos</h3>
+            <p class="mb-0 text-sm">Gestão de contratos de clientes &bull; Valores e vigência</p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end d-flex align-items-center justify-content-end">
+        <a href="{% url 'financeiro:dashboard_financeiro' %}" class="btn btn-sm bg-gradient-dark mb-0">
+            <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- KPIs -->
 <div class="row">
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Total de Contratos</p>
+                        <h4 class="mb-0">{{ contratos.count }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">description</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Todos os contratos cadastrados</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Ativos</p>
+                        {% with ativos=contratos|dictsort:"status" %}
+                        <h4 class="mb-0 text-success" id="contratosAtivos">-</h4>
+                        {% endwith %}
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">check_circle</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Contratos em vigência</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabela de Contratos -->
+<div class="row mt-4">
     <div class="col-12">
-        <div class="card my-4">
+        <div class="card">
             <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="text-white text-capitalize ps-3 mb-0">Lista de Contratos</h6>
-                        <div class="me-3">
-                            <button class="btn btn-outline-white btn-sm mb-0" data-bs-toggle="modal" data-bs-target="#modalNovoContrato">
-                                <i class="fas fa-plus me-2"></i>Novo Contrato
-                            </button>
-                        </div>
-                    </div>
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3 d-flex justify-content-between align-items-center px-3">
+                    <h6 class="text-white text-capitalize mb-0">
+                        <i class="material-symbols-rounded text-sm me-1 opacity-7">description</i>
+                        Lista de Contratos
+                    </h6>
                 </div>
             </div>
-            
-            <!-- Filtros -->
-            <div class="card-body pt-0">
-                <div class="row mt-4">
-                    <div class="col-md-3">
-                        <div class="input-group input-group-outline">
-                            <label class="form-label">Buscar cliente...</label>
-                            <input type="text" class="form-control" id="searchContrato">
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="input-group input-group-outline">
-                            <select class="form-control" id="statusFilter">
-                                <option value="">Todos os Status</option>
-                                <option value="ativo">Ativo</option>
-                                <option value="suspenso">Suspenso</option>
-                                <option value="cancelado">Cancelado</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="input-group input-group-outline">
-                            <select class="form-control" id="tipoFilter">
-                                <option value="">Todos os Tipos</option>
-                                <option value="mensal">Mensal</option>
-                                <option value="anual">Anual</option>
-                                <option value="unico">Único</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-info" onclick="aplicarFiltros()">
-                            <i class="fas fa-search me-2"></i>Filtrar
-                        </button>
-                    </div>
-                    <div class="col-md-3 text-end">
-                        <button class="btn btn-success" onclick="exportarContratos()">
-                            <i class="fas fa-download me-2"></i>Exportar
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Tabela de Contratos -->
             <div class="card-body px-0 pb-2">
                 <div class="table-responsive p-0">
-                    <table class="table align-items-center mb-0" id="tabelaContratos">
+                    <table class="table align-items-center mb-0">
                         <thead>
                             <tr>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Cliente</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Serviço</th>
-                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Valor</th>
-                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Nº Contrato</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cliente</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Valor Mensal</th>
                                 <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Início</th>
-                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Próximo Venc.</th>
-                                <th class="text-secondary opacity-7">Ações</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Fim</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -85,66 +95,31 @@
                             <tr>
                                 <td>
                                     <div class="d-flex px-2 py-1">
-                                        <div>
-                                            <img src="{% static 'img/team-2.jpg' %}" class="avatar avatar-sm me-3 border-radius-lg" alt="user1">
-                                        </div>
                                         <div class="d-flex flex-column justify-content-center">
-                                            <h6 class="mb-0 text-sm">{{ contrato.cliente.nome|default:"Cliente Exemplo" }}</h6>
-                                            <p class="text-xs text-secondary mb-0">{{ contrato.cliente.email|default:"cliente@exemplo.com" }}</p>
+                                            <h6 class="mb-0 text-sm">{{ contrato.numero_contrato }}</h6>
+                                            <p class="text-xs text-secondary mb-0 text-truncate" style="max-width:200px;">{{ contrato.descricao|truncatewords:8 }}</p>
                                         </div>
                                     </div>
                                 </td>
-                                <td>
-                                    <div class="d-flex flex-column justify-content-center">
-                                        <h6 class="mb-0 text-sm">{{ contrato.servico|default:"Serviço de Sistema" }}</h6>
-                                        <p class="text-xs text-secondary mb-0">{{ contrato.descricao|default:"Sistema de atendimento completo"|truncatechars:30 }}</p>
-                                    </div>
-                                </td>
-                                <td class="align-middle text-center text-sm">
-                                    <span class="text-secondary text-xs font-weight-bold">R$ {{ contrato.valor|floatformat:2|default:"299,90" }}</span>
-                                    <p class="text-xs text-secondary mb-0">{{ contrato.tipo_cobranca|default:"Mensal" }}</p>
-                                </td>
-                                <td class="align-middle text-center text-sm">
-                                    {% if contrato.status == 'ativo' or not contrato.status %}
-                                        <span class="badge badge-sm bg-gradient-success">Ativo</span>
-                                    {% elif contrato.status == 'suspenso' %}
-                                        <span class="badge badge-sm bg-gradient-warning">Suspenso</span>
-                                    {% else %}
-                                        <span class="badge badge-sm bg-gradient-danger">Cancelado</span>
-                                    {% endif %}
+                                <td><span class="text-xs font-weight-bold">{{ contrato.cliente.nome }}</span></td>
+                                <td><span class="text-xs font-weight-bold text-success">R$ {{ contrato.valor_mensal|floatformat:2 }}</span></td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">{{ contrato.data_inicio|date:"d/m/Y" }}</span>
                                 </td>
                                 <td class="align-middle text-center">
-                                    <span class="text-secondary text-xs font-weight-bold">{{ contrato.data_inicio|date:"d/m/Y"|default:"01/01/2024" }}</span>
+                                    <span class="text-secondary text-xs font-weight-bold">{{ contrato.data_fim|date:"d/m/Y"|default:"Indeterminado" }}</span>
                                 </td>
                                 <td class="align-middle text-center">
-                                    <span class="text-secondary text-xs font-weight-bold">{{ contrato.proximo_vencimento|date:"d/m/Y"|default:"01/02/2024" }}</span>
-                                </td>
-                                <td class="align-middle">
-                                    <div class="dropdown">
-                                        <button class="btn btn-link text-secondary mb-0" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="fa fa-ellipsis-v text-xs"></i>
-                                        </button>
-                                        <ul class="dropdown-menu px-2 py-3 ms-sm-n4 ms-n5">
-                                            <li><a class="dropdown-item border-radius-md" href="#" onclick="visualizarContrato({{ contrato.id|default:'1' }})">Visualizar</a></li>
-                                            <li><a class="dropdown-item border-radius-md" href="#" onclick="editarContrato({{ contrato.id|default:'1' }})">Editar</a></li>
-                                            <li><a class="dropdown-item border-radius-md" href="#" onclick="gerarFatura({{ contrato.id|default:'1' }})">Gerar Fatura</a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item border-radius-md text-danger" href="#" onclick="cancelarContrato({{ contrato.id|default:'1' }})">Cancelar</a></li>
-                                        </ul>
-                                    </div>
+                                    <span class="badge badge-sm bg-gradient-{% if contrato.status == 'ativo' %}success{% elif contrato.status == 'suspenso' %}warning{% elif contrato.status == 'cancelado' %}danger{% else %}secondary{% endif %}">
+                                        {{ contrato.get_status_display }}
+                                    </span>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="7" class="text-center py-4">
-                                    <div class="d-flex flex-column align-items-center">
-                                        <i class="fas fa-file-contract fa-3x text-secondary mb-3"></i>
-                                        <h6 class="text-secondary">Nenhum contrato encontrado</h6>
-                                        <p class="text-sm text-secondary mb-0">Comece criando um novo contrato</p>
-                                        <button class="btn btn-primary btn-sm mt-3" data-bs-toggle="modal" data-bs-target="#modalNovoContrato">
-                                            <i class="fas fa-plus me-2"></i>Criar Primeiro Contrato
-                                        </button>
-                                    </div>
+                                <td colspan="6" class="text-center py-4">
+                                    <i class="material-symbols-rounded opacity-5" style="font-size:40px;">description</i>
+                                    <p class="text-sm text-secondary mt-2 mb-0">Nenhum contrato cadastrado</p>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -155,136 +130,14 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
-<!-- Modal Novo Contrato -->
-<div class="modal fade" id="modalNovoContrato" tabindex="-1" aria-labelledby="modalNovoContratoLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalNovoContratoLabel">Novo Contrato</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="formNovoContrato">
-                    {% csrf_token %}
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Cliente *</label>
-                                <select class="form-control" name="cliente" required>
-                                    <option value="">Selecione um cliente</option>
-                                    <!-- Options serão carregadas via JavaScript -->
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Serviço *</label>
-                                <input type="text" class="form-control" name="servico" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Valor *</label>
-                                <input type="number" step="0.01" class="form-control" name="valor" required>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Tipo de Cobrança</label>
-                                <select class="form-control" name="tipo_cobranca">
-                                    <option value="mensal">Mensal</option>
-                                    <option value="anual">Anual</option>
-                                    <option value="unico">Único</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Data de Início</label>
-                                <input type="date" class="form-control" name="data_inicio" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Descrição</label>
-                                <textarea class="form-control" name="descricao" rows="3"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" onclick="salvarContrato()">Salvar Contrato</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Scripts -->
+{% block extra_js %}
 <script>
-// Funções para manipulação de contratos
-function aplicarFiltros() {
-    const search = document.getElementById('searchContrato').value;
-    const status = document.getElementById('statusFilter').value;
-    const tipo = document.getElementById('tipoFilter').value;
-    
-    // Implementar filtro na tabela
-    console.log('Aplicando filtros:', { search, status, tipo });
-}
-
-function exportarContratos() {
-    // Implementar exportação
-    alert('Funcionalidade de exportação será implementada');
-}
-
-function visualizarContrato(id) {
-    // Implementar visualização
-    console.log('Visualizar contrato:', id);
-}
-
-function editarContrato(id) {
-    // Implementar edição
-    console.log('Editar contrato:', id);
-}
-
-function gerarFatura(id) {
-    // Implementar geração de fatura
-    console.log('Gerar fatura para contrato:', id);
-    alert('Fatura gerada com sucesso!');
-}
-
-function cancelarContrato(id) {
-    if (confirm('Tem certeza que deseja cancelar este contrato?')) {
-        // Implementar cancelamento
-        console.log('Cancelar contrato:', id);
-        alert('Contrato cancelado com sucesso!');
-    }
-}
-
-function salvarContrato() {
-    const form = document.getElementById('formNovoContrato');
-    const formData = new FormData(form);
-    
-    // Implementar salvamento via AJAX
-    console.log('Salvando contrato...');
-    alert('Contrato salvo com sucesso!');
-    
-    // Fechar modal e recarregar página
-    const modal = bootstrap.Modal.getInstance(document.getElementById('modalNovoContrato'));
-    modal.hide();
-    location.reload();
-}
-
-// Carregar dados quando a página carrega
 document.addEventListener('DOMContentLoaded', function() {
-    // Carregar lista de clientes para o select
-    // fetch('/financeiro/api/clientes/')...
+    // Contar ativos via DOM
+    const rows = document.querySelectorAll('.badge.bg-gradient-success');
+    document.getElementById('contratosAtivos').textContent = rows.length;
 });
 </script>
 {% endblock %}

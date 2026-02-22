@@ -10,27 +10,50 @@ from django.db import connections
 from django.core.cache import cache
 from django.conf import settings
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.contrib.admin.views.decorators import staff_member_required
 from datetime import datetime, timedelta
 
 logger = logging.getLogger('dashboard')
 
 class HealthCheckView(View):
     """
-    Endpoint para verificação de saúde da aplicação
+    Endpoint para verificação de saúde da aplicação.
     GET /health/
+    Aceita token via query param ?token=<HEALTH_CHECK_TOKEN> ou header Authorization.
     """
     
+    def _check_auth(self, request):
+        """Verifica autenticação por token ou staff."""
+        # Permitir acesso de staff logados
+        if hasattr(request, 'user') and request.user.is_authenticated and request.user.is_staff:
+            return True
+        # Token de health check (para load balancers/monitoring externo)
+        expected_token = getattr(settings, 'HEALTH_CHECK_TOKEN', None)
+        if expected_token:
+            token = request.GET.get('token') or request.META.get('HTTP_AUTHORIZATION', '').replace('Bearer ', '')
+            return token == expected_token
+        # Se nenhum token configurado, permitir health check básico (sem detalhes)
+        return None
+    
     def get(self, request):
-        """
-        Verifica a saúde de todos os componentes críticos
-        """
+        auth = self._check_auth(request)
+        
         health_data = {
             'status': 'healthy',
             'timestamp': timezone.now().isoformat(),
-            'version': getattr(settings, 'VERSION', '1.0.0'),
-            'environment': getattr(settings, 'ENVIRONMENT', 'unknown'),
-            'checks': {}
         }
+        
+        # Apenas retorna status básico para requisições não-autenticadas
+        if auth is None:
+            return JsonResponse(health_data)
+        if auth is False:
+            return JsonResponse({'error': 'Unauthorized'}, status=401)
+        
+        # Dados completos para requisições autenticadas
+        health_data['version'] = getattr(settings, 'VERSION', '1.0.0')
+        health_data['environment'] = getattr(settings, 'ENVIRONMENT', 'unknown')
+        health_data['checks'] = {}
         
         # Check Database
         try:
@@ -100,9 +123,10 @@ class HealthCheckView(View):
         return round((end_time - start_time) * 1000, 2)  # ms
 
 
+@method_decorator(staff_member_required, name='dispatch')
 class MetricsView(View):
     """
-    Endpoint para métricas da aplicação
+    Endpoint para métricas da aplicação (SOMENTE STAFF).
     GET /metrics/
     """
     
@@ -170,7 +194,7 @@ class MetricsView(View):
             disk = psutil.disk_usage('/')
             
             return {
-                'cpu_percent': psutil.cpu_percent(interval=1),
+                'cpu_percent': psutil.cpu_percent(interval=None),  # Non-blocking
                 'memory': {
                     'total_gb': round(memory.total / (1024**3), 2),
                     'used_gb': round(memory.used / (1024**3), 2),

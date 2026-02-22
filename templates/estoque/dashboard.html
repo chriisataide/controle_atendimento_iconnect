@@ -1,52 +1,59 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ title }} - iConnect{% endblock %}
-
-{% block page_title %}{{ title }}{% endblock %}
-{% block breadcrumb_title %}{{ title }}{% endblock %}
+{% block title %}Dashboard de Estoque{% endblock %}
+{% block page_title %}Dashboard de Estoque{% endblock %}
+{% block breadcrumb_title %}Dashboard de Estoque{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="ms-3">
-        <h3 class="mb-0 h4 font-weight-bolder">{{ title }}</h3>
-        <p class="mb-4">
-            Controle completo de estoque integrado ao sistema de atendimento
-        </p>
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Dashboard de Estoque</h3>
+            <p class="mb-0 text-sm">Controle de materiais &bull; Consumo em atendimentos &bull; Alertas de estoque</p>
+        </div>
     </div>
-    
-    <!-- Cards de Métricas -->
+    <div class="col-lg-4 col-md-5 text-end d-flex align-items-center justify-content-end">
+        <a href="{% url 'estoque:movimentacao_create' %}" class="btn btn-sm bg-gradient-dark mb-0 me-2">
+            <i class="material-symbols-rounded text-sm me-1">add_circle</i> Nova Movimentação
+        </a>
+        <a href="{% url 'estoque:produto_create' %}" class="btn btn-sm bg-gradient-info mb-0">
+            <i class="material-symbols-rounded text-sm me-1">add_box</i> Novo Produto
+        </a>
+    </div>
+</div>
+
+<!-- KPIs Principais -->
+<div class="row">
     <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
         <div class="card">
             <div class="card-header p-2 ps-3">
                 <div class="d-flex justify-content-between">
                     <div>
                         <p class="text-sm mb-0 text-capitalize">Total de Produtos</p>
-                        <h4 class="mb-0">{{ total_produtos|default:"0" }}</h4>
+                        <h4 class="mb-0">{{ total_produtos }}</h4>
                     </div>
                     <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">inventory</i>
+                        <i class="material-symbols-rounded opacity-10">inventory_2</i>
                     </div>
                 </div>
             </div>
             <hr class="dark horizontal my-0">
             <div class="card-footer p-2 ps-3">
                 <p class="mb-0 text-sm">
-                    <span class="text-success font-weight-bolder">
-                        <i class="material-symbols-rounded text-sm">trending_up</i> Ativos
-                    </span>
+                    <a href="{% url 'estoque:produto_list' %}" class="text-primary font-weight-bolder">Ver catálogo</a>
                 </p>
             </div>
         </div>
     </div>
-    
     <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
         <div class="card">
             <div class="card-header p-2 ps-3">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <p class="text-sm mb-0 text-capitalize">Produtos Críticos</p>
-                        <h4 class="mb-0 text-danger">{{ produtos_criticos|default:"0" }}</h4>
+                        <p class="text-sm mb-0 text-capitalize">Estoque Crítico</p>
+                        <h4 class="mb-0 {% if produtos_criticos > 0 %}text-danger{% endif %}">{{ produtos_criticos }}</h4>
                     </div>
                     <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
                         <i class="material-symbols-rounded opacity-10">warning</i>
@@ -56,161 +63,240 @@
             <hr class="dark horizontal my-0">
             <div class="card-footer p-2 ps-3">
                 <p class="mb-0 text-sm">
-                    <span class="text-danger font-weight-bolder">
-                        <i class="material-symbols-rounded text-sm">priority_high</i> Estoque baixo
-                    </span>
+                    <a href="{% url 'estoque:produto_list' %}?estoque_critico=true" class="text-danger font-weight-bolder">Produtos abaixo do mínimo</a>
                 </p>
             </div>
         </div>
     </div>
-    
     <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
         <div class="card">
             <div class="card-header p-2 ps-3">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <p class="text-sm mb-0 text-capitalize">Valor Total Estoque</p>
+                        <p class="text-sm mb-0 text-capitalize">Valor do Estoque</p>
                         <h4 class="mb-0">R$ {{ valor_total_estoque|floatformat:2 }}</h4>
                     </div>
                     <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">attach_money</i>
+                        <i class="material-symbols-rounded opacity-10">payments</i>
                     </div>
                 </div>
             </div>
             <hr class="dark horizontal my-0">
             <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm">
-                    <span class="text-success font-weight-bolder">
-                        <i class="material-symbols-rounded text-sm">account_balance</i> Investimento
-                    </span>
-                </p>
+                <p class="mb-0 text-sm"><span class="text-dark font-weight-bolder">Custo total</span> em estoque ativo</p>
             </div>
         </div>
     </div>
-    
-    <div class="col-xl-3 col-sm-6">
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
         <div class="card">
             <div class="card-header p-2 ps-3">
                 <div class="d-flex justify-content-between">
                     <div>
                         <p class="text-sm mb-0 text-capitalize">Movimentações Hoje</p>
-                        <h4 class="mb-0">{{ movimentacoes_hoje|default:"0" }}</h4>
+                        <h4 class="mb-0">{{ movimentacoes_hoje }}</h4>
                     </div>
                     <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">sync</i>
+                        <i class="material-symbols-rounded opacity-10">sync_alt</i>
                     </div>
                 </div>
             </div>
             <hr class="dark horizontal my-0">
             <div class="card-footer p-2 ps-3">
                 <p class="mb-0 text-sm">
-                    <span class="text-info font-weight-bolder">
-                        <i class="material-symbols-rounded text-sm">today</i> Hoje
-                    </span>
+                    <span class="text-info font-weight-bolder">{{ alertas_pendentes }}</span> alertas pendentes
                 </p>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Gráfico de Movimentações -->
+<!-- Gráfico + Consumo em Atendimentos -->
 <div class="row mt-4">
-    <div class="col-lg-8 col-md-12 mb-md-0 mb-4">
-        <div class="card">
-            <div class="card-header pb-0">
-                <div class="row">
-                    <div class="col-lg-6 col-7">
-                        <h6>Movimentações dos Últimos 7 Dias</h6>
-                        <p class="text-sm mb-0">
-                            <i class="material-symbols-rounded text-success text-sm">trending_up</i>
-                            <span class="font-weight-bold">Entradas vs Saídas</span>
-                        </p>
+    <!-- Gráfico Movimentações -->
+    <div class="col-lg-7 mb-4">
+        <div class="card z-index-2 h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">bar_chart</i>
+                </div>
+                <h6 class="mb-0">Movimentações — Últimos 7 Dias</h6>
+                <p class="text-sm mb-0 text-muted">Entradas vs saídas de estoque</p>
+            </div>
+            <div class="card-body p-3 pt-0">
+                <div class="chart">
+                    <canvas id="movimentacoesChart" class="chart-canvas" height="280"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Consumo em Atendimentos -->
+    <div class="col-lg-5 mb-4">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">build</i>
+                </div>
+                <h6 class="mb-0">Consumo em Atendimentos</h6>
+                <p class="text-sm mb-0 text-muted">Materiais utilizados este mês</p>
+            </div>
+            <div class="card-body p-3 pt-0">
+                <div class="row text-center mb-3">
+                    <div class="col-6">
+                        <h5 class="mb-0 text-primary">{{ consumo_atendimentos_mes.total_itens|default:"0" }}</h5>
+                        <p class="text-xs text-muted mb-0">Itens utilizados</p>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="mb-0 text-info">{{ consumo_atendimentos_mes.total_quantidade|floatformat:0|default:"0" }}</h5>
+                        <p class="text-xs text-muted mb-0">Unidades consumidas</p>
                     </div>
                 </div>
+                <hr class="dark horizontal my-2">
+                <h6 class="text-uppercase text-body text-xs font-weight-bolder mb-2">Top Produtos Consumidos</h6>
+                <ul class="list-group">
+                    {% for item in top_consumo_atendimentos %}
+                    <li class="list-group-item border-0 d-flex justify-content-between ps-0 border-radius-lg">
+                        <div class="d-flex align-items-center">
+                            <div class="icon icon-shape icon-sm bg-gradient-info shadow text-center border-radius-md me-2">
+                                <i class="material-symbols-rounded text-white text-xs">package_2</i>
+                            </div>
+                            <div class="d-flex flex-column">
+                                <h6 class="mb-0 text-dark text-sm">{{ item.produto__nome }}</h6>
+                                <span class="text-xs">{{ item.produto__codigo }} &bull; {{ item.qtd_chamados }} chamado{{ item.qtd_chamados|pluralize:"s" }}</span>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <span class="text-sm font-weight-bold text-danger">-{{ item.qtd_consumida|floatformat:0 }}</span>
+                            <br><span class="text-xs text-muted">saldo: {{ item.produto__estoque_atual|floatformat:0 }} {{ item.produto__unidade_medida__sigla }}</span>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item border-0 ps-0 text-center">
+                        <p class="text-sm text-muted mb-0">Nenhum consumo registrado este mês</p>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Produtos Críticos + Últimas Movimentações de Atendimento -->
+<div class="row mt-2">
+    <!-- Produtos Críticos -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">error</i>
+                </div>
+                <h6 class="mb-0">Produtos com Estoque Crítico</h6>
+                <p class="text-sm mb-0 text-muted">Abaixo do estoque mínimo definido</p>
             </div>
             <div class="card-body px-0 pb-2">
-                <div class="chart">
-                    <canvas id="movimentacoesChart" class="chart-canvas" height="300"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Alertas de Estoque -->
-    <div class="col-lg-4 col-md-12">
-        <div class="card h-100">
-            <div class="card-header pb-0">
-                <h6>Alertas de Estoque</h6>
-                <p class="text-sm">
-                    <span class="font-weight-bold">{{ alertas_pendentes }}</span> alerta(s) pendente(s)
-                </p>
-            </div>
-            <div class="card-body p-3">
-                <div id="alertas-container">
-                    <div class="timeline timeline-one-side">
-                        <!-- Alertas serão carregados via AJAX -->
-                    </div>
-                </div>
-                <div class="text-center mt-3">
-                    <a href="{% url 'estoque:produto_list' %}?estoque_critico=true" class="btn btn-outline-primary btn-sm">
-                        Ver Todos os Alertas
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Produtos Mais Movimentados -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header pb-0">
-                <h6>Produtos Mais Movimentados (Últimos 30 Dias)</h6>
-            </div>
-            <div class="card-body px-0 pt-0 pb-2">
-                <div class="table-responsive p-0">
-                    <table class="table align-items-center justify-content-center mb-0">
+                <div class="table-responsive">
+                    <table class="table align-items-center mb-0">
                         <thead>
                             <tr>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Produto</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Código</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Movimentações</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">Quantidade Total</th>
-                                <th></th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Estoque</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Mínimo</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for produto in produtos_mais_movimentados %}
+                            {% for p in lista_criticos %}
                             <tr>
                                 <td>
-                                    <div class="d-flex px-2">
-                                        <div class="my-auto">
-                                            <h6 class="mb-0 text-sm">{{ produto.produto__nome }}</h6>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="icon icon-shape icon-sm bg-gradient-danger shadow text-center border-radius-md me-2">
+                                            <i class="material-symbols-rounded text-white text-xs">warning</i>
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ p.nome }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ p.codigo }} &bull; {{ p.categoria.nome }}</p>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
-                                    <p class="text-sm font-weight-bold mb-0">{{ produto.produto__codigo }}</p>
+                                    <span class="text-sm font-weight-bold text-danger">{{ p.estoque_atual|floatformat:0 }} {{ p.unidade_medida.sigla }}</span>
                                 </td>
                                 <td>
-                                    <span class="badge badge-sm bg-gradient-info">{{ produto.total_movimentacoes }}</span>
+                                    <span class="text-sm">{{ p.estoque_minimo|floatformat:0 }} {{ p.unidade_medida.sigla }}</span>
                                 </td>
-                                <td class="align-middle text-center">
-                                    <div class="d-flex align-items-center justify-content-center">
-                                        <span class="me-2 text-xs font-weight-bold">{{ produto.quantidade_total|floatformat:2 }}</span>
-                                    </div>
-                                </td>
-                                <td class="align-middle">
-                                    <button class="btn btn-link text-secondary mb-0">
-                                        <i class="material-symbols-rounded text-sm">visibility</i>
-                                    </button>
+                                <td class="text-center">
+                                    {% if p.estoque_atual <= 0 %}
+                                    <span class="badge bg-gradient-danger">Zerado</span>
+                                    {% else %}
+                                    <span class="badge bg-gradient-warning">Crítico</span>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="5" class="text-center text-muted">
-                                    Nenhuma movimentação nos últimos 30 dias
+                                <td colspan="4" class="text-center py-4">
+                                    <i class="material-symbols-rounded text-success" style="font-size:2rem">check_circle</i>
+                                    <p class="text-sm text-muted mb-0 mt-1">Todos os produtos com estoque adequado</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Últimas Movimentações de Atendimento -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">history</i>
+                </div>
+                <h6 class="mb-0">Últimas Saídas via Atendimento</h6>
+                <p class="text-sm mb-0 text-muted">Materiais consumidos automaticamente em chamados</p>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Material</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Qtd</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Chamado</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Data</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mov in ultimas_mov_atendimento %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ mov.produto.nome }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ mov.produto.codigo }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-sm font-weight-bold {% if mov.tipo_operacao == 'saida' %}text-danger{% else %}text-success{% endif %}">
+                                        {% if mov.tipo_operacao == 'saida' %}-{% else %}+{% endif %}{{ mov.quantidade|floatformat:0 }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if mov.ticket_relacionado %}
+                                    <span class="text-sm">#{{ mov.ticket_relacionado.numero }}</span>
+                                    {% else %}
+                                    <span class="text-xs text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="text-xs">{{ mov.data_movimentacao|date:"d/m/Y H:i" }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4">
+                                    <p class="text-sm text-muted mb-0">Nenhuma movimentação via atendimento</p>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -222,40 +308,85 @@
     </div>
 </div>
 
-<!-- Ações Rápidas -->
-<div class="row mt-4">
+<!-- Produtos mais movimentados -->
+<div class="row mt-2">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header pb-0">
-                <h6>Ações Rápidas</h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3 col-6 mb-2">
-                        <a href="{% url 'estoque:produto_create' %}" class="btn btn-primary w-100">
-                            <i class="material-symbols-rounded me-2">add</i>
-                            Novo Produto
-                        </a>
-                    </div>
-                    <div class="col-md-3 col-6 mb-2">
-                        <a href="{% url 'estoque:movimentacao_create' %}" class="btn btn-success w-100">
-                            <i class="material-symbols-rounded me-2">sync</i>
-                            Nova Movimentação
-                        </a>
-                    </div>
-                    <div class="col-md-3 col-6 mb-2">
-                        <a href="{% url 'estoque:relatorio_estoque' %}" class="btn btn-info w-100">
-                            <i class="material-symbols-rounded me-2">assessment</i>
-                            Relatório de Estoque
-                        </a>
-                    </div>
-                    <div class="col-md-3 col-6 mb-2">
-                        <a href="{% url 'estoque:produto_list' %}?estoque_critico=true" class="btn btn-warning w-100">
-                            <i class="material-symbols-rounded me-2">warning</i>
-                            Produtos Críticos
-                        </a>
-                    </div>
+        <div class="card mb-4">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">trending_up</i>
                 </div>
+                <h6 class="mb-0">Produtos Mais Movimentados — Últimos 30 Dias</h6>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Produto</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Movimentações</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Quantidade</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in produtos_mais_movimentados %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="icon icon-shape icon-sm bg-gradient-primary shadow text-center border-radius-md me-2">
+                                            <i class="material-symbols-rounded text-white text-xs">package_2</i>
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ p.produto__nome }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ p.produto__codigo }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-gradient-info">{{ p.total_movimentacoes }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-sm font-weight-bold">{{ p.quantidade_total|floatformat:0 }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <a href="{% url 'estoque:movimentacao_list' %}?produto={{ p.produto__codigo }}" class="text-info" title="Ver movimentações">
+                                        <i class="material-symbols-rounded text-sm">visibility</i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4">
+                                    <p class="text-sm text-muted mb-0">Nenhuma movimentação nos últimos 30 dias</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alertas de Estoque -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header p-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-0">
+                        <i class="material-symbols-rounded text-warning me-1 align-middle">notifications_active</i>
+                        Alertas Pendentes
+                        {% if alertas_pendentes > 0 %}
+                        <span class="badge bg-gradient-danger ms-1">{{ alertas_pendentes }}</span>
+                        {% endif %}
+                    </h6>
+                </div>
+            </div>
+            <div class="card-body p-3" id="alertas-container">
+                <p class="text-sm text-muted text-center" id="alertas-loading">Carregando alertas...</p>
             </div>
         </div>
     </div>
@@ -263,114 +394,99 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Dados das movimentações (passados do Django)
-    const movimentacoesData = {{ movimentacoes_por_dia|safe }};
-    
-    // Configurar gráfico de movimentações
-    const ctx = document.getElementById('movimentacoesChart').getContext('2d');
-    const chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: movimentacoesData.map(item => item.data),
-            datasets: [{
-                label: 'Entradas',
-                data: movimentacoesData.map(item => item.entradas),
-                borderColor: 'rgb(75, 192, 192)',
-                backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                tension: 0.1
-            }, {
-                label: 'Saídas',
-                data: movimentacoesData.map(item => item.saidas),
-                borderColor: 'rgb(255, 99, 132)',
-                backgroundColor: 'rgba(255, 99, 132, 0.1)',
-                tension: 0.1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                title: {
-                    display: false
-                },
-                legend: {
-                    position: 'bottom'
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1
+    // ── Gráfico Movimentações 7 dias ──
+    const movData = {{ movimentacoes_por_dia|safe }};
+    const ctx = document.getElementById('movimentacoesChart');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: movData.map(d => d.data),
+                datasets: [
+                    {
+                        label: 'Entradas',
+                        data: movData.map(d => d.entradas),
+                        backgroundColor: 'rgba(6, 182, 212, 0.75)',
+                        borderColor: '#06b6d4',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                    },
+                    {
+                        label: 'Saídas',
+                        data: movData.map(d => d.saidas),
+                        backgroundColor: 'rgba(239, 68, 68, 0.75)',
+                        borderColor: '#ef4444',
+                        borderWidth: 1,
+                        borderRadius: 4,
                     }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { usePointStyle: true, padding: 15 } }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1, color: '#64748b' }, grid: { color: '#e2e8f0' } },
+                    x: { ticks: { color: '#64748b' }, grid: { display: false } }
                 }
             }
-        }
-    });
-    
-    // Carregar alertas via AJAX
-    fetch('{% url "estoque:api_alertas_estoque" %}')
-        .then(response => response.json())
-        .then(data => {
-            const container = document.querySelector('#alertas-container .timeline');
-            
-            if (data.alertas.length === 0) {
-                container.innerHTML = '<div class="text-center text-muted">Nenhum alerta pendente</div>';
-                return;
-            }
-            
-            container.innerHTML = '';
-            data.alertas.forEach(alerta => {
-                const alertaHtml = `
-                    <div class="timeline-block mb-3">
-                        <span class="timeline-step bg-gradient-warning">
-                            <i class="material-symbols-rounded text-white text-sm">warning</i>
-                        </span>
-                        <div class="timeline-content">
-                            <h6 class="text-dark text-sm font-weight-bold mb-0">${alerta.produto_nome}</h6>
-                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">${alerta.tipo_alerta}</p>
-                            <p class="text-sm mt-1 mb-2">${alerta.mensagem}</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-muted">${alerta.data_alerta}</small>
-                                <button class="btn btn-sm btn-outline-success" onclick="resolverAlerta(${alerta.id})">
-                                    Resolver
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                container.innerHTML += alertaHtml;
-            });
-        })
-        .catch(error => {
-            console.error('Erro ao carregar alertas:', error);
-        });
-});
-
-function resolverAlerta(alertaId) {
-    if (confirm('Tem certeza que deseja resolver este alerta?')) {
-        fetch(`/estoque/api/alertas/${alertaId}/resolver/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                'Content-Type': 'application/json',
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload(); // Recarregar página para atualizar alertas
-            } else {
-                alert('Erro ao resolver alerta');
-            }
-        })
-        .catch(error => {
-            console.error('Erro:', error);
-            alert('Erro ao resolver alerta');
         });
     }
+
+    // ── Alertas AJAX ──
+    fetch("{% url 'estoque:api_alertas_estoque' %}")
+    .then(r => r.json())
+    .then(data => {
+        const container = document.getElementById('alertas-container');
+        if (!data.alertas || data.alertas.length === 0) {
+            container.innerHTML = '<div class="text-center py-3"><i class="material-symbols-rounded text-success" style="font-size:2.5rem">verified</i><p class="text-sm text-muted mt-2 mb-0">Nenhum alerta pendente</p></div>';
+            return;
+        }
+        let html = '<div class="list-group">';
+        data.alertas.forEach(a => {
+            html += `<div class="list-group-item border-0 d-flex justify-content-between align-items-center px-0">
+                <div class="d-flex align-items-center">
+                    <div class="icon icon-shape icon-sm bg-gradient-warning shadow text-center border-radius-md me-3">
+                        <i class="material-symbols-rounded text-white text-xs">warning</i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0 text-sm">${a.produto_nome} <span class="text-xs text-muted">(${a.produto_codigo})</span></h6>
+                        <p class="text-xs text-muted mb-0">${a.tipo_alerta} — ${a.data_alerta}</p>
+                    </div>
+                </div>
+                <button class="btn btn-sm bg-gradient-success mb-0" onclick="resolverAlerta(${a.id}, this)">
+                    <i class="material-symbols-rounded text-sm">check</i> Resolver
+                </button>
+            </div>`;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    })
+    .catch(() => {
+        document.getElementById('alertas-container').innerHTML = '<p class="text-sm text-danger text-center mb-0">Erro ao carregar alertas</p>';
+    });
+});
+
+function resolverAlerta(alertaId, btn) {
+    btn.disabled = true;
+    fetch(`/estoque/api/alertas/${alertaId}/resolver/`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}'}
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            btn.closest('.list-group-item').style.opacity = '0.3';
+            btn.innerHTML = '<i class="material-symbols-rounded text-sm">done</i> Resolvido';
+            btn.classList.remove('bg-gradient-success');
+            btn.classList.add('bg-gradient-secondary');
+        }
+    });
 }
 </script>
 {% endblock %}

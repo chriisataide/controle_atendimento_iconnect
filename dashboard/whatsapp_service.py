@@ -18,6 +18,9 @@ logger = logging.getLogger(__name__)
 class WhatsAppBusinessAPI:
     """Cliente para API do WhatsApp Business"""
     
+    # Timeout padrão para requisições (connect, read) em segundos
+    DEFAULT_TIMEOUT = (5, 30)
+    
     def __init__(self, account: WhatsAppBusinessAccount):
         self.account = account
         self.base_url = "https://graph.facebook.com/v18.0"
@@ -37,7 +40,7 @@ class WhatsAppBusinessAPI:
         }
         
         try:
-            response = requests.post(url, headers=self.headers, json=payload)
+            response = requests.post(url, headers=self.headers, json=payload, timeout=self.DEFAULT_TIMEOUT)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
@@ -86,7 +89,7 @@ class WhatsAppBusinessAPI:
         }
         
         try:
-            response = requests.post(url, headers=self.headers, json=payload)
+            response = requests.post(url, headers=self.headers, json=payload, timeout=self.DEFAULT_TIMEOUT)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
@@ -97,7 +100,7 @@ class WhatsAppBusinessAPI:
         """Baixa mídia do WhatsApp"""
         # Primeiro, pega a URL da mídia
         url = f"{self.base_url}/{media_id}"
-        response = requests.get(url, headers=self.headers)
+        response = requests.get(url, headers=self.headers, timeout=self.DEFAULT_TIMEOUT)
         response.raise_for_status()
         
         media_data = response.json()
@@ -105,7 +108,7 @@ class WhatsAppBusinessAPI:
         mime_type = media_data.get('mime_type')
         
         # Depois, baixa o arquivo
-        media_response = requests.get(media_url, headers=self.headers)
+        media_response = requests.get(media_url, headers=self.headers, timeout=(5, 60))
         media_response.raise_for_status()
         
         return media_response.content, mime_type

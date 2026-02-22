@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }} — iConnect{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+{% block breadcrumb_title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">{{ titulo }}</h3>
+            <p class="mb-0 text-sm">Preencha as informações do cliente</p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end">
+        <a href="{% url 'dashboard:cliente_list' %}" class="btn btn-sm bg-gradient-dark mb-0">
+            <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Voltar
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">{% if object %}edit{% else %}person_add{% endif %}</i>
+                </div>
+                <h6 class="mb-0">{{ titulo }}</h6>
+                <p class="text-sm mb-0 text-muted">{% if object %}Atualize os dados do cliente{% else %}Cadastre um novo cliente no sistema{% endif %}</p>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                    <div class="alert alert-danger alert-dismissible fade show text-white" role="alert">
+                        <i class="material-symbols-rounded me-2">error</i>
+                        <strong>Corrija os erros abaixo:</strong>
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                            <br>{{ error }}
+                            {% endfor %}
+                        {% endfor %}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-xs text-uppercase font-weight-bold">Nome Completo *</label>
+                            <div class="input-group input-group-outline {% if form.nome.value %}is-filled{% endif %}">
+                                <input type="text" name="nome" class="form-control {% if form.nome.errors %}is-invalid{% endif %}" 
+                                       placeholder="Nome completo" value="{{ form.nome.value|default:'' }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-xs text-uppercase font-weight-bold">Email *</label>
+                            <div class="input-group input-group-outline {% if form.email.value %}is-filled{% endif %}">
+                                <input type="email" name="email" class="form-control {% if form.email.errors %}is-invalid{% endif %}" 
+                                       placeholder="email@exemplo.com" value="{{ form.email.value|default:'' }}" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-xs text-uppercase font-weight-bold">Telefone</label>
+                            <div class="input-group input-group-outline {% if form.telefone.value %}is-filled{% endif %}">
+                                <input type="text" name="telefone" class="form-control" 
+                                       placeholder="(11) 99999-9999" value="{{ form.telefone.value|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-xs text-uppercase font-weight-bold">Empresa</label>
+                            <div class="input-group input-group-outline {% if form.empresa.value %}is-filled{% endif %}">
+                                <input type="text" name="empresa" class="form-control" 
+                                       placeholder="Nome da empresa" value="{{ form.empresa.value|default:'' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="horizontal dark mt-2 mb-4">
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'dashboard:cliente_list' %}" class="btn btn-outline-dark btn-sm">
+                            <i class="material-symbols-rounded text-sm me-1">close</i> Cancelar
+                        </a>
+                        <button type="submit" class="btn bg-gradient-info btn-sm">
+                            <i class="material-symbols-rounded text-sm me-1">{% if object %}save{% else %}person_add{% endif %}</i> {{ btn_text }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

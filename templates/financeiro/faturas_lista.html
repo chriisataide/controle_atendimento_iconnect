@@ -1,229 +1,169 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Faturas - Sistema Financeiro{% endblock %}
-
+{% block title %}Faturas{% endblock %}
 {% block page_title %}Faturas{% endblock %}
 {% block breadcrumb_title %}Faturas{% endblock %}
 
 {% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Faturas</h3>
+            <p class="mb-0 text-sm">Controle de faturas &bull; Cobranças e pagamentos</p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end d-flex align-items-center justify-content-end">
+        <a href="{% url 'financeiro:dashboard_financeiro' %}" class="btn btn-sm bg-gradient-dark mb-0">
+            <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- KPIs -->
 <div class="row">
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Total Faturado</p>
+                        <h4 class="mb-0">R$ {{ faturas_total|floatformat:2 }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">receipt_long</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Valor total de todas as faturas</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Pagas</p>
+                        <h4 class="mb-0 text-success">R$ {{ faturas_pagas_total|floatformat:2 }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">check_circle</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Faturas quitadas</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Pendentes</p>
+                        <h4 class="mb-0 text-warning">R$ {{ faturas_pendentes_total|floatformat:2 }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">schedule</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Aguardando pagamento</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Vencidas</p>
+                        <h4 class="mb-0 text-danger">R$ {{ faturas_vencidas_total|floatformat:2 }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">warning</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm text-danger">Requer atenção imediata</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabela de Faturas -->
+<div class="row mt-4">
     <div class="col-12">
-        <div class="card my-4">
+        <div class="card">
             <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-                <div class="bg-gradient-success shadow-success border-radius-lg pt-4 pb-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="text-white text-capitalize ps-3 mb-0">Lista de Faturas</h6>
-                        <div class="me-3">
-                            <button class="btn btn-outline-white btn-sm mb-0 me-2" onclick="gerarFaturasMensais()">
-                                <i class="fas fa-calendar-alt me-2"></i>Gerar Mensais
-                            </button>
-                            <button class="btn btn-outline-white btn-sm mb-0" data-bs-toggle="modal" data-bs-target="#modalNovaFatura">
-                                <i class="fas fa-plus me-2"></i>Nova Fatura
-                            </button>
-                        </div>
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-4 pb-3 d-flex justify-content-between align-items-center px-3">
+                    <h6 class="text-white text-capitalize mb-0">
+                        <i class="material-symbols-rounded text-sm me-1 opacity-7">receipt_long</i>
+                        Lista de Faturas
+                    </h6>
+                    <div>
+                        <button class="btn btn-sm bg-gradient-info text-white mb-0 me-1" onclick="filterFaturas('all')">Todas</button>
+                        <button class="btn btn-sm bg-gradient-warning text-white mb-0 me-1" onclick="filterFaturas('pendente')">Pendentes</button>
+                        <button class="btn btn-sm bg-gradient-danger text-white mb-0" onclick="filterFaturas('vencido')">Vencidas</button>
                     </div>
                 </div>
             </div>
-            
-            <!-- Estatísticas Rápidas -->
-            <div class="card-body pt-4">
-                <div class="row">
-                    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-                        <div class="card">
-                            <div class="card-header p-3 pt-2">
-                                <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                                <div class="text-end pt-1">
-                                    <p class="text-sm mb-0 text-capitalize">Pagas</p>
-                                    <h4 class="mb-0">R$ 15.420,00</h4>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-                        <div class="card">
-                            <div class="card-header p-3 pt-2">
-                                <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute">
-                                    <i class="fas fa-clock"></i>
-                                </div>
-                                <div class="text-end pt-1">
-                                    <p class="text-sm mb-0 text-capitalize">Pendentes</p>
-                                    <h4 class="mb-0">R$ 8.340,00</h4>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-                        <div class="card">
-                            <div class="card-header p-3 pt-2">
-                                <div class="icon icon-lg icon-shape bg-gradient-danger shadow-danger text-center border-radius-xl mt-n4 position-absolute">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                </div>
-                                <div class="text-end pt-1">
-                                    <p class="text-sm mb-0 text-capitalize">Vencidas</p>
-                                    <h4 class="mb-0">R$ 2.180,00</h4>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-sm-6">
-                        <div class="card">
-                            <div class="card-header p-3 pt-2">
-                                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
-                                    <i class="fas fa-calculator"></i>
-                                </div>
-                                <div class="text-end pt-1">
-                                    <p class="text-sm mb-0 text-capitalize">Total</p>
-                                    <h4 class="mb-0">R$ 25.940,00</h4>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Filtros -->
-            <div class="card-body pt-0">
-                <div class="row mt-4">
-                    <div class="col-md-2">
-                        <div class="input-group input-group-outline">
-                            <label class="form-label">Número...</label>
-                            <input type="text" class="form-control" id="searchFatura">
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="input-group input-group-outline">
-                            <select class="form-control" id="statusFilter">
-                                <option value="">Todos os Status</option>
-                                <option value="pendente">Pendente</option>
-                                <option value="paga">Paga</option>
-                                <option value="vencida">Vencida</option>
-                                <option value="cancelada">Cancelada</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="input-group input-group-outline">
-                            <input type="date" class="form-control" id="dataInicio" placeholder="Data início">
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="input-group input-group-outline">
-                            <input type="date" class="form-control" id="dataFim" placeholder="Data fim">
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-info" onclick="aplicarFiltros()">
-                            <i class="fas fa-search me-2"></i>Filtrar
-                        </button>
-                    </div>
-                    <div class="col-md-2 text-end">
-                        <div class="dropdown">
-                            <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-download me-2"></i>Exportar
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" onclick="exportarFaturas('pdf')">PDF</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="exportarFaturas('excel')">Excel</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="exportarFaturas('csv')">CSV</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Tabela de Faturas -->
             <div class="card-body px-0 pb-2">
                 <div class="table-responsive p-0">
                     <table class="table align-items-center mb-0" id="tabelaFaturas">
                         <thead>
                             <tr>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Número</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Nº Fatura</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cliente</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Contrato</th>
                                 <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Valor</th>
-                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                                 <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Vencimento</th>
                                 <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Pagamento</th>
-                                <th class="text-secondary opacity-7">Ações</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for fatura in faturas %}
-                            <tr>
+                            <tr data-status="{{ fatura.status }}">
                                 <td>
                                     <div class="d-flex px-2 py-1">
                                         <div class="d-flex flex-column justify-content-center">
-                                            <h6 class="mb-0 text-sm">{{ fatura.numero|default:"#001234" }}</h6>
-                                            <p class="text-xs text-secondary mb-0">{{ fatura.contrato.servico|default:"Sistema de Atendimento"|truncatechars:20 }}</p>
+                                            <h6 class="mb-0 text-sm">{{ fatura.numero_fatura }}</h6>
                                         </div>
                                     </div>
                                 </td>
-                                <td>
-                                    <div class="d-flex px-2 py-1">
-                                        <div>
-                                            <img src="{% static 'img/team-2.jpg' %}" class="avatar avatar-sm me-3 border-radius-lg" alt="user1">
-                                        </div>
-                                        <div class="d-flex flex-column justify-content-center">
-                                            <h6 class="mb-0 text-sm">{{ fatura.cliente.nome|default:"João Silva" }}</h6>
-                                            <p class="text-xs text-secondary mb-0">{{ fatura.cliente.email|default:"joao@exemplo.com" }}</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="align-middle text-center text-sm">
-                                    <span class="text-secondary text-xs font-weight-bold">R$ {{ fatura.valor|floatformat:2|default:"299,90" }}</span>
-                                </td>
-                                <td class="align-middle text-center text-sm">
-                                    {% if fatura.status == 'paga' %}
-                                        <span class="badge badge-sm bg-gradient-success">Paga</span>
-                                    {% elif fatura.status == 'vencida' %}
-                                        <span class="badge badge-sm bg-gradient-danger">Vencida</span>
-                                    {% elif fatura.status == 'cancelada' %}
-                                        <span class="badge badge-sm bg-gradient-secondary">Cancelada</span>
-                                    {% else %}
-                                        <span class="badge badge-sm bg-gradient-warning">Pendente</span>
-                                    {% endif %}
+                                <td><span class="text-xs font-weight-bold">{{ fatura.contrato.cliente.nome }}</span></td>
+                                <td><span class="text-xs text-secondary">{{ fatura.contrato.numero_contrato }}</span></td>
+                                <td class="align-middle text-center">
+                                    <span class="text-sm font-weight-bold">R$ {{ fatura.valor|floatformat:2 }}</span>
                                 </td>
                                 <td class="align-middle text-center">
-                                    <span class="text-secondary text-xs font-weight-bold">{{ fatura.data_vencimento|date:"d/m/Y"|default:"15/02/2024" }}</span>
+                                    <span class="text-secondary text-xs font-weight-bold">{{ fatura.data_vencimento|date:"d/m/Y" }}</span>
                                 </td>
                                 <td class="align-middle text-center">
-                                    {% if fatura.data_pagamento %}
-                                        <span class="text-secondary text-xs font-weight-bold">{{ fatura.data_pagamento|date:"d/m/Y" }}</span>
-                                    {% else %}
-                                        <span class="text-secondary text-xs">-</span>
-                                    {% endif %}
+                                    <span class="text-secondary text-xs font-weight-bold">{{ fatura.data_pagamento|date:"d/m/Y"|default:"-" }}</span>
                                 </td>
-                                <td class="align-middle">
-                                    <div class="dropdown">
-                                        <button class="btn btn-link text-secondary mb-0" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="fa fa-ellipsis-v text-xs"></i>
-                                        </button>
-                                        <ul class="dropdown-menu px-2 py-3 ms-sm-n4 ms-n5">
-                                            <li><a class="dropdown-item border-radius-md" href="#" onclick="visualizarFatura('{{ fatura.id|default:'1' }}')">Visualizar</a></li>
-                                            <li><a class="dropdown-item border-radius-md" href="#" onclick="baixarPDF('{{ fatura.id|default:'1' }}')">Baixar PDF</a></li>
-                                            {% if fatura.status != 'paga' and fatura.status != 'cancelada' %}
-                                                <li><a class="dropdown-item border-radius-md" href="#" onclick="registrarPagamento('{{ fatura.id|default:'1' }}')">Registrar Pagamento</a></li>
-                                                <li><a class="dropdown-item border-radius-md" href="#" onclick="enviarCobranca('{{ fatura.id|default:'1' }}')">Enviar Cobrança</a></li>
-                                            {% endif %}
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item border-radius-md text-danger" href="#" onclick="cancelarFatura('{{ fatura.id|default:'1' }}')">Cancelar</a></li>
-                                        </ul>
-                                    </div>
+                                <td class="align-middle text-center">
+                                    <span class="badge badge-sm bg-gradient-{% if fatura.status == 'pago' %}success{% elif fatura.status == 'pendente' %}warning{% elif fatura.status == 'vencido' %}danger{% else %}secondary{% endif %}">
+                                        {{ fatura.get_status_display }}
+                                    </span>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
                                 <td colspan="7" class="text-center py-4">
-                                    <div class="d-flex flex-column align-items-center">
-                                        <i class="fas fa-file-invoice fa-3x text-secondary mb-3"></i>
-                                        <h6 class="text-secondary">Nenhuma fatura encontrada</h6>
-                                        <p class="text-sm text-secondary mb-0">Comece criando uma nova fatura</p>
-                                        <button class="btn btn-primary btn-sm mt-3" data-bs-toggle="modal" data-bs-target="#modalNovaFatura">
-                                            <i class="fas fa-plus me-2"></i>Criar Primeira Fatura
-                                        </button>
-                                    </div>
+                                    <i class="material-symbols-rounded opacity-5" style="font-size:40px;">receipt_long</i>
+                                    <p class="text-sm text-secondary mt-2 mb-0">Nenhuma fatura cadastrada</p>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -234,222 +174,19 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
-<!-- Modal Nova Fatura -->
-<div class="modal fade" id="modalNovaFatura" tabindex="-1" aria-labelledby="modalNovaFaturaLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalNovaFaturaLabel">Nova Fatura</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="formNovaFatura">
-                    {% csrf_token %}
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Cliente/Contrato *</label>
-                                <select class="form-control" name="contrato" required>
-                                    <option value="">Selecione um contrato</option>
-                                    <!-- Options serão carregadas via JavaScript -->
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Valor *</label>
-                                <input type="number" step="0.01" class="form-control" name="valor" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Data de Vencimento *</label>
-                                <input type="date" class="form-control" name="data_vencimento" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Método de Pagamento</label>
-                                <select class="form-control" name="metodo_pagamento">
-                                    <option value="boleto">Boleto</option>
-                                    <option value="pix">PIX</option>
-                                    <option value="cartao">Cartão</option>
-                                    <option value="transferencia">Transferência</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Observações</label>
-                                <textarea class="form-control" name="observacoes" rows="3"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" onclick="salvarFatura()">Gerar Fatura</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Registrar Pagamento -->
-<div class="modal fade" id="modalPagamento" tabindex="-1" aria-labelledby="modalPagamentoLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalPagamentoLabel">Registrar Pagamento</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="formPagamento">
-                    {% csrf_token %}
-                    <input type="hidden" name="fatura_id" id="pagamento_fatura_id">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Data do Pagamento *</label>
-                                <input type="date" class="form-control" name="data_pagamento" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Valor Pago *</label>
-                                <input type="number" step="0.01" class="form-control" name="valor_pago" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Forma de Pagamento</label>
-                                <select class="form-control" name="forma_pagamento">
-                                    <option value="dinheiro">Dinheiro</option>
-                                    <option value="pix">PIX</option>
-                                    <option value="transferencia">Transferência</option>
-                                    <option value="cartao_debito">Cartão Débito</option>
-                                    <option value="cartao_credito">Cartão Crédito</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="input-group input-group-outline mb-3">
-                                <label class="form-label">Observações</label>
-                                <textarea class="form-control" name="observacoes_pagamento" rows="2"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-success" onclick="confirmarPagamento()">Confirmar Pagamento</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Scripts -->
+{% block extra_js %}
 <script>
-// Funções para manipulação de faturas
-function aplicarFiltros() {
-    const search = document.getElementById('searchFatura').value;
-    const status = document.getElementById('statusFilter').value;
-    const dataInicio = document.getElementById('dataInicio').value;
-    const dataFim = document.getElementById('dataFim').value;
-    
-    console.log('Aplicando filtros:', { search, status, dataInicio, dataFim });
+function filterFaturas(status) {
+    const rows = document.querySelectorAll('#tabelaFaturas tbody tr[data-status]');
+    rows.forEach(row => {
+        if (status === 'all' || row.dataset.status === status) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
 }
-
-function exportarFaturas(formato) {
-    console.log('Exportando faturas em formato:', formato);
-    alert(`Exportação em ${formato.toUpperCase()} será implementada`);
-}
-
-function gerarFaturasMensais() {
-    if (confirm('Deseja gerar faturas mensais para todos os contratos ativos?')) {
-        console.log('Gerando faturas mensais...');
-        alert('Faturas mensais geradas com sucesso!');
-        location.reload();
-    }
-}
-
-function visualizarFatura(id) {
-    console.log('Visualizar fatura:', id);
-    // Implementar visualização detalhada
-}
-
-function baixarPDF(id) {
-    console.log('Baixar PDF da fatura:', id);
-    // window.open(`/financeiro/faturas/${id}/pdf/`, '_blank');
-    alert('Download do PDF iniciado');
-}
-
-function registrarPagamento(id) {
-    document.getElementById('pagamento_fatura_id').value = id;
-    const modal = new bootstrap.Modal(document.getElementById('modalPagamento'));
-    modal.show();
-}
-
-function enviarCobranca(id) {
-    if (confirm('Deseja enviar cobrança para esta fatura?')) {
-        console.log('Enviando cobrança para fatura:', id);
-        alert('Cobrança enviada com sucesso!');
-    }
-}
-
-function cancelarFatura(id) {
-    if (confirm('Tem certeza que deseja cancelar esta fatura?')) {
-        console.log('Cancelar fatura:', id);
-        alert('Fatura cancelada com sucesso!');
-        location.reload();
-    }
-}
-
-function salvarFatura() {
-    const form = document.getElementById('formNovaFatura');
-    const formData = new FormData(form);
-    
-    console.log('Salvando fatura...');
-    alert('Fatura gerada com sucesso!');
-    
-    const modal = bootstrap.Modal.getInstance(document.getElementById('modalNovaFatura'));
-    modal.hide();
-    location.reload();
-}
-
-function confirmarPagamento() {
-    const form = document.getElementById('formPagamento');
-    const formData = new FormData(form);
-    
-    console.log('Confirmando pagamento...');
-    alert('Pagamento registrado com sucesso!');
-    
-    const modal = bootstrap.Modal.getInstance(document.getElementById('modalPagamento'));
-    modal.hide();
-    location.reload();
-}
-
-// Carregar dados quando a página carrega
-document.addEventListener('DOMContentLoaded', function() {
-    // Carregar contratos para o select
-    // fetch('/financeiro/api/contratos/')...
-    
-    // Definir data de hoje como padrão
-    const hoje = new Date().toISOString().split('T')[0];
-    const dataVencimento = document.querySelector('input[name="data_vencimento"]');
-    if (dataVencimento) {
-        dataVencimento.value = hoje;
-    }
-});
 </script>
 {% endblock %}

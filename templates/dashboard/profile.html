@@ -1,791 +1,478 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Perfil - Controle de Atendimento iConnect{% endblock %}
+{% block title %}Perfil - iConnect{% endblock %}
 {% block page_title %}Meu Perfil{% endblock %}
 {% block breadcrumb_title %}Perfil{% endblock %}
 
 {% block extra_css %}
 <style>
-  /* Tema moderno para perfil com tons pretos elegantes */
-  .profile-container {
-    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-    border-radius: 20px;
-    padding: 2rem;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-  
-  .profile-header {
-    background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
-    border-radius: 20px;
-    padding: 2.5rem;
-    margin-bottom: 2rem;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-  }
-  
-  /* Efeito de partículas animadas no header */
-  .profile-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    animation: shine 4s infinite;
-  }
-  
-  .profile-header::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
-    background-size: 30px 30px;
-    animation: float 20s linear infinite;
-  }
-  
-  @keyframes shine {
-    0% { left: -100%; }
-    50% { left: 100%; }
-    100% { left: 100%; }
-  }
-  
-  @keyframes float {
-    0% { transform: rotate(0deg) translateX(0px); }
-    100% { transform: rotate(360deg) translateX(20px); }
-  }
-  
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(50px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  /* Cards com glassmorphism melhorado */
-  .profile-page-content .profile-card.card {
-    background: rgba(255, 255, 255, 0.25) !important;
-    backdrop-filter: blur(20px) saturate(180%);
-    border: 2px solid rgba(255, 255, 255, 0.3) !important;
-    border-radius: 20px;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: fadeInUp 0.8s ease-out;
-    box-shadow: 0 15px 50px rgba(55, 65, 81, 0.2);
-  }
-  
-  .profile-page-content .profile-card.card:hover {
-    transform: translateY(-10px) scale(1.02);
-    box-shadow: 0 25px 80px rgba(55, 65, 81, 0.4);
-    border-color: rgba(255, 255, 255, 0.5);
-    background: rgba(255, 255, 255, 0.35) !important;
-  }
-  
-  /* Avatar moderno com gradiente */
-  .profile-avatar {
-    width: 140px;
-    height: 140px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
-    background-size: 300% 300%;
-    animation: gradientShift 6s ease infinite;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 3.5rem;
-    color: white;
-    border: 4px solid rgba(255, 255, 255, 0.8);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    cursor: pointer;
-    font-weight: bold;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-  }
-  
-  @keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-  
-  .profile-avatar:hover {
-    transform: scale(1.1) rotate(5deg);
-    border-color: rgba(255, 255, 255, 1);
-    box-shadow: 0 20px 40px rgba(255, 107, 107, 0.4);
-  }
-  
-  .avatar-upload {
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
-    width: 35px;
-    height: 35px;
-    background: linear-gradient(135deg, #374151, #1f2937);
-    border: 3px solid white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-  }
-  
-  .avatar-upload:hover {
-    background: linear-gradient(135deg, #1f2937, #374151);
-    transform: scale(1.2);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
-  }
-  
-  /* Campos de formulário com alta visibilidade */
-  .profile-page-content .form-control {
-    background: rgba(255, 255, 255, 0.9) !important;
-    border: 2px solid rgba(55, 65, 81, 0.3) !important;
-    color: #2d3748 !important;
-    border-radius: 12px;
-    padding: 12px 16px;
-    font-size: 16px;
-    font-weight: 500;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 15px rgba(55, 65, 81, 0.1);
-  }
-  
-  .profile-page-content .form-control:focus {
-    background: rgba(255, 255, 255, 1) !important;
-    border-color: #374151 !important;
-    box-shadow: 0 0 0 4px rgba(55, 65, 81, 0.2), 0 8px 25px rgba(0, 0, 0, 0.15) !important;
-    color: #2d3748 !important;
-    transform: translateY(-2px);
-  }
-  
-  .profile-page-content .form-control::placeholder {
-    color: rgba(45, 55, 72, 0.5) !important;
-    font-weight: 400;
-  }
-  
-  .profile-page-content .form-control[readonly] {
-    background: rgba(255, 255, 255, 0.7) !important;
-    color: rgba(45, 55, 72, 0.6) !important;
-    cursor: not-allowed;
-    border-color: rgba(55, 65, 81, 0.2) !important;
-  }
-  
-  .profile-page-content .form-label {
-    color: #ffffff !important;
-    font-weight: 600;
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-    margin-bottom: 8px;
-  }
-  
-  .section-title {
-    color: #ffffff;
-    font-weight: 700;
-    font-size: 18px;
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.8rem;
-    border-bottom: 3px solid rgba(255, 255, 255, 0.3);
-    position: relative;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-  }
-  
-  .section-title::after {
-    content: '';
-    position: absolute;
-    bottom: -3px;
-    left: 0;
-    width: 60px;
-    height: 3px;
-    background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
-    border-radius: 2px;
-  }
-  
-  /* Stats cards com cores vibrantes */
-  .stats-card {
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(15px);
+  .profile-header-card {
     border-radius: 16px;
-    padding: 1.8rem;
-    text-align: center;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
     overflow: hidden;
+    border: none;
   }
-  
-  .stats-card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    transform: rotate(45deg);
-    transition: all 0.6s ease;
-    opacity: 0;
-  }
-  
-  .stats-card:hover::before {
-    opacity: 1;
-    animation: shimmer 1s ease-in-out;
-  }
-  
-  @keyframes shimmer {
-    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-  }
-  
-  .stats-card:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: translateY(-8px) scale(1.05);
-    box-shadow: 0 20px 40px rgba(55, 65, 81, 0.3);
-    border-color: rgba(255, 255, 255, 0.5);
-  }
-  
-  .stats-number {
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: #ffffff;
-    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
-    margin-bottom: 0.5rem;
-  }
-  
-  .stats-label {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 600;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-  }
-  
-  /* Botões modernos com gradientes pretos */
-  .profile-page-content .btn-primary {
-    background: linear-gradient(135deg, #374151, #1f2937) !important;
-    border: none !important;
-    color: white !important;
-    font-weight: 600;
-    padding: 12px 30px;
-    border-radius: 12px;
-    font-size: 16px;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  .profile-header-bg {
+    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+    padding: 2rem 2rem 4rem;
     position: relative;
-    overflow: hidden;
   }
-  
-  .profile-page-content .btn-primary::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s ease;
-  }
-  
-  .profile-page-content .btn-primary:hover::before {
-    left: 100%;
-  }
-  
-  .profile-page-content .btn-primary:hover {
-    background: linear-gradient(135deg, #1f2937, #374151) !important;
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
-  }
-  
-  .profile-page-content .btn-outline-light {
-    border: 2px solid rgba(255, 255, 255, 0.6) !important;
-    color: rgba(255, 255, 255, 0.9) !important;
-    background: transparent !important;
-    font-weight: 600;
-    padding: 10px 28px;
-    border-radius: 12px;
-    font-size: 16px;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  
-  .profile-page-content .btn-outline-light:hover {
-    background: rgba(255, 255, 255, 0.15) !important;
-    border-color: rgba(255, 255, 255, 0.9) !important;
-    color: white !important;
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
-  }
-  
-  /* Progress ring melhorado */
-  .progress-ring {
+  .profile-avatar {
     width: 100px;
     height: 100px;
-    margin: 0 auto 1rem;
-    filter: drop-shadow(0 4px 8px rgba(55, 65, 81, 0.3));
-  }
-  
-  .progress-ring-circle {
-    fill: none;
-    stroke: rgba(255, 255, 255, 0.2);
-    stroke-width: 6;
-    stroke-dasharray: 280;
-    stroke-dashoffset: 0;
-    transform-origin: 50% 50%;
-    transform: rotate(-90deg);
-    transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  
-  .progress-ring-circle.progress-75 {
-    stroke: url(#gradient);
-    stroke-dashoffset: 70;
-    stroke-linecap: round;
-  }
-  
-  /* Seções colapsíveis modernas */
-  .collapsible-section {
-    border: 2px solid rgba(255, 255, 255, 0.25);
-    border-radius: 16px;
-    margin-bottom: 1.5rem;
-    overflow: hidden;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
-  }
-  
-  .collapsible-section:hover {
-    border-color: rgba(255, 255, 255, 0.4);
-    background: rgba(255, 255, 255, 0.15);
-  }
-  
-  .collapsible-header {
-    background: rgba(55, 65, 81, 0.3);
-    padding: 1.5rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #06b6d4, #0891b2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: white;
+    border: 4px solid white;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    margin-top: -50px;
+    position: relative;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.3s ease;
+    font-weight: bold;
   }
-  
+  .profile-avatar:hover {
+    transform: scale(1.05);
+  }
+  .avatar-upload-icon {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 28px;
+    height: 28px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    color: #334155;
+    font-size: 14px;
+  }
+  .stats-item {
+    text-align: center;
+    padding: 1rem 0.5rem;
+  }
+  .stats-item h4 {
+    margin-bottom: 0;
+    color: #334155;
+    font-weight: 700;
+  }
+  .stats-item p {
+    margin-bottom: 0;
+    color: #64748b;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  .collapsible-section {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    transition: box-shadow 0.3s ease;
+  }
+  .collapsible-section:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  }
+  .collapsible-header {
+    background: #f8fafc;
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: 1px solid transparent;
+  }
   .collapsible-header:hover {
-    background: rgba(55, 65, 81, 0.4);
-    transform: translateX(5px);
+    background: #f1f5f9;
   }
-  
+  .collapsible-header h5 {
+    margin-bottom: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #334155;
+  }
   .collapsible-content {
-    padding: 2rem;
+    padding: 1.5rem;
     display: none;
-    background: rgba(255, 255, 255, 0.05);
+    background: white;
   }
-  
   .collapsible-content.active {
     display: block;
-    animation: slideDown 0.4s ease-out;
   }
-  
-  @keyframes slideDown {
-    from {
-      opacity: 0;
-      transform: translateY(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  .section-title {
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 0;
   }
-  
-  /* Notificação moderna */
-  .notification {
-    position: fixed;
-    top: 30px;
-    right: 30px;
-    background: linear-gradient(135deg, #374151, #1f2937);
-    color: white;
-    padding: 1.2rem 1.8rem;
-    border-radius: 16px;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
-    z-index: 9999;
-    transform: translateX(400px);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+  .progress-checklist {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
   }
-  
-  .notification.show {
-    transform: translateX(0);
+  .progress-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #f1f5f9;
+    padding: 0.35rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
   }
-  
-  /* Responsividade melhorada */
-  @media (max-width: 768px) {
-    .profile-header {
-      padding: 1.5rem;
-      text-align: center;
-    }
-    
-    .profile-avatar {
-      width: 120px;
-      height: 120px;
-      font-size: 3rem;
-    }
-    
-    .stats-card {
-      margin-bottom: 1rem;
-    }
-    
-    .collapsible-header {
-      padding: 1rem;
-    }
-    
-    .collapsible-content {
-      padding: 1rem;
-    }
+  .progress-item.completed {
+    background: rgba(34,197,94,0.1);
+    border-color: rgba(34,197,94,0.2);
+    color: #16a34a;
   }
-
-  /* Estilos para novas seções */
-  .form-check-input {
-    background-color: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.4);
-    border-radius: 4px;
-    width: 18px;
-    height: 18px;
+  .progress-item i {
+    font-size: 16px;
   }
-  
-  .form-check-input:checked {
-    background-color: #374151;
-    border-color: #374151;
+  .progress-item.completed i {
+    color: #22c55e;
   }
-  
-  .form-check-input:focus {
-    border-color: #1f2937;
-    box-shadow: 0 0 0 0.2rem rgba(55, 65, 81, 0.25);
+  .info-card {
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 0.75rem;
+    transition: background 0.2s;
   }
-  
-  .form-check-label {
-    font-weight: 500;
-    margin-left: 0.5rem;
+  .info-card:hover {
+    background: #f1f5f9;
   }
-  
-  /* Timeline de atividades */
+  .info-card h6 {
+    color: #64748b;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.3rem;
+  }
+  .info-card p {
+    color: #334155;
+    font-weight: 600;
+    margin-bottom: 0;
+  }
   .activity-timeline {
     position: relative;
-    padding-left: 30px;
+    padding-left: 28px;
   }
-  
   .activity-timeline::before {
     content: '';
     position: absolute;
-    left: 9px;
+    left: 8px;
     top: 0;
     bottom: 0;
     width: 2px;
-    background: linear-gradient(to bottom, #374151, #1f2937);
+    background: #e2e8f0;
     border-radius: 1px;
   }
-  
   .timeline-item {
     position: relative;
-    margin-bottom: 2rem;
-    padding-left: 0;
+    margin-bottom: 1.5rem;
   }
-  
   .timeline-marker {
     position: absolute;
-    left: -25px;
-    top: 5px;
-    width: 20px;
-    height: 20px;
+    left: -24px;
+    top: 4px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
-    border: 3px solid rgba(255, 255, 255, 0.2);
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px #e2e8f0;
   }
-  
   .timeline-content {
-    background: rgba(255, 255, 255, 0.08);
-    padding: 1rem;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(5px);
-    transition: all 0.3s ease;
+    background: #f8fafc;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
   }
-  
-  .timeline-content:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.25);
-    transform: translateX(5px);
+  .timeline-content h6 {
+    color: #334155;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
   }
-  
-  /* Cards de informação */
-  .info-card {
-    background: rgba(255, 255, 255, 0.08);
-    padding: 1.2rem;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    margin-bottom: 1rem;
-    transition: all 0.3s ease;
-  }
-  
-  .info-card:hover {
-    background: rgba(255, 255, 255, 0.12);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(55, 65, 81, 0.2);
-  }
-  
-  /* Badges customizadas */
-  .badge {
+  .timeline-content p {
+    color: #64748b;
     font-size: 0.8rem;
-    padding: 0.4rem 0.8rem;
-    border-radius: 20px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    margin-bottom: 0.2rem;
   }
-  
-  /* Input de senha com indicador de força */
+  .timeline-content small {
+    color: #94a3b8;
+  }
   .password-strength {
     height: 4px;
-    background: rgba(255, 255, 255, 0.2);
+    background: #e2e8f0;
     border-radius: 2px;
     margin-top: 5px;
     overflow: hidden;
   }
-  
   .password-strength-bar {
     height: 100%;
     transition: all 0.3s ease;
     border-radius: 2px;
   }
-  
-  .strength-weak { background: #ff6b6b; width: 25%; }
-  .strength-medium { background: #ffa726; width: 50%; }
-  .strength-good { background: #66bb6a; width: 75%; }
-  .strength-strong { background: #4caf50; width: 100%; }
-  
-  /* Progress checklist */
-  .profile-progress-details {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 1.5rem;
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
+  .strength-weak { background: #ef4444; width: 25%; }
+  .strength-medium { background: #f59e0b; width: 50%; }
+  .strength-good { background: #22c55e; width: 75%; }
+  .strength-strong { background: #16a34a; width: 100%; }
+  .profile-form-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 0.35rem;
   }
-  
-  .progress-checklist {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-top: 1rem;
+  .profile-form-control {
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+    transition: all 0.2s;
   }
-  
-  .progress-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: rgba(255, 255, 255, 0.08);
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    transition: all 0.3s ease;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 0.9rem;
+  .profile-form-control:focus {
+    border-color: #06b6d4;
+    box-shadow: 0 0 0 3px rgba(6,182,212,0.1);
   }
-  
-  .progress-item.completed {
-    background: rgba(76, 175, 80, 0.2);
-    border-color: rgba(76, 175, 80, 0.4);
-    color: rgba(255, 255, 255, 0.95);
-  }
-  
-  .progress-item.completed i {
-    color: #4caf50;
-  }
-  
-  .progress-item:hover {
-    transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.15);
-  }
-  
-  /* Spinner para loading states */
-  .spinner-border-sm {
-    width: 1rem;
-    height: 1rem;
-  }
-  
-  /* Melhorias nos cards de stats */
-  .stats-card i {
-    display: block;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-  }
-  
-  /* Quick actions floating button */
-  .quick-actions {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    z-index: 1000;
-  }
-  
-  .quick-action-btn {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #374151, #1f2937);
-    border: none;
-    color: white;
-    font-size: 1.5rem;
-    box-shadow: 0 8px 25px rgba(55, 65, 81, 0.4);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
+  .subsection-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 700;
+    color: #06b6d4;
     margin-bottom: 1rem;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 6px;
   }
-  
-  .quick-action-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 12px 40px rgba(55, 65, 81, 0.6);
+  .subsection-label i {
+    font-size: 16px;
   }
-  
-  /* Tooltip para quick actions */
-  .quick-action-btn[data-tooltip]:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    right: 70px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    font-size: 0.8rem;
-    white-space: nowrap;
-    z-index: 1001;
+  .profile-completion-bar {
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 0.5rem;
   }
-</style>
+  .profile-completion-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+    background: linear-gradient(90deg, #06b6d4, #22c55e);
+  }
+  .profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+  .form-check-input:checked {
+    background-color: #06b6d4 !important;
+    border-color: #06b6d4 !important;
+  }
 
-<!-- Gradiente SVG para o progress ring -->
-<svg width="0" height="0">
-  <defs>
-    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#ff6b6b;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#4ecdc4;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#45b7d1;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-</svg>
+  /* ====== DARK MODE — Profile Page ====== */
+  .dark-version .profile-header-card {
+    border-color: var(--border-color) !important;
+  }
+  .dark-version .profile-header-bg {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+  }
+  .dark-version .profile-avatar {
+    border-color: var(--bg-card) !important;
+  }
+  .dark-version .stats-item h4 {
+    color: var(--text-primary) !important;
+  }
+  .dark-version .stats-item p {
+    color: var(--text-secondary) !important;
+  }
+  .dark-version .collapsible-section {
+    border-color: var(--border-color) !important;
+    background: var(--bg-card) !important;
+  }
+  .dark-version .collapsible-header {
+    background: var(--bg-secondary) !important;
+    border-bottom-color: var(--border-color) !important;
+  }
+  .dark-version .collapsible-header:hover {
+    background: rgba(6,182,212,0.05) !important;
+  }
+  .dark-version .collapsible-header h5,
+  .dark-version .section-title {
+    color: var(--text-primary) !important;
+  }
+  .dark-version .collapsible-content {
+    background: var(--bg-card) !important;
+  }
+  .dark-version .profile-form-label {
+    color: var(--text-primary) !important;
+  }
+  .dark-version .profile-form-control {
+    background: var(--bg-primary) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+  }
+  .dark-version .profile-form-control:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px rgba(6,182,212,0.15) !important;
+  }
+  .dark-version .profile-form-control::placeholder {
+    color: var(--text-secondary) !important;
+    opacity: 0.6;
+  }
+  .dark-version .profile-form-control[readonly] {
+    background: var(--bg-secondary) !important;
+  }
+  .dark-version .subsection-label {
+    color: var(--accent) !important;
+  }
+  .dark-version .info-card {
+    background: var(--bg-secondary) !important;
+    border-color: var(--border-color) !important;
+  }
+  .dark-version .info-card:hover {
+    background: var(--bg-primary) !important;
+  }
+  .dark-version .info-card h6 {
+    color: var(--text-secondary) !important;
+  }
+  .dark-version .info-card p {
+    color: var(--text-primary) !important;
+  }
+  .dark-version .progress-item {
+    background: var(--bg-secondary) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-secondary) !important;
+  }
+  .dark-version .progress-item.completed {
+    background: rgba(34,197,94,0.1) !important;
+    border-color: rgba(34,197,94,0.2) !important;
+    color: #22c55e !important;
+  }
+  .dark-version .profile-completion-bar {
+    background: var(--border-color) !important;
+  }
+  .dark-version .password-strength {
+    background: var(--border-color) !important;
+  }
+  .dark-version .timeline-content {
+    background: var(--bg-secondary) !important;
+    border-color: var(--border-color) !important;
+  }
+  .dark-version .timeline-content h6 {
+    color: var(--text-primary) !important;
+  }
+  .dark-version .timeline-content p {
+    color: var(--text-secondary) !important;
+  }
+  .dark-version .activity-timeline::before {
+    background: var(--border-color) !important;
+  }
+  .dark-version .timeline-marker {
+    box-shadow: 0 0 0 2px var(--border-color) !important;
+    border-color: var(--bg-card) !important;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid py-2">
-  <!-- Page Header -->
-  <div class="ms-3">
-    <h3 class="mb-0 h4 font-weight-bolder">Meu Perfil</h3>
-    <p class="mb-4">Gerencie suas informações pessoais e configurações da conta</p>
-  </div>
-
-  <div class="profile-page-content">
-    <!-- Notification Area -->
-    <div id="notification" class="notification">
-      <div class="d-flex align-items-center">
-        <i class="material-symbols-rounded me-2">check_circle</i>
-        <span id="notification-text">Perfil atualizado com sucesso!</span>
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+      <div class="ms-3">
+        <h3 class="mb-0 h4 font-weight-bolder">Meu Perfil</h3>
+        <p class="mb-0 text-sm text-secondary">Gerencie suas informações pessoais e configurações da conta</p>
       </div>
     </div>
+  </div>
 
-    <!-- Profile Header -->
-  <div class="profile-header text-center">
-    <div class="row align-items-center">
-      <div class="col-md-3">
-        <div class="profile-avatar mx-auto" onclick="document.getElementById('avatar-upload').click()">
-          {{ user.username|first|upper }}
-          <div class="avatar-upload">
-            <i class="material-symbols-rounded" style="font-size: 14px;">camera_alt</i>
-          </div>
-          <input type="file" id="avatar-upload" accept="image/*" style="display: none;">
+
+
+  <!-- Profile Header Card -->
+  <div class="row mx-1 mb-4">
+    <div class="col-12">
+      <div class="card profile-header-card shadow-sm">
+        <div class="profile-header-bg">
+          <h4 class="text-white mb-0">{{ user.get_full_name|default:user.username }}</h4>
+          <p class="text-white opacity-8 mb-0">
+            {% if user.is_superuser %}Administrador{% elif user.is_staff %}Agente de Suporte{% else %}Usuário{% endif %}
+            {% if user.email %}&bull; {{ user.email }}{% endif %}
+          </p>
         </div>
-        
-        <!-- Progress Ring com gradiente -->
-        <div class="progress-ring">
-          <svg width="100" height="100">
-            <circle class="progress-ring-circle progress-75" cx="50" cy="50" r="45"/>
-          </svg>
-        </div>
-        <p style="color: rgba(255,255,255,0.95); margin: 0; font-weight: 600; font-size: 16px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Perfil 85% completo</p>
-      </div>
-      <div class="col-md-9 text-md-start">
-        <h2 style="color: white; margin-bottom: 0.8rem; font-size: 2.5rem; font-weight: 700; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">{{ user.get_full_name|default:user.username }}</h2>
-        <p style="color: rgba(255,255,255,0.9); font-size: 1.2rem; margin-bottom: 1.5rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">
-          <i class="material-symbols-rounded me-2" style="vertical-align: middle;">business_center</i>
-          {% if user.is_staff %}Agente de Suporte{% else %}Usuário{% endif %} | {{ user.email }}
-        </p>
-        <div class="row">
-          <div class="col-md-3">
-            <div class="stats-card">
-              <i class="material-symbols-rounded mb-2" style="font-size: 2rem; color: #4ecdc4;">confirmation_number</i>
-              <div class="stats-number">{{ user_stats.ocorrencias|default:0 }}</div>
-              <div class="stats-label">Ocorrências</div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stats-card">
-              <i class="material-symbols-rounded mb-2" style="font-size: 2rem; color: #ff6b6b;">support_agent</i>
-              <div class="stats-number">{{ user_stats.chamados|default:0 }}</div>
-              <div class="stats-label">Chamados</div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stats-card">
-              <i class="material-symbols-rounded mb-2" style="font-size: 2rem; color: #45b7d1;">headset_mic</i>
-              <div class="stats-number">{{ user_stats.atendimentos|default:0 }}</div>
-              <div class="stats-label">Atendimentos</div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stats-card">
-              <i class="material-symbols-rounded mb-2" style="font-size: 2rem; color: #96ceb4;">schedule</i>
-              <div class="stats-number">{{ user_stats.indisponibilidade|default:0 }}</div>
-              <div class="stats-label">Indisponibilidade</div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Progress Details -->
-        <div class="mt-3">
-          <div class="row">
-            <div class="col-12">
-              <div class="profile-progress-details">
-                <h6 class="text-light mb-2">Completar seu perfil:</h6>
-                <div class="progress-checklist">
-                  <div class="progress-item {% if user.first_name %}completed{% endif %}">
-                    <i class="material-symbols-rounded">{% if user.first_name %}check_circle{% else %}radio_button_unchecked{% endif %}</i>
-                    <span>Nome completo</span>
-                  </div>
-                  <div class="progress-item {% if user.email %}completed{% endif %}">
-                    <i class="material-symbols-rounded">{% if user.email %}check_circle{% else %}radio_button_unchecked{% endif %}</i>
-                    <span>Email verificado</span>
-                  </div>
-                  <div class="progress-item {% if perfil.telefone %}completed{% endif %}">
-                    <i class="material-symbols-rounded">{% if perfil.telefone %}check_circle{% else %}radio_button_unchecked{% endif %}</i>
-                    <span>Telefone</span>
-                  </div>
-                  <div class="progress-item {% if perfil.bio %}completed{% endif %}">
-                    <i class="material-symbols-rounded">{% if perfil.bio %}check_circle{% else %}radio_button_unchecked{% endif %}</i>
-                    <span>Biografia</span>
-                  </div>
-                  <div class="progress-item">
-                    <i class="material-symbols-rounded">radio_button_unchecked</i>
-                    <span>Foto de perfil</span>
-                  </div>
+        <div class="card-body pt-0">
+          <div class="row align-items-end">
+            <div class="col-auto">
+              <div class="profile-avatar" onclick="document.getElementById('avatar-upload').click()" title="Clique para alterar sua foto">
+                {% if perfil.avatar %}
+                  <img src="{{ perfil.avatar.url }}" alt="Avatar de {{ user.username }}">
+                {% else %}
+                  {{ user.first_name|default:user.username|first|upper }}
+                {% endif %}
+                <div class="avatar-upload-icon">
+                  <i class="material-symbols-rounded" style="font-size: 14px;">camera_alt</i>
                 </div>
+              </div>
+            </div>
+            <div class="col-auto ms-auto">
+              <div class="d-flex gap-4">
+                <div class="stats-item">
+                  <h4>{{ user_stats.ocorrencias|default:0 }}</h4>
+                  <p>Ocorrências</p>
+                </div>
+                <div class="stats-item">
+                  <h4>{{ user_stats.chamados|default:0 }}</h4>
+                  <p>Chamados</p>
+                </div>
+                <div class="stats-item">
+                  <h4>{{ user_stats.atendimentos|default:0 }}</h4>
+                  <p>Atendimentos</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Completar perfil -->
+          <div class="mt-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <small class="text-secondary font-weight-bold">Completar seu perfil:</small>
+              <small class="fw-bold" style="color: #06b6d4;">{{ perfil.perfil_completo_percentual }}%</small>
+            </div>
+            <div class="profile-completion-bar">
+              <div class="profile-completion-fill" style="width: {{ perfil.perfil_completo_percentual }}%;"></div>
+            </div>
+            <div class="progress-checklist">
+              <div class="progress-item {% if user.first_name %}completed{% endif %}">
+                <i class="material-symbols-rounded">{% if user.first_name %}check_circle{% else %}radio_button_unchecked{% endif %}</i>
+                <span>Nome</span>
+              </div>
+              <div class="progress-item {% if user.email %}completed{% endif %}">
+                <i class="material-symbols-rounded">{% if user.email %}check_circle{% else %}radio_button_unchecked{% endif %}</i>
+                <span>Email</span>
+              </div>
+              <div class="progress-item {% if perfil.telefone %}completed{% endif %}">
+                <i class="material-symbols-rounded">{% if perfil.telefone %}check_circle{% else %}radio_button_unchecked{% endif %}</i>
+                <span>Telefone</span>
+              </div>
+              <div class="progress-item {% if perfil.endereco %}completed{% endif %}">
+                <i class="material-symbols-rounded">{% if perfil.endereco %}check_circle{% else %}radio_button_unchecked{% endif %}</i>
+                <span>Endereço</span>
+              </div>
+              <div class="progress-item {% if perfil.cidade %}completed{% endif %}">
+                <i class="material-symbols-rounded">{% if perfil.cidade %}check_circle{% else %}radio_button_unchecked{% endif %}</i>
+                <span>Cidade</span>
+              </div>
+              <div class="progress-item {% if perfil.cargo %}completed{% endif %}">
+                <i class="material-symbols-rounded">{% if perfil.cargo %}check_circle{% else %}radio_button_unchecked{% endif %}</i>
+                <span>Cargo</span>
               </div>
             </div>
           </div>
@@ -794,562 +481,619 @@
     </div>
   </div>
 
-  <div class="row">
-    <!-- Main Profile Form -->
-    <div class="col-md-12">
-      <div class="profile-card card">
-        <div class="card-body">
-          <form id="profile-form">
-            {% csrf_token %}
-            
-            <!-- Personal Information Section -->
-            <div class="collapsible-section">
-              <div class="collapsible-header" onclick="toggleSection('personal')">
-                <h5 class="section-title mb-0">
-                  <i class="material-symbols-rounded me-2">person</i>
-                  Informações Pessoais
-                  <i class="material-symbols-rounded float-end">expand_more</i>
-                </h5>
-              </div>
-              <div class="collapsible-content active" id="personal-content">
-                <div class="row">
-                  <div class="col-md-6">
-                    <div class="mb-3">
-                      <label class="form-label">Nome de usuário</label>
-                      <input type="text" class="form-control" id="username" value="{{ user.username }}" readonly>
-                      <small class="text-muted">O nome de usuário não pode ser alterado</small>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="mb-3">
-                      <label class="form-label">Email *</label>
-                      <input type="email" class="form-control" id="email" value="{{ user.email }}" required>
-                      <div class="invalid-feedback">Por favor, insira um email válido.</div>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="mb-3">
-                      <label class="form-label">Primeiro Nome</label>
-                      <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" placeholder="Digite seu primeiro nome">
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="mb-3">
-                      <label class="form-label">Último Nome</label>
-                      <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" placeholder="Digite seu sobrenome">
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="mb-3">
-                      <label class="form-label">Telefone</label>
-                      <input type="tel" class="form-control" id="telefone" name="telefone" value="{{ perfil.telefone }}" placeholder="(XX) XXXXX-XXXX">
-                    </div>
-                  </div>
-                  <div class="col-12">
-                    <div class="mb-3">
-                      <label class="form-label">Endereço</label>
-                      <input type="text" class="form-control" id="address" name="endereco" value="{{ perfil.endereco }}" placeholder="Rua, Número, Bairro">
-                    </div>
-                  </div>
-                  <div class="col-12">
-                    <div class="mb-3">
-                      <label class="form-label">Bio</label>
-                      <textarea class="form-control" id="bio" name="bio" rows="3" placeholder="Conte um pouco sobre você...">{{ perfil.bio }}</textarea>
-                    </div>
-                  </div>
-                </div>
-                
-                <div class="d-flex justify-content-end gap-2 mt-4">
-                  <button type="button" class="btn btn-outline-light btn-cancel">Cancelar</button>
-                  <button type="submit" class="btn btn-primary">Salvar Alterações</button>
-                </div>
-              </div>
+  <!-- Form Sections -->
+  <div class="row mx-1">
+    <div class="col-12">
+      <form id="profile-form" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" id="avatar-upload" name="avatar" accept="image/*" style="display: none;">
+
+        <!-- Informações Pessoais -->
+        <div class="collapsible-section">
+          <div class="collapsible-header" onclick="toggleSection('personal')">
+            <h5 class="section-title">
+              <i class="material-symbols-rounded me-2" style="vertical-align: middle; font-size: 20px;">person</i>
+              Informações Pessoais
+              <i class="material-symbols-rounded float-end" style="font-size: 20px;">expand_more</i>
+            </h5>
+          </div>
+          <div class="collapsible-content active" id="personal-content">
+            <div class="subsection-label">
+              <i class="material-symbols-rounded">badge</i>
+              Dados Básicos
             </div>
-            
-            <!-- Security Section -->
-            <div class="collapsible-section">
-              <div class="collapsible-header" onclick="toggleSection('security')">
-                <h5 class="section-title mb-0">
-                  <i class="material-symbols-rounded me-2">security</i>
-                  Segurança & Privacidade
-                  <i class="material-symbols-rounded float-end">expand_more</i>
-                </h5>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="profile-form-label">Nome de usuário</label>
+                <input type="text" class="form-control profile-form-control" value="{{ user.username }}" readonly style="background: #f8fafc;">
+                <small class="text-muted">O nome de usuário não pode ser alterado</small>
               </div>
-              <div class="collapsible-content" id="security-content">
-                <div class="row">
-                  <div class="col-md-6">
-                    <div class="mb-3">
-                      <label class="form-label">Nova Senha</label>
-                      <input type="password" class="form-control" id="new_password" placeholder="Digite sua nova senha">
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="mb-3">
-                      <label class="form-label">Confirmar Senha</label>
-                      <input type="password" class="form-control" id="confirm_password" placeholder="Confirme sua nova senha">
-                    </div>
-                  </div>
-                  <div class="col-12">
-                    <div class="mb-3">
-                      <label class="form-label">Senha Atual</label>
-                      <input type="password" class="form-control" id="current_password" placeholder="Digite sua senha atual">
-                      <small class="text-light">Necessário para confirmar alterações de segurança</small>
-                    </div>
-                  </div>
-                  <div class="col-12">
-                    <div class="d-flex align-items-center mb-3">
-                      <input type="checkbox" class="form-check-input me-2" id="two_factor">
-                      <label class="form-check-label text-light">Ativar autenticação de dois fatores</label>
-                    </div>
-                    <div class="d-flex align-items-center">
-                      <input type="checkbox" class="form-check-input me-2" id="login_notifications">
-                      <label class="form-check-label text-light">Notificar sobre novos logins</label>
-                    </div>
-                  </div>
-                </div>
-                <div class="d-flex justify-content-end gap-2 mt-4">
-                  <button type="button" class="btn btn-outline-light">Cancelar</button>
-                  <button type="button" class="btn btn-primary">Atualizar Segurança</button>
-                </div>
+              <div class="col-md-6 mb-3">
+                <label class="profile-form-label">Email <span class="text-danger">*</span></label>
+                <input type="email" class="form-control profile-form-control" id="email" name="email" value="{{ user.email }}" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="profile-form-label">Primeiro Nome</label>
+                <input type="text" class="form-control profile-form-control" id="first_name" name="first_name" value="{{ user.first_name }}" placeholder="Digite seu primeiro nome">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="profile-form-label">Sobrenome</label>
+                <input type="text" class="form-control profile-form-control" id="last_name" name="last_name" value="{{ user.last_name }}" placeholder="Digite seu sobrenome">
               </div>
             </div>
 
-            <!-- Notifications Section -->
-            <div class="collapsible-section">
-              <div class="collapsible-header" onclick="toggleSection('notifications')">
-                <h5 class="section-title mb-0">
-                  <i class="material-symbols-rounded me-2">notifications</i>
-                  Configurações de Notificações
-                  <i class="material-symbols-rounded float-end">expand_more</i>
-                </h5>
+            <div class="subsection-label mt-3">
+              <i class="material-symbols-rounded">call</i>
+              Contato
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="profile-form-label">Telefone Principal</label>
+                <input type="tel" class="form-control profile-form-control" id="telefone" name="telefone" value="{{ perfil.telefone }}" placeholder="(XX) XXXXX-XXXX">
               </div>
-              <div class="collapsible-content" id="notifications-content">
-                <div class="row">
-                  <div class="col-md-6">
-                    <h6 class="text-light mb-3">Notificações por Email</h6>
-                    <div class="mb-2">
-                      <input type="checkbox" class="form-check-input me-2" id="email_new_tickets" checked>
-                      <label class="form-check-label text-light">Novos tickets</label>
-                    </div>
-                    <div class="mb-2">
-                      <input type="checkbox" class="form-check-input me-2" id="email_status_updates" checked>
-                      <label class="form-check-label text-light">Atualizações de status</label>
-                    </div>
-                    <div class="mb-2">
-                      <input type="checkbox" class="form-check-input me-2" id="email_messages">
-                      <label class="form-check-label text-light">Novas mensagens</label>
-                    </div>
-                    <div class="mb-2">
-                      <input type="checkbox" class="form-check-input me-2" id="email_reports">
-                      <label class="form-check-label text-light">Relatórios semanais</label>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <h6 class="text-light mb-3">Notificações Push</h6>
-                    <div class="mb-2">
-                      <input type="checkbox" class="form-check-input me-2" id="push_urgent" checked>
-                      <label class="form-check-label text-light">Tickets urgentes</label>
-                    </div>
-                    <div class="mb-2">
-                      <input type="checkbox" class="form-check-input me-2" id="push_assignments" checked>
-                      <label class="form-check-label text-light">Atribuições</label>
-                    </div>
-                    <div class="mb-2">
-                      <input type="checkbox" class="form-check-input me-2" id="push_mentions">
-                      <label class="form-check-label text-light">Menções (@você)</label>
-                    </div>
-                  </div>
-                </div>
-                <div class="d-flex justify-content-end gap-2 mt-4">
-                  <button type="button" class="btn btn-outline-light">Cancelar</button>
-                  <button type="button" class="btn btn-primary">Salvar Notificações</button>
-                </div>
+              <div class="col-md-6 mb-3">
+                <label class="profile-form-label">Telefone Alternativo</label>
+                <input type="tel" class="form-control profile-form-control" id="telefone_alternativo" name="telefone_alternativo" value="{{ perfil.telefone_alternativo }}" placeholder="(XX) XXXXX-XXXX">
               </div>
             </div>
 
-            <!-- Activity History Section -->
-            <div class="collapsible-section">
-              <div class="collapsible-header" onclick="toggleSection('activity')">
-                <h5 class="section-title mb-0">
-                  <i class="material-symbols-rounded me-2">history</i>
-                  Histórico de Atividades
-                  <i class="material-symbols-rounded float-end">expand_more</i>
-                </h5>
+            <div class="subsection-label mt-3">
+              <i class="material-symbols-rounded">location_on</i>
+              Endereço
+            </div>
+            <div class="row">
+              <div class="col-md-8 mb-3">
+                <label class="profile-form-label">Endereço</label>
+                <input type="text" class="form-control profile-form-control" id="endereco" name="endereco" value="{{ perfil.endereco }}" placeholder="Rua, Número, Bairro">
               </div>
-              <div class="collapsible-content" id="activity-content">
-                <div class="activity-timeline">
-                  <div class="timeline-item">
-                    <div class="timeline-marker bg-success"></div>
-                    <div class="timeline-content">
-                      <h6 class="text-light mb-1">Login realizado</h6>
-                      <p class="text-light mb-1 small">IP: 192.168.1.100 • Navegador: Chrome</p>
-                      <small class="text-muted">Há 2 horas</small>
-                    </div>
-                  </div>
-                  <div class="timeline-item">
-                    <div class="timeline-marker bg-info"></div>
-                    <div class="timeline-content">
-                      <h6 class="text-light mb-1">Perfil atualizado</h6>
-                      <p class="text-light mb-1 small">Alterações em informações pessoais</p>
-                      <small class="text-muted">Hoje, 14:30</small>
-                    </div>
-                  </div>
-                  <div class="timeline-item">
-                    <div class="timeline-marker bg-warning"></div>
-                    <div class="timeline-content">
-                      <h6 class="text-light mb-1">Ticket #1234 criado</h6>
-                      <p class="text-light mb-1 small">Problema com sistema de pagamento</p>
-                      <small class="text-muted">Ontem, 16:45</small>
-                    </div>
-                  </div>
-                  <div class="timeline-item">
-                    <div class="timeline-marker bg-primary"></div>
-                    <div class="timeline-content">
-                      <h6 class="text-light mb-1">Senha alterada</h6>
-                      <p class="text-light mb-1 small">Alteração de segurança realizada</p>
-                      <small class="text-muted">3 dias atrás</small>
-                    </div>
-                  </div>
-                </div>
-                <div class="text-center mt-4">
-                  <button type="button" class="btn btn-outline-light">Ver Histórico Completo</button>
-                </div>
+              <div class="col-md-4 mb-3">
+                <label class="profile-form-label">CEP</label>
+                <input type="text" class="form-control profile-form-control" id="cep" name="cep" value="{{ perfil.cep }}" placeholder="XXXXX-XXX" maxlength="9">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="profile-form-label">Cidade</label>
+                <input type="text" class="form-control profile-form-control" id="cidade" name="cidade" value="{{ perfil.cidade }}" placeholder="Nome da cidade">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="profile-form-label">Estado</label>
+                <input type="text" class="form-control profile-form-control" id="estado" name="estado" value="{{ perfil.estado }}" placeholder="UF" maxlength="2">
               </div>
             </div>
 
-            <!-- System Info Section -->
-            <div class="collapsible-section">
-              <div class="collapsible-header" onclick="toggleSection('system')">
-                <h5 class="section-title mb-0">
-                  <i class="material-symbols-rounded me-2">info</i>
-                  Informações do Sistema
-                  <i class="material-symbols-rounded float-end">expand_more</i>
-                </h5>
-              </div>
-              <div class="collapsible-content" id="system-content">
-                <div class="row">
-                  <div class="col-md-6">
-                    <div class="info-card">
-                      <h6 class="text-light mb-2">Conta Criada</h6>
-                      <p class="text-light">{{ user.date_joined|date:"d/m/Y H:i" }}</p>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="info-card">
-                      <h6 class="text-light mb-2">Último Login</h6>
-                      <p class="text-light">{{ user.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</p>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="info-card">
-                      <h6 class="text-light mb-2">Permissões</h6>
-                      <p class="text-light">
-                        {% if user.is_superuser %}
-                          <span class="badge bg-danger">Administrador</span>
-                        {% elif user.is_staff %}
-                          <span class="badge bg-warning">Staff</span>
-                        {% else %}
-                          <span class="badge bg-info">Usuário</span>
-                        {% endif %}
-                      </p>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="info-card">
-                      <h6 class="text-light mb-2">Status da Conta</h6>
-                      <p class="text-light">
-                        {% if user.is_active %}
-                          <span class="badge bg-success">Ativa</span>
-                        {% else %}
-                          <span class="badge bg-danger">Inativa</span>
-                        {% endif %}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+            <div class="subsection-label mt-3">
+              <i class="material-symbols-rounded">description</i>
+              Sobre
+            </div>
+            <div class="row">
+              <div class="col-12 mb-3">
+                <label class="profile-form-label">Bio</label>
+                <textarea class="form-control profile-form-control" id="bio" name="bio" rows="3" placeholder="Conte um pouco sobre você...">{{ perfil.bio }}</textarea>
               </div>
             </div>
-          </form>
+
+            <div class="d-flex justify-content-end gap-2 mt-2">
+              <button type="button" class="btn btn-outline-secondary btn-sm btn-cancel">Cancelar</button>
+              <button type="submit" class="btn btn-sm" style="background: linear-gradient(135deg, #06b6d4, #0891b2); color: #fff;">
+                <i class="material-symbols-rounded me-1" style="font-size: 16px; vertical-align: middle;">save</i>
+                Salvar Alterações
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+
+        <!-- Informações Profissionais -->
+        <div class="collapsible-section">
+          <div class="collapsible-header" onclick="toggleSection('professional')">
+            <h5 class="section-title">
+              <i class="material-symbols-rounded me-2" style="vertical-align: middle; font-size: 20px;">work</i>
+              Informações Profissionais
+              <i class="material-symbols-rounded float-end" style="font-size: 20px;">expand_more</i>
+            </h5>
+          </div>
+          <div class="collapsible-content" id="professional-content">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="profile-form-label">Cargo</label>
+                <input type="text" class="form-control profile-form-control" id="cargo" name="cargo" value="{{ perfil.cargo }}" placeholder="Ex: Analista de Suporte">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="profile-form-label">Departamento</label>
+                <select class="form-control profile-form-control" id="departamento" name="departamento">
+                  <option value="">Selecione...</option>
+                  <option value="TI" {% if perfil.departamento == 'TI' %}selected{% endif %}>Tecnologia da Informação</option>
+                  <option value="SUP" {% if perfil.departamento == 'SUP' %}selected{% endif %}>Suporte</option>
+                  <option value="RH" {% if perfil.departamento == 'RH' %}selected{% endif %}>Recursos Humanos</option>
+                  <option value="FIN" {% if perfil.departamento == 'FIN' %}selected{% endif %}>Financeiro</option>
+                  <option value="OPS" {% if perfil.departamento == 'OPS' %}selected{% endif %}>Operações</option>
+                  <option value="COM" {% if perfil.departamento == 'COM' %}selected{% endif %}>Comercial</option>
+                </select>
+              </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-2">
+              <button type="submit" class="btn btn-sm" style="background: linear-gradient(135deg, #06b6d4, #0891b2); color: #fff;">
+                <i class="material-symbols-rounded me-1" style="font-size: 16px; vertical-align: middle;">save</i>
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Segurança -->
+        <div class="collapsible-section">
+          <div class="collapsible-header" onclick="toggleSection('security')">
+            <h5 class="section-title">
+              <i class="material-symbols-rounded me-2" style="vertical-align: middle; font-size: 20px;">security</i>
+              Segurança & Privacidade
+              <i class="material-symbols-rounded float-end" style="font-size: 20px;">expand_more</i>
+            </h5>
+          </div>
+          <div class="collapsible-content" id="security-content">
+            <div class="subsection-label">
+              <i class="material-symbols-rounded">lock</i>
+              Alterar Senha
+            </div>
+            <div class="row">
+              <div class="col-12 mb-3">
+                <label class="profile-form-label">Senha Atual <span class="text-danger">*</span></label>
+                <input type="password" class="form-control profile-form-control" name="current_password" id="current_password" placeholder="Digite sua senha atual" autocomplete="current-password">
+                <small class="text-muted">Necessario para confirmar alteracoes de seguranca</small>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="profile-form-label">Nova Senha</label>
+                <input type="password" class="form-control profile-form-control" name="new_password" id="new_password" placeholder="Digite sua nova senha" autocomplete="new-password">
+                <div class="password-strength mt-1">
+                  <div class="password-strength-bar" id="pwd-strength-bar"></div>
+                </div>
+                <small class="text-muted" id="pwd-strength-text"></small>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="profile-form-label">Confirmar Nova Senha</label>
+                <input type="password" class="form-control profile-form-control" name="confirm_password" id="confirm_password" placeholder="Confirme sua nova senha" autocomplete="new-password">
+                <small class="text-danger d-none" id="pwd-match-error">As senhas nao coincidem</small>
+              </div>
+            </div>
+
+            <div class="subsection-label mt-3">
+              <i class="material-symbols-rounded">verified_user</i>
+              Opcoes de Seguranca
+            </div>
+            <div class="row">
+              <div class="col-12">
+                <div class="info-card mb-2" style="cursor: default;">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                      <i class="material-symbols-rounded" style="font-size: 24px; color: #06b6d4;">smartphone</i>
+                      <div>
+                        <p class="mb-0" style="font-weight: 600;">Autenticacao de dois fatores (2FA)</p>
+                        <small class="text-muted">Adicione uma camada extra de seguranca a sua conta</small>
+                      </div>
+                    </div>
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="two_factor" style="width: 40px; height: 20px;">
+                    </div>
+                  </div>
+                </div>
+                <div class="info-card" style="cursor: default;">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                      <i class="material-symbols-rounded" style="font-size: 24px; color: #06b6d4;">notifications_active</i>
+                      <div>
+                        <p class="mb-0" style="font-weight: 600;">Notificar sobre novos logins</p>
+                        <small class="text-muted">Receba um alerta quando sua conta for acessada de um novo dispositivo</small>
+                      </div>
+                    </div>
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="login_notifications" style="width: 40px; height: 20px;">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-3">
+              <button type="button" class="btn btn-outline-secondary btn-sm">Cancelar</button>
+              <button type="submit" name="action" value="change_password" class="btn btn-sm" style="background: linear-gradient(135deg, #06b6d4, #0891b2); color: #fff;">
+                <i class="material-symbols-rounded me-1" style="font-size: 16px; vertical-align: middle;">shield</i>
+                Atualizar Seguranca
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notificações -->
+        <div class="collapsible-section">
+          <div class="collapsible-header" onclick="toggleSection('notifications')">
+            <h5 class="section-title">
+              <i class="material-symbols-rounded me-2" style="vertical-align: middle; font-size: 20px;">notifications</i>
+              Configuracoes de Notificacoes
+              <i class="material-symbols-rounded float-end" style="font-size: 20px;">expand_more</i>
+            </h5>
+          </div>
+          <div class="collapsible-content" id="notifications-content">
+            <div class="row">
+              <div class="col-md-6 mb-4">
+                <div class="subsection-label">
+                  <i class="material-symbols-rounded">mail</i>
+                  Notificacoes por Email
+                </div>
+                <div class="info-card mb-2" style="cursor: default;">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                      <p class="mb-0 text-sm" style="font-weight: 600;">Novos tickets</p>
+                      <small class="text-muted">Receba quando um novo ticket for criado</small>
+                    </div>
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="email_new_tickets" checked style="width: 40px; height: 20px;">
+                    </div>
+                  </div>
+                </div>
+                <div class="info-card mb-2" style="cursor: default;">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                      <p class="mb-0 text-sm" style="font-weight: 600;">Atualizacoes de status</p>
+                      <small class="text-muted">Notificar sobre mudancas de status</small>
+                    </div>
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="email_status_updates" checked style="width: 40px; height: 20px;">
+                    </div>
+                  </div>
+                </div>
+                <div class="info-card mb-2" style="cursor: default;">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                      <p class="mb-0 text-sm" style="font-weight: 600;">Novas mensagens</p>
+                      <small class="text-muted">Notificar sobre novas interacoes</small>
+                    </div>
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="email_messages" style="width: 40px; height: 20px;">
+                    </div>
+                  </div>
+                </div>
+                <div class="info-card" style="cursor: default;">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                      <p class="mb-0 text-sm" style="font-weight: 600;">Relatorios semanais</p>
+                      <small class="text-muted">Resumo semanal de atividades</small>
+                    </div>
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="email_reports" style="width: 40px; height: 20px;">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6 mb-4">
+                <div class="subsection-label">
+                  <i class="material-symbols-rounded">phone_android</i>
+                  Notificacoes Push
+                </div>
+                <div class="info-card mb-2" style="cursor: default;">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                      <p class="mb-0 text-sm" style="font-weight: 600;">Tickets urgentes</p>
+                      <small class="text-muted">Alertas para prioridade critica</small>
+                    </div>
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="push_urgent" checked style="width: 40px; height: 20px;">
+                    </div>
+                  </div>
+                </div>
+                <div class="info-card mb-2" style="cursor: default;">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                      <p class="mb-0 text-sm" style="font-weight: 600;">Atribuicoes</p>
+                      <small class="text-muted">Quando um ticket for atribuido a voce</small>
+                    </div>
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="push_assignments" checked style="width: 40px; height: 20px;">
+                    </div>
+                  </div>
+                </div>
+                <div class="info-card" style="cursor: default;">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                      <p class="mb-0 text-sm" style="font-weight: 600;">Mencoes (@voce)</p>
+                      <small class="text-muted">Quando alguem mencionar voce</small>
+                    </div>
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="push_mentions" style="width: 40px; height: 20px;">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-2">
+              <button type="button" class="btn btn-outline-secondary btn-sm">Cancelar</button>
+              <button type="button" class="btn btn-sm" style="background: linear-gradient(135deg, #06b6d4, #0891b2); color: #fff;" onclick="if(typeof showToastMessage==='function'){showToastMessage('Preferencias de notificacao salvas!','success');}">
+                <i class="material-symbols-rounded me-1" style="font-size: 16px; vertical-align: middle;">save</i>
+                Salvar Notificacoes
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Histórico de Atividades -->
+        <div class="collapsible-section">
+          <div class="collapsible-header" onclick="toggleSection('activity')">
+            <h5 class="section-title">
+              <i class="material-symbols-rounded me-2" style="vertical-align: middle; font-size: 20px;">history</i>
+              Histórico de Atividades
+              <i class="material-symbols-rounded float-end" style="font-size: 20px;">expand_more</i>
+            </h5>
+          </div>
+          <div class="collapsible-content" id="activity-content">
+            {% if recent_activities %}
+              <div class="activity-timeline">
+                {% for activity in recent_activities %}
+                <div class="timeline-item">
+                  <div class="timeline-marker bg-{{ activity.color|default:'primary' }}"></div>
+                  <div class="timeline-content">
+                    <h6>{{ activity.title }}</h6>
+                    <p>{{ activity.description }}</p>
+                    <small>{{ activity.created_at|timesince }} atrás</small>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center py-3">
+                <i class="material-symbols-rounded text-muted" style="font-size: 48px;">history</i>
+                <p class="text-muted mt-2 mb-0">Nenhuma atividade recente registrada.</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Informações do Sistema -->
+        <div class="collapsible-section">
+          <div class="collapsible-header" onclick="toggleSection('system')">
+            <h5 class="section-title">
+              <i class="material-symbols-rounded me-2" style="vertical-align: middle; font-size: 20px;">info</i>
+              Informações do Sistema
+              <i class="material-symbols-rounded float-end" style="font-size: 20px;">expand_more</i>
+            </h5>
+          </div>
+          <div class="collapsible-content" id="system-content">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="info-card">
+                  <h6>Conta Criada</h6>
+                  <p>{{ user.date_joined|date:"d/m/Y H:i" }}</p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="info-card">
+                  <h6>Último Login</h6>
+                  <p>{{ user.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="info-card">
+                  <h6>Permissões</h6>
+                  <p>
+                    {% if user.is_superuser %}
+                      <span class="badge bg-gradient-danger">Administrador</span>
+                    {% elif user.is_staff %}
+                      <span class="badge bg-gradient-warning">Staff</span>
+                    {% else %}
+                      <span class="badge bg-gradient-info">Usuário</span>
+                    {% endif %}
+                  </p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="info-card">
+                  <h6>Status da Conta</h6>
+                  <p>
+                    {% if user.is_active %}
+                      <span class="badge bg-gradient-success">Ativa</span>
+                    {% else %}
+                      <span class="badge bg-gradient-danger">Inativa</span>
+                    {% endif %}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
     </div>
-  </div>
-  
-  <!-- Quick Actions Floating Buttons -->
-  <div class="quick-actions">
-    <button class="quick-action-btn" data-tooltip="Exportar dados" onclick="exportUserData()">
-      <i class="material-symbols-rounded">download</i>
-    </button>
-    <button class="quick-action-btn" data-tooltip="Suporte" onclick="openSupport()">
-      <i class="material-symbols-rounded">help</i>
-    </button>
-    <button class="quick-action-btn" data-tooltip="Voltar ao topo" onclick="scrollToTop()">
-      <i class="material-symbols-rounded">keyboard_arrow_up</i>
-    </button>
   </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-  // Enhanced animations for progress ring
-  document.addEventListener('DOMContentLoaded', function() {
-    const progress = document.querySelector('.progress-ring circle');
-    const radius = progress.r.baseVal.value;
-    const circumference = radius * 2 * Math.PI;
-    
-    progress.style.strokeDasharray = `${circumference} ${circumference}`;
-    progress.style.strokeDashoffset = circumference;
-    
-    function setProgress(percent) {
-      const offset = circumference - percent / 100 * circumference;
-      progress.style.strokeDashoffset = offset;
-    }
-    
-    // Animate to 85% complete with delay
-    setTimeout(() => setProgress(85), 800);
-    
-    // Add entrance animations to cards
-    const cards = document.querySelectorAll('.stats-card');
-    cards.forEach((card, index) => {
-      card.style.animationDelay = `${index * 0.1}s`;
-    });
-    
-    // Parallax effect on scroll (if needed)
-    window.addEventListener('scroll', function() {
-      const scrolled = window.pageYOffset;
-      const parallax = document.querySelector('.profile-header::after');
-      if (parallax) {
-        const speed = scrolled * 0.5;
-        parallax.style.transform = `translateY(${speed}px)`;
-      }
-    });
-  });
-
-  // Form validation
-  document.getElementById('profile-form').addEventListener('submit', function(e) {
-    const requiredFields = ['first_name', 'last_name', 'email'];
-    let valid = true;
-    
-    requiredFields.forEach(field => {
-      const input = document.getElementById(field);
-      if (!input.value.trim()) {
-        valid = false;
-        input.classList.add('is-invalid');
-      } else {
-        input.classList.remove('is-invalid');
-      }
-    });
-    
-    if (!valid) {
-      e.preventDefault();
-      alert('Por favor, preencha todos os campos obrigatórios.');
-    }
-  });
-
-  // Avatar preview
-  document.getElementById('avatar').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        document.querySelector('.profile-avatar img').src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-  });
-
-  // Cancel button
-  document.querySelector('.btn-cancel').addEventListener('click', function() {
-    if (confirm('Descartar alterações?')) {
-      location.reload();
-    }
-  });
-
-  // Enhanced toggle collapsible sections
-  function toggleSection(sectionId) {
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle collapsible sections
+  window.toggleSection = function(sectionId) {
     const content = document.getElementById(sectionId + '-content');
-    const header = content.previousElementSibling.querySelector('i.float-end');
-    const section = content.closest('.collapsible-section');
-    
+    const header = content.previousElementSibling;
+    const icon = header.querySelector('.float-end');
+
     if (content.classList.contains('active')) {
       content.classList.remove('active');
-      header.style.transform = 'rotate(0deg)';
-      section.style.borderColor = 'rgba(255, 255, 255, 0.25)';
+      icon.textContent = 'expand_more';
     } else {
       content.classList.add('active');
-      header.style.transform = 'rotate(180deg)';
-      section.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+      icon.textContent = 'expand_less';
     }
-    
-    // Add ripple effect to header
-    const headerElement = content.previousElementSibling;
-    headerElement.style.background = 'rgba(55, 65, 81, 0.5)';
-    setTimeout(() => {
-      headerElement.style.background = 'rgba(55, 65, 81, 0.3)';
-    }, 200);
-  }
+  };
 
-  // Enhanced notification system
-  function showNotification(message, type = 'success') {
-    const notification = document.getElementById('notification');
-    const text = document.getElementById('notification-text');
-    const icon = notification.querySelector('i');
-    
-    text.textContent = message;
-    
-    // Change icon based on type
-    if (type === 'success') {
-      icon.textContent = 'check_circle';
-      notification.style.background = 'linear-gradient(135deg, #374151, #1f2937)';
-    } else if (type === 'error') {
-      icon.textContent = 'error';
-      notification.style.background = 'linear-gradient(135deg, #ff6b6b, #ee5a52)';
-    }
-    
-    notification.classList.add('show');
-    setTimeout(() => {
-      notification.classList.remove('show');
-    }, 4000);
+  // Cancel buttons — reload page
+  document.querySelectorAll('.btn-cancel, .collapsible-content .btn-outline-secondary').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      if (confirm('Descartar alteracoes?')) {
+        location.reload();
+      }
+    });
+  });
+
+  // Avatar upload preview
+  const avatarUpload = document.getElementById('avatar-upload');
+  if (avatarUpload) {
+    avatarUpload.addEventListener('change', function(e) {
+      if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+
+        // Validar tamanho (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          if (typeof showToastMessage === 'function') {
+            showToastMessage('Imagem muito grande. Maximo 5MB.', 'danger');
+          }
+          e.target.value = '';
+          return;
+        }
+
+        // Validar tipo
+        if (!file.type.startsWith('image/')) {
+          if (typeof showToastMessage === 'function') {
+            showToastMessage('Selecione apenas arquivos de imagem.', 'danger');
+          }
+          e.target.value = '';
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          const avatar = document.querySelector('.profile-avatar');
+          avatar.innerHTML = '<img src="' + ev.target.result + '" alt="Preview">' +
+            '<div class="avatar-upload-icon"><i class="material-symbols-rounded" style="font-size:14px;">camera_alt</i></div>';
+          // Auto-submit form
+          if (typeof showToastMessage === 'function') {
+            showToastMessage('Foto selecionada. Clique em "Salvar Alteracoes" para confirmar.', 'info');
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    });
   }
 
   // Password strength checker
-  function checkPasswordStrength(password) {
-    let strength = 0;
-    const checks = {
-      length: password.length >= 8,
-      lowercase: /[a-z]/.test(password),
-      uppercase: /[A-Z]/.test(password),
-      numbers: /\d/.test(password),
-      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
-    };
-    
-    strength = Object.values(checks).filter(Boolean).length;
-    
-    const strengthBar = document.createElement('div');
-    strengthBar.className = 'password-strength-bar';
-    
-    if (strength < 2) {
-      strengthBar.classList.add('strength-weak');
-    } else if (strength < 4) {
-      strengthBar.classList.add('strength-medium');
-    } else if (strength < 5) {
-      strengthBar.classList.add('strength-good');
-    } else {
-      strengthBar.classList.add('strength-strong');
-    }
-    
-    return { strength, element: strengthBar };
-  }
+  const newPasswordInput = document.getElementById('new_password');
+  const confirmInput = document.getElementById('confirm_password');
+  const strengthBar = document.getElementById('pwd-strength-bar');
+  const strengthText = document.getElementById('pwd-strength-text');
+  const matchError = document.getElementById('pwd-match-error');
 
-  // Add password strength indicator
-  document.getElementById('new_password')?.addEventListener('input', function(e) {
-    const password = e.target.value;
-    let strengthContainer = document.querySelector('.password-strength');
-    
-    if (!strengthContainer) {
-      strengthContainer = document.createElement('div');
-      strengthContainer.className = 'password-strength';
-      e.target.parentNode.appendChild(strengthContainer);
-    }
-    
-    strengthContainer.innerHTML = '';
-    if (password.length > 0) {
-      const { element } = checkPasswordStrength(password);
-      strengthContainer.appendChild(element);
-    }
-  });
+  if (newPasswordInput && strengthBar) {
+    newPasswordInput.addEventListener('input', function() {
+      const password = this.value;
+      strengthBar.className = 'password-strength-bar';
+      strengthText.textContent = '';
 
-  // Form validation for security section
-  function validatePasswordChange() {
-    const newPassword = document.getElementById('new_password').value;
-    const confirmPassword = document.getElementById('confirm_password').value;
-    const currentPassword = document.getElementById('current_password').value;
-    
-    if (!currentPassword) {
-      showNotification('Digite sua senha atual para confirmar', 'error');
-      return false;
-    }
-    
-    if (newPassword !== confirmPassword) {
-      showNotification('As senhas não coincidem', 'error');
-      return false;
-    }
-    
-    if (newPassword.length < 8) {
-      showNotification('A nova senha deve ter pelo menos 8 caracteres', 'error');
-      return false;
-    }
-    
-    return true;
-  }
+      if (password.length === 0) {
+        strengthBar.style.width = '0';
+        return;
+      }
 
-  // Auto-save for notifications
-  document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-    checkbox.addEventListener('change', function() {
-      const setting = this.id;
-      const enabled = this.checked;
-      
-      // Simulate API call
-      setTimeout(() => {
-        showNotification(`Configuração "${this.nextElementSibling.textContent}" ${enabled ? 'ativada' : 'desativada'}`, 'success');
-      }, 300);
-    });
-  });
+      let strength = 0;
+      if (password.length >= 8) strength++;
+      if (password.length >= 12) strength++;
+      if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+      if (/\d/.test(password)) strength++;
+      if (/[^a-zA-Z\d]/.test(password)) strength++;
 
-  // Real-time clock for last activity
-  function updateLastActivity() {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString('pt-BR');
-    const elements = document.querySelectorAll('.last-activity');
-    elements.forEach(el => {
-      el.textContent = `Última atividade: ${timeString}`;
+      const levels = [
+        { cls: 'strength-weak', text: 'Fraca', w: '25%' },
+        { cls: 'strength-weak', text: 'Fraca', w: '25%' },
+        { cls: 'strength-medium', text: 'Razoavel', w: '50%' },
+        { cls: 'strength-good', text: 'Boa', w: '75%' },
+        { cls: 'strength-strong', text: 'Forte', w: '100%' },
+        { cls: 'strength-strong', text: 'Muito forte', w: '100%' }
+      ];
+
+      const level = levels[Math.min(strength, 5)];
+      strengthBar.classList.add(level.cls);
+      strengthBar.style.width = level.w;
+      strengthText.textContent = level.text;
     });
   }
 
-  // Update every minute
-  setInterval(updateLastActivity, 60000);
-
-  // Add loading states to buttons
-  function addLoadingState(button, text = 'Carregando...') {
-    button.innerHTML = `
-      <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-      ${text}
-    `;
-    button.disabled = true;
-  }
-
-  function removeLoadingState(button, originalText) {
-    button.innerHTML = originalText;
-    button.disabled = false;
-  }
-
-  // Quick actions functions
-  function exportUserData() {
-    showNotification('Preparando exportação de dados...', 'info');
-    // Simulate API call
-    setTimeout(() => {
-      showNotification('Dados exportados com sucesso!', 'success');
-    }, 2000);
-  }
-
-  function openSupport() {
-    window.open('/support', '_blank');
-  }
-
-  function scrollToTop() {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
+  // Password match validation
+  if (confirmInput && matchError) {
+    confirmInput.addEventListener('input', function() {
+      if (this.value && newPasswordInput.value !== this.value) {
+        matchError.classList.remove('d-none');
+        this.classList.add('is-invalid');
+      } else {
+        matchError.classList.add('d-none');
+        this.classList.remove('is-invalid');
+      }
     });
   }
 
-  // Initialize all components on page load
-  document.addEventListener('DOMContentLoaded', function() {
-    // Show welcome message after animations
-    setTimeout(() => {
-      showNotification('Bem-vindo ao seu perfil!', 'success');
-    }, 1500);
+  // Form validation
+  const form = document.getElementById('profile-form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      const email = document.getElementById('email');
+      if (email && !email.value.trim()) {
+        e.preventDefault();
+        email.classList.add('is-invalid');
+        if (typeof showToastMessage === 'function') {
+          showToastMessage('O campo email e obrigatorio.', 'danger');
+        }
+        return;
+      }
+
+      // Se for troca de senha, validar campos
+      const submitBtn = e.submitter;
+      if (submitBtn && submitBtn.value === 'change_password') {
+        const newPwd = document.getElementById('new_password').value;
+        const confirmPwd = document.getElementById('confirm_password').value;
+        const currentPwd = document.getElementById('current_password').value;
+
+        if (!currentPwd) {
+          e.preventDefault();
+          if (typeof showToastMessage === 'function') {
+            showToastMessage('Informe sua senha atual.', 'danger');
+          }
+          return;
+        }
+
+        if (newPwd && newPwd !== confirmPwd) {
+          e.preventDefault();
+          if (typeof showToastMessage === 'function') {
+            showToastMessage('As senhas nao coincidem.', 'danger');
+          }
+          return;
+        }
+
+        if (newPwd && newPwd.length < 8) {
+          e.preventDefault();
+          if (typeof showToastMessage === 'function') {
+            showToastMessage('A senha deve ter pelo menos 8 caracteres.', 'danger');
+          }
+          return;
+        }
+      }
+    });
+  }
+
+  // CEP mask
+  const cepInput = document.getElementById('cep');
+  if (cepInput) {
+    cepInput.addEventListener('input', function() {
+      let v = this.value.replace(/\D/g, '');
+      if (v.length > 5) v = v.slice(0,5) + '-' + v.slice(5,8);
+      this.value = v;
+    });
+  }
+
+  // Phone mask
+  document.querySelectorAll('input[type="tel"]').forEach(function(input) {
+    input.addEventListener('input', function() {
+      let v = this.value.replace(/\D/g, '');
+      if (v.length > 11) v = v.slice(0, 11);
+      if (v.length > 6) {
+        v = '(' + v.slice(0,2) + ') ' + v.slice(2,7) + '-' + v.slice(7);
+      } else if (v.length > 2) {
+        v = '(' + v.slice(0,2) + ') ' + v.slice(2);
+      } else if (v.length > 0) {
+        v = '(' + v;
+      }
+      this.value = v;
+    });
   });
+});
 </script>
-</div>
-
 {% endblock %}

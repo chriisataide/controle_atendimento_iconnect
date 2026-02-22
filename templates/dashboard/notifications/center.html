@@ -2,6 +2,9 @@
 
 {% block title %}Notification Center - iConnect{% endblock %}
 
+{% block page_title %}Central de Notificações{% endblock %}
+{% block breadcrumb_title %}Central de Notificações{% endblock %}
+
 {% block extra_css %}
 <style>
 .notification-card {
@@ -439,12 +442,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Inicializar WebSocket (simulado)
     function initWebSocket() {
-        console.log('🔄 Conectando ao WebSocket de notificações...');
-        
         // Simular conexão WebSocket
         setTimeout(() => {
-            console.log('✅ Conectado ao sistema de notificações em tempo real');
-            
             // Simular nova notificação a cada 30 segundos
             setInterval(() => {
                 if (Math.random() > 0.7) {
@@ -657,7 +656,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMcBjuL0e/SeSwCJnrJ8OuVRwoUXrPo6qxYFAlFnt7wvGIcBzuL0e7QdysEKn3M8+uTRQkUXbPn6KlWEwxHoN/zsGEcCDKN0u7OeSYCJnzK8OmVRgsWYLDk66ZUEgxIot7xwGNeBjSM0O7LfCwHL3nE8+WQQQoUX7Xn6qRUEQxIpN7wxWNeBDKM0+3Ldl0DLHzH8+eSQQoTYLLl6aVUEwxIot7yuGNfBTCM0+/NeSsFLHzH8+eSQQsUXbPn6KdVEQxIpN7ww2NeBjKM0O7LfCwHL3nE8+WQQAoUX7Xn6qRUEgxHn93ztGdaBzKM0O7LfCwHL3nE8+WQQAoUX7Xn6qRUEgxHn93ztGdaBzKM0O7LfCwHL3nE8+WQQAoUX7Xn6qRUEgxHn93ztGdaBzKM0O7LfCwHL3nE8+WQQAoUX7Xn6qRUEgxHn93ztGdaBzKM0O7LfCwHL3nE8+WQQAoUX7Xn6qRUEgxHn93ztGdaBzKM0O7LfCwHL3nE8+WQQAoUX7Xn6qRUEgxHn93ztGdaBzKM0O7LfCwHL3nE8+WQQAoUX7Xn6qRUEgxHn93ztGdaBzKM0O7LfC');
             audio.play().catch(e => console.log('Som não pode ser reproduzido'));
         } catch (e) {
-            console.log('Som não suportado');
         }
     }
     

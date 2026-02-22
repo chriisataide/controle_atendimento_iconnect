@@ -30,6 +30,7 @@ def chatbot_interface(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@login_required
 def chatbot_api(request):
     """API principal do chatbot"""
     try:
@@ -70,6 +71,7 @@ def chatbot_api(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@login_required
 def chatbot_feedback(request):
     """API para feedback do chatbot"""
     try:

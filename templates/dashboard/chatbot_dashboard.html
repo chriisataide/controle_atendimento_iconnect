@@ -89,7 +89,7 @@
     padding: 1.5rem;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     text-align: center;
-    border-left: 4px solid #6366f1;
+    border-left: 4px solid #334155;
 }
 
 .analytics-number {
@@ -114,7 +114,7 @@
 .action-btn {
     display: inline-block;
     padding: 0.75rem 1.5rem;
-    background: #6366f1;
+    background: #334155;
     color: white;
     text-decoration: none;
     border-radius: 8px;
@@ -123,7 +123,7 @@
 }
 
 .action-btn:hover {
-    background: #4f46e5;
+    background: #1e293b;
     color: white;
     text-decoration: none;
     transform: translateY(-1px);
@@ -142,8 +142,8 @@
 
 .nav-tabs .nav-link.active {
     background: none;
-    border-bottom: 2px solid #6366f1;
-    color: #6366f1;
+    border-bottom: 2px solid #334155;
+    color: #334155;
 }
 
 .empty-state {
@@ -508,8 +508,6 @@ if (typeof Chart === 'undefined') {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Inicializando gráficos do dashboard do chatbot...');
-    
     // Aguardar um pouco para garantir que Chart.js foi carregado
     setTimeout(function() {
         initializeCharts();
@@ -567,7 +565,6 @@ function initializeCharts() {
                     }
                 }
             });
-            console.log('Gráfico de confiança criado com sucesso');
         } catch (error) {
             console.error('Erro ao criar gráfico de confiança:', error);
             showChartError('confidenceChart', 'Erro ao carregar gráfico de confiança');
@@ -591,12 +588,12 @@ function initializeCharts() {
                     datasets: [{
                         label: 'Mensagens por Hora',
                         data: hourlyData,
-                        borderColor: '#6366f1',
+                        borderColor: '#334155',
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
                         borderWidth: 3,
                         fill: true,
                         tension: 0.4,
-                        pointBackgroundColor: '#6366f1',
+                        pointBackgroundColor: '#334155',
                         pointBorderColor: '#ffffff',
                         pointBorderWidth: 2,
                         pointRadius: 5,
@@ -651,7 +648,7 @@ function initializeCharts() {
                             backgroundColor: 'rgba(0, 0, 0, 0.8)',
                             titleColor: 'white',
                             bodyColor: 'white',
-                            borderColor: '#6366f1',
+                            borderColor: '#334155',
                             borderWidth: 1,
                             callbacks: {
                                 title: function(context) {
@@ -665,7 +662,6 @@ function initializeCharts() {
                     }
                 }
             });
-            console.log('Gráfico de atividade criado com sucesso');
         } catch (error) {
             console.error('Erro ao criar gráfico de atividade:', error);
             showChartError('activityChart', 'Erro ao carregar gráfico de atividade');

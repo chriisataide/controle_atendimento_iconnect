@@ -7,974 +7,1023 @@
     <link rel="apple-touch-icon" sizes="76x76" href="{% static 'img/apple-icon.png' %}">
     <link rel="icon" type="image/png" href="{% static 'img/icodev-logo.png' %}">
     <title>iConnect - Sistema de Atendimento</title>
-    
-    <!-- Fonts and icons -->
-    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,900|Roboto+Slab:400,700" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
-    
-    <!-- CSS Files -->
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <!-- Material Dashboard CSS -->
     <link id="pagestyle" href="{% static 'css/material-dashboard.css' %}" rel="stylesheet">
-    
+
     <style>
-        /* Material Symbols Rounded fallback */
-        .material-symbols-rounded {
-            font-family: 'Material Symbols Rounded';
-            font-weight: normal;
-            font-style: normal;
-            font-size: 24px;
-            line-height: 1;
-            letter-spacing: normal;
-            text-transform: none;
-            display: inline-block;
-            white-space: nowrap;
-            word-wrap: normal;
-            direction: ltr;
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+        /* ===== Design Tokens (Slate + Cyan) ===== */
+        :root {
+            --primary: #334155;
+            --primary-dark: #1e293b;
+            --primary-light: #475569;
+            --accent: #06b6d4;
+            --accent-dark: #0891b2;
+            --accent-light: #22d3ee;
+            --surface: #ffffff;
+            --surface-dim: #f8fafc;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --success: #22c55e;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --info: #06b6d4;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+            --shadow-lg: 0 20px 50px rgba(0,0,0,0.12);
+            --shadow-xl: 0 25px 65px rgba(0,0,0,0.18);
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
-        /* Ícones SVG como fallback */
-        .icon-person::before { content: "👤"; }
-        .icon-lock::before { content: "🔒"; }
-        .icon-visibility::before { content: "👁️"; }
-        .icon-visibility-off::before { content: "🙈"; }
-        .icon-login::before { content: "🔑"; }
-        .icon-check::before { content: "✅"; }
-        .icon-error::before { content: "❌"; }
-        .icon-dark-mode::before { content: "🌙"; }
-        .icon-light-mode::before { content: "☀️"; }
-        
-        .bg-gradient-primary {
-            background: linear-gradient(135deg, #2E3192 0%, #ED3A5B 100%) !important;
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: var(--font);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ===== Layout Split ===== */
+        .login-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ===== Painel Esquerdo — Hero ===== */
+        .hero-panel {
+            flex: 1;
+            background: linear-gradient(195deg, #334155 0%, #1e293b 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 3rem 4rem;
             position: relative;
             overflow: hidden;
+            color: white;
         }
-        
-        .bg-gradient-primary::before {
+
+        .hero-panel::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image: 
-                radial-gradient(circle at 20% 80%, #ED3A5B33 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, #2E319233 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, #ED3A5B22 0%, transparent 50%);
-            animation: float 6s ease-in-out infinite;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 80%, rgba(6,182,212,0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(51,65,85,0.25) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.03) 0%, transparent 70%);
         }
-        
-        .particles {
+
+        /* Pattern de fundo sutil */
+        .hero-panel::after {
+            content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
+            inset: 0;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 480px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.12);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 50px;
+            padding: 6px 16px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            margin-bottom: 2rem;
+            color: rgba(255,255,255,0.9);
+        }
+        .hero-badge .pulse-dot {
+            width: 8px; height: 8px;
+            background: #34d399;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.3); }
+        }
+
+        .hero-title {
+            font-size: 2.8rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            letter-spacing: -0.5px;
+        }
+        .hero-title .accent {
+            background: linear-gradient(135deg, #06b6d4, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-description {
+            font-size: 1.05rem;
+            line-height: 1.7;
+            opacity: 0.8;
+            margin-bottom: 3rem;
+            font-weight: 400;
+        }
+
+        /* Stats */
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.55;
+            margin-top: 2px;
+        }
+
+        /* Feature pills */
+        .hero-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .feature-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 50px;
+            padding: 10px 18px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .feature-pill:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-2px);
+        }
+        .feature-pill i {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        /* Floating shapes */
+        .floating-shapes {
+            position: absolute;
+            inset: 0;
             pointer-events: none;
+            z-index: 1;
         }
-        
-        .particle {
+        .shape {
             position: absolute;
-            background: rgba(255, 255, 255, 0.1);
             border-radius: 50%;
-            animation: particleFloat 8s infinite linear;
+            background: rgba(255,255,255,0.04);
+            animation: float-shape linear infinite;
         }
-        
-        .particle:nth-child(1) { left: 10%; animation-delay: 0s; width: 4px; height: 4px; }
-        .particle:nth-child(2) { left: 20%; animation-delay: 1s; width: 6px; height: 6px; }
-        .particle:nth-child(3) { left: 30%; animation-delay: 2s; width: 3px; height: 3px; }
-        .particle:nth-child(4) { left: 40%; animation-delay: 3s; width: 5px; height: 5px; }
-        .particle:nth-child(5) { left: 50%; animation-delay: 4s; width: 4px; height: 4px; }
-        .particle:nth-child(6) { left: 60%; animation-delay: 5s; width: 7px; height: 7px; }
-        .particle:nth-child(7) { left: 70%; animation-delay: 6s; width: 3px; height: 3px; }
-        .particle:nth-child(8) { left: 80%; animation-delay: 7s; width: 5px; height: 5px; }
-        .particle:nth-child(9) { left: 90%; animation-delay: 0.5s; width: 4px; height: 4px; }
-        
-        @keyframes particleFloat {
-            0% { 
-                transform: translateY(100vh) rotate(0deg);
-                opacity: 0;
-            }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { 
-                transform: translateY(-100px) rotate(360deg);
-                opacity: 0;
-            }
+        .shape:nth-child(1) { width: 300px; height: 300px; top: -80px; right: -60px; animation-duration: 25s; }
+        .shape:nth-child(2) { width: 200px; height: 200px; bottom: -40px; left: -50px; animation-duration: 20s; animation-delay: 3s; }
+        .shape:nth-child(3) { width: 150px; height: 150px; top: 40%; right: 15%; animation-duration: 30s; animation-delay: 5s; }
+
+        @keyframes float-shape {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(20px, -20px) rotate(5deg); }
+            50% { transform: translate(-10px, 15px) rotate(-3deg); }
+            75% { transform: translate(15px, 10px) rotate(4deg); }
         }
-        
+
+        /* ===== Painel Direito — Form ===== */
+        .form-panel {
+            flex: 0 0 520px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2.5rem 3rem;
+            background: var(--surface);
+            position: relative;
+        }
+
+        .form-container {
+            width: 100%;
+            max-width: 380px;
+        }
+
+        /* Theme toggle */
         .theme-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--surface-dim);
+            border: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.3s ease;
-            z-index: 1000;
+            transition: all 0.25s;
+            color: var(--text-secondary);
+            font-size: 14px;
         }
-        
         .theme-toggle:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.1);
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            transform: scale(1.05);
         }
-        
-        .theme-toggle i {
-            color: #ED3A5B;
-            font-size: 20px;
-            transition: all 0.3s ease;
-        }
-        
-        /* Modo Escuro */
-        body.dark-mode {
-            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%) !important;
-        }
-        
-        body.dark-mode .bg-gradient-primary {
-            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%) !important;
-        }
-        
-        body.dark-mode .login-card {
-            background: rgba(30, 30, 50, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        body.dark-mode .login-card h3 {
-            color: #e5e7eb !important;
-        }
-        
-        body.dark-mode .login-card p {
-            color: #9ca3af !important;
-        }
-        
-        body.dark-mode .form-control {
-            background: rgba(30, 30, 50, 0.8);
-            border-color: #374151;
-            color: #e5e7eb;
-        }
-        
-        body.dark-mode .form-control:focus {
-            background: rgba(30, 30, 50, 0.9);
-            border-color: #374151;
-        }
-        
-        body.dark-mode .demo-credentials {
-            background: rgba(55, 65, 81, 0.1);
-            border-color: rgba(55, 65, 81, 0.3);
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(180deg); }
-        }
-        
-        .login-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            box-shadow: 
-                0 25px 50px rgba(0, 0, 0, 0.1),
-                0 0 0 1px rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .login-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #2E3192, #ED3A5B, #2E3192);
-        }
-        
-        .login-header {
+
+        /* Brand */
+        .brand {
             text-align: center;
             margin-bottom: 2.5rem;
         }
-        
-        .login-logo {
-            width: 100px;
-            height: 100px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
+        .brand-logo {
+            width: 72px;
+            height: 72px;
+            background: #ffffff;
+            border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 1.5rem;
-            box-shadow: 
-                0 10px 30px rgba(55, 65, 81, 0.3),
-                0 0 0 4px rgba(255, 255, 255, 0.1);
+            margin: 0 auto 1.25rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
             position: relative;
             overflow: hidden;
         }
-        
-        .login-logo img {
-            width: 80px;
-            height: 80px;
+        .brand-logo img {
+            width: 52px;
+            height: 52px;
             object-fit: contain;
-            border-radius: 15px;
-        }
-        
-        .login-logo::before {
-            content: '';
-            position: absolute;
-            inset: -2px;
-            background: linear-gradient(135deg, #374151, #1f2937, #111827, #374151);
-            border-radius: 22px;
-            z-index: -1;
-            animation: rotate 4s linear infinite;
-        }
-        
-        .login-logo::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
-            animation: shimmer 3s ease-in-out infinite;
-        }
-        
-        @keyframes shimmer {
-            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-            50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-            100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-        }
-        
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        
-        .login-form .input-group {
             position: relative;
-            margin-bottom: 1.5rem;
+            z-index: 1;
         }
-        
-        .password-toggle {
-            position: absolute;
-            right: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: #9ca3af;
-            z-index: 4;
-            transition: all 0.3s ease;
-            padding: 4px;
-            border-radius: 4px;
+        .brand h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 0.35rem;
         }
-        
-        .password-toggle:hover {
-            color: #374151;
-            background: rgba(55, 65, 81, 0.1);
+        .brand p {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            margin: 0;
         }
-        
-        .input-validation {
-            position: absolute;
-            right: 45px;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 3;
-            font-size: 18px;
-            transition: all 0.3s ease;
-        }
-        
-        .validation-success { color: #10b981; }
-        .validation-error { color: #ef4444; }
-        
-        .field-error {
-            border-color: #ef4444 !important;
-            animation: shake 0.5s ease-in-out;
-        }
-        
-        .field-success {
-            border-color: #10b981 !important;
-        }
-        
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-        
-        .login-form .form-control {
-            border-radius: 12px;
-            border: 2px solid #e5e7eb;
-            padding: 16px 20px;
-            padding-left: 48px;
-            font-size: 16px;
+
+        /* Alerts */
+        .login-alert {
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem;
             font-weight: 500;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+            animation: slideDown 0.3s ease;
         }
-        
-        .login-form .form-control:focus {
-            border-color: #374151;
-            box-shadow: 0 0 0 3px rgba(55, 65, 81, 0.1);
-            background: white;
-            transform: translateY(-1px);
+        .login-alert.alert-danger {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
         }
-        
-        .input-icon {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #9ca3af;
-            z-index: 3;
-            transition: color 0.3s ease;
+        .login-alert.alert-success {
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #bbf7d0;
         }
-        
-        .login-form .input-group:hover .input-icon,
-        .login-form .form-control:focus + .input-icon {
-            color: #374151;
+        .login-alert.alert-info {
+            background: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
         }
-        
-        .btn-login {
-            background: linear-gradient(135deg, #2E3192 0%, #ED3A5B 100%);
-            border: none;
-            border-radius: 12px;
-            padding: 16px 32px;
-            font-size: 16px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            width: 100%;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(55, 65, 81, 0.3);
-        }
-        
-        .btn-login::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: left 0.6s ease;
-        }
-        
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px #ED3A5B55;
-            background: linear-gradient(135deg, #ED3A5B 0%, #2E3192 100%);
-        }
-        
-        .btn-login:hover::before {
-            left: 100%;
-        }
-        
-        .btn-login:active {
-            transform: translateY(0px) scale(0.98);
-        }
-        
-        .btn-login.loading {
-            pointer-events: none;
-            opacity: 0.8;
-        }
-        
-        .btn-loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-            margin-right: 8px;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.6s ease-out;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-8px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
-        .slide-up {
-            animation: slideUp 0.5s ease-out;
+
+        /* Form */
+        .login-form .form-group {
+            margin-bottom: 1.25rem;
         }
-        
-        @keyframes slideUp {
-            from { transform: translateY(30px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        
-        .pulse {
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        
-        .login-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            box-shadow: 
-                0 25px 50px rgba(0, 0, 0, 0.1),
-                0 0 0 1px rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            overflow: hidden;
-            position: relative;
-            animation: cardEntrance 0.8s ease-out;
-        }
-        
-        @keyframes cardEntrance {
-            from { 
-                opacity: 0; 
-                transform: translateY(50px) scale(0.9); 
-            }
-            to { 
-                opacity: 1; 
-                transform: translateY(0) scale(1); 
-            }
-        }
-        
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-top: 3rem;
-        }
-        
-        .feature-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 2rem;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .feature-icon {
-            width: 60px;
-            height: 60px;
-            background: #2E3192;
-            color: #ED3A5B;
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-            font-size: 24px;
-            color: white;
-        }
-        
-        .demo-credentials {
-            background: linear-gradient(135deg, #2E319211 0%, #ED3A5B11 100%);
-            border-radius: 10px;
-            padding: 1rem;
-            text-align: center;
-            border: 1.5px solid #ED3A5B;
-            transition: all 0.3s ease;
-            height: 100%;
-            cursor: pointer;
-        }
-        
-        .demo-credentials:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px #2E319255;
-            background: linear-gradient(135deg, #ED3A5B22 0%, #2E319222 100%);
-            border-color: #2E3192;
-        }
-        
-        .demo-header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-            color: #2E3192;
-            font-size: 0.875rem;
+        .login-form label {
+            display: block;
+            font-size: 0.82rem;
             font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
         }
-        
-        .demo-header i {
-            font-size: 18px;
+        .input-wrapper {
+            position: relative;
         }
-        
-        .demo-content .badge {
+        .login-form .form-control {
+            width: 100%;
+            border-radius: var(--radius-md);
+            border: 1.5px solid var(--border);
+            padding: 12px 40px 12px 42px;
+            font-size: 0.92rem;
+            font-weight: 400;
+            font-family: var(--font);
+            transition: all 0.2s;
+            background: var(--surface);
+            color: var(--text-primary);
+            outline: none;
+        }
+        .login-form .form-control::placeholder {
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+        .login-form .form-control:hover {
+            border-color: #cbd5e1;
+        }
+        .login-form .form-control:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(6,182,212,0.15);
+        }
+        .input-wrapper .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            z-index: 2;
+            font-size: 14px;
+            transition: color 0.2s;
+            pointer-events: none;
+        }
+        .login-form .form-control:focus ~ .input-icon {
+            color: var(--accent);
+        }
+        .input-validation {
+            position: absolute;
+            right: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 2;
+            font-size: 13px;
+        }
+        .validation-success { color: var(--success); }
+        .validation-error   { color: var(--error); }
+        .field-error   { border-color: var(--error) !important; animation: shake 0.4s ease; }
+        .field-success { border-color: var(--success) !important; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25%  { transform: translateX(-4px); }
+            75%  { transform: translateX(4px); }
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--text-muted);
+            z-index: 3;
+            font-size: 14px;
+            transition: color 0.2s;
+            padding: 4px;
+            border-radius: 4px;
+            background: none;
+            border: none;
+        }
+        .password-toggle:hover { color: var(--accent); }
+
+        /* Form extras */
+        .form-extras {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            font-size: 0.82rem;
+        }
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .remember-me input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent);
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .forgot-password {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+        .forgot-password:hover {
+            color: var(--accent-dark);
+        }
+
+        /* Button */
+        .btn-login {
+            width: 100%;
+            padding: 13px 24px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.92rem;
+            font-weight: 600;
+            font-family: var(--font);
+            cursor: pointer;
+            transition: all 0.25s;
+            position: relative;
+            overflow: hidden;
+            color: white;
+            background: var(--primary);
+            box-shadow: 0 4px 12px rgba(51,65,85,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-login:hover {
+            background: var(--primary-dark);
+            box-shadow: 0 6px 20px rgba(30,41,59,0.4);
+            transform: translateY(-1px);
+        }
+        .btn-login:active {
+            transform: translateY(0);
+        }
+        .btn-login.loading {
+            pointer-events: none;
+            opacity: 0.85;
+        }
+        .btn-loading-spinner {
+            display: inline-block;
+            width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Trust indicators */
+        .trust-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.25rem;
+            margin-top: 1.75rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .trust-item i {
+            font-size: 11px;
+            color: var(--success);
+        }
+
+        /* Demo credentials */
+        .demo-section {
+            margin-top: 1.75rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+        .demo-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
             font-size: 0.75rem;
-            padding: 0.375rem 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-bottom: 0.75rem;
         }
-        
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
+        .demo-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .demo-card {
+            background: var(--surface-dim);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+        .demo-card:hover {
+            border-color: var(--accent);
+            background: #ecfeff;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+        .demo-card .demo-role {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .demo-card .demo-role i { font-size: 12px; }
+        .demo-card .demo-creds {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        .form-footer {
+            text-align: center;
+            margin-top: 2.5rem;
+        }
+        .form-footer p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+        .form-footer strong {
+            color: var(--text-secondary);
+        }
+
+        /* ===== Dark Mode ===== */
+        body.dark-mode {
+            --surface: #0f172a;
+            --surface-dim: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #475569;
+            --border: #334155;
+        }
+        body.dark-mode .hero-panel {
+            background: linear-gradient(195deg, #0f172a 0%, #020617 100%);
+        }
+        body.dark-mode .form-panel {
+            background: var(--surface);
+        }
+        body.dark-mode .form-control::placeholder {
+            color: var(--text-muted) !important;
+        }
+        body.dark-mode .login-alert.alert-danger {
+            background: #1c1113;
+            color: #fca5a5;
+            border-color: #7f1d1d;
+        }
+        body.dark-mode .login-alert.alert-success {
+            background: #0c1f1a;
+            color: #6ee7b7;
+            border-color: #065f46;
+        }
+        body.dark-mode .demo-card:hover {
+            background: #1e293b;
+            border-color: var(--primary-light);
+        }
+        body.dark-mode .login-alert.alert-info {
+            background: #0c1524;
+            color: #93c5fd;
+            border-color: #1e3a5f;
+        }
+
+        /* ===== Mobile ===== */
+        @media (max-width: 991px) {
+            .login-wrapper { flex-direction: column; }
+            .hero-panel {
+                flex: none;
+                padding: 2rem 1.5rem;
+                min-height: auto;
             }
-            
-            .login-card {
-                margin: 1rem 0.5rem;
+            .hero-content { max-width: 100%; }
+            .hero-title { font-size: 1.8rem; }
+            .hero-description { font-size: 0.92rem; margin-bottom: 1.5rem; }
+            .hero-stats { gap: 1rem; margin-bottom: 1.5rem; }
+            .stat-value { font-size: 1.3rem; }
+            .hero-features { display: none; }
+            .form-panel {
+                flex: none;
                 padding: 2rem 1.5rem;
             }
-            
-            .features-grid {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
+            .form-container { max-width: 400px; }
+        }
+
+        @media (max-width: 575px) {
+            .hero-panel { padding: 1.5rem 1.25rem; }
+            .hero-title { font-size: 1.5rem; }
+            .hero-stats { grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+            .stat-value { font-size: 1.1rem; }
+            .stat-label { font-size: 0.65rem; }
+            .form-panel { padding: 1.5rem 1.25rem; }
+            .trust-bar { flex-direction: column; gap: 0.5rem; }
+        }
+
+        /* ===== Entrance animations ===== */
+        .animate-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .animate-in.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
     </style>
 </head>
 
-<body class="bg-gradient-primary">
-    <!-- Botão de alternância de tema -->
-    <div class="theme-toggle" onclick="toggleTheme()">
-        <i class="material-symbols-rounded" id="theme-icon">dark_mode</i>
-    </div>
-    
-    <!-- Partículas animadas -->
-    <div class="particles">
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
+<body>
+<div class="login-wrapper">
+
+    <!-- ===== Painel Esquerdo — Hero ===== -->
+    <div class="hero-panel">
+        <div class="floating-shapes">
+            <div class="shape"></div>
+            <div class="shape"></div>
+            <div class="shape"></div>
+        </div>
+
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="pulse-dot"></span>
+                Sistema Online &bull; v3.0
+            </div>
+
+            <h1 class="hero-title">
+                Transforme seu<br>
+                <span class="accent">atendimento</span><br>
+                ao cliente
+            </h1>
+
+            <p class="hero-description">
+                Plataforma completa para gestão de chamados, SLA,
+                automações inteligentes e comunicação multicanal.
+            </p>
+
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <div class="stat-value" data-count="99.9">99.9%</div>
+                    <div class="stat-label">Uptime</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" data-count="24">24/7</div>
+                    <div class="stat-label">Disponível</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" data-count="5">&lt;5min</div>
+                    <div class="stat-label">Tempo Resposta</div>
+                </div>
+            </div>
+
+            <div class="hero-features">
+                <div class="feature-pill">
+                    <i class="fa-solid fa-headset"></i>
+                    Multicanal
+                </div>
+                <div class="feature-pill">
+                    <i class="fa-solid fa-bolt"></i>
+                    Automações
+                </div>
+                <div class="feature-pill">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    Relatórios
+                </div>
+                <div class="feature-pill">
+                    <i class="fa-brands fa-whatsapp"></i>
+                    WhatsApp
+                </div>
+                <div class="feature-pill">
+                    <i class="fa-solid fa-robot"></i>
+                    IA Integrada
+                </div>
+                <div class="feature-pill">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    SLA
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-xl-10 col-lg-12 col-md-12">
-                <div class="row" style="min-height: 100vh; align-items: center;">
-                    
-                    <!-- Coluna esquerda - Informações -->
-                    <div class="col-lg-6 d-none d-lg-flex flex-column justify-content-center text-white">
-                        <div class="px-5">
-                            <h1 class="display-4 fw-bold mb-4" style="color:#ED3A5B">iConnect</h1>
-                            <p class="lead mb-4">Sistema Inteligente de Atendimento ao Cliente</p>
-                            
-                            <div class="features-grid">
-                                <div class="feature-card">
-                                    <div class="feature-icon">
-                                        <i class="material-symbols-rounded">support_agent</i>
-                                    </div>
-                                    <h6 class="text-white mb-2">Atendimento 24/7</h6>
-                                    <small class="text-white-50">Suporte contínuo aos seus clientes</small>
-                                </div>
-                                
-                                <div class="feature-card">
-                                    <div class="feature-icon">
-                                        <i class="material-symbols-rounded">auto_awesome</i>
-                                    </div>
-                                    <h6 class="text-white mb-2">IA Integrada</h6>
-                                    <small class="text-white-50">Automação inteligente de processos</small>
-                                </div>
-                                
-                                <div class="feature-card">
-                                    <div class="feature-icon">
-                                        <i class="material-symbols-rounded">analytics</i>
-                                    </div>
-                                    <h6 class="text-white mb-2">Relatórios Avançados</h6>
-                                    <small class="text-white-50">Métricas e insights detalhados</small>
-                                </div>
-                                
-                                <div class="feature-card">
-                                    <div class="feature-icon">
-                                        <i class="material-symbols-rounded">integration_instructions</i>
-                                    </div>
-                                    <h6 class="text-white mb-2">Integrações</h6>
-                                    <small class="text-white-50">WhatsApp, Slack, Email e muito mais</small>
-                                </div>
-                            </div>
+    <!-- ===== Painel Direito — Formulário ===== -->
+    <div class="form-panel">
+        <!-- Theme toggle -->
+        <div class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
+            <i class="fa-solid fa-moon" id="theme-icon"></i>
+        </div>
+
+        <div class="form-container">
+            <!-- Brand -->
+            <div class="brand animate-in">
+                <div class="brand-logo">
+                    <img src="{% static 'img/icodev-logo.png' %}" alt="iConnect">
+                </div>
+                <h2>Bem-vindo de volta</h2>
+                <p>Entre com suas credenciais para continuar</p>
+            </div>
+
+            <!-- Alerts -->
+            {% if form.errors %}
+            <div class="login-alert alert-danger" role="alert">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span>
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}{{ error }}{% endfor %}
+                    {% endfor %}
+                </span>
+            </div>
+            {% endif %}
+
+            {% if messages %}
+                {% for message in messages %}
+                <div class="login-alert alert-{{ message.tags }}" role="alert">
+                    <i class="fa-solid {% if message.tags == 'success' %}fa-circle-check{% elif message.tags == 'error' %}fa-circle-xmark{% else %}fa-circle-info{% endif %}"></i>
+                    <span>{{ message }}</span>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Form -->
+            <form method="post" class="login-form" id="login-form" novalidate>
+                {% csrf_token %}
+
+                <div class="form-group animate-in">
+                    <label for="username">Usuário</label>
+                    <div class="input-wrapper">
+                        <input type="text"
+                               name="username"
+                               id="username"
+                               class="form-control"
+                               placeholder="Digite seu nome de usuário"
+                               autocomplete="username"
+                               required>
+                        <i class="fa-solid fa-user input-icon"></i>
+                        <div class="input-validation" id="username-validation"></div>
+                    </div>
+                </div>
+
+                <div class="form-group animate-in">
+                    <label for="password">Senha</label>
+                    <div class="input-wrapper">
+                        <input type="password"
+                               name="password"
+                               id="password"
+                               class="form-control"
+                               placeholder="Digite sua senha"
+                               autocomplete="current-password"
+                               required>
+                        <i class="fa-solid fa-lock input-icon"></i>
+                        <div class="input-validation" id="password-validation"></div>
+                        <button type="button" class="password-toggle" onclick="togglePassword()" aria-label="Mostrar senha">
+                            <i class="fa-solid fa-eye" id="password-toggle-icon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-extras animate-in">
+                    <label class="remember-me">
+                        <input type="checkbox" name="remember" id="remember">
+                        Lembrar-me
+                    </label>
+                    <a href="#" class="forgot-password" onclick="event.preventDefault();">Esqueceu a senha?</a>
+                </div>
+
+                <div class="animate-in">
+                    <button type="submit" class="btn-login" id="login-btn">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        Entrar
+                    </button>
+                </div>
+            </form>
+
+            <!-- Trust indicators -->
+            <div class="trust-bar animate-in">
+                <div class="trust-item">
+                    <i class="fa-solid fa-lock"></i>
+                    Conexão segura
+                </div>
+                <div class="trust-item">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    Dados protegidos
+                </div>
+                <div class="trust-item">
+                    <i class="fa-solid fa-certificate"></i>
+                    SSL/TLS
+                </div>
+            </div>
+
+            {% if DEBUG %}
+            <!-- Demo credentials -->
+            <div class="demo-section animate-in">
+                <div class="demo-label">
+                    <i class="fa-solid fa-flask"></i>
+                    Ambiente de demonstração
+                </div>
+                <div class="demo-cards">
+                    <div class="demo-card" data-user="admin" data-pass="admin123">
+                        <div class="demo-role">
+                            <i class="fa-solid fa-crown"></i>
+                            Admin
+                        </div>
+                        <div class="demo-creds">
+                            admin / admin123
                         </div>
                     </div>
-                    
-                    <!-- Coluna direita - Formulário de Login -->
-                    <div class="col-lg-6">
-                        <div class="login-card p-5">
-                            <div class="login-header">
-                                <div class="login-logo">
-                                    <img src="{% static 'img/icodev-logo.png' %}" alt="iConnect Logo">
-                                </div>
-                                <h3 class="text-dark fw-bold">Bem-vindo ao iConnect</h3>
-                                <p class="text-muted">Sistema Inteligente de Atendimento</p>
-                                <p class="text-muted small">Entre com suas credenciais para acessar</p>
-                            </div>
-
-                            {% if form.errors %}
-                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                    <span class="material-symbols-rounded align-middle me-2">error</span>
-                                    {% for field, errors in form.errors.items %}
-                                        {% for error in errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    {% endfor %}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            {% endif %}
-
-                            {% if messages %}
-                                {% for message in messages %}
-                                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                        <span class="material-symbols-rounded align-middle me-2">
-                                            {% if message.tags == 'success' %}check_circle{% elif message.tags == 'error' %}error{% else %}info{% endif %}
-                                        </span>
-                                        {{ message }}
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                    </div>
-                                {% endfor %}
-                            {% endif %}
-
-                            <form method="post" class="login-form">
-                                {% csrf_token %}
-                                <div class="input-group">
-                                    <input type="text" 
-                                           name="username" 
-                                           id="username"
-                                           class="form-control" 
-                                           placeholder="Nome de usuário"
-                                           value=""
-                                           required>
-                                    <i class="material-symbols-rounded input-icon">person</i>
-                                    <div class="input-validation" id="username-validation"></div>
-                                </div>
-
-                                <div class="input-group">
-                                    <input type="password" 
-                                           name="password"
-                                           id="password" 
-                                           class="form-control" 
-                                           placeholder="Senha"
-                                           required>
-                                    <i class="material-symbols-rounded input-icon">lock</i>
-                                    <div class="input-validation" id="password-validation"></div>
-                                    <div class="password-toggle" onclick="togglePassword()">
-                                        <i class="material-symbols-rounded" id="password-toggle-icon">visibility</i>
-                                    </div>
-                                </div>
-
-                                <div class="text-center">
-                                    <button type="submit" class="btn btn-primary btn-login" id="login-btn">
-                                        <i class="material-symbols-rounded me-2">login</i>
-                                        Entrar no Sistema
-                                    </button>
-                                </div>
-                            </form>
-
-                            <div class="text-center mt-4">
-                                <p class="text-muted small mb-3">
-                                    <i class="material-symbols-rounded align-middle me-1" style="font-size: 16px;">info</i>
-                                    Credenciais para demonstração
-                                </p>
-                                <div class="row g-2">
-                                    <div class="col-6">
-                                        <div class="demo-credentials">
-                                            <div class="demo-header">
-                                                <i class="material-symbols-rounded">admin_panel_settings</i>
-                                                <strong>Administrador</strong>
-                                            </div>
-                                            <div class="demo-content">
-                                                <span class="badge bg-primary">admin</span><br>
-                                                <span class="badge bg-secondary mt-1">admin123</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="demo-credentials">
-                                            <div class="demo-header">
-                                                <i class="material-symbols-rounded">support_agent</i>
-                                                <strong>Agente</strong>
-                                            </div>
-                                            <div class="demo-content">
-                                                <span class="badge bg-success">agente1</span><br>
-                                                <span class="badge bg-secondary mt-1">agente123</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                    <div class="demo-card" data-user="agente1" data-pass="agente123">
+                        <div class="demo-role">
+                            <i class="fa-solid fa-headset"></i>
+                            Agente
+                        </div>
+                        <div class="demo-creds">
+                            agente1 / agente123
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Rodapé institucional -->
-        <div class="text-center mt-4 pb-4">
-            <p class="text-white-50 small mb-0">
-                Desenvolvido por <strong>iCodev Tecnologia</strong> - Soluções Inteligentes
-            </p>
+            {% endif %}
+
+            <!-- Footer -->
+            <div class="form-footer animate-in">
+                <p>&copy; 2024 <strong>iCodev Tecnologia</strong> &mdash; Soluções Inteligentes</p>
+            </div>
         </div>
     </div>
 
-    <!-- Core JS Files -->
-    <script src="{% static 'js/core/popper.min.js' %}"></script>
-    <script src="{% static 'js/core/bootstrap.min.js' %}"></script>
-    <script src="{% static 'js/material-dashboard.min.js' %}"></script>
+</div>
 
-    <script>
-        // ========== TEMA ESCURO/CLARO ==========
-        function toggleTheme() {
-            const body = document.body;
-            const themeIcon = document.getElementById('theme-icon');
-            
-            body.classList.toggle('dark-mode');
-            
-            if (body.classList.contains('dark-mode')) {
-                themeIcon.textContent = 'light_mode';
-                localStorage.setItem('theme', 'dark');
-            } else {
-                themeIcon.textContent = 'dark_mode';
-                localStorage.setItem('theme', 'light');
-            }
+<!-- Core JS -->
+<script src="{% static 'js/core/popper.min.js' %}"></script>
+<script src="{% static 'js/core/bootstrap.min.js' %}"></script>
+
+<script>
+(function() {
+    'use strict';
+
+    // ===== Theme toggle =====
+    window.toggleTheme = function() {
+        var icon = document.getElementById('theme-icon');
+        document.body.classList.toggle('dark-mode');
+        var isDark = document.body.classList.contains('dark-mode');
+        icon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        localStorage.setItem('login-theme', isDark ? 'dark' : 'light');
+    };
+
+    // ===== Password toggle =====
+    window.togglePassword = function() {
+        var pw = document.getElementById('password');
+        var icon = document.getElementById('password-toggle-icon');
+        if (pw.type === 'password') {
+            pw.type = 'text';
+            icon.className = 'fa-solid fa-eye-slash';
+        } else {
+            pw.type = 'password';
+            icon.className = 'fa-solid fa-eye';
         }
-        
-        // Carregar tema salvo
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedTheme = localStorage.getItem('theme');
-            if (savedTheme === 'dark') {
-                document.body.classList.add('dark-mode');
-                document.getElementById('theme-icon').textContent = 'light_mode';
-            }
+    };
+
+    // ===== Validation =====
+    function validate(field, min) {
+        var v = field.value.trim();
+        if (v.length === 0) return null;
+        return v.length >= min ? { valid: true } : { valid: false };
+    }
+
+    function showValidation(id, result) {
+        var field = document.getElementById(id);
+        var el = document.getElementById(id + '-validation');
+        field.classList.remove('field-error', 'field-success');
+        el.innerHTML = '';
+        if (!result) return;
+        if (result.valid) {
+            field.classList.add('field-success');
+            el.innerHTML = '<i class="fa-solid fa-check validation-success"></i>';
+        } else {
+            field.classList.add('field-error');
+            el.innerHTML = '<i class="fa-solid fa-xmark validation-error"></i>';
+        }
+    }
+
+    // ===== Typewriter =====
+    function typeWriter(el, text, speed, cb) {
+        var i = 0;
+        el.focus();
+        (function type() {
+            if (i < text.length) {
+                el.value += text.charAt(i++);
+                el.dispatchEvent(new Event('input'));
+                setTimeout(type, speed);
+            } else if (cb) cb();
+        })();
+    }
+
+    // ===== Init =====
+    document.addEventListener('DOMContentLoaded', function() {
+        // Restore theme
+        if (localStorage.getItem('login-theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('theme-icon').className = 'fa-solid fa-sun';
+        }
+
+        var usernameField = document.getElementById('username');
+        var passwordField = document.getElementById('password');
+
+        // Real-time validation
+        usernameField.addEventListener('input', function() {
+            showValidation('username', validate(this, 3));
         });
-        
-        // ========== TOGGLE DE SENHA ==========
-        function togglePassword() {
-            const passwordField = document.getElementById('password');
-            const toggleIcon = document.getElementById('password-toggle-icon');
-            
-            if (passwordField.type === 'password') {
-                passwordField.type = 'text';
-                toggleIcon.textContent = 'visibility_off';
-            } else {
-                passwordField.type = 'password';
-                toggleIcon.textContent = 'visibility';
-            }
-        }
-        
-        // ========== VALIDAÇÃO EM TEMPO REAL ==========
-        function validateUsername(value) {
-            if (value.length < 3) {
-                return { valid: false, message: 'Mínimo 3 caracteres' };
-            }
-            if (value.length > 20) {
-                return { valid: false, message: 'Máximo 20 caracteres' };
-            }
-            return { valid: true, message: 'Usuário válido' };
-        }
-        
-        function validatePassword(value) {
-            if (value.length < 4) {
-                return { valid: false, message: 'Mínimo 4 caracteres' };
-            }
-            if (value.length > 50) {
-                return { valid: false, message: 'Muito longa' };
-            }
-            return { valid: true, message: 'Senha válida' };
-        }
-        
-        function updateValidation(fieldId, validation) {
-            const field = document.getElementById(fieldId);
-            const validationEl = document.getElementById(fieldId + '-validation');
-            
-            field.classList.remove('field-error', 'field-success');
-            validationEl.innerHTML = '';
-            
-            if (validation.valid) {
-                field.classList.add('field-success');
-                validationEl.innerHTML = '<i class="material-symbols-rounded validation-success">check_circle</i>';
-            } else {
-                field.classList.add('field-error');
-                validationEl.innerHTML = '<i class="material-symbols-rounded validation-error">error</i>';
-            }
-        }
+        passwordField.addEventListener('input', function() {
+            showValidation('password', validate(this, 4));
+        });
 
-        // ========== INICIALIZAÇÃO ==========
-        document.addEventListener('DOMContentLoaded', function() {
-            // Verificar se Material Icons carregou
-            checkMaterialIcons();
-            
-            // Animação de entrada escalonada
-            const elements = document.querySelectorAll('.login-header h3, .login-header p, .input-group, .btn-login, .demo-credentials');
-            elements.forEach((el, index) => {
-                el.style.opacity = '0';
-                el.style.transform = 'translateY(20px)';
-                setTimeout(() => {
-                    el.style.transition = 'all 0.6s ease';
-                    el.style.opacity = '1';
-                    el.style.transform = 'translateY(0)';
-                }, index * 100);
-            });
-            
-            // Validação em tempo real
-            const usernameField = document.getElementById('username');
-            const passwordField = document.getElementById('password');
-            
-            usernameField.addEventListener('input', function() {
-                const validation = validateUsername(this.value);
-                updateValidation('username', validation);
-            });
-            
-            passwordField.addEventListener('input', function() {
-                const validation = validatePassword(this.value);
-                updateValidation('password', validation);
-            });
-            
-            // Loading state no formulário
-            const form = document.querySelector('.login-form');
-            const submitBtn = document.getElementById('login-btn');
-            
-            form.addEventListener('submit', function(e) {
-                // Validação final antes do submit
-                const usernameValidation = validateUsername(usernameField.value);
-                const passwordValidation = validatePassword(passwordField.value);
-                
-                if (!usernameValidation.valid || !passwordValidation.valid) {
-                    e.preventDefault();
-                    return;
-                }
-                
-                // Estado de loading
-                submitBtn.classList.add('loading');
-                submitBtn.innerHTML = '<div class="btn-loading-spinner"></div>Entrando...';
-                submitBtn.disabled = true;
-                
-                // Simular delay para mostrar loading (remover em produção)
-                // setTimeout(() => form.submit(), 1000);
-            });
-            
-            // Auto-fill demo credentials com micro-animação
-            const demoCredentials = document.querySelectorAll('.demo-credentials');
-            demoCredentials.forEach(demo => {
-                demo.addEventListener('click', function() {
-                    const badges = demo.querySelectorAll('.badge');
-                    if (badges.length >= 2) {
-                        // Animação de click
-                        demo.style.transform = 'scale(0.95)';
-                        setTimeout(() => {
-                            demo.style.transform = 'scale(1)';
-                        }, 150);
-                        
-                        // Preenchimento com animação
-                        const usernameField = document.querySelector('input[name="username"]');
-                        const passwordField = document.querySelector('input[name="password"]');
-                        
-                        usernameField.value = '';
-                        passwordField.value = '';
-                        
-                        // Efeito de digitação
-                        const username = badges[0].textContent;
-                        const password = badges[1].textContent;
-                        
-                        typeWriter(usernameField, username, 50, () => {
-                            typeWriter(passwordField, password, 50, () => {
-                                // Validar após preencher
-                                updateValidation('username', validateUsername(username));
-                                updateValidation('password', validatePassword(password));
-                            });
-                        });
-                    }
+        // Submit with loading state
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            var uv = validate(usernameField, 3);
+            var pv = validate(passwordField, 4);
+            if (!uv || !uv.valid || !pv || !pv.valid) {
+                e.preventDefault();
+                showValidation('username', uv);
+                showValidation('password', pv);
+
+                // Focus primeiro campo inválido
+                if (!uv || !uv.valid) usernameField.focus();
+                else passwordField.focus();
+                return;
+            }
+            var btn = document.getElementById('login-btn');
+            btn.classList.add('loading');
+            btn.innerHTML = '<span class="btn-loading-spinner"></span> Autenticando...';
+            btn.disabled = true;
+        });
+
+        // Demo credentials click
+        document.querySelectorAll('.demo-card').forEach(function(card) {
+            card.addEventListener('click', function() {
+                var user = this.dataset.user;
+                var pass = this.dataset.pass;
+                this.style.transform = 'scale(0.96)';
+                var self = this;
+                setTimeout(function() { self.style.transform = ''; }, 150);
+
+                usernameField.value = '';
+                passwordField.value = '';
+                typeWriter(usernameField, user, 50, function() {
+                    typeWriter(passwordField, pass, 50);
                 });
             });
-            
-            // Pulse no logo
-            setInterval(() => {
-                document.querySelector('.login-logo').classList.add('pulse');
-                setTimeout(() => {
-                    document.querySelector('.login-logo').classList.remove('pulse');
-                }, 2000);
-            }, 10000);
         });
-        
-                }
-        
-        // ========== VERIFICAÇÃO DE ÍCONES ==========
-        function checkMaterialIcons() {
-            // Criar elemento de teste
-            const testElement = document.createElement('span');
-            testElement.style.fontFamily = 'Material Symbols Rounded';
-            testElement.style.position = 'absolute';
-            testElement.style.left = '-9999px';
-            testElement.innerHTML = 'home';
-            document.body.appendChild(testElement);
-            
-            // Verificar se a fonte carregou
-            setTimeout(() => {
-                const width = testElement.offsetWidth;
-                document.body.removeChild(testElement);
-                
-                // Se a largura for muito pequena, os ícones não carregaram
-                if (width < 20) {
-                    console.warn('Material Symbols Rounded não carregaram, usando fallback');
-                    useFallbackIcons();
-                }
-            }, 100);
-        }
-        
-        function useFallbackIcons() {
-            // Mapear ícones para alternativas
-            const iconMap = {
-                'person': '👤',
-                'lock': '🔒', 
-                'visibility': '👁️',
-                'visibility_off': '🙈',
-                'login': '🔑',
-                'check_circle': '✅',
-                'error': '❌',
-                'dark_mode': '🌙',
-                'light_mode': '☀️',
-                'support_agent': '🎧',
-                'auto_awesome': '✨',
-                'analytics': '📊',
-                'integration_instructions': '🔗',
-                'admin_panel_settings': '👑',
-                'info': 'ℹ️'
-            };
-            
-            // Substituir todos os ícones Material
-            document.querySelectorAll('.material-symbols-rounded').forEach(icon => {
-                const iconName = icon.textContent.trim();
-                if (iconMap[iconName]) {
-                    icon.textContent = iconMap[iconName];
-                    icon.style.fontFamily = 'emoji';
-                }
-            });
-        }
-        
-        // ========== EFEITO DE DIGITAÇÃO ==========
-        function typeWriter(element, text, speed, callback) {
-            let i = 0;
-            element.focus();
-            
-            function type() {
-                if (i < text.length) {
-                    element.value += text.charAt(i);
-                    i++;
-                    setTimeout(type, speed);
-                } else if (callback) {
-                    callback();
-                }
-            }
-            type();
-        }
-    </script>
+
+        // Staggered entrance animations
+        var animEls = document.querySelectorAll('.animate-in');
+        animEls.forEach(function(el, i) {
+            setTimeout(function() {
+                el.classList.add('visible');
+            }, 100 + i * 80);
+        });
+
+        // Focus auto no username
+        setTimeout(function() { usernameField.focus(); }, 600);
+    });
+})();
+</script>
 </body>
 </html>

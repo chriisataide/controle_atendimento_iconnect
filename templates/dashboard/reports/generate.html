@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gerar Relatório - iConnect{% endblock %}
+{% block page_title %}Gerar Relatório{% endblock %}
+{% block breadcrumb_title %}Gerar Relatório{% endblock %}
+
+{% block content %}
+<!-- ===== HEADER ===== -->
+<div class="row">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Gerar Relatório</h3>
+            <p class="mb-0 text-sm">Configure os parâmetros para gerar um novo relatório</p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+        <a href="{% url 'dashboard:reports' %}" class="btn btn-outline-primary btn-sm mb-0">
+            <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Voltar
+        </a>
+    </div>
+</div>
+
+<!-- ===== FORMULÁRIO ===== -->
+<div class="row mt-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+                    <h6 class="text-white text-capitalize ps-3 mb-0">Configuração do Relatório</h6>
+                </div>
+            </div>
+            <div class="card-body pt-4">
+                <form method="post" id="formReport">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-sm font-weight-bold">Tipo de Relatório</label>
+                            <select name="tipo" class="form-select" required>
+                                <option value="">Selecione...</option>
+                                <option value="performance">Performance da Equipe</option>
+                                <option value="customer">Análise de Clientes</option>
+                                <option value="sla">SLA Compliance</option>
+                                <option value="trends">Tendências</option>
+                                <option value="financial">Financeiro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-sm font-weight-bold">Formato</label>
+                            <select name="formato" class="form-select">
+                                <option value="pdf">PDF</option>
+                                <option value="excel">Excel</option>
+                                <option value="csv">CSV</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-sm font-weight-bold">Data Início</label>
+                            <input type="date" name="data_inicio" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-sm font-weight-bold">Data Fim</label>
+                            <input type="date" name="data_fim" class="form-control">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-sm font-weight-bold">Observações</label>
+                        <textarea name="observacoes" class="form-control" rows="3" placeholder="Notas adicionais para o relatório..."></textarea>
+                    </div>
+                    <div class="text-end">
+                        <a href="{% url 'dashboard:reports' %}" class="btn btn-outline-secondary btn-sm me-2">Cancelar</a>
+                        <button type="submit" class="btn bg-gradient-primary btn-sm">
+                            <i class="material-symbols-rounded text-sm me-1">play_arrow</i> Gerar Relatório
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dicas -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header pb-0">
+                <h6>
+                    <i class="material-symbols-rounded text-sm me-1">tips_and_updates</i>
+                    Dicas
+                </h6>
+            </div>
+            <div class="card-body pt-2">
+                <div class="d-flex align-items-start mb-3">
+                    <div class="icon icon-sm icon-shape bg-gradient-info shadow text-center border-radius-md me-3 mt-1">
+                        <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">info</i>
+                    </div>
+                    <div>
+                        <h6 class="text-sm mb-1">Período</h6>
+                        <p class="text-xs text-secondary mb-0">Deixe as datas em branco para considerar todo o período disponível.</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-start mb-3">
+                    <div class="icon icon-sm icon-shape bg-gradient-success shadow text-center border-radius-md me-3 mt-1">
+                        <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">download</i>
+                    </div>
+                    <div>
+                        <h6 class="text-sm mb-1">Formato</h6>
+                        <p class="text-xs text-secondary mb-0">PDF é recomendado para apresentações. Excel para análise de dados.</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-start">
+                    <div class="icon icon-sm icon-shape bg-gradient-warning shadow text-center border-radius-md me-3 mt-1">
+                        <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">schedule</i>
+                    </div>
+                    <div>
+                        <h6 class="text-sm mb-1">Tempo</h6>
+                        <p class="text-xs text-secondary mb-0">A geração pode levar alguns segundos dependendo do volume de dados.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

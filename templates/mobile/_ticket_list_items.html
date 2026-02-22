@@ -1,48 +1,36 @@
 {% for ticket in tickets %}
-<div class="ticket-card priority-{{ ticket.prioridade }}" data-ticket-url="{% url 'mobile:mobile_ticket_detail' ticket.id %}">
-    <div class="ticket-header">
-        <div class="ticket-number">#{{ ticket.numero }}</div>
-        <span class="ticket-status status-{{ ticket.status }}">
-            {{ ticket.get_status_display }}
-        </span>
+<a href="{% url 'mobile:mobile_ticket_detail' ticket.id %}" class="ticket-item" data-search="{{ ticket.numero }} {{ ticket.titulo }} {{ ticket.cliente.nome }}">
+    <div class="ticket-top">
+        <span class="ticket-num">#{{ ticket.numero }}</span>
+        <span class="badge-status badge-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
     </div>
-    <div class="ticket-title">{{ ticket.titulo }}</div>
-    <div class="ticket-client">
-        <i class="fas fa-user"></i>
-        {{ ticket.cliente.nome }}
+    <div class="ticket-titulo">{{ ticket.titulo }}</div>
+    <div style="display:flex; align-items:center; gap:6px; font-size:.75rem; color:var(--slate-500); margin-bottom:6px;">
+        <span class="material-symbols-rounded" style="font-size:14px;">person</span>
+        {{ ticket.cliente.nome|truncatechars:20 }}
         {% if ticket.categoria %}
-            <span class="category-badge">{{ ticket.categoria.nome }}</span>
+        <span style="background:var(--slate-100); padding:1px 6px; border-radius:4px; font-size:.65rem;">{{ ticket.categoria.nome }}</span>
         {% endif %}
     </div>
-    <div class="ticket-meta">
-        <div class="ticket-time">
-            <i class="far fa-clock"></i>
+    <div class="ticket-bottom">
+        <div class="ticket-meta-left">
+            <span class="material-symbols-rounded" style="font-size:14px;">schedule</span>
             {{ ticket.criado_em|timesince }} atrás
         </div>
-        <span class="priority-badge priority-{{ ticket.prioridade }}">
-            {{ ticket.get_prioridade_display }}
-        </span>
+        <span class="badge-priority badge-{{ ticket.prioridade }}">{{ ticket.get_prioridade_display }}</span>
     </div>
     {% if is_agent %}
-    <div class="ticket-actions">
+    <div style="display:flex; gap:6px; margin-top:8px; padding-top:8px; border-top:1px solid var(--slate-100);">
         {% if ticket.status == 'aberto' %}
-            <button class="quick-action-btn" data-ticket-id="{{ ticket.id }}" data-status="em_andamento">
-                <i class="fas fa-play"></i> Iniciar
-            </button>
-        {% elif ticket.status == 'em_andamento' %}
-            <button class="quick-action-btn" data-ticket-id="{{ ticket.id }}" data-status="resolvido">
-                <i class="fas fa-check"></i> Resolver
-            </button>
-        {% endif %}
-        <button class="quick-action-btn" data-ticket-id="{{ ticket.id }}" data-action="comment">
-            <i class="fas fa-comment"></i> Comentar
+        <button class="btn-m btn-sm-m btn-primary-m" style="flex:1;" onclick="event.preventDefault(); updateStatus({{ ticket.id }}, 'em_andamento')">
+            <span class="material-symbols-rounded">play_arrow</span> Iniciar
         </button>
+        {% elif ticket.status == 'em_andamento' %}
+        <button class="btn-m btn-sm-m btn-success-m" style="flex:1;" onclick="event.preventDefault(); updateStatus({{ ticket.id }}, 'resolvido')">
+            <span class="material-symbols-rounded">check</span> Resolver
+        </button>
+        {% endif %}
     </div>
     {% endif %}
-    <div class="ticket-progress 
-        {% if ticket.status == 'aberto' %}progress-0
-        {% elif ticket.status == 'em_andamento' %}progress-50
-        {% elif ticket.status == 'resolvido' %}progress-75
-        {% else %}progress-100{% endif %}"></div>
-</div>
+</a>
 {% endfor %}

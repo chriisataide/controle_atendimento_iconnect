@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ cliente.nome }} — Detalhe do Cliente{% endblock %}
+{% block page_title %}Detalhe do Cliente{% endblock %}
+{% block breadcrumb_title %}Detalhe do Cliente{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">{{ cliente.nome }}</h3>
+            <p class="mb-0 text-sm">Informações detalhadas e histórico de tickets do cliente</p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end">
+        <a href="{% url 'dashboard:cliente_list' %}" class="btn btn-sm bg-gradient-dark mb-0 me-1">
+            <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Voltar
+        </a>
+        <a href="{% url 'dashboard:cliente_update' cliente.pk %}" class="btn btn-sm bg-gradient-info mb-0">
+            <i class="material-symbols-rounded text-sm me-1">edit</i> Editar
+        </a>
+    </div>
+</div>
+
+<!-- Info + KPIs -->
+<div class="row mb-4">
+    <!-- Dados do Cliente -->
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">person</i>
+                </div>
+                <h6 class="mb-0">Dados do Cliente</h6>
+            </div>
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="material-symbols-rounded text-info me-2" style="font-size:20px;">person</i>
+                    <div>
+                        <p class="text-xs text-muted mb-0">Nome</p>
+                        <p class="text-sm font-weight-bold mb-0">{{ cliente.nome }}</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center mb-3">
+                    <i class="material-symbols-rounded text-info me-2" style="font-size:20px;">email</i>
+                    <div>
+                        <p class="text-xs text-muted mb-0">Email</p>
+                        <p class="text-sm font-weight-bold mb-0">{{ cliente.email }}</p>
+                    </div>
+                </div>
+                {% if cliente.telefone %}
+                <div class="d-flex align-items-center mb-3">
+                    <i class="material-symbols-rounded text-info me-2" style="font-size:20px;">phone</i>
+                    <div>
+                        <p class="text-xs text-muted mb-0">Telefone</p>
+                        <p class="text-sm font-weight-bold mb-0">{{ cliente.telefone }}</p>
+                    </div>
+                </div>
+                {% endif %}
+                {% if cliente.empresa %}
+                <div class="d-flex align-items-center mb-3">
+                    <i class="material-symbols-rounded text-info me-2" style="font-size:20px;">business</i>
+                    <div>
+                        <p class="text-xs text-muted mb-0">Empresa</p>
+                        <p class="text-sm font-weight-bold mb-0">{{ cliente.empresa }}</p>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="d-flex align-items-center">
+                    <i class="material-symbols-rounded text-info me-2" style="font-size:20px;">calendar_today</i>
+                    <div>
+                        <p class="text-xs text-muted mb-0">Cliente desde</p>
+                        <p class="text-sm font-weight-bold mb-0">{{ cliente.criado_em|date:"d/m/Y H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="col-lg-8 col-md-6">
+        <div class="row">
+            <div class="col-sm-6 mb-4">
+                <div class="card">
+                    <div class="card-header p-2 ps-3">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <p class="text-sm mb-0">Total Tickets</p>
+                                <h4 class="mb-0">{{ total_tickets }}</h4>
+                            </div>
+                            <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
+                                <i class="material-symbols-rounded opacity-10">confirmation_number</i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 mb-4">
+                <div class="card">
+                    <div class="card-header p-2 ps-3">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <p class="text-sm mb-0">Abertos</p>
+                                <h4 class="mb-0">{{ tickets_abertos }}</h4>
+                            </div>
+                            <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
+                                <i class="material-symbols-rounded opacity-10">error</i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 mb-4">
+                <div class="card">
+                    <div class="card-header p-2 ps-3">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <p class="text-sm mb-0">Em Andamento</p>
+                                <h4 class="mb-0">{{ tickets_em_andamento }}</h4>
+                            </div>
+                            <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
+                                <i class="material-symbols-rounded opacity-10">pending</i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 mb-4">
+                <div class="card">
+                    <div class="card-header p-2 ps-3">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <p class="text-sm mb-0">Resolvidos</p>
+                                <h4 class="mb-0">{{ tickets_resolvidos }}</h4>
+                            </div>
+                            <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                                <i class="material-symbols-rounded opacity-10">check_circle</i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 mb-4">
+                <div class="card">
+                    <div class="card-header p-2 ps-3">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <p class="text-sm mb-0">Alta Prioridade</p>
+                                <h4 class="mb-0">{{ tickets_alta }}</h4>
+                            </div>
+                            <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
+                                <i class="material-symbols-rounded opacity-10">priority_high</i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 mb-4">
+                <div class="card">
+                    <div class="card-header p-2 ps-3">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <p class="text-sm mb-0">Tempo Médio</p>
+                                <h4 class="mb-0">{{ tempo_medio }}</h4>
+                            </div>
+                            <div class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
+                                <i class="material-symbols-rounded opacity-10">schedule</i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tickets do Cliente -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">list_alt</i>
+                </div>
+                <h6 class="mb-0">Tickets de {{ cliente.nome }}</h6>
+                <p class="text-sm mb-0 text-muted">{{ total_tickets }} ticket{{ total_tickets|pluralize:"s" }} registrado{{ total_tickets|pluralize:"s" }}</p>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ticket</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Prioridade</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Categoria</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Agente</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Criado</th>
+                                <th class="text-secondary opacity-7"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in tickets %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">#{{ ticket.numero }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ ticket.titulo|truncatechars:50 }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="align-middle text-center text-sm">
+                                    {% if ticket.status == 'aberto' %}
+                                        <span class="badge badge-sm bg-gradient-danger">{{ ticket.get_status_display }}</span>
+                                    {% elif ticket.status == 'em_andamento' %}
+                                        <span class="badge badge-sm bg-gradient-warning">{{ ticket.get_status_display }}</span>
+                                    {% elif ticket.status == 'aguardando_cliente' %}
+                                        <span class="badge badge-sm bg-gradient-info">{{ ticket.get_status_display }}</span>
+                                    {% elif ticket.status == 'resolvido' %}
+                                        <span class="badge badge-sm bg-gradient-success">{{ ticket.get_status_display }}</span>
+                                    {% else %}
+                                        <span class="badge badge-sm bg-gradient-dark">{{ ticket.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="align-middle text-center text-sm">
+                                    {% if ticket.prioridade == 'alta' or ticket.prioridade == 'critica' %}
+                                        <span class="badge badge-sm bg-gradient-danger">{{ ticket.get_prioridade_display }}</span>
+                                    {% elif ticket.prioridade == 'media' %}
+                                        <span class="badge badge-sm bg-gradient-warning">{{ ticket.get_prioridade_display }}</span>
+                                    {% else %}
+                                        <span class="badge badge-sm bg-gradient-secondary">{{ ticket.get_prioridade_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">{{ ticket.categoria.nome|default:"-" }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    {% if ticket.agente %}
+                                        <span class="text-secondary text-xs font-weight-bold">{{ ticket.agente.get_full_name|default:ticket.agente.username }}</span>
+                                    {% else %}
+                                        <span class="text-xs text-muted">Não atribuído</span>
+                                    {% endif %}
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">{{ ticket.criado_em|date:"d/m/Y H:i" }}</span>
+                                </td>
+                                <td class="align-middle text-end pe-4">
+                                    <a href="{% url 'dashboard:ticket_detail' ticket.pk %}" class="btn btn-link text-dark mb-0 px-2 py-1" title="Ver detalhes">
+                                        <i class="material-symbols-rounded">visibility</i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <i class="material-symbols-rounded text-muted" style="font-size:40px;">inbox</i>
+                                    <p class="text-muted mt-2 mb-0">Este cliente não possui tickets.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

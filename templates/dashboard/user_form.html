@@ -1,78 +1,374 @@
 {% extends 'base.html' %}
-{% block title %}Criar Usuário{% endblock %}
+{% block title %}Criar Usuário - iConnect{% endblock %}
+
+{% block page_title %}Criar Usuário{% endblock %}
+{% block breadcrumb_title %}Criar Usuário{% endblock %}
 
 {% block extra_css %}
 <style>
-  /* Pequenas alterações para o formulário de criação seguir o estilo do perfil */
-  .create-user-card { border-radius: 12px; padding: 1.5rem; }
-  .create-user-avatar { width: 100px; height: 100px; border-radius: 50%; display:flex; align-items:center; justify-content:center; font-size:2rem; background:linear-gradient(135deg,#ff6b6b,#4ecdc4); color:white; }
-  .form-section-title { font-weight:700; margin-bottom:1rem; }
+    .create-user-card {
+        border-radius: 16px;
+        border: none;
+        overflow: hidden;
+    }
+    .create-header {
+        background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+        padding: 2rem 2rem 3.5rem;
+        position: relative;
+    }
+    .create-header::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 30px;
+        background: #fff;
+        border-radius: 24px 24px 0 0;
+    }
+    .avatar-preview {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #334155;
+        background: rgba(255,255,255,0.95);
+        border: 3px solid rgba(255,255,255,0.4);
+        margin: 0 auto;
+        transition: all 0.3s;
+    }
+    .form-section {
+        padding: 0 2rem;
+    }
+    .section-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        font-weight: 700;
+        color: #06b6d4;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .section-label i {
+        font-size: 18px;
+    }
+    .form-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 0.35rem;
+    }
+    .form-control {
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+    .form-control:focus {
+        border-color: #06b6d4;
+        box-shadow: 0 0 0 3px rgba(6,182,212,0.1);
+    }
+    .form-check-input:checked {
+        background-color: #06b6d4;
+        border-color: #06b6d4;
+    }
+    .password-hint {
+        font-size: 0.72rem;
+        color: #94a3b8;
+        margin-top: 4px;
+    }
+    .password-hint ul {
+        padding-left: 1rem;
+        margin-bottom: 0;
+    }
+    .btn-create {
+        background: linear-gradient(135deg, #06b6d4, #0891b2);
+        border: none;
+        color: #fff;
+        padding: 0.65rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+    .btn-create:hover {
+        background: linear-gradient(135deg, #0891b2, #0e7490);
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(6,182,212,0.3);
+    }
+    .btn-back {
+        border: 1px solid #e2e8f0;
+        color: #64748b;
+        padding: 0.65rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        background: #fff;
+        transition: all 0.2s;
+    }
+    .btn-back:hover {
+        background: #f8fafc;
+        color: #334155;
+        border-color: #cbd5e1;
+    }
+    .error-list {
+        background: rgba(239,68,68,0.05);
+        border: 1px solid rgba(239,68,68,0.15);
+        border-radius: 10px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    .error-list li {
+        color: #ef4444;
+        font-size: 0.82rem;
+        margin-bottom: 2px;
+    }
+    .info-card {
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid py-2">
-  <div class="row">
-    <div class="col-md-8">
-      <div class="profile-card card create-user-card">
-        <div class="card-body">
-          <h4 class="mb-3">Criar Usuário</h4>
-          <form method="post">
-            {% csrf_token %}
-            <div class="row">
-              <div class="col-md-4 text-center">
-                <div class="create-user-avatar mb-3">U</div>
-                <p class="text-muted small">Avatar gerado automaticamente</p>
-              </div>
-              <div class="col-md-8">
-                <div class="mb-3">
-                  <label class="form-label">Nome de usuário</label>
-                  {{ form.username }}
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-lg-8 col-md-7">
+            <div class="ms-3">
+                <h3 class="mb-0 h4 font-weight-bolder">Criar Novo Usuário</h3>
+                <p class="mb-0 text-sm text-secondary">Preencha os dados para criar uma nova conta</p>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+            <a href="{% url 'dashboard:user_list' %}" class="btn btn-outline-secondary btn-sm mb-0">
+                <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <div class="row mx-1">
+        <!-- Formulário principal -->
+        <div class="col-lg-8 col-12 mb-4">
+            <div class="card create-user-card shadow-sm">
+                <!-- Header com avatar -->
+                <div class="create-header text-center">
+                    <div class="avatar-preview mb-2" id="avatarPreview">
+                        <i class="material-symbols-rounded" style="font-size: 32px;">person</i>
+                    </div>
+                    <h6 class="text-white mb-0 mt-2">Novo Usuário</h6>
+                    <p class="text-white-50 text-xs mb-0">O avatar será gerado a partir das iniciais</p>
                 </div>
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label class="form-label">Primeiro nome</label>
-                    {{ form.first_name }}
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <label class="form-label">Último nome</label>
-                    {{ form.last_name }}
-                  </div>
+
+                <div class="card-body pt-2 pb-4">
+                    <form method="post" id="createUserForm">
+                        {% csrf_token %}
+
+                        <!-- Erros do formulário -->
+                        {% if form.errors %}
+                        <div class="mx-2 mb-3">
+                            <div class="error-list">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="material-symbols-rounded me-2" style="color: #ef4444; font-size: 18px;">error</i>
+                                    <strong class="text-sm" style="color: #ef4444;">Corrija os erros abaixo:</strong>
+                                </div>
+                                <ul class="mb-0 ps-4">
+                                    {% for field in form %}
+                                        {% for error in field.errors %}
+                                        <li><strong>{{ field.label }}</strong>: {{ error }}</li>
+                                        {% endfor %}
+                                    {% endfor %}
+                                    {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Dados de Acesso -->
+                        <div class="form-section mb-4">
+                            <div class="section-label">
+                                <i class="material-symbols-rounded">login</i>
+                                Dados de Acesso
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="id_username">Nome de usuário <span class="text-danger">*</span></label>
+                                    {{ form.username }}
+                                    {% if form.username.help_text %}
+                                    <div class="password-hint">{{ form.username.help_text }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="id_email">Email</label>
+                                    {{ form.email }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="id_password1">Senha <span class="text-danger">*</span></label>
+                                    {{ form.password1 }}
+                                    {% if form.password1.help_text %}
+                                    <div class="password-hint">{{ form.password1.help_text }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="id_password2">Confirmar Senha <span class="text-danger">*</span></label>
+                                    {{ form.password2 }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Informações Pessoais -->
+                        <div class="form-section mb-4">
+                            <div class="section-label">
+                                <i class="material-symbols-rounded">badge</i>
+                                Informações Pessoais
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="id_first_name">Primeiro Nome</label>
+                                    {{ form.first_name }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="id_last_name">Sobrenome</label>
+                                    {{ form.last_name }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Permissões -->
+                        <div class="form-section mb-4">
+                            <div class="section-label">
+                                <i class="material-symbols-rounded">shield_person</i>
+                                Permissões
+                            </div>
+                            <div class="d-flex align-items-center p-3 rounded-3 mb-2" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                                <div class="form-check form-switch mb-0">
+                                    {{ form.is_active }}
+                                </div>
+                                <div class="ms-3">
+                                    <h6 class="mb-0 text-sm">Conta Ativa</h6>
+                                    <p class="text-xs text-secondary mb-0">O usuário poderá fazer login e acessar o sistema</p>
+                                </div>
+                            </div>
+                            <div class="text-xs text-muted mt-2 px-1">
+                                <i class="material-symbols-rounded align-middle" style="font-size: 14px;">info</i>
+                                Novos usuários são criados com permissão básica. Permissões avançadas podem ser configuradas no painel administrativo.
+                            </div>
+                        </div>
+
+                        <!-- Botões -->
+                        <div class="form-section">
+                            <hr class="my-3" style="border-color: #f1f5f9;">
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="{% url 'dashboard:user_list' %}" class="btn btn-back">
+                                    <i class="material-symbols-rounded text-sm me-1">close</i> Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-create">
+                                    <i class="material-symbols-rounded text-sm me-1">person_add</i> Criar Usuário
+                                </button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
-                <div class="mb-3">
-                  <label class="form-label">Email</label>
-                  {{ form.email }}
+            </div>
+        </div>
+
+        <!-- Sidebar informativa -->
+        <div class="col-lg-4 col-12">
+            <div class="card info-card mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="material-symbols-rounded me-2" style="color: #06b6d4; font-size: 22px;">help</i>
+                        <h6 class="mb-0 text-sm">Dicas</h6>
+                    </div>
+                    <ul class="list-unstyled mb-0">
+                        <li class="d-flex align-items-start mb-3">
+                            <i class="material-symbols-rounded me-2 mt-1" style="color: #22c55e; font-size: 16px;">check_circle</i>
+                            <span class="text-xs text-secondary">O nome de usuário deve ser único e será usado para login</span>
+                        </li>
+                        <li class="d-flex align-items-start mb-3">
+                            <i class="material-symbols-rounded me-2 mt-1" style="color: #22c55e; font-size: 16px;">check_circle</i>
+                            <span class="text-xs text-secondary">A senha deve ter pelo menos 8 caracteres</span>
+                        </li>
+                        <li class="d-flex align-items-start mb-3">
+                            <i class="material-symbols-rounded me-2 mt-1" style="color: #22c55e; font-size: 16px;">check_circle</i>
+                            <span class="text-xs text-secondary">O email será usado para notificações e recuperação de senha</span>
+                        </li>
+                        <li class="d-flex align-items-start">
+                            <i class="material-symbols-rounded me-2 mt-1" style="color: #f59e0b; font-size: 16px;">info</i>
+                            <span class="text-xs text-secondary">Dados como telefone, cargo e departamento poderão ser preenchidos no perfil</span>
+                        </li>
+                    </ul>
                 </div>
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label class="form-label">Senha</label>
-                    {{ form.password1 }}
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <label class="form-label">Confirmar Senha</label>
-                    {{ form.password2 }}
-                  </div>
-                </div>
-                <div class="mb-3 form-check">
-                  {{ form.is_staff }} <label class="form-check-label ms-2">Staff (agente)</label>
-                </div>
-                <div class="mb-3 form-check">
-                  {{ form.is_superuser }} <label class="form-check-label ms-2">Administrador</label>
-                </div>
-                <div class="mb-3 form-check">
-                  {{ form.is_active }} <label class="form-check-label ms-2">Conta ativa</label>
-                </div>
-              </div>
             </div>
 
-            <div class="d-flex justify-content-end gap-2 mt-3">
-              <a href="{% url 'dashboard:user_list' %}" class="btn btn-outline-secondary">Voltar</a>
-              <button type="submit" class="btn btn-primary">Criar Usuário</button>
+            <div class="card info-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="material-symbols-rounded me-2" style="color: #334155; font-size: 22px;">security</i>
+                        <h6 class="mb-0 text-sm">Segurança</h6>
+                    </div>
+                    <p class="text-xs text-secondary mb-2">Requisitos de senha:</p>
+                    <ul class="list-unstyled mb-0">
+                        <li class="text-xs text-secondary mb-1">
+                            <i class="material-symbols-rounded align-middle me-1" style="font-size: 14px;">lock</i>
+                            Mínimo 8 caracteres
+                        </li>
+                        <li class="text-xs text-secondary mb-1">
+                            <i class="material-symbols-rounded align-middle me-1" style="font-size: 14px;">lock</i>
+                            Não pode ser muito semelhante aos dados pessoais
+                        </li>
+                        <li class="text-xs text-secondary mb-1">
+                            <i class="material-symbols-rounded align-middle me-1" style="font-size: 14px;">lock</i>
+                            Não pode ser uma senha comum
+                        </li>
+                        <li class="text-xs text-secondary">
+                            <i class="material-symbols-rounded align-middle me-1" style="font-size: 14px;">lock</i>
+                            Não pode ser totalmente numérica
+                        </li>
+                    </ul>
+                </div>
             </div>
-          </form>
         </div>
-      </div>
     </div>
-  </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const usernameField = document.getElementById('id_username');
+    const firstNameField = document.getElementById('id_first_name');
+    const lastNameField = document.getElementById('id_last_name');
+    const avatarPreview = document.getElementById('avatarPreview');
+
+    function updateAvatar() {
+        const first = (firstNameField.value || usernameField.value || '').charAt(0).toUpperCase();
+        const last = lastNameField.value.charAt(0).toUpperCase();
+        if (first) {
+            avatarPreview.textContent = first + (last || '');
+        } else {
+            avatarPreview.innerHTML = '<i class="material-symbols-rounded" style="font-size: 32px;">person</i>';
+        }
+    }
+
+    [usernameField, firstNameField, lastNameField].forEach(function(field) {
+        if (field) field.addEventListener('input', updateAvatar);
+    });
+
+    updateAvatar();
+});
+</script>
 {% endblock %}

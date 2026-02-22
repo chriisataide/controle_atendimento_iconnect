@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Configurações de Chat - iConnect{% endblock %}
+{% block page_title %}Configurações{% endblock %}
+{% block breadcrumb_title %}Configurações de Chat{% endblock %}
+
+{% block content %}
+<!-- ===== HEADER ===== -->
+<div class="row">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Configurações de Chat</h3>
+            <p class="mb-0 text-sm">Personalize suas preferências de notificações, aparência e respostas automáticas</p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+        <a href="{% url 'dashboard:chat_dashboard' %}" class="btn btn-outline-primary btn-sm mb-0">
+            <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Voltar ao Chat
+        </a>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="row mt-4">
+        <!-- Notificações -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header pb-0 pt-3 px-3">
+                    <div class="d-flex align-items-center">
+                        <div class="icon icon-sm icon-shape bg-gradient-primary shadow text-center border-radius-md me-2">
+                            <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">notifications</i>
+                        </div>
+                        <h6 class="mb-0">Notificações</h6>
+                    </div>
+                </div>
+                <div class="card-body pt-3 px-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="notifications_enabled" id="notifEnabled" {% if settings.notifications_enabled %}checked{% endif %}>
+                        <label class="form-check-label text-sm" for="notifEnabled">Ativar notificações</label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="sound_notifications" id="soundNotif" {% if settings.sound_notifications %}checked{% endif %}>
+                        <label class="form-check-label text-sm" for="soundNotif">Notificações sonoras</label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="desktop_notifications" id="desktopNotif" {% if settings.desktop_notifications %}checked{% endif %}>
+                        <label class="form-check-label text-sm" for="desktopNotif">Notificações na área de trabalho</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="email_notifications" id="emailNotif" {% if settings.email_notifications %}checked{% endif %}>
+                        <label class="form-check-label text-sm" for="emailNotif">Notificações por e-mail</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aparência -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header pb-0 pt-3 px-3">
+                    <div class="d-flex align-items-center">
+                        <div class="icon icon-sm icon-shape bg-gradient-info shadow text-center border-radius-md me-2">
+                            <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">palette</i>
+                        </div>
+                        <h6 class="mb-0">Aparência</h6>
+                    </div>
+                </div>
+                <div class="card-body pt-3 px-3">
+                    <div class="mb-3">
+                        <label class="form-label text-sm">Tema</label>
+                        <select name="theme" class="form-select">
+                            <option value="light" {% if settings.theme == 'light' %}selected{% endif %}>Claro</option>
+                            <option value="dark" {% if settings.theme == 'dark' %}selected{% endif %}>Escuro</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label text-sm">Tamanho da Fonte</label>
+                        <select name="font_size" class="form-select">
+                            <option value="small" {% if settings.font_size == 'small' %}selected{% endif %}>Pequeno</option>
+                            <option value="medium" {% if settings.font_size == 'medium' %}selected{% endif %}>Médio</option>
+                            <option value="large" {% if settings.font_size == 'large' %}selected{% endif %}>Grande</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Privacidade -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header pb-0 pt-3 px-3">
+                    <div class="d-flex align-items-center">
+                        <div class="icon icon-sm icon-shape bg-gradient-success shadow text-center border-radius-md me-2">
+                            <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">security</i>
+                        </div>
+                        <h6 class="mb-0">Privacidade</h6>
+                    </div>
+                </div>
+                <div class="card-body pt-3 px-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="show_online_status" id="showOnline" {% if settings.show_online_status %}checked{% endif %}>
+                        <label class="form-check-label text-sm" for="showOnline">Mostrar status online</label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="show_typing_indicator" id="showTyping" {% if settings.show_typing_indicator %}checked{% endif %}>
+                        <label class="form-check-label text-sm" for="showTyping">Mostrar indicador de digitação</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="show_read_receipts" id="showRead" {% if settings.show_read_receipts %}checked{% endif %}>
+                        <label class="form-check-label text-sm" for="showRead">Mostrar confirmação de leitura</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resposta Automática -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header pb-0 pt-3 px-3">
+                    <div class="d-flex align-items-center">
+                        <div class="icon icon-sm icon-shape bg-gradient-warning shadow text-center border-radius-md me-2">
+                            <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">auto_fix_high</i>
+                        </div>
+                        <h6 class="mb-0">Resposta Automática</h6>
+                    </div>
+                </div>
+                <div class="card-body pt-3 px-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="auto_response_enabled" id="autoResponse" {% if settings.auto_response_enabled %}checked{% endif %}>
+                        <label class="form-check-label text-sm" for="autoResponse">Ativar resposta automática</label>
+                    </div>
+                    <div>
+                        <label class="form-label text-sm">Mensagem automática</label>
+                        <textarea name="auto_response_message" class="form-control" rows="3" placeholder="Ex: Olá! Recebi sua mensagem e retornarei em breve.">{{ settings.auto_response_message }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botão Salvar -->
+    <div class="row">
+        <div class="col-12 text-end">
+            <button type="submit" class="btn bg-gradient-primary mb-4">
+                <i class="material-symbols-rounded text-sm me-1">save</i> Salvar Configurações
+            </button>
+        </div>
+    </div>
+</form>
+{% endblock %}

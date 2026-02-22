@@ -1,603 +1,602 @@
 {% extends 'base.html' %}
+{% load static %}
 
+{% block title %}Portal do Cliente — iConnect{% endblock %}
 {% block page_title %}Portal do Cliente{% endblock %}
+{% block breadcrumb_title %}Portal do Cliente{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-  {% if cliente %}
-  <div class="row">
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-      <div class="card">
-        <div class="card-header p-3 pt-2">
-          <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary text-center border-radius-xl mt-n4 position-absolute">
-            <i class="material-symbols-rounded opacity-10">confirmation_number</i>
-          </div>
-          <div class="text-end pt-1">
-            <p class="text-sm mb-0 text-capitalize">Total de Tickets</p>
-            <h4 class="mb-0">{{ total_tickets }}</h4>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-      <div class="card">
-        <div class="card-header p-3 pt-2">
-          <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute">
-            <i class="material-symbols-rounded opacity-10">pending</i>
-          </div>
-          <div class="text-end pt-1">
-            <p class="text-sm mb-0 text-capitalize">Tickets Abertos</p>
-            <h4 class="mb-0">{{ tickets_abertos }}</h4>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-      <div class="card">
-        <div class="card-header p-3 pt-2">
-          <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
-            <i class="material-symbols-rounded opacity-10">check_circle</i>
-          </div>
-          <div class="text-end pt-1">
-            <p class="text-sm mb-0 text-capitalize">Tickets Fechados</p>
-            <h4 class="mb-0">{{ tickets_fechados }}</h4>
-          </div>
-        </div>
-      </div>
-    </div>
-        <div class="col-xl-3 col-sm-6">
-      <div class="card">
-        <div class="card-header p-3 pt-2">
-          <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
-            <i class="material-symbols-rounded opacity-10">schedule</i>
-          </div>
-          <div class="text-end pt-1">
-            <p class="text-sm mb-0 text-capitalize">Tempo Médio Resposta</p>
-            <h4 class="mb-0">{{ tempo_medio_resposta }}</h4>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+{% if cliente %}
 
-  <!-- Segunda linha de cards -->
-  <div class="row mt-4">
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-      <div class="card">
-        <div class="card-header p-3 pt-2">
-          <div class="icon icon-lg icon-shape bg-gradient-danger shadow-danger text-center border-radius-xl mt-n4 position-absolute">
-            <i class="material-symbols-rounded opacity-10">priority_high</i>
-          </div>
-          <div class="text-end pt-1">
-            <p class="text-sm mb-0 text-capitalize">Alta Prioridade</p>
-            <h4 class="mb-0">{{ tickets_alta_prioridade }}</h4>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-      <div class="card">
-        <div class="card-header p-3 pt-2">
-          <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute">
-            <i class="material-symbols-rounded opacity-10">pending</i>
-          </div>
-          <div class="text-end pt-1">
-            <p class="text-sm mb-0 text-capitalize">Em Andamento</p>
-            <h4 class="mb-0">{{ tickets_em_andamento }}</h4>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-      <div class="card">
-        <div class="card-header p-3 pt-2">
-          <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
-            <i class="material-symbols-rounded opacity-10">task_alt</i>
-          </div>
-          <div class="text-end pt-1">
-            <p class="text-sm mb-0 text-capitalize">Resolvidos</p>
-            <h4 class="mb-0">{{ tickets_resolvidos }}</h4>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-xl-3 col-sm-6">
-      <div class="card">
-        <div class="card-header p-3 pt-2">
-          <div class="icon icon-lg icon-shape bg-gradient-secondary shadow-secondary text-center border-radius-xl mt-n4 position-absolute">
-            <i class="material-symbols-rounded opacity-10">trending_up</i>
-          </div>
-          <div class="text-end pt-1">
-            <p class="text-sm mb-0 text-capitalize">Média Prioridade</p>
-            <h4 class="mb-0">{{ tickets_media_prioridade }}</h4>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Seção de Ação Rápida -->
-  <div class="row mt-4">
-    <div class="col-md-3">
-      <div class="card h-100">
-        <div class="card-header pb-0 p-3">
-          <div class="row">
-            <div class="col-md-8 d-flex align-items-center">
-              <h6 class="mb-0">Criar Novo Ticket</h6>
-            </div>
-          </div>
-        </div>
-        <div class="card-body p-3">
-          <p class="text-sm">Precisa de ajuda? Crie um novo ticket de atendimento rapidamente.</p>
-          <a href="{% url 'dashboard:ticket_create' %}" class="btn bg-gradient-primary w-100">
-            <i class="material-symbols-rounded me-2">add</i>
-            Novo Ticket
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Seção de Notificações -->
-    <div class="col-md-3">
-      <div class="card h-100 bg-gradient-info">
-        <div class="card-header pb-0 p-3">
-          <div class="row">
-            <div class="col-md-8 d-flex align-items-center">
-              <h6 class="mb-0 text-white">Notificações</h6>
-            </div>
-          </div>
-        </div>
-        <div class="card-body p-3">
-          {% if tickets_recentes_mudancas > 0 %}
-            <div class="d-flex align-items-center mb-2">
-              <div class="icon icon-sm bg-white shadow text-center me-2">
-                <i class="material-symbols-rounded text-info">update</i>
-              </div>
-              <div>
-                <p class="text-white text-sm mb-0">{{ tickets_recentes_mudancas }} ticket(s) atualizados</p>
-              </div>
-            </div>
-          {% endif %}
-          {% if tickets_aguardando_cliente > 0 %}
-            <div class="d-flex align-items-center mb-2">
-              <div class="icon icon-sm bg-white shadow text-center me-2">
-                <i class="material-symbols-rounded text-warning">schedule</i>
-              </div>
-              <div>
-                <p class="text-white text-sm mb-0">{{ tickets_aguardando_cliente }} ticket(s) aguardando sua resposta</p>
-              </div>
-            </div>
-          {% endif %}
-          {% if tickets_recentes_mudancas == 0 and tickets_aguardando_cliente == 0 %}
-            <div class="text-center">
-              <i class="material-symbols-rounded text-white opacity-6" style="font-size: 24px;">notifications</i>
-              <p class="text-white text-sm mb-0">Nenhuma notificação</p>
-            </div>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-
-    <!-- Seção Status do Último Ticket -->
-    <div class="col-md-6">
-      {% if ultimo_ticket %}
-      <div class="card h-100">
-        <div class="card-header pb-0 p-3">
-          <div class="row">
-            <div class="col-md-8 d-flex align-items-center">
-              <h6 class="mb-0">Último Ticket Criado</h6>
-            </div>
-          </div>
-        </div>
-        <div class="card-body p-3">
-          <div class="row">
-            <div class="col-md-6">
-              <div class="d-flex">
-                <div class="icon icon-shape icon-sm bg-gradient-primary shadow text-center me-2">
-                  <i class="material-symbols-rounded opacity-10">confirmation_number</i>
-                </div>
-                <div>
-                  <h6 class="text-sm mb-0">#{{ ultimo_ticket.numero }}</h6>
-                  <p class="text-xs text-secondary mb-0">{{ ultimo_ticket.titulo|truncatechars:40 }}</p>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="text-center">
-                {% if ultimo_ticket.status == 'aberto' %}
-                  <span class="badge badge-sm bg-gradient-danger">{{ ultimo_ticket.get_status_display }}</span>
-                {% elif ultimo_ticket.status == 'em_andamento' %}
-                  <span class="badge badge-sm bg-gradient-warning">{{ ultimo_ticket.get_status_display }}</span>
-                {% elif ultimo_ticket.status == 'resolvido' %}
-                  <span class="badge badge-sm bg-gradient-info">{{ ultimo_ticket.get_status_display }}</span>
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">
+                {% if admin_view %}Visão Geral de Clientes{% else %}Portal do Cliente{% endif %}
+            </h3>
+            <p class="mb-0 text-sm">
+                {% if admin_view %}
+                    Monitoramento centralizado de todos os clientes e tickets
                 {% else %}
-                  <span class="badge badge-sm bg-gradient-success">{{ ultimo_ticket.get_status_display }}</span>
+                    Acompanhe seus tickets e solicitações de atendimento
                 {% endif %}
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="text-end">
-                <h6 class="text-sm mb-0">{{ ultimo_ticket.criado_em|date:"d/m/Y" }}</h6>
-                <p class="text-xs text-secondary mb-0">{{ ultimo_ticket.criado_em|time:"H:i" }}</p>
-              </div>
-            </div>
-          </div>
-          <div class="row mt-2">
-            <div class="col-12">
-              <a href="{% url 'dashboard:ticket_detail' ultimo_ticket.pk %}" class="btn btn-outline-primary btn-sm w-100">
-                <i class="material-symbols-rounded me-1">visibility</i>
-                Ver Detalhes
-              </a>
-            </div>
-          </div>
+            </p>
         </div>
-      </div>
-      {% else %}
-      <div class="card h-100">
-        <div class="card-body p-3 text-center">
-          <i class="material-symbols-rounded text-muted" style="font-size: 48px;">inbox</i>
-          <h6 class="text-muted mt-2 mb-1">Nenhum ticket criado</h6>
-          <p class="text-sm text-muted mb-3">Você ainda não criou nenhum ticket de suporte.</p>
-          <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-primary btn-sm">
-            <i class="material-symbols-rounded me-1">add</i>
-            Criar Primeiro Ticket
-          </a>
-        </div>
-      </div>
-      {% endif %}
     </div>
-  </div>
-  </div>
-
-  <div class="row mt-4">
-    <div class="col-lg-8 col-md-6 mb-md-0 mb-4">
-      <div class="card">
-        <div class="card-header pb-0">
-          <div class="row">
-            <div class="col-lg-6 col-7">
-              <h6>Seus Tickets Recentes</h6>
-              <p class="text-sm mb-0">
-                <i class="fa fa-check text-info" aria-hidden="true"></i>
-                <span class="font-weight-bold ms-1">{{ tickets_recentes|length }}</span> tickets
-              </p>
-            </div>
-            <div class="col-lg-6 col-5 my-auto text-end">
-              <div class="dropdown float-lg-end pe-4">
-                <a class="cursor-pointer" href="{% url 'dashboard:cliente_tickets' %}">
-                  <i class="material-symbols-rounded">more_vert</i>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="card-body px-0 pb-2">
-          <div class="table-responsive">
-            <table class="table align-items-center mb-0">
-              <thead>
-                <tr>
-                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ticket</th>
-                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
-                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Agente</th>
-                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Criado</th>
-                  <th class="text-secondary opacity-7"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for ticket in tickets_recentes %}
-                <tr>
-                  <td>
-                    <div class="d-flex px-2 py-1">
-                      <div class="d-flex flex-column justify-content-center">
-                        <h6 class="mb-0 text-sm">#{{ ticket.numero }}</h6>
-                        <p class="text-xs text-secondary mb-0">{{ ticket.titulo|truncatechars:40 }}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="align-middle text-center text-sm">
-                    {% if ticket.status == 'aberto' %}
-                      <span class="badge badge-sm bg-gradient-danger">{{ ticket.get_status_display }}</span>
-                    {% elif ticket.status == 'em_andamento' %}
-                      <span class="badge badge-sm bg-gradient-warning">{{ ticket.get_status_display }}</span>
-                    {% elif ticket.status == 'resolvido' %}
-                      <span class="badge badge-sm bg-gradient-info">{{ ticket.get_status_display }}</span>
-                    {% else %}
-                      <span class="badge badge-sm bg-gradient-success">{{ ticket.get_status_display }}</span>
-                    {% endif %}
-                  </td>
-                  <td class="align-middle text-center">
-                    {% if ticket.agente %}
-                      <span class="text-secondary text-xs font-weight-bold">{{ ticket.agente.get_full_name|default:ticket.agente.username }}</span>
-                    {% else %}
-                      <span class="text-secondary text-xs">Não atribuído</span>
-                    {% endif %}
-                  </td>
-                  <td class="align-middle text-center">
-                    <span class="text-secondary text-xs font-weight-bold">{{ ticket.criado_em|date:"d/m/Y" }}</span>
-                  </td>
-                  <td class="align-middle">
-                    <a href="{% url 'dashboard:ticket_detail' ticket.pk %}" class="text-secondary font-weight-bold text-xs">
-                      Ver
-                    </a>
-                  </td>
-                </tr>
-                {% empty %}
-                <tr>
-                  <td colspan="5" class="text-center py-4">
-                    <p class="text-muted">Você ainda não criou nenhum ticket.</p>
-                    <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-primary btn-sm">Criar Primeiro Ticket</a>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+    <div class="col-lg-4 col-md-5 text-end">
+        {% if admin_view %}
+        <a href="{% url 'dashboard:cliente_list' %}" class="btn btn-sm bg-gradient-dark mb-0 me-1">
+            <i class="material-symbols-rounded text-sm me-1">group</i> Gerenciar Clientes
+        </a>
+        <a href="{% url 'dashboard:cliente_create' %}" class="btn btn-sm bg-gradient-info mb-0">
+            <i class="material-symbols-rounded text-sm me-1">person_add</i> Novo Cliente
+        </a>
+        {% else %}
+        <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-sm bg-gradient-info mb-0">
+            <i class="material-symbols-rounded text-sm me-1">add</i> Novo Ticket
+        </a>
+        {% endif %}
     </div>
-    <div class="col-lg-4 col-md-6">
-      <div class="card h-100">
-        <div class="card-header pb-0">
-          <h6>Informações da Conta</h6>
-        </div>
-        <div class="card-body p-3">
-          <div class="timeline timeline-one-side">
-            <div class="timeline-block mb-3">
-              <span class="timeline-step">
-                <i class="material-symbols-rounded text-success text-gradient">person</i>
-              </span>
-              <div class="timeline-content">
-                <h6 class="text-dark text-sm font-weight-bold mb-0">{{ cliente.nome }}</h6>
-                <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">{{ cliente.email }}</p>
-                {% if cliente.telefone %}
-                <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">{{ cliente.telefone }}</p>
-                {% endif %}
-                {% if cliente.empresa %}
-                <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">{{ cliente.empresa }}</p>
-                {% endif %}
-              </div>
-            </div>
-            <div class="timeline-block mb-3">
-              <span class="timeline-step">
-                <i class="material-symbols-rounded text-info text-gradient">date_range</i>
-              </span>
-              <div class="timeline-content">
-                <h6 class="text-dark text-sm font-weight-bold mb-0">Cliente desde</h6>
-                <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">{{ cliente.criado_em|date:"d/m/Y" }}</p>
-              </div>
-            </div>
-            <div class="timeline-block mb-3">
-              <span class="timeline-step">
-                <i class="material-symbols-rounded text-warning text-gradient">support</i>
-              </span>
-              <div class="timeline-content">
-                <h6 class="text-dark text-sm font-weight-bold mb-0">Precisa de ajuda?</h6>
-                <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
-                  <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-sm btn-warning">Abrir Ticket</a>
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  {% else %}
-  <div class="row">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-body text-center py-5">
-          <i class="material-symbols-rounded text-muted mb-3" style="font-size: 64px;">person_off</i>
-          <h4 class="text-muted">Acesso Restrito</h4>
-          <p class="text-muted">Você precisa ser cadastrado como cliente para acessar este portal.</p>
-          <p class="text-muted">Entre em contato com o suporte para mais informações.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-  {% endif %}
 </div>
+
+<!-- KPIs Linha 1 -->
+<div class="row">
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Total de Tickets</p>
+                        <h4 class="mb-0">{{ total_tickets }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">confirmation_number</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Todos os tickets registrados</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Tickets Abertos</p>
+                        <h4 class="mb-0">{{ tickets_abertos }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">error</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Aguardando atendimento</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Resolvidos</p>
+                        <h4 class="mb-0">{{ tickets_resolvidos }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">check_circle</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Tickets resolvidos</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Tempo Médio Resposta</p>
+                        <h4 class="mb-0">{{ tempo_medio_resposta }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">schedule</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Primeira resposta</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- KPIs Linha 2 -->
+<div class="row">
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Em Andamento</p>
+                        <h4 class="mb-0">{{ tickets_em_andamento }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">pending</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Sendo atendidos atualmente</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Alta Prioridade</p>
+                        <h4 class="mb-0">{{ tickets_alta_prioridade }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">priority_high</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Tickets urgentes</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Fechados</p>
+                        <h4 class="mb-0">{{ tickets_fechados }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">lock</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Tickets encerrados</p>
+            </div>
+        </div>
+    </div>
+    {% if admin_view %}
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Total Clientes</p>
+                        <h4 class="mb-0">{{ total_clientes }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">group</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Clientes cadastrados</p>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Aguardando Resposta</p>
+                        <h4 class="mb-0">{{ tickets_aguardando_cliente }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-secondary shadow-secondary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">hourglass_top</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Aguardando sua ação</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Notificações e Ações Rápidas -->
+<div class="row mb-4">
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header p-3 pb-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="material-symbols-rounded text-info me-1" style="font-size:18px; vertical-align:middle;">notifications_active</i>
+                        Notificações
+                    </h6>
+                </div>
+            </div>
+            <div class="card-body p-3">
+                {% if tickets_recentes_mudancas > 0 %}
+                <div class="d-flex align-items-center mb-3 p-2 border-radius-lg" style="background: rgba(6,182,212,0.08);">
+                    <div class="icon icon-sm icon-shape bg-gradient-info shadow text-center me-2 border-radius-lg">
+                        <i class="material-symbols-rounded text-white" style="font-size:16px;">update</i>
+                    </div>
+                    <div>
+                        <p class="text-sm mb-0 font-weight-bold">{{ tickets_recentes_mudancas }} ticket{{ tickets_recentes_mudancas|pluralize:"s" }} atualizado{{ tickets_recentes_mudancas|pluralize:"s" }}</p>
+                        <p class="text-xs text-muted mb-0">Últimas 24 horas</p>
+                    </div>
+                </div>
+                {% endif %}
+                {% if tickets_aguardando_cliente > 0 %}
+                <div class="d-flex align-items-center mb-3 p-2 border-radius-lg" style="background: rgba(251,191,36,0.08);">
+                    <div class="icon icon-sm icon-shape bg-gradient-warning shadow text-center me-2 border-radius-lg">
+                        <i class="material-symbols-rounded text-white" style="font-size:16px;">schedule</i>
+                    </div>
+                    <div>
+                        <p class="text-sm mb-0 font-weight-bold">{{ tickets_aguardando_cliente }} ticket{{ tickets_aguardando_cliente|pluralize:"s" }} aguardando</p>
+                        <p class="text-xs text-muted mb-0">Resposta necessária</p>
+                    </div>
+                </div>
+                {% endif %}
+                {% if tickets_recentes_mudancas == 0 and tickets_aguardando_cliente == 0 %}
+                <div class="text-center py-3">
+                    <i class="material-symbols-rounded text-muted" style="font-size:40px;">notifications_none</i>
+                    <p class="text-sm text-muted mb-0 mt-2">Nenhuma notificação pendente</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header p-3 pb-0">
+                <h6 class="mb-0">
+                    <i class="material-symbols-rounded text-primary me-1" style="font-size:18px; vertical-align:middle;">receipt_long</i>
+                    Último Ticket
+                </h6>
+            </div>
+            <div class="card-body p-3">
+                {% if ultimo_ticket %}
+                <div class="d-flex align-items-start mb-3">
+                    <div class="icon icon-sm icon-shape bg-gradient-primary shadow text-center me-2 border-radius-lg">
+                        <i class="material-symbols-rounded text-white" style="font-size:16px;">confirmation_number</i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="text-sm mb-0">#{{ ultimo_ticket.numero }}</h6>
+                        <p class="text-xs text-muted mb-1">{{ ultimo_ticket.titulo|truncatechars:45 }}</p>
+                        {% if ultimo_ticket.status == 'aberto' %}
+                            <span class="badge badge-sm bg-gradient-danger">{{ ultimo_ticket.get_status_display }}</span>
+                        {% elif ultimo_ticket.status == 'em_andamento' %}
+                            <span class="badge badge-sm bg-gradient-warning">{{ ultimo_ticket.get_status_display }}</span>
+                        {% elif ultimo_ticket.status == 'resolvido' %}
+                            <span class="badge badge-sm bg-gradient-success">{{ ultimo_ticket.get_status_display }}</span>
+                        {% else %}
+                            <span class="badge badge-sm bg-gradient-dark">{{ ultimo_ticket.get_status_display }}</span>
+                        {% endif %}
+                        <span class="text-xs text-muted ms-2">{{ ultimo_ticket.criado_em|date:"d/m/Y H:i" }}</span>
+                    </div>
+                </div>
+                <a href="{% url 'dashboard:ticket_detail' ultimo_ticket.pk %}" class="btn btn-sm bg-gradient-dark w-100 mb-0">
+                    <i class="material-symbols-rounded text-sm me-1">visibility</i> Ver Detalhes
+                </a>
+                {% else %}
+                <div class="text-center py-3">
+                    <i class="material-symbols-rounded text-muted" style="font-size:40px;">inbox</i>
+                    <p class="text-sm text-muted mb-2 mt-2">Nenhum ticket criado</p>
+                    <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-sm bg-gradient-info mb-0">
+                        <i class="material-symbols-rounded text-sm me-1">add</i> Criar Primeiro Ticket
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-12 mb-4">
+        <div class="card h-100">
+            <div class="card-header p-3 pb-0">
+                <h6 class="mb-0">
+                    <i class="material-symbols-rounded text-success me-1" style="font-size:18px; vertical-align:middle;">
+                        {% if admin_view %}insights{% else %}person{% endif %}
+                    </i>
+                    {% if admin_view %}Resumo{% else %}Minha Conta{% endif %}
+                </h6>
+            </div>
+            <div class="card-body p-3">
+                {% if admin_view %}
+                <div class="d-flex align-items-center mb-3">
+                    <div class="icon icon-sm icon-shape bg-gradient-success shadow text-center me-2 border-radius-lg">
+                        <i class="material-symbols-rounded text-white" style="font-size:16px;">trending_up</i>
+                    </div>
+                    <div>
+                        <p class="text-sm mb-0 font-weight-bold">Taxa de Resolução</p>
+                        <p class="text-xs text-muted mb-0">
+                            {% if total_tickets > 0 %}
+                                {% widthratio tickets_resolvidos total_tickets 100 %}% dos tickets resolvidos
+                            {% else %}
+                                Sem dados
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center mb-3">
+                    <div class="icon icon-sm icon-shape bg-gradient-info shadow text-center me-2 border-radius-lg">
+                        <i class="material-symbols-rounded text-white" style="font-size:16px;">group</i>
+                    </div>
+                    <div>
+                        <p class="text-sm mb-0 font-weight-bold">{{ total_clientes }} clientes cadastrados</p>
+                        <p class="text-xs text-muted mb-0">Base de clientes ativa</p>
+                    </div>
+                </div>
+                <a href="{% url 'dashboard:cliente_list' %}" class="btn btn-sm bg-gradient-info w-100 mb-0">
+                    <i class="material-symbols-rounded text-sm me-1">group</i> Ver Todos os Clientes
+                </a>
+                {% else %}
+                <div class="mb-3">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="material-symbols-rounded text-info me-2" style="font-size:18px;">person</i>
+                        <span class="text-sm font-weight-bold">{{ cliente.nome }}</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="material-symbols-rounded text-info me-2" style="font-size:18px;">email</i>
+                        <span class="text-sm text-muted">{{ cliente.email }}</span>
+                    </div>
+                    {% if cliente.telefone %}
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="material-symbols-rounded text-info me-2" style="font-size:18px;">phone</i>
+                        <span class="text-sm text-muted">{{ cliente.telefone }}</span>
+                    </div>
+                    {% endif %}
+                    {% if cliente.empresa %}
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="material-symbols-rounded text-info me-2" style="font-size:18px;">business</i>
+                        <span class="text-sm text-muted">{{ cliente.empresa }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="material-symbols-rounded text-info me-2" style="font-size:18px;">calendar_today</i>
+                        <span class="text-sm text-muted">Cliente desde {{ cliente.criado_em|date:"d/m/Y" }}</span>
+                    </div>
+                </div>
+                <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-sm bg-gradient-info w-100 mb-0">
+                    <i class="material-symbols-rounded text-sm me-1">add</i> Abrir Novo Ticket
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if admin_view and top_clientes %}
+<!-- Top Clientes (Admin) -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">leaderboard</i>
+                </div>
+                <h6 class="mb-0">Clientes com Mais Tickets</h6>
+                <p class="text-sm mb-0 text-muted">Top 10 clientes por volume de chamados</p>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Cliente</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Empresa</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tickets</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Desde</th>
+                                <th class="text-secondary opacity-7"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in top_clientes %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="icon icon-sm icon-shape bg-gradient-info shadow text-center me-2 border-radius-lg">
+                                            <i class="material-symbols-rounded text-white" style="font-size:16px;">person</i>
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ c.nome }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ c.email }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-sm">{{ c.empresa|default:"-" }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="badge badge-sm bg-gradient-info">{{ c.num_tickets }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs">{{ c.criado_em|date:"d/m/Y" }}</span>
+                                </td>
+                                <td class="align-middle text-end pe-4">
+                                    <a href="{% url 'dashboard:cliente_detail' c.pk %}" class="btn btn-link text-info mb-0 px-2" title="Ver detalhes">
+                                        <i class="material-symbols-rounded">visibility</i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Tickets Recentes -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">list_alt</i>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">Tickets Recentes</h6>
+                        <p class="text-sm mb-0 text-muted">{{ tickets_recentes|length }} ticket{{ tickets_recentes|length|pluralize:"s" }} mais recente{{ tickets_recentes|length|pluralize:"s" }}</p>
+                    </div>
+                    <a href="{% url 'dashboard:cliente_tickets' %}" class="btn btn-sm btn-outline-primary mb-0">
+                        Ver Todos
+                    </a>
+                </div>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ticket</th>
+                                {% if admin_view %}
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cliente</th>
+                                {% endif %}
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Agente</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Criado</th>
+                                <th class="text-secondary opacity-7"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in tickets_recentes %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">#{{ ticket.numero }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ ticket.titulo|truncatechars:40 }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                {% if admin_view %}
+                                <td>
+                                    <p class="text-sm font-weight-bold mb-0">{{ ticket.cliente.nome|default:"-" }}</p>
+                                </td>
+                                {% endif %}
+                                <td class="align-middle text-center text-sm">
+                                    {% if ticket.status == 'aberto' %}
+                                        <span class="badge badge-sm bg-gradient-danger">{{ ticket.get_status_display }}</span>
+                                    {% elif ticket.status == 'em_andamento' %}
+                                        <span class="badge badge-sm bg-gradient-warning">{{ ticket.get_status_display }}</span>
+                                    {% elif ticket.status == 'resolvido' %}
+                                        <span class="badge badge-sm bg-gradient-success">{{ ticket.get_status_display }}</span>
+                                    {% elif ticket.status == 'aguardando_cliente' %}
+                                        <span class="badge badge-sm bg-gradient-info">{{ ticket.get_status_display }}</span>
+                                    {% else %}
+                                        <span class="badge badge-sm bg-gradient-dark">{{ ticket.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="align-middle text-center">
+                                    {% if ticket.agente %}
+                                        <span class="text-secondary text-xs font-weight-bold">{{ ticket.agente.get_full_name|default:ticket.agente.username }}</span>
+                                    {% else %}
+                                        <span class="text-xs text-muted">Não atribuído</span>
+                                    {% endif %}
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">{{ ticket.criado_em|date:"d/m/Y" }}</span>
+                                </td>
+                                <td class="align-middle text-end pe-4">
+                                    <a href="{% url 'dashboard:ticket_detail' ticket.pk %}" class="btn btn-link text-dark mb-0 px-2 py-1" title="Ver">
+                                        <i class="material-symbols-rounded">visibility</i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="{% if admin_view %}6{% else %}5{% endif %}" class="text-center py-4">
+                                    <i class="material-symbols-rounded text-muted" style="font-size:40px;">inbox</i>
+                                    <p class="text-muted mt-2 mb-0">Nenhum ticket encontrado.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- Acesso Restrito -->
+<div class="row mt-4">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <div class="icon icon-xl icon-shape bg-gradient-secondary shadow text-center border-radius-xl mx-auto mb-3">
+                    <i class="material-symbols-rounded opacity-10" style="font-size:36px;">person_off</i>
+                </div>
+                <h4 class="mb-2">Acesso Restrito</h4>
+                <p class="text-muted mb-1">Você precisa ser cadastrado como cliente para acessar este portal.</p>
+                <p class="text-muted mb-4">Entre em contato com o suporte para mais informações.</p>
+                <a href="{% url 'dashboard:index' %}" class="btn bg-gradient-dark">
+                    <i class="material-symbols-rounded me-1">home</i> Voltar ao Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Auto-refresh das estatísticas a cada 30 segundos
-    const AUTO_REFRESH_INTERVAL = 30 * 1000; // 30 segundos
-    
+    const REFRESH_INTERVAL = 30000;
     function refreshStats() {
         fetch('/dashboard/api/cliente/stats/')
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
-                if (data.error) {
-                    console.error('Erro ao carregar estatísticas:', data.error);
-                    return;
-                }
-                
-                // Atualizar os cards com as novas estatísticas
-                updateStatCard('total_tickets', data.total_tickets);
-                updateStatCard('tickets_abertos', data.tickets_abertos);
-                updateStatCard('tickets_fechados', data.tickets_fechados);
-                updateStatCard('tickets_em_andamento', data.tickets_em_andamento);
-                updateStatCard('tickets_resolvidos', data.tickets_resolvidos);
-                updateStatCard('tickets_alta_prioridade', data.tickets_alta_prioridade);
-                updateStatCard('tickets_media_prioridade', data.tickets_media_prioridade);
-                
-                // Atualizar indicador de última atualização
-                const lastUpdate = document.querySelector('.last-update');
-                if (lastUpdate) {
-                    lastUpdate.textContent = 'Atualizado às ' + data.ultimo_update;
-                    lastUpdate.style.color = '#28a745';
-                    setTimeout(() => {
-                        lastUpdate.style.color = '';
-                    }, 2000);
-                }
-                
-                console.log('Estatísticas atualizadas em:', data.ultimo_update);
+                if (data.error) return;
+                const mapping = {
+                    'total de tickets': data.total_tickets,
+                    'tickets abertos': data.tickets_abertos,
+                    'resolvidos': data.tickets_resolvidos,
+                    'em andamento': data.tickets_em_andamento,
+                    'alta prioridade': data.tickets_alta_prioridade,
+                    'fechados': data.tickets_fechados,
+                };
+                document.querySelectorAll('.card-header h4').forEach(h4 => {
+                    const label = h4.closest('.card-header').querySelector('p');
+                    if (!label) return;
+                    const t = label.textContent.trim().toLowerCase();
+                    for (const [key, val] of Object.entries(mapping)) {
+                        if (t.includes(key) && h4.textContent.trim() !== String(val)) {
+                            h4.textContent = val;
+                            h4.style.color = '#06b6d4';
+                            setTimeout(() => { h4.style.color = ''; }, 1500);
+                        }
+                    }
+                });
             })
-            .catch(error => {
-                console.error('Erro ao atualizar estatísticas:', error);
-                const lastUpdate = document.querySelector('.last-update');
-                if (lastUpdate) {
-                    lastUpdate.textContent = 'Erro ao atualizar - ' + new Date().toLocaleTimeString('pt-BR');
-                    lastUpdate.style.color = '#dc3545';
-                }
-            });
+            .catch(() => {});
     }
-    
-    function updateStatCard(elementName, newValue) {
-        // Procurar pelo card que contém esta estatística
-        const cards = document.querySelectorAll('.card h4');
-        cards.forEach(card => {
-            const parent = card.closest('.card');
-            const label = parent.querySelector('p');
-            if (label) {
-                const labelText = label.textContent.toLowerCase();
-                let shouldUpdate = false;
-                
-                switch(elementName) {
-                    case 'total_tickets':
-                        shouldUpdate = labelText.includes('total de tickets');
-                        break;
-                    case 'tickets_abertos':
-                        shouldUpdate = labelText.includes('tickets abertos');
-                        break;
-                    case 'tickets_fechados':
-                        shouldUpdate = labelText.includes('tickets fechados');
-                        break;
-                    case 'tickets_em_andamento':
-                        shouldUpdate = labelText.includes('em andamento');
-                        break;
-                    case 'tickets_resolvidos':
-                        shouldUpdate = labelText.includes('resolvidos');
-                        break;
-                    case 'tickets_alta_prioridade':
-                        shouldUpdate = labelText.includes('alta prioridade');
-                        break;
-                    case 'tickets_media_prioridade':
-                        shouldUpdate = labelText.includes('média prioridade');
-                        break;
-                }
-                
-                if (shouldUpdate && card.textContent !== newValue.toString()) {
-                    const oldValue = card.textContent;
-                    card.textContent = newValue;
-                    
-                    // Animar mudança
-                    card.style.color = '#28a745';
-                    card.style.transform = 'scale(1.1)';
-                    setTimeout(() => {
-                        card.style.color = '';
-                        card.style.transform = 'scale(1)';
-                    }, 1000);
-                    
-                    // Destacar card inteiro
-                    highlightCard(parent);
-                }
-            }
-        });
-    }
-    
-    // Configurar auto-refresh
-    setInterval(refreshStats, AUTO_REFRESH_INTERVAL);
-    
-    // Primeira atualização após 5 segundos
-    setTimeout(refreshStats, 5000);
-    
-    // Adicionar indicador de última atualização na primeira carga
-    const portalCards = document.querySelector('.row');
-    if (portalCards && !document.querySelector('.last-update')) {
-        const updateIndicator = document.createElement('div');
-        updateIndicator.className = 'col-12 text-center mt-2';
-        updateIndicator.innerHTML = '<small class="text-muted last-update">Carregado às ' + new Date().toLocaleTimeString('pt-BR') + ' - Atualização automática a cada 30s</small>';
-        portalCards.appendChild(updateIndicator);
-    }
-    
-    // Destacar cards com hover
-    document.querySelectorAll('.card').forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-2px)';
-            this.style.transition = 'all 0.3s ease';
-            this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-        });
-        
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0)';
-            this.style.boxShadow = '';
-        });
-    });
-    
-    // Animação inicial para cards
-    const cards = document.querySelectorAll('.card');
-    cards.forEach((card, index) => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(20px)';
-        setTimeout(() => {
-            card.style.transition = 'all 0.6s ease';
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-        }, index * 100);
-    });
-    
-    // Animação para tabela de tickets
-    const ticketsRows = document.querySelectorAll('#tickets-recentes tr');
-    ticketsRows.forEach((row, index) => {
-        setTimeout(() => {
-            row.style.opacity = '0';
-            row.style.transform = 'translateX(-20px)';
-            row.offsetHeight; // Force reflow
-            row.style.transition = 'all 0.5s ease';
-            row.style.opacity = '1';
-            row.style.transform = 'translateX(0)';
-        }, (cards.length * 100) + (index * 100));
-    });
+    setInterval(refreshStats, REFRESH_INTERVAL);
 });
-
-// Função para destacar cards com mudanças
-function highlightCard(cardElement) {
-    cardElement.style.boxShadow = '0 0 20px rgba(76, 175, 80, 0.4)';
-    cardElement.style.transform = 'scale(1.02)';
-    setTimeout(() => {
-        cardElement.style.boxShadow = '';
-        cardElement.style.transform = 'scale(1)';
-    }, 2000);
-}
-
-// Função para criar notificação toast
-function showToast(message, type = 'success') {
-    const toast = document.createElement('div');
-    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    toast.style.top = '20px';
-    toast.style.right = '20px';
-    toast.style.zIndex = '9999';
-    toast.style.minWidth = '300px';
-    toast.innerHTML = `
-        <strong>${type === 'success' ? 'Sucesso!' : 'Info'}</strong> ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.remove();
-    }, 5000);
-}
-
-// Detectar inatividade e pausar atualizações
-let isActive = true;
-let inactiveTime = 0;
-const MAX_INACTIVE_TIME = 5 * 60 * 1000; // 5 minutos
-
-document.addEventListener('mousemove', () => {
-    isActive = true;
-    inactiveTime = 0;
-});
-
-setInterval(() => {
-    if (!isActive) {
-        inactiveTime += 1000;
-        if (inactiveTime >= MAX_INACTIVE_TIME) {
-            console.log('Página inativa - pausando atualizações');
-            // Você pode implementar lógica para pausar as atualizações aqui
-        }
-    }
-    isActive = false;
-}, 1000);
 </script>
 {% endblock %}

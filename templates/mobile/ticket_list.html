@@ -1,776 +1,130 @@
 {% extends 'mobile/base.html' %}
-{% load static %}
 
-{% block title %}Tickets{% endblock %}
+{% block title %}Chamados - iConnect Mobile{% endblock %}
+{% block bar_title %}Chamados{% endblock %}
+{% block bar_subtitle %}{{ tickets|length }} chamado{{ tickets|length|pluralize }}{% endblock %}
 
 {% block extra_css %}
-<style>
-    .filter-section {
-    background: linear-gradient(135deg, #2E3192 0%, #ED3A5B 100%);
-        color: white;
-        padding: 1rem;
-        margin: -0.5rem -0.5rem 1rem -0.5rem;
-        border-radius: 0 0 20px 20px;
-    }
-    
-    .filter-chips {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 0.75rem;
-        flex-wrap: wrap;
-    }
-    
-    .filter-chip {
-    background: rgba(46,49,146,0.12);
-    border: 1.5px solid #ED3A5B;
-    color: #2E3192;
-        padding: 0.25rem 0.75rem;
-        border-radius: 15px;
-        font-size: 0.85rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-    }
-    
-    .filter-chip.active,
-    .filter-chip:hover {
-        background: #ED3A5B;
-        color: #fff;
-        border-color: #2E3192;
-        transform: translateY(-2px) scale(1.05);
-    }
-    
-    .ticket-card {
-        background: white;
-        border-radius: 16px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-    border-left: 4px solid #2E3192;
-        box-shadow: 0 2px 20px rgba(0,0,0,0.08);
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .ticket-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 30px rgba(0,0,0,0.12);
-    }
-    
-    .ticket-card.priority-alta {
-    border-left-color: #ED3A5B;
-    }
-    
-    .ticket-card.priority-media {
-    border-left-color: #2E3192;
-    }
-    
-    .ticket-card.priority-baixa {
-    border-left-color: #00b894;
-    }
-    
-    .ticket-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 0.75rem;
-    }
-    
-    .ticket-number {
-        font-weight: 700;
-        color: #2c3e50;
-        font-size: 1.1rem;
-    }
-    
-    .ticket-status {
-        padding: 0.25rem 0.75rem;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .status-aberto {
-    background: #FDF2F8;
-    color: #ED3A5B;
-    border: 1.5px solid #ED3A5B;
-    }
-    
-    .status-em_andamento {
-    background: #EEF2FF;
-    color: #2E3192;
-    border: 1.5px solid #2E3192;
-    }
-    
-    .status-resolvido {
-    background: #E6FFFA;
-    color: #00b894;
-    border: 1.5px solid #00b894;
-    }
-    
-    .status-fechado {
-    background: #F3F4F6;
-    color: #6B7280;
-    border: 1.5px solid #E5E7EB;
-    }
-    
-    .ticket-title {
-        font-weight: 600;
-        color: #2d3748;
-        margin-bottom: 0.5rem;
-        line-height: 1.4;
-    }
-    
-    .ticket-client {
-        color: #718096;
-        font-size: 0.875rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 0.5rem;
-    }
-    
-    .ticket-meta {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 0.75rem;
-        padding-top: 0.75rem;
-        border-top: 1px solid #e2e8f0;
-    }
-    
-    .ticket-time {
-        color: #a0aec0;
-        font-size: 0.75rem;
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-    }
-    
-    .priority-badge {
-    padding: 0.25rem 0.5rem;
-    border-radius: 8px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    border: 1.5px solid #2E3192;
-    }
-    
-    .priority-alta {
-    background: #ED3A5B22;
-    color: #ED3A5B;
-    border-color: #ED3A5B;
-    }
-    
-    .priority-media {
-    background: #2E319222;
-    color: #2E3192;
-    border-color: #2E3192;
-    }
-    
-    .priority-baixa {
-    background: #00b89422;
-    color: #00b894;
-    border-color: #00b894;
-    }
-    
-    .search-container {
-        position: sticky;
-        top: 60px;
-        background: white;
-        z-index: 10;
-        padding: 1rem 0;
-        margin: 0 -0.5rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    
-    .search-input {
-        width: 100%;
-        padding: 0.75rem 1rem 0.75rem 2.5rem;
-        border: 2px solid #e2e8f0;
-        border-radius: 12px;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-        background: #f7fafc;
-    }
-    
-    .search-input:focus {
-        outline: none;
-        border-color: #667eea;
-        background: white;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-    
-    .search-icon {
-        position: absolute;
-        left: 0.75rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #a0aec0;
-    }
-    
-    .empty-state {
-        text-align: center;
-        padding: 3rem 1rem;
-        color: #718096;
-    }
-    
-    .empty-state-icon {
-        font-size: 3rem;
-        color: #e2e8f0;
-        margin-bottom: 1rem;
-    }
-    
-    .create-ticket-fab {
-        position: fixed;
-        bottom: 80px;
-        right: 1rem;
-        width: 56px;
-        height: 56px;
-    background: linear-gradient(135deg, #ED3A5B 0%, #2E3192 100%);
-    box-shadow: 0 8px 32px #ED3A5B55;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
-        transition: all 0.3s ease;
-        z-index: 100;
-        border: none;
-        color: white;
-        font-size: 1.5rem;
-    }
-    
-    .create-ticket-fab:hover {
-    transform: scale(1.12) translateY(-4px);
-    box-shadow: 0 12px 40px #2E319255;
-    }
-    
-    .loading-spinner {
-        display: inline-block;
-        width: 20px;
-        height: 20px;
-        border: 2px solid #e2e8f0;
-        border-radius: 50%;
-    border-top-color: #ED3A5B;
-        animation: spin 1s ease-in-out infinite;
-    }
-    
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-    
-    .category-badge {
-        background: #edf2f7;
-        color: #4a5568;
-        padding: 0.25rem 0.5rem;
-        border-radius: 6px;
-        font-size: 0.7rem;
-        font-weight: 500;
-    }
-    
-    .ticket-actions {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 0.75rem;
-    }
-    
-    .quick-action-btn {
-        flex: 1;
-        padding: 0.5rem;
-        border: 1px solid #e2e8f0;
-        background: white;
-        border-radius: 8px;
-        font-size: 0.75rem;
-        color: #4a5568;
-        transition: all 0.2s ease;
-    }
-    
-    .quick-action-btn:hover {
-        background: #f7fafc;
-        border-color: #cbd5e0;
-    }
-    
-    .ticket-progress {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        height: 3px;
-    background: linear-gradient(90deg, #ED3A5B, #2E3192);
-        transition: width 0.3s ease;
-    }
-    
-    .progress-0 { width: 0%; }
-    .progress-25 { width: 25%; }
-    .progress-50 { width: 50%; }
-    .progress-75 { width: 75%; }
-    .progress-100 { width: 100%; }
-</style>
+/* Filters */
+.filter-bar {
+    display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
+    margin-bottom: 12px; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+.filter-bar::-webkit-scrollbar { display: none; }
+.filter-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 6px 14px; border-radius: 20px; white-space: nowrap;
+    font-size: .8rem; font-weight: 600; text-decoration: none;
+    background: #fff; color: var(--slate-600); border: 1.5px solid var(--slate-300);
+    transition: all .2s;
+}
+.filter-chip.active, .filter-chip:hover {
+    background: var(--slate-800); color: #fff; border-color: var(--slate-800);
+}
+.search-box {
+    position: relative; margin-bottom: 12px;
+}
+.search-box input {
+    width: 100%; padding: 10px 14px 10px 40px; border: 1.5px solid var(--slate-300);
+    border-radius: var(--radius-sm); font-size: .9rem; font-family: inherit;
+    background: #fff; color: var(--slate-800); transition: border-color .2s;
+}
+.search-box input:focus { outline: none; border-color: var(--cyan-500); box-shadow: 0 0 0 3px rgba(6,182,212,.1); }
+.search-box .material-symbols-rounded {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 20px; color: var(--slate-400);
+}
 {% endblock %}
 
 {% block content %}
-<div class="filter-section">
-    <div class="d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Meus Tickets</h5>
-        <div class="text-white-50">
-            {{ tickets.count }} ticket{{ tickets.count|pluralize }}
+<!-- Search -->
+<div class="search-box">
+    <span class="material-symbols-rounded">search</span>
+    <input type="text" id="searchInput" placeholder="Buscar chamados..."
+           value="{{ search|default:'' }}" autocomplete="off">
+</div>
+
+<!-- Filter Chips -->
+<div class="filter-bar">
+    <a href="{% url 'mobile:mobile_ticket_list' %}" class="filter-chip {% if not status_filter %}active{% endif %}">
+        Todos
+    </a>
+    <a href="?status=aberto" class="filter-chip {% if status_filter == 'aberto' %}active{% endif %}">
+        <span class="material-symbols-rounded" style="font-size:14px;">circle</span> Abertos
+    </a>
+    <a href="?status=em_andamento" class="filter-chip {% if status_filter == 'em_andamento' %}active{% endif %}">
+        <span class="material-symbols-rounded" style="font-size:14px;">play_circle</span> Em Andamento
+    </a>
+    <a href="?status=resolvido" class="filter-chip {% if status_filter == 'resolvido' %}active{% endif %}">
+        <span class="material-symbols-rounded" style="font-size:14px;">check_circle</span> Resolvidos
+    </a>
+    <a href="?status=fechado" class="filter-chip {% if status_filter == 'fechado' %}active{% endif %}">
+        <span class="material-symbols-rounded" style="font-size:14px;">lock</span> Fechados
+    </a>
+</div>
+
+<!-- Ticket List -->
+<div id="ticketList">
+    {% for ticket in tickets %}
+    <a href="{% url 'mobile:mobile_ticket_detail' ticket.id %}" class="ticket-item" data-search="{{ ticket.numero }} {{ ticket.titulo }} {{ ticket.cliente.nome }}">
+        <div class="ticket-top">
+            <span class="ticket-num">#{{ ticket.numero }}</span>
+            <span class="badge-status badge-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
         </div>
-    </div>
-    
-    <div class="filter-chips">
-        <a href="{% url 'mobile:mobile_ticket_list' %}" class="filter-chip {% if not status_filter %}active{% endif %}">
-            Todos
-        </a>
-        <a href="?status=aberto" class="filter-chip {% if status_filter == 'aberto' %}active{% endif %}">
-            Abertos
-        </a>
-        <a href="?status=em_andamento" class="filter-chip {% if status_filter == 'em_andamento' %}active{% endif %}">
-            Em Andamento
-        </a>
-        <a href="?status=resolvido" class="filter-chip {% if status_filter == 'resolvido' %}active{% endif %}">
-            Resolvidos
-        </a>
-    </div>
-</div>
-
-<div class="search-container">
-    <div class="position-relative">
-        <i class="fas fa-search search-icon"></i>
-        <input type="text" 
-               class="search-input" 
-               placeholder="Buscar tickets..." 
-               value="{{ search }}"
-               id="searchInput">
-    </div>
-</div>
-
-<div class="tickets-container" id="ticketsContainer" aria-live="polite">
-    <!-- Tickets serão carregados via AJAX -->
-</div>
-<div id="paginationSummary" class="text-center text-muted small my-2" aria-live="polite"></div>
-<div id="loader" class="text-center my-3" style="display:none;">
-    <span class="loading-spinner" aria-label="Carregando..."></span>
-</div>
-<button id="loadMoreBtn" class="btn btn-outline-primary w-100 my-2" style="display:none; font-size:1.1rem;" aria-label="Carregar mais tickets">Carregar Mais</button>
-<div id="emptyState" class="empty-state" style="display:none;">
-    <div class="empty-state-icon">
-        <i class="fas fa-ticket-alt"></i>
-    </div>
-    <h6>Nenhum ticket encontrado</h6>
-    <p class="text-muted"></p>
-</div>
-
-{% if is_agent %}
-<button class="create-ticket-fab" data-url="{% url 'mobile:mobile_create_ticket' %}"
-    <i class="fas fa-plus"></i>
-</button>
-{% endif %}
-
-<!-- Modal para comentário rápido -->
-<div class="modal fade" id="commentModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h6 class="modal-title">Adicionar Comentário</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="commentForm">
-                    <textarea class="form-control" 
-                              id="commentText" 
-                              rows="3" 
-                              placeholder="Digite seu comentário..."></textarea>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" onclick="submitComment()">
-                    <span class="comment-loading d-none">
-                        <span class="loading-spinner"></span>
-                    </span>
-                    Enviar
-                </button>
-            </div>
+        <div class="ticket-titulo">{{ ticket.titulo }}</div>
+        <div style="display:flex; align-items:center; gap:6px; font-size:.75rem; color:var(--slate-500); margin-bottom:6px;">
+            <span class="material-symbols-rounded" style="font-size:14px;">person</span>
+            {{ ticket.cliente.nome|truncatechars:20 }}
+            {% if ticket.categoria %}
+            <span style="background:var(--slate-100); padding:1px 6px; border-radius:4px; font-size:.65rem;">{{ ticket.categoria.nome }}</span>
+            {% endif %}
         </div>
+        <div class="ticket-bottom">
+            <div class="ticket-meta-left">
+                <span class="material-symbols-rounded">schedule</span>
+                {{ ticket.criado_em|timesince }} atrás
+            </div>
+            <span class="badge-priority badge-{{ ticket.prioridade }}">{{ ticket.get_prioridade_display }}</span>
+        </div>
+    </a>
+    {% empty %}
+    <div class="empty-state">
+        <span class="material-symbols-rounded">search_off</span>
+        <h3>Nenhum chamado encontrado</h3>
+        <p>{% if search %}Tente buscar com outros termos{% else %}Crie seu primeiro chamado{% endif %}</p>
+        <a href="{% url 'mobile:mobile_create_ticket' %}" class="btn-m btn-cyan-m">
+            <span class="material-symbols-rounded">add</span> Novo Chamado
+        </a>
     </div>
+    {% endfor %}
 </div>
+{% endblock %}
+
 {% block extra_js %}
 <script>
-let currentTicketId = null;
-let currentPage = 1;
-let loading = false;
-let hasNext = true;
-let totalTickets = 0;
-let perPage = 20;
-let searchTerm = '{{ search|default:"" }}';
-
-function renderTickets(html, append = true) {
-    const container = document.getElementById('ticketsContainer');
-    if (append) {
-        container.insertAdjacentHTML('beforeend', html);
-    } else {
-        container.innerHTML = html;
-    }
-}
-
-function showLoader(show) {
-    document.getElementById('loader').style.display = show ? '' : 'none';
-}
-
-function showLoadMore(show) {
-    document.getElementById('loadMoreBtn').style.display = show ? '' : 'none';
-}
-
-function showEmptyState(show, msg = '') {
-    const empty = document.getElementById('emptyState');
-    empty.style.display = show ? '' : 'none';
-    if (msg) empty.querySelector('p').textContent = msg;
-}
-
-function updateSummary(page, total, perPage) {
-    const el = document.getElementById('paginationSummary');
-    if (total > 0) {
-        const showing = Math.min(page * perPage, total);
-        el.textContent = `Mostrando ${showing} de ${total} tickets`;
-    } else {
-        el.textContent = '';
-    }
-}
-
-async function loadTickets(page = 1, append = true) {
-    if (loading || !hasNext) return;
-    loading = true;
-    showLoader(true);
-    showLoadMore(false);
-    showEmptyState(false);
-    try {
-        const params = new URLSearchParams(window.location.search);
-        params.set('page', page);
-        params.set('per_page', perPage);
-        const resp = await fetch(`/mobile/tickets/ajax/?${params}`);
-        const data = await resp.json();
-        if (data.html) {
-            renderTickets(data.html, append);
-        }
-        hasNext = data.has_next;
-        totalTickets = data.total;
-        updateSummary(data.page, data.total, data.per_page);
-        if (!data.html || data.total === 0) {
-            showEmptyState(true, searchTerm ? `Nenhum ticket encontrado para "${searchTerm}"` : 'Você não possui tickets no momento');
-        }
-        showLoadMore(data.has_next);
-    } catch (e) {
-        showEmptyState(true, 'Erro ao carregar tickets');
-    } finally {
-        showLoader(false);
-        loading = false;
-    }
-}
-
-// Scroll infinito
-window.addEventListener('scroll', () => {
-    if (!hasNext || loading) return;
-    const scrollY = window.scrollY || window.pageYOffset;
-    const winH = window.innerHeight;
-    const docH = document.body.offsetHeight;
-    if (scrollY + winH > docH - 200) {
-        currentPage++;
-        loadTickets(currentPage, true);
-    }
+// Client-side search filtering
+const searchInput = document.getElementById('searchInput');
+let debounce;
+searchInput.addEventListener('input', function() {
+    clearTimeout(debounce);
+    debounce = setTimeout(() => {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll('.ticket-item').forEach(item => {
+            const text = item.dataset.search.toLowerCase();
+            item.style.display = text.includes(q) ? '' : 'none';
+        });
+    }, 200);
 });
 
-// Fallback botão 'Carregar Mais'
-document.getElementById('loadMoreBtn').addEventListener('click', () => {
-    if (hasNext && !loading) {
-        currentPage++;
-        loadTickets(currentPage, true);
-    }
-});
-
-// Busca em tempo real
-document.getElementById('searchInput').addEventListener('input', function(e) {
-    searchTerm = e.target.value;
-    const url = new URL(window.location);
-    if (searchTerm) {
-        url.searchParams.set('search', searchTerm);
-    } else {
-        url.searchParams.delete('search');
-    }
-    clearTimeout(window.searchTimeout);
-    window.searchTimeout = setTimeout(() => {
+// Server-side search on Enter
+searchInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const url = new URL(window.location);
+        if (this.value) url.searchParams.set('search', this.value);
+        else url.searchParams.delete('search');
         window.location = url;
-    }, 500);
-});
-
-// Delegação de eventos para tickets e botões
-document.addEventListener('click', function(e) {
-    if (e.target.closest('.ticket-card[data-ticket-url]')) {
-        const ticketCard = e.target.closest('.ticket-card[data-ticket-url]');
-        const url = ticketCard.dataset.ticketUrl;
-        if (url && !e.target.closest('button')) {
-            window.location.href = url;
-        }
-    }
-    if (e.target.closest('.create-ticket-fab[data-url]')) {
-        const fab = e.target.closest('.create-ticket-fab[data-url]');
-        const url = fab.dataset.url;
-        if (url) {
-            window.location.href = url;
-        }
-    }
-    if (e.target.closest('.quick-action-btn[data-ticket-id]')) {
-        e.stopPropagation();
-        const btn = e.target.closest('.quick-action-btn[data-ticket-id]');
-        const ticketId = btn.dataset.ticketId;
-        const status = btn.dataset.status;
-        const action = btn.dataset.action;
-        if (status) {
-            updateTicketStatus(ticketId, status, btn);
-        } else if (action === 'comment') {
-            openCommentModal(ticketId);
-        }
     }
 });
-
-// Atualizar status do ticket (mantido igual)
-function updateTicketStatus(ticketId, newStatus, btn) {
-    const originalContent = btn.innerHTML;
-    btn.innerHTML = '<span class="loading-spinner"></span>';
-    btn.disabled = true;
-    fetch(`/mobile/ticket/${ticketId}/status/`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-        },
-        body: JSON.stringify({ status: newStatus })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            alert('Erro ao atualizar status');
-            btn.innerHTML = originalContent;
-            btn.disabled = false;
-        }
-    })
-    .catch(error => {
-        alert('Erro ao atualizar status');
-        btn.innerHTML = originalContent;
-        btn.disabled = false;
-    });
-}
-
-// Modal de comentário (mantido igual)
-function openCommentModal(ticketId) {
-    currentTicketId = ticketId;
-    const modal = new bootstrap.Modal(document.getElementById('commentModal'));
-    modal.show();
-    setTimeout(() => {
-        document.getElementById('commentText').focus();
-    }, 300);
-}
-function submitComment() {
-    const commentText = document.getElementById('commentText').value.trim();
-    if (!commentText) {
-        alert('Por favor, digite um comentário');
-        return;
-    }
-    const btn = event.target;
-    const loading = btn.querySelector('.comment-loading');
-    loading.classList.remove('d-none');
-    btn.disabled = true;
-    fetch(`/mobile/ticket/${currentTicketId}/comment/`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-        },
-        body: JSON.stringify({ comment: commentText })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            alert('Erro ao enviar comentário');
-        }
-        btn.disabled = false;
-        loading.classList.add('d-none');
-    })
-    .catch(error => {
-        alert('Erro ao enviar comentário');
-        btn.disabled = false;
-        loading.classList.add('d-none');
-    });
-}
-
-// Inicialização
-document.addEventListener('DOMContentLoaded', function() {
-    currentPage = 1;
-    hasNext = true;
-    renderTickets('', false);
-    loadTickets(currentPage, false);
-});
-</script>
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            bootstrap.Modal.getInstance(document.getElementById('commentModal')).hide();
-            document.getElementById('commentText').value = '';
-            
-            // Mostrar feedback
-            showToast('Comentário adicionado com sucesso!', 'success');
-        } else {
-            alert('Erro ao adicionar comentário');
-        }
-    })
-    .catch(error => {
-        console.error('Erro:', error);
-        alert('Erro ao adicionar comentário');
-    })
-    .finally(() => {
-        loading.classList.add('d-none');
-        btn.disabled = false;
-    });
-}
-
-// Toast notification
-function showToast(message, type = 'info') {
-    const toastHtml = `
-        <div class="toast align-items-center text-white bg-${type} border-0" role="alert">
-            <div class="d-flex">
-                <div class="toast-body">${message}</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
-        </div>
-    `;
-    
-    const toastContainer = document.querySelector('.toast-container') || 
-                          document.body.appendChild(document.createElement('div'));
-    toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
-    toastContainer.innerHTML = toastHtml;
-    
-    const toast = new bootstrap.Toast(toastContainer.querySelector('.toast'));
-    toast.show();
-}
-
-// Atualização automática da lista
-setInterval(() => {
-    // Verificar se há novos tickets apenas se a página estiver visível
-    if (!document.hidden) {
-        checkForUpdates();
-    }
-}, 30000); // 30 segundos
-
-function checkForUpdates() {
-    fetch('/mobile/tickets/check-updates/', {
-        method: 'GET',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.hasUpdates) {
-            showUpdateNotification();
-        }
-    })
-    .catch(error => {
-        console.error('Erro ao verificar atualizações:', error);
-    });
-}
-
-function showUpdateNotification() {
-    const notification = document.createElement('div');
-    notification.className = 'alert alert-info position-fixed top-50 start-50 translate-middle';
-    notification.style.zIndex = '9999';
-    notification.innerHTML = `
-        <div class="d-flex align-items-center">
-            <i class="fas fa-info-circle me-2"></i>
-            Há atualizações disponíveis
-            <button class="btn btn-sm btn-outline-info ms-auto" onclick="location.reload()">
-                Atualizar
-            </button>
-        </div>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 5000);
-}
-
-// Swipe para atualizar (Pull to refresh)
-let startY = 0;
-let pullDistance = 0;
-const pullThreshold = 100;
-
-document.addEventListener('touchstart', (e) => {
-    if (window.scrollY === 0) {
-        startY = e.touches[0].clientY;
-    }
-});
-
-document.addEventListener('touchmove', (e) => {
-    if (window.scrollY === 0 && startY > 0) {
-        pullDistance = e.touches[0].clientY - startY;
-        
-        if (pullDistance > 0) {
-            e.preventDefault();
-            
-            // Visual feedback
-            const refreshIndicator = document.getElementById('refreshIndicator') || createRefreshIndicator();
-            const progress = Math.min(pullDistance / pullThreshold, 1);
-            refreshIndicator.style.opacity = progress;
-            refreshIndicator.style.transform = `translateY(${pullDistance * 0.5}px) rotate(${progress * 360}deg)`;
-        }
-    }
-});
-
-document.addEventListener('touchend', () => {
-    if (pullDistance > pullThreshold) {
-        location.reload();
-    }
-    
-    const refreshIndicator = document.getElementById('refreshIndicator');
-    if (refreshIndicator) {
-        refreshIndicator.style.opacity = '0';
-        refreshIndicator.style.transform = 'translateY(-50px) rotate(0deg)';
-    }
-    
-    startY = 0;
-    pullDistance = 0;
-});
-
-function createRefreshIndicator() {
-    const indicator = document.createElement('div');
-    indicator.id = 'refreshIndicator';
-    indicator.innerHTML = '<i class="fas fa-sync-alt"></i>';
-    indicator.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%) translateY(-50px);
-        background: white;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        opacity: 0;
-        transition: all 0.3s ease;
-        z-index: 1000;
-        color: #667eea;
-    `;
-    document.body.appendChild(indicator);
-    return indicator;
-}
 </script>
 {% endblock %}

@@ -1,237 +1,219 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Dashboard Financeiro - Sistema de Atendimento{% endblock %}
-
+{% block title %}Dashboard Financeiro{% endblock %}
 {% block page_title %}Dashboard Financeiro{% endblock %}
 {% block breadcrumb_title %}Dashboard Financeiro{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="ms-3">
-        <h3 class="mb-0 h4 font-weight-bolder">Dashboard Financeiro</h3>
-        <p class="mb-4">
-            Gestão financeira completa • Contratos, faturas e movimentações • Bem-vindo, {{ user.get_full_name|default:user.username }}
-        </p>
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Dashboard Financeiro</h3>
+            <p class="mb-0 text-sm">Visão financeira dos chamados &bull; Valores LPU &bull; Faturamento por atendimento</p>
+        </div>
     </div>
-    
-    <!-- Estatísticas Financeiras -->
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+    <div class="col-lg-4 col-md-5 text-end d-flex align-items-center justify-content-end">
+        <a href="{% url 'financeiro:relatorios_financeiros' %}" class="btn btn-sm bg-gradient-dark mb-0 me-2">
+            <i class="material-symbols-rounded text-sm me-1">assessment</i> Relatórios
+        </a>
+        <a href="{% url 'financeiro:faturas_lista' %}" class="btn btn-sm bg-gradient-info mb-0">
+            <i class="material-symbols-rounded text-sm me-1">receipt_long</i> Faturas
+        </a>
+    </div>
+</div>
+
+<!-- KPIs Principais -->
+<div class="row">
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
         <div class="card">
             <div class="card-header p-2 ps-3">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <p class="text-sm mb-0 text-capitalize">Receita Mensal</p>
-                        <h4 class="mb-0">R$ {{ receita_mensal|floatformat:2|default:"0,00" }}</h4>
+                        <p class="text-sm mb-0 text-capitalize">Faturamento do Mês</p>
+                        <h4 class="mb-0">R$ {{ receita_chamados_mes|floatformat:2 }}</h4>
                     </div>
                     <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">trending_up</i>
+                        <i class="material-symbols-rounded opacity-10">payments</i>
                     </div>
                 </div>
             </div>
             <hr class="dark horizontal my-0">
             <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm"><span class="text-success font-weight-bolder">+{{ percentual_crescimento|default:"0" }}% </span>este mês</p>
+                <p class="mb-0 text-sm">
+                    <span class="{% if variacao_receita >= 0 %}text-success{% else %}text-danger{% endif %} font-weight-bolder">
+                        {% if variacao_receita >= 0 %}+{% endif %}{{ variacao_receita|floatformat:1 }}%
+                    </span> vs mês anterior
+                </p>
             </div>
         </div>
     </div>
-    
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
         <div class="card">
             <div class="card-header p-2 ps-3">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <p class="text-sm mb-0 text-capitalize">Faturas Pendentes</p>
-                        <h4 class="mb-0">{{ faturas_pendentes|default:"0" }}</h4>
-                    </div>
-                    <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">receipt</i>
-                    </div>
-                </div>
-            </div>
-            <hr class="dark horizontal my-0">
-            <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm"><span class="text-warning font-weight-bolder">R$ {{ valor_pendente|floatformat:2|default:"0,00" }} </span>em aberto</p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-        <div class="card">
-            <div class="card-header p-2 ps-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-sm mb-0 text-capitalize">Contratos Ativos</p>
-                        <h4 class="mb-0">{{ contratos_ativos|default:"0" }}</h4>
+                        <p class="text-sm mb-0 text-capitalize">Chamados Faturados</p>
+                        <h4 class="mb-0">{{ tickets_finalizados_mes }}</h4>
                     </div>
                     <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">description</i>
+                        <i class="material-symbols-rounded opacity-10">confirmation_number</i>
                     </div>
                 </div>
             </div>
             <hr class="dark horizontal my-0">
             <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm"><span class="text-primary font-weight-bolder">{{ contratos_novos|default:"0" }} novos </span>este mês</p>
+                <p class="mb-0 text-sm"><span class="text-primary font-weight-bolder">{{ total_itens_mes }}</span> itens/serviços utilizados</p>
             </div>
         </div>
     </div>
-    
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
         <div class="card">
             <div class="card-header p-2 ps-3">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <p class="text-sm mb-0 text-capitalize">Movimentações</p>
-                        <h4 class="mb-0">{{ total_movimentacoes|default:"0" }}</h4>
+                        <p class="text-sm mb-0 text-capitalize">Ticket Médio</p>
+                        <h4 class="mb-0">R$ {{ ticket_medio_valor|floatformat:2 }}</h4>
                     </div>
                     <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">swap_horiz</i>
+                        <i class="material-symbols-rounded opacity-10">avg_pace</i>
                     </div>
                 </div>
             </div>
             <hr class="dark horizontal my-0">
             <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm"><span class="text-info font-weight-bolder">Últimas 24h </span>registradas</p>
+                <p class="mb-0 text-sm">Valor médio <span class="font-weight-bolder">por chamado</span></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Valor em Aberto</p>
+                        <h4 class="mb-0">R$ {{ valor_em_aberto|floatformat:2 }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">pending_actions</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">
+                    <span class="text-warning font-weight-bolder">{{ faturas_pendentes }}</span> faturas pendentes
+                    {% if faturas_vencidas %} &bull; <span class="text-danger font-weight-bolder">{{ faturas_vencidas }}</span> vencidas{% endif %}
+                </p>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Gráficos -->
 <div class="row mt-4">
-    <!-- Gráfico de Receitas -->
-    <div class="col-lg-8 col-md-6 mb-md-0 mb-4">
+    <!-- Evolução de Faturamento -->
+    <div class="col-lg-8 col-md-7 mb-4">
+        <div class="card z-index-2 h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">trending_up</i>
+                </div>
+                <div class="d-block">
+                    <p class="text-sm mb-0 text-capitalize">Faturamento de Chamados</p>
+                    <h5 class="mb-0">Evolução Mensal</h5>
+                </div>
+            </div>
+            <div class="card-body p-3 pt-0">
+                <div class="chart">
+                    <canvas id="chartEvolucao" class="chart-canvas" height="280"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Receita por Categoria -->
+    <div class="col-lg-4 col-md-5 mb-4">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">donut_large</i>
+                </div>
+                <div class="d-block">
+                    <p class="text-sm mb-0 text-capitalize">Por Categoria</p>
+                    <h5 class="mb-0">Distribuição</h5>
+                </div>
+            </div>
+            <div class="card-body p-3 pt-0">
+                <div class="chart">
+                    <canvas id="chartCategoria" class="chart-canvas" height="280"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabela: Produtos/Serviços LPU Mais Faturados -->
+<div class="row mt-4">
+    <div class="col-12 mb-4">
         <div class="card">
-            <div class="card-header pb-0">
-                <div class="row">
-                    <div class="col-lg-6 col-7">
-                        <h6>Evolução da Receita</h6>
-                        <p class="text-sm mb-0">
-                            <i class="fa fa-check text-info" aria-hidden="true"></i>
-                            <span class="font-weight-bold ms-1">Últimos 12 meses</span>
-                        </p>
-                    </div>
-                    <div class="col-lg-6 col-5 my-auto text-end">
-                        <div class="dropdown float-lg-end pe-4">
-                            <a class="cursor-pointer" id="dropdownTable" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fa fa-ellipsis-v text-secondary"></i>
-                            </a>
-                            <ul class="dropdown-menu px-2 py-3 ms-sm-n4 ms-n5" aria-labelledby="dropdownTable">
-                                <li><a class="dropdown-item border-radius-md" href="{% url 'financeiro:relatorios_financeiros' %}">Ver Relatórios</a></li>
-                                <li><a class="dropdown-item border-radius-md" href="#">Exportar Dados</a></li>
-                            </ul>
-                        </div>
-                    </div>
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3 d-flex justify-content-between align-items-center px-3">
+                    <h6 class="text-white text-capitalize mb-0">
+                        <i class="material-symbols-rounded text-sm me-1 opacity-7">inventory_2</i>
+                        Produtos &amp; Serviços LPU — Mais Faturados no Mês
+                    </h6>
                 </div>
             </div>
             <div class="card-body px-0 pb-2">
-                <div class="chart">
-                    <canvas id="chart-line" class="chart-canvas" height="300"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Resumo Rápido -->
-    <div class="col-lg-4 col-md-6">
-        <div class="card h-100">
-            <div class="card-header pb-0">
-                <h6>Ações Rápidas</h6>
-            </div>
-            <div class="card-body p-3">
-                <div class="timeline timeline-one-side">
-                    <div class="timeline-block mb-3">
-                        <span class="timeline-step">
-                            <i class="material-symbols-rounded text-success text-gradient">receipt</i>
-                        </span>
-                        <div class="timeline-content">
-                            <h6 class="text-dark text-sm font-weight-bold mb-0">Gerenciar Faturas</h6>
-                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
-                                <a href="{% url 'financeiro:faturas_lista' %}" class="text-info">Ver todas as faturas</a>
-                            </p>
-                        </div>
-                    </div>
-                    <div class="timeline-block mb-3">
-                        <span class="timeline-step">
-                            <i class="material-symbols-rounded text-warning text-gradient">description</i>
-                        </span>
-                        <div class="timeline-content">
-                            <h6 class="text-dark text-sm font-weight-bold mb-0">Contratos</h6>
-                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
-                                <a href="{% url 'financeiro:contratos_lista' %}" class="text-info">Gerenciar contratos</a>
-                            </p>
-                        </div>
-                    </div>
-                    <div class="timeline-block mb-3">
-                        <span class="timeline-step">
-                            <i class="material-symbols-rounded text-info text-gradient">swap_horiz</i>
-                        </span>
-                        <div class="timeline-content">
-                            <h6 class="text-dark text-sm font-weight-bold mb-0">Movimentações</h6>
-                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
-                                <a href="{% url 'financeiro:movimentacoes_lista' %}" class="text-info">Ver movimentações</a>
-                            </p>
-                        </div>
-                    </div>
-                    <div class="timeline-block mb-3">
-                        <span class="timeline-step">
-                            <i class="material-symbols-rounded text-primary text-gradient">analytics</i>
-                        </span>
-                        <div class="timeline-content">
-                            <h6 class="text-dark text-sm font-weight-bold mb-0">Relatórios</h6>
-                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
-                                <a href="{% url 'financeiro:relatorios_financeiros' %}" class="text-info">Gerar relatórios</a>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mt-4">
-    <!-- Faturas Recentes -->
-    <div class="col-lg-6 mb-lg-0 mb-4">
-        <div class="card">
-            <div class="card-header pb-0">
-                <h6>Faturas Recentes</h6>
-            </div>
-            <div class="card-body px-0 pt-0 pb-2">
                 <div class="table-responsive p-0">
                     <table class="table align-items-center mb-0">
                         <thead>
                             <tr>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Cliente</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Valor</th>
-                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
-                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Vencimento</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Produto/Serviço</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Código</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Tipo</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Qtd. Utilizada</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Chamados</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Total Faturado</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for fatura in faturas_recentes %}
+                            {% for item in top_produtos %}
                             <tr>
                                 <td>
                                     <div class="d-flex px-2 py-1">
+                                        <div class="icon icon-sm icon-shape bg-gradient-{% if item.tipo_item == 'servico' %}info{% else %}primary{% endif %} shadow text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
+                                            <i class="material-symbols-rounded opacity-10 text-white" style="font-size: 14px;">
+                                                {% if item.tipo_item == 'servico' %}build{% else %}category{% endif %}
+                                            </i>
+                                        </div>
                                         <div class="d-flex flex-column justify-content-center">
-                                            <h6 class="mb-0 text-sm">{{ fatura.cliente.nome|default:"Cliente" }}</h6>
-                                            <p class="text-xs text-secondary mb-0">{{ fatura.numero|default:"#0001" }}</p>
+                                            <h6 class="mb-0 text-sm">{{ item.produto__nome }}</h6>
                                         </div>
                                     </div>
                                 </td>
+                                <td><span class="text-xs font-weight-bold">{{ item.produto__codigo }}</span></td>
                                 <td>
-                                    <p class="text-xs font-weight-bold mb-0">R$ {{ fatura.valor|floatformat:2|default:"0,00" }}</p>
-                                </td>
-                                <td class="align-middle text-center text-sm">
-                                    <span class="badge badge-sm bg-gradient-{{ fatura.status_color|default:'warning' }}">{{ fatura.get_status_display|default:"Pendente" }}</span>
+                                    <span class="badge badge-sm bg-gradient-{% if item.tipo_item == 'servico' %}info{% else %}primary{% endif %}">
+                                        {{ item.tipo_item|title }}
+                                    </span>
                                 </td>
                                 <td class="align-middle text-center">
-                                    <span class="text-secondary text-xs font-weight-bold">{{ fatura.data_vencimento|date:"d/m/Y"|default:"--/--/----" }}</span>
+                                    <span class="text-secondary text-xs font-weight-bold">{{ item.quantidade_total|floatformat:0 }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">{{ item.qtd_chamados }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-success text-sm font-weight-bold">R$ {{ item.total_faturado|floatformat:2 }}</span>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="4" class="text-center text-sm">
-                                    <p class="mb-0">Nenhuma fatura encontrada</p>
+                                <td colspan="6" class="text-center py-4">
+                                    <i class="material-symbols-rounded opacity-5" style="font-size: 40px;">inventory_2</i>
+                                    <p class="text-sm text-secondary mt-2 mb-0">Nenhum produto/serviço faturado neste mês</p>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -241,146 +223,267 @@
             </div>
         </div>
     </div>
-    
-    <!-- Contratos por Status -->
-    <div class="col-lg-6">
+</div>
+
+<!-- Tabela: Últimos Chamados Finalizados com Valor -->
+<div class="row">
+    <div class="col-lg-8 mb-4">
         <div class="card">
-            <div class="card-header pb-0">
-                <h6>Contratos por Status</h6>
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-4 pb-3 d-flex justify-content-between align-items-center px-3">
+                    <h6 class="text-white text-capitalize mb-0">
+                        <i class="material-symbols-rounded text-sm me-1 opacity-7">receipt_long</i>
+                        Últimos Chamados Finalizados
+                    </h6>
+                </div>
             </div>
-            <div class="card-body p-3">
-                <div class="chart">
-                    <canvas id="chart-doughnut" class="chart-canvas" height="200"></canvas>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Chamado</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cliente</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Agente</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Categoria</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Data</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Valor Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in ultimos_chamados %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">#{{ ticket.numero }}</h6>
+                                            <p class="text-xs text-secondary mb-0 text-truncate" style="max-width: 200px;">{{ ticket.titulo }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="text-xs font-weight-bold">{{ ticket.cliente.nome }}</span></td>
+                                <td><span class="text-xs font-weight-bold">{{ ticket.agente.get_full_name|default:ticket.agente.username }}</span></td>
+                                <td class="align-middle text-center">
+                                    <span class="badge badge-sm bg-gradient-secondary">{{ ticket.categoria.nome|default:"-" }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">{{ ticket.fechado_em|date:"d/m/Y" }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-success text-sm font-weight-bold">R$ {{ ticket.valor_total|floatformat:2 }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <p class="text-sm text-secondary mb-0">Nenhum chamado finalizado com valor</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Top Clientes -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-warning shadow-warning border-radius-lg pt-4 pb-3 px-3">
+                    <h6 class="text-white text-capitalize mb-0">
+                        <i class="material-symbols-rounded text-sm me-1 opacity-7">star</i>
+                        Top Clientes — Mês
+                    </h6>
+                </div>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Cliente</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Chamados</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cliente in top_clientes %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ cliente.ticket__cliente__nome }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ cliente.ticket__cliente__empresa|default:"" }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-xs font-weight-bold">{{ cliente.qtd_chamados }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-success text-xs font-weight-bold">R$ {{ cliente.total_faturado|floatformat:2 }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center py-3">
+                                    <p class="text-sm text-secondary mb-0">Sem dados</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Scripts para gráficos -->
+<!-- Info Cards: Contratos e Faturas -->
+<div class="row">
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center">
+                    <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary border-radius-xl me-3">
+                        <i class="material-symbols-rounded opacity-10">description</i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0">{{ contratos_ativos }}</h3>
+                        <p class="text-sm mb-0 text-secondary">Contratos Ativos</p>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-3">
+                <a href="{% url 'financeiro:contratos_lista' %}" class="text-sm text-info font-weight-bold">
+                    Ver contratos <i class="material-symbols-rounded text-sm">arrow_forward</i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center">
+                    <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning border-radius-xl me-3">
+                        <i class="material-symbols-rounded opacity-10">pending_actions</i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0">R$ {{ total_pendente|floatformat:2 }}</h3>
+                        <p class="text-sm mb-0 text-secondary">Faturas Pendentes</p>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-3">
+                <a href="{% url 'financeiro:faturas_lista' %}" class="text-sm text-info font-weight-bold">
+                    Ver faturas <i class="material-symbols-rounded text-sm">arrow_forward</i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center">
+                    <div class="icon icon-lg icon-shape bg-gradient-danger shadow-danger border-radius-xl me-3">
+                        <i class="material-symbols-rounded opacity-10">warning</i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0">{{ faturas_vencidas }}</h3>
+                        <p class="text-sm mb-0 text-secondary">Faturas Vencidas</p>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-3">
+                <a href="{% url 'financeiro:faturas_lista' %}" class="text-sm text-danger font-weight-bold">
+                    Resolver pendências <i class="material-symbols-rounded text-sm">arrow_forward</i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
 <script src="{% static 'js/plugins/chartjs.min.js' %}"></script>
 <script>
-// Gráfico de linha - Evolução da Receita
-var ctx1 = document.getElementById("chart-line").getContext("2d");
-var gradientStroke1 = ctx1.createLinearGradient(0, 230, 0, 50);
-gradientStroke1.addColorStop(1, 'rgba(203,12,159,0.2)');
-gradientStroke1.addColorStop(0.2, 'rgba(72,72,176,0.0)');
-gradientStroke1.addColorStop(0, 'rgba(203,12,159,0)');
+document.addEventListener('DOMContentLoaded', function() {
+    const SLATE = '#334155';
+    const CYAN = '#06b6d4';
+    const SUCCESS = '#4CAF50';
 
-new Chart(ctx1, {
-  type: "line",
-  data: {
-    labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
-    datasets: [{
-      label: "Receita",
-      tension: 0.4,
-      borderWidth: 0,
-      pointRadius: 0,
-      borderColor: "#cb0c9f",
-      borderWidth: 3,
-      backgroundColor: gradientStroke1,
-      fill: true,
-      data: [50000, 52000, 48000, 61000, 55000, 58000, 62000, 60000, 65000, 63000, 67000, 70000],
-      maxBarThickness: 6
-    }],
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      }
-    },
-    interaction: {
-      intersect: false,
-      mode: 'index',
-    },
-    scales: {
-      y: {
-        grid: {
-          drawBorder: false,
-          display: true,
-          drawOnChartArea: true,
-          drawTicks: false,
-          borderDash: [5, 5]
-        },
-        ticks: {
-          display: true,
-          padding: 10,
-          color: '#b2b9bf',
-          font: {
-            size: 11,
-            family: "Open Sans",
-            style: 'normal',
-            lineHeight: 2
-          },
-        }
-      },
-      x: {
-        grid: {
-          drawBorder: false,
-          display: false,
-          drawOnChartArea: false,
-          drawTicks: false,
-          borderDash: [5, 5]
-        },
-        ticks: {
-          display: true,
-          color: '#b2b9bf',
-          padding: 20,
-          font: {
-            size: 11,
-            family: "Open Sans",
-            style: 'normal',
-            lineHeight: 2
-          },
-        }
-      },
-    },
-  },
-});
+    // Evolução de Faturamento
+    const ctxEvolucao = document.getElementById('chartEvolucao');
+    if (ctxEvolucao) {
+        const ctx = ctxEvolucao.getContext('2d');
+        const grad = ctx.createLinearGradient(0, 200, 0, 0);
+        grad.addColorStop(0, 'rgba(6,182,212,0.0)');
+        grad.addColorStop(1, 'rgba(6,182,212,0.15)');
 
-// Gráfico de rosca - Contratos por Status
-var ctx2 = document.getElementById("chart-doughnut").getContext("2d");
-new Chart(ctx2, {
-  type: "doughnut",
-  data: {
-    labels: ['Ativos', 'Suspensos', 'Cancelados'],
-    datasets: [{
-      label: "Contratos",
-      weight: 9,
-      cutout: 60,
-      tension: 0.9,
-      pointRadius: 2,
-      borderWidth: 2,
-      backgroundColor: ['#17ad37', '#f1c40f', '#e74c3c'],
-      data: [{{ contratos_ativos|default:"0" }}, {{ contratos_suspensos|default:"0" }}, {{ contratos_cancelados|default:"0" }}],
-      fill: false
-    }],
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: true,
-        position: 'bottom',
-      }
-    },
-    interaction: {
-      intersect: false,
-      mode: 'index',
-    },
-    scales: {
-      y: {
-        display: false
-      },
-      x: {
-        display: false
-      }
-    },
-  },
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ evolucao_labels_json|safe }},
+                datasets: [{
+                    label: 'Faturamento (R$)',
+                    data: {{ evolucao_valores_json|safe }},
+                    backgroundColor: CYAN,
+                    borderRadius: 6,
+                    maxBarThickness: 36,
+                    order: 2
+                }, {
+                    label: 'Chamados',
+                    data: {{ evolucao_tickets_json|safe }},
+                    type: 'line',
+                    borderColor: SLATE,
+                    backgroundColor: 'transparent',
+                    tension: 0.4,
+                    borderWidth: 2,
+                    pointRadius: 4,
+                    pointBackgroundColor: SLATE,
+                    yAxisID: 'y1',
+                    order: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: true, position: 'top', labels: { usePointStyle: true, padding: 15, font: { size: 11 } } } },
+                scales: {
+                    y: { beginAtZero: true, grid: { drawBorder: false, borderDash: [5,5] }, ticks: { callback: v => 'R$ ' + v.toLocaleString('pt-BR'), font: { size: 10 } } },
+                    y1: { position: 'right', beginAtZero: true, grid: { display: false }, ticks: { font: { size: 10 } } },
+                    x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                }
+            }
+        });
+    }
+
+    // Receita por Categoria
+    const ctxCat = document.getElementById('chartCategoria');
+    if (ctxCat) {
+        const catLabels = {{ cat_labels_json|safe }};
+        const catValues = {{ cat_values_json|safe }};
+        const palette = [CYAN, SLATE, '#f59e0b', '#10b981', '#8b5cf6', '#ef4444'];
+
+        new Chart(ctxCat.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: catLabels.length ? catLabels : ['Sem dados'],
+                datasets: [{
+                    data: catValues.length ? catValues : [1],
+                    backgroundColor: catValues.length ? palette.slice(0, catLabels.length) : ['#e5e7eb'],
+                    borderWidth: 2,
+                    cutout: '65%'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true, position: 'bottom', labels: { usePointStyle: true, padding: 10, font: { size: 10 } } },
+                    tooltip: { callbacks: { label: ctx => ctx.label + ': R$ ' + ctx.parsed.toLocaleString('pt-BR', {minimumFractionDigits: 2}) } }
+                }
+            }
+        });
+    }
 });
 </script>
 {% endblock %}

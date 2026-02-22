@@ -15,8 +15,20 @@ from .models_estoque import MovimentacaoEstoque, TipoMovimentacao, Produto
 from django.contrib.auth.models import User
 from .services.sla_calculator import sla_calculator
 
+import logging
+logger = logging.getLogger('dashboard')
+
 
 channel_layer = get_channel_layer()
+
+
+def _safe_group_send(group, message):
+    """Send to channel group only when layer is available (not in tests/dev without Redis)."""
+    if channel_layer is not None:
+        try:
+            async_to_sync(channel_layer.group_send)(group, message)
+        except Exception:
+            logger.debug("Channel layer send failed (no backend?)")
 
 
 @receiver(post_save, sender=Ticket)
@@ -26,7 +38,7 @@ def ticket_created_or_updated(sender, instance, created, **kwargs):
     if created:
         # 🎫 NOVO TICKET CRIADO
         # Notificar todos os agentes disponíveis
-        async_to_sync(channel_layer.group_send)(
+        _safe_group_send(
             "agents",
             {
                 'type': 'notification_message',
@@ -56,7 +68,7 @@ def ticket_created_or_updated(sender, instance, created, **kwargs):
     
     else:
         # 🔄 TICKET ATUALIZADO
-        async_to_sync(channel_layer.group_send)(
+        _safe_group_send(
             f"ticket_chat_{instance.id}",
             {
                 'type': 'ticket_update',
@@ -80,12 +92,12 @@ def ticket_created_or_updated(sender, instance, created, **kwargs):
                     user=client_user,
                     title='Ticket Atualizado',
                     message=f'Seu ticket #{instance.numero} foi atualizado: {instance.get_status_display()}',
-                    type='ticket_update',
+                    type='ticket_status_change',
                     ticket=instance
                 )
                 
                 # Enviar via WebSocket
-                async_to_sync(channel_layer.group_send)(
+                _safe_group_send(
                     f"user_{client_user.id}",
                     {
                         'type': 'notification_message',
@@ -112,7 +124,7 @@ def interaction_created(sender, instance, created, **kwargs):
     ticket = instance.ticket
     
     # 💬 NOVA MENSAGEM NO CHAT
-    async_to_sync(channel_layer.group_send)(
+    _safe_group_send(
         f"ticket_chat_{ticket.id}",
         {
             'type': 'chat_message_broadcast',
@@ -138,11 +150,11 @@ def interaction_created(sender, instance, created, **kwargs):
                     user=client_user,
                     title='Nova Resposta no seu Ticket',
                     message=f'Ticket #{ticket.numero}: Nova resposta disponível',
-                    type='new_response',
+                    type='new_interaction',
                     ticket=ticket
                 )
                 
-                async_to_sync(channel_layer.group_send)(
+                _safe_group_send(
                     f"user_{client_user.id}",
                     {
                         'type': 'notification_message',
@@ -164,11 +176,11 @@ def interaction_created(sender, instance, created, **kwargs):
             user=ticket.agente,
             title='Nova Mensagem no Ticket',
             message=f'Ticket #{ticket.numero}: Nova mensagem adicionada',
-            type='new_message',
+            type='new_interaction',
             ticket=ticket
         )
         
-        async_to_sync(channel_layer.group_send)(
+        _safe_group_send(
             f"user_{ticket.agente.id}",
             {
                 'type': 'notification_message',
@@ -188,7 +200,7 @@ def interaction_created(sender, instance, created, **kwargs):
 def send_sla_warning(ticket):
     """⚠️ Alerta de SLA próximo do vencimento"""
     
-    async_to_sync(channel_layer.group_send)(
+    _safe_group_send(
         "agents",
         {
             'type': 'sla_alert',
@@ -218,7 +230,7 @@ def send_sla_warning(ticket):
 def send_sla_breach(ticket):
     """🚨 Alerta de violação de SLA"""
     
-    async_to_sync(channel_layer.group_send)(
+    _safe_group_send(
         "agents",
         {
             'type': 'sla_alert',
@@ -245,7 +257,7 @@ def send_sla_breach(ticket):
         )
         
         # Notificação WebSocket individual
-        async_to_sync(channel_layer.group_send)(
+        _safe_group_send(
             f"user_{supervisor.id}",
             {
                 'type': 'sla_alert',
@@ -264,7 +276,7 @@ def send_sla_breach(ticket):
 def agent_status_changed(sender, instance, **kwargs):
     """Notificação de mudança de status do agente"""
     
-    async_to_sync(channel_layer.group_send)(
+    _safe_group_send(
         "agent_status",
         {
             'type': 'agent_status_update',
@@ -299,7 +311,7 @@ def send_dashboard_update():
         'timestamp': timezone.now().isoformat()
     }
     
-    async_to_sync(channel_layer.group_send)(
+    _safe_group_send(
         "dashboard_updates",
         {
             'type': 'metrics_update',
@@ -319,7 +331,7 @@ def setup_sla_for_new_ticket(sender, instance, created, **kwargs):
             sla_history = sla_calculator.create_sla_history(instance)
             
             if sla_history:
-                print(f"✅ SLA configurado para ticket #{instance.numero}")
+                logger.info("SLA configurado para ticket #%s", instance.numero)
                 
                 # Envia notificação sobre a criação do SLA
                 if instance.agente:
@@ -337,10 +349,10 @@ def setup_sla_for_new_ticket(sender, instance, created, **kwargs):
                         }
                     )
             else:
-                print(f"⚠️  Nenhuma política SLA encontrada para ticket #{instance.numero}")
+                logger.warning("Nenhuma politica SLA encontrada para ticket #%s", instance.numero)
                 
         except Exception as e:
-            print(f"❌ Erro ao configurar SLA para ticket #{instance.numero}: {str(e)}")
+            logger.error("Erro ao configurar SLA para ticket #%s: %s", instance.numero, str(e), exc_info=True)
 
 
 @receiver(pre_save, sender=Ticket)
@@ -356,7 +368,7 @@ def track_first_response(sender, instance, **kwargs):
                 not instance.first_response_at):
                 
                 instance.first_response_at = timezone.now()
-                print(f"✅ Primeira resposta registrada para ticket #{instance.numero}")
+                logger.info("Primeira resposta registrada para ticket #%s", instance.numero)
                 
                 # Atualiza métricas de SLA
                 sla_history = instance.sla_history.first()
@@ -366,17 +378,17 @@ def track_first_response(sender, instance, **kwargs):
                     # Verifica se cumpriu o SLA de primeira resposta
                     if instance.first_response_at <= sla_history.first_response_deadline:
                         sla_history.sla_compliance = True
-                        print(f"✅ SLA de primeira resposta cumprido para ticket #{instance.numero}")
+                        logger.info("SLA de primeira resposta cumprido para ticket #%s", instance.numero)
                     else:
                         sla_history.sla_compliance = False
-                        print(f"❌ SLA de primeira resposta violado para ticket #{instance.numero}")
+                        logger.error("SLA de primeira resposta violado para ticket #%s", instance.numero)
                     
                     sla_history.save()
                     
         except Ticket.DoesNotExist:
             pass  # Ticket novo, não há nada para comparar
         except Exception as e:
-            print(f"❌ Erro ao rastrear primeira resposta: {str(e)}")
+            logger.error("Erro ao rastrear primeira resposta: %s", str(e), exc_info=True)
 
 
 @receiver(post_save, sender=Ticket)
@@ -404,9 +416,9 @@ def track_resolution_time(sender, instance, created, **kwargs):
                 
                 # Log do resultado
                 if sla_history.sla_compliance:
-                    print(f"✅ SLA totalmente cumprido para ticket #{instance.numero}")
+                    logger.info("SLA totalmente cumprido para ticket #%s", instance.numero)
                 else:
-                    print(f"❌ SLA violado para ticket #{instance.numero}")
+                    logger.error("SLA violado para ticket #%s", instance.numero)
                     
                     # Cria notificação de violação se necessário
                     if instance.agente:
@@ -421,7 +433,7 @@ def track_resolution_time(sender, instance, created, **kwargs):
                         )
                         
         except Exception as e:
-            print(f"❌ Erro ao rastrear tempo de resolução: {str(e)}")
+            logger.error("Erro ao rastrear tempo de resolucao: %s", str(e), exc_info=True)
 
 
 def send_sla_dashboard_update():
@@ -431,7 +443,7 @@ def send_sla_dashboard_update():
         
         dashboard_data = sla_monitor.get_sla_dashboard_data()
         
-        async_to_sync(channel_layer.group_send)(
+        _safe_group_send(
             "sla_dashboard",
             {
                 'type': 'sla_update',
@@ -440,7 +452,7 @@ def send_sla_dashboard_update():
         )
         
     except Exception as e:
-        print(f"❌ Erro ao enviar atualização do dashboard SLA: {str(e)}")
+        logger.error("Erro ao enviar atualizacao do dashboard SLA: %s", str(e), exc_info=True)
 
 
 # ========== CONTROLE DE ESTOQUE ==========
@@ -475,10 +487,10 @@ def item_atendimento_created(sender, instance, created, **kwargs):
                 data_movimentacao=timezone.now()
             )
             
-            print(f"✅ Estoque reduzido: {instance.produto.nome} (-{instance.quantidade})")
+            logger.info("Estoque reduzido: %s (-%s)", instance.produto.nome, instance.quantidade)
             
         except Exception as e:
-            print(f"❌ Erro ao reduzir estoque para item {instance.id}: {str(e)}")
+            logger.error("Erro ao reduzir estoque para item %s: %s", instance.id, str(e), exc_info=True)
 
 
 @receiver(post_save, sender=ItemAtendimento)
@@ -516,10 +528,10 @@ def item_atendimento_updated(sender, instance, created, **kwargs):
                         data_movimentacao=timezone.now()
                     )
                     
-                    print(f"✅ Estoque ajustado: {instance.produto.nome} ({'+' if diferenca < 0 else '-'}{abs(diferenca)})")
+                    logger.info("Estoque ajustado: %s (%s%s)", instance.produto.nome, '+' if diferenca < 0 else '-', abs(diferenca))
                     
         except Exception as e:
-            print(f"❌ Erro ao ajustar estoque para item {instance.id}: {str(e)}")
+            logger.error("Erro ao ajustar estoque para item %s: %s", instance.id, str(e), exc_info=True)
 
 
 @receiver(pre_delete, sender=ItemAtendimento)
@@ -552,7 +564,107 @@ def item_atendimento_deleted(sender, instance, **kwargs):
                 data_movimentacao=timezone.now()
             )
             
-            print(f"✅ Estoque devolvido: {instance.produto.nome} (+{instance.quantidade})")
+            logger.info("Estoque devolvido: %s (+%s)", instance.produto.nome, instance.quantidade)
             
         except Exception as e:
-            print(f"❌ Erro ao devolver estoque para item {instance.id}: {str(e)}")
+            logger.error("Erro ao devolver estoque para item %s: %s", instance.id, str(e), exc_info=True)
+
+
+# ---------------------------------------------------------------------------
+# Audit signals - login / logout / login_failed
+# ---------------------------------------------------------------------------
+from django.contrib.auth.signals import user_logged_in, user_logged_out, user_login_failed
+
+
+def _get_ip(request):
+    if request is None:
+        return "0.0.0.0"
+    xff = request.META.get("HTTP_X_FORWARDED_FOR")
+    if xff:
+        return xff.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR", "0.0.0.0")
+
+
+@receiver(user_logged_in)
+def audit_user_logged_in(sender, request, user, **kwargs):
+    """Registrar login bem-sucedido"""
+    try:
+        from .audit_models import AuditEvent
+        AuditEvent.objects.create(
+            event_type="login",
+            severity="low",
+            user=user,
+            action="login",
+            description=f"Login bem-sucedido: {user.username}",
+            ip_address=_get_ip(request),
+            user_agent=request.META.get("HTTP_USER_AGENT", "")[:500] if request else "",
+        )
+    except Exception as e:
+        logger.error("Erro ao registrar audit login: %s", e)
+
+
+@receiver(user_logged_out)
+def audit_user_logged_out(sender, request, user, **kwargs):
+    """Registrar logout"""
+    try:
+        from .audit_models import AuditEvent
+        if user:
+            AuditEvent.objects.create(
+                event_type="logout",
+                severity="low",
+                user=user,
+                action="logout",
+                description=f"Logout: {user.username}",
+                ip_address=_get_ip(request),
+                user_agent=request.META.get("HTTP_USER_AGENT", "")[:500] if request else "",
+            )
+    except Exception as e:
+        logger.error("Erro ao registrar audit logout: %s", e)
+
+
+@receiver(user_login_failed)
+def audit_user_login_failed(sender, credentials, request, **kwargs):
+    """Registrar tentativa de login falha"""
+    try:
+        from .audit_models import AuditEvent
+        username = credentials.get("username", "desconhecido")
+        AuditEvent.objects.create(
+            event_type="security_event",
+            severity="medium",
+            action="login_failed",
+            description=f"Tentativa de login falha: {username}",
+            ip_address=_get_ip(request),
+            user_agent=request.META.get("HTTP_USER_AGENT", "")[:500] if request else "",
+            additional_data={"username_attempted": username},
+            is_suspicious=True,
+        )
+    except Exception as e:
+        logger.error("Erro ao registrar audit login_failed: %s", e)
+
+
+# ---------------------------------------------------------------------------
+# Audit signals - model changes (Ticket, SLAPolicy)
+# ---------------------------------------------------------------------------
+
+@receiver(post_save, sender=Ticket)
+def audit_ticket_change(sender, instance, created, **kwargs):
+    """Registrar criacao/alteracao de tickets para audit trail"""
+    try:
+        from .audit_models import AuditEvent
+        from django.contrib.contenttypes.models import ContentType
+        ct = ContentType.objects.get_for_model(Ticket)
+        AuditEvent.objects.create(
+            event_type="create" if created else "update",
+            severity="low",
+            action="ticket_created" if created else "ticket_updated",
+            description=f"Ticket #{instance.numero}: {'criado' if created else 'atualizado'} - {instance.titulo}",
+            content_type=ct,
+            object_id=instance.pk,
+            additional_data={
+                "numero": instance.numero,
+                "status": instance.status,
+                "prioridade": instance.prioridade,
+            },
+        )
+    except Exception as e:
+        logger.error("Erro ao registrar audit ticket: %s", e)

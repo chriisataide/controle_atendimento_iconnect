@@ -68,6 +68,10 @@ MANIFEST
 .env.development.local
 .env.test.local
 .env.production.local
+vapid_keys.txt
+*.pem
+*.key
+*.crt
 
 # Coverage reports
 htmlcov/

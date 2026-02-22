@@ -1,0 +1,69 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>500 - Erro Interno | iConnect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container { text-align: center; padding: 2rem; max-width: 600px; }
+        .error-code {
+            font-size: 8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+            margin-bottom: 1rem;
+        }
+        h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; color: #f1f5f9; }
+        p { color: #94a3b8; margin-bottom: 2rem; line-height: 1.6; }
+        .actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.75rem 1.5rem; border-radius: 0.5rem;
+            text-decoration: none; font-weight: 500; font-size: 0.875rem; transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #06b6d4, #0891b2); color: white;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(6,182,212,0.4); }
+        .btn-outline { border: 1px solid #475569; color: #94a3b8; background: transparent; }
+        .btn-outline:hover { border-color: #06b6d4; color: #06b6d4; }
+        .status-info {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="error-code">500</div>
+        <h1>Erro Interno do Servidor</h1>
+        <p>Algo deu errado no servidor. Nossa equipe já foi notificada e está trabalhando para resolver o problema. Tente novamente em alguns instantes.</p>
+        <div class="actions">
+            <a href="/" class="btn btn-primary">Ir para o Dashboard</a>
+            <a href="javascript:location.reload()" class="btn btn-outline">Tentar Novamente</a>
+        </div>
+        <div class="status-info">
+            Se o problema persistir, entre em contato com o administrador do sistema.
+        </div>
+    </div>
+</body>
+</html>

@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib import messages
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Min
 from django.http import JsonResponse
 from django.urls import reverse_lazy, reverse
 from django.core.paginator import Paginator
@@ -14,11 +14,14 @@ from django.views.decorators.http import require_http_methods
 from django.db.models import Q, Count, Case, When, IntegerField
 from datetime import datetime, timedelta
 import json
+import logging
 from .models import Cliente, Ticket, PerfilUsuario, CategoriaTicket, InteracaoTicket, PerfilAgente, StatusTicket, PrioridadeTicket, TicketAnexo, Notification
 from .security import rate_limit, log_suspicious_activity
 from .api_versioning import api_version, APIResponseTransformer
 from .audit_system import audit_action, audit_model_changes, audit_sensitive_data_access
 from .forms import DashboardUserCreationForm, TicketCreateForm
+
+logger = logging.getLogger('dashboard')
 
 from .models import PontoDeVenda
 from django import forms
@@ -122,12 +125,22 @@ class UserListView(ListView):
     template_name = 'dashboard/user_list.html'
     context_object_name = 'users'
     paginate_by = 25
+    ordering = ['-date_joined']
 
     def dispatch(self, request, *args, **kwargs):
         if not (request.user.is_staff or request.user.is_superuser):
             messages.error(request, 'Acesso negado. Você não tem permissão para ver usuários.')
             return redirect('dashboard:index')
         return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        all_users = User.objects.all()
+        context['total_users'] = all_users.count()
+        context['active_users'] = all_users.filter(is_active=True).count()
+        context['staff_users'] = all_users.filter(is_staff=True).count()
+        context['admin_users'] = all_users.filter(is_superuser=True).count()
+        return context
 
 
 @method_decorator([login_required], name='dispatch')
@@ -184,6 +197,11 @@ def admin_dashboard(request):
         messages.error(request, 'Acesso negado. Você não tem permissões administrativas.')
         return redirect('dashboard:index')
     
+    import json
+    from datetime import timedelta
+    from django.db.models import Count, Q
+    from django.utils import timezone
+    
     # Estatísticas gerais do sistema
     total_usuarios = User.objects.count()
     total_clientes = Cliente.objects.count()
@@ -191,7 +209,6 @@ def admin_dashboard(request):
     total_categorias = CategoriaTicket.objects.count()
     
     # Tickets por status (otimizado com uma query)
-    from django.db.models import Count, Q
     ticket_stats = Ticket.objects.aggregate(
         abertos=Count('id', filter=Q(status='aberto')),
         andamento=Count('id', filter=Q(status='em_andamento')),
@@ -202,7 +219,6 @@ def admin_dashboard(request):
         baixa=Count('id', filter=Q(prioridade='baixa'))
     )
     
-    # Extrair valores das estatísticas
     tickets_abertos = ticket_stats['abertos']
     tickets_andamento = ticket_stats['andamento']
     tickets_resolvidos = ticket_stats['resolvidos']
@@ -210,6 +226,31 @@ def admin_dashboard(request):
     tickets_alta = ticket_stats['alta']
     tickets_media = ticket_stats['media']
     tickets_baixa = ticket_stats['baixa']
+    
+    # Usuários ativos nas últimas 24h
+    agora = timezone.now()
+    usuarios_ativos_24h = User.objects.filter(last_login__gte=agora - timedelta(hours=24)).count()
+    
+    # Taxa de resolução (resolvidos + fechados / total)
+    total_resolvidos = tickets_resolvidos + tickets_fechados
+    taxa_resolucao = round((total_resolvidos / total_tickets * 100) if total_tickets > 0 else 0, 1)
+    
+    # Tendência de tickets dos últimos 7 dias (dados reais)
+    tendencia_labels = []
+    tendencia_criados = []
+    tendencia_fechados = []
+    for i in range(6, -1, -1):
+        dia = (agora - timedelta(days=i)).date()
+        tendencia_labels.append(dia.strftime('%d/%m'))
+        tendencia_criados.append(
+            Ticket.objects.filter(criado_em__date=dia).count()
+        )
+        tendencia_fechados.append(
+            Ticket.objects.filter(
+                Q(status__in=['resolvido', 'fechado']),
+                Q(atualizado_em__date=dia)
+            ).count()
+        )
     
     # Tickets recentes com otimização
     tickets_recentes = Ticket.objects.select_related(
@@ -237,6 +278,11 @@ def admin_dashboard(request):
         'tickets_recentes': tickets_recentes,
         'usuarios_recentes': usuarios_recentes,
         'clientes_recentes': clientes_recentes,
+        'usuarios_ativos_24h': usuarios_ativos_24h,
+        'taxa_resolucao': taxa_resolucao,
+        'tendencia_labels': json.dumps(tendencia_labels),
+        'tendencia_criados': json.dumps(tendencia_criados),
+        'tendencia_fechados': json.dumps(tendencia_fechados),
     }
     
     return render(request, 'dashboard/admin/dashboard.html', context)
@@ -277,9 +323,12 @@ def custom_logout(request):
     """
     View personalizada para logout
     """
-    username = request.user.get_full_name() or request.user.username
-    logout(request)
-    messages.success(request, f'Até logo, {username}! Logout realizado com sucesso.')
+    if request.user.is_authenticated:
+        username = request.user.get_full_name() or request.user.username
+        logout(request)
+        messages.success(request, f'Até logo, {username}! Logout realizado com sucesso.')
+    else:
+        logout(request)
     return redirect('login')
 
 @login_required
@@ -322,79 +371,85 @@ class DashboardView(TemplateView):
         # === IMPORTAÇÕES ===
         from django.utils import timezone
         from datetime import timedelta, datetime
-        from django.db.models import Count, Q
-        from django.db.models.functions import TruncDate, TruncHour
+        from django.db.models import Count, Q, Avg, F, ExpressionWrapper, DurationField
+        from django.db.models.functions import TruncDate, TruncHour, TruncMonth, ExtractWeekDay, ExtractHour
+        import json
         
-        # Dados legados (manter compatibilidade)
-        hoje = timezone.now().date()
+        now = timezone.now()
+        hoje = now.date()
         ontem = hoje - timedelta(days=1)
         mes_atual = hoje.replace(day=1)
+        doze_meses_atras = (now - timedelta(days=365)).replace(day=1)
         
-        # 1. Tickets por mês (gráfico de linha) - Últimos 12 meses
+        # 1. Tickets por mês (últimos 12 meses) — UMA query com TruncMonth
+        tickets_por_mes_qs = (
+            Ticket.objects.filter(criado_em__gte=doze_meses_atras)
+            .annotate(mes=TruncMonth('criado_em'))
+            .values('mes')
+            .annotate(count=Count('id'))
+            .order_by('mes')
+        )
+        # Montar dicionário mês -> count
+        mes_dict = {item['mes'].date(): item['count'] for item in tickets_por_mes_qs}
         tickets_por_mes = []
-        now = timezone.now()
-        
         for i in range(12):
-            # Calcular o mês (i meses atrás)
             year = now.year
             month = now.month - i
-            
-            # Ajustar para anos anteriores se necessário
             while month <= 0:
                 month += 12
                 year -= 1
-            
-            # Contar tickets do mês
-            count = Ticket.objects.filter(
-                criado_em__year=year,
-                criado_em__month=month
-            ).count()
-            
-            tickets_por_mes.insert(0, count)
+            dt = datetime(year, month, 1).date()
+            tickets_por_mes.insert(0, mes_dict.get(dt, 0))
         
-        # 2. Distribuição por status (gráfico pizza) - otimizado
-        status_stats = Ticket.objects.aggregate(
+        # 2. Distribuição por status (UMA query com aggregate + conditional)
+        status_data = Ticket.objects.aggregate(
             aberto=Count('id', filter=Q(status=StatusTicket.ABERTO)),
             em_andamento=Count('id', filter=Q(status=StatusTicket.EM_ANDAMENTO)),
             resolvido=Count('id', filter=Q(status=StatusTicket.RESOLVIDO)),
             fechado=Count('id', filter=Q(status=StatusTicket.FECHADO))
         )
-        status_data = status_stats
         
-        # 3. Performance por agente (gráfico barras) - otimizado
-        agent_performance_qs = Ticket.objects.filter(
-            status=StatusTicket.RESOLVIDO,
-            agente__is_staff=True
-        ).values('agente__username').annotate(
-            count=Count('id')
-        ).order_by('-count')[:5]
+        # 3. Performance por agente (UMA query com annotate)
+        agent_performance = list(
+            Ticket.objects.filter(
+                status=StatusTicket.RESOLVIDO,
+                agente__is_staff=True
+            ).values('agente__username', 'agente__first_name').annotate(
+                count=Count('id')
+            ).order_by('-count')[:5]
+        )
         
-        # Converter QuerySet para lista
-        agent_performance = list(agent_performance_qs)
+        # 4. Heatmap de horários — UMA query com ExtractWeekDay + ExtractHour
+        heatmap_qs = (
+            Ticket.objects
+            .annotate(dia=ExtractWeekDay('criado_em'), hora=ExtractHour('criado_em'))
+            .values('dia', 'hora')
+            .annotate(count=Count('id'))
+        )
+        heatmap_lookup = {}
+        for item in heatmap_qs:
+            heatmap_lookup[(item['dia'], item['hora'])] = item['count']
         
-        # 4. Heatmap de horários (tabela)
-        # Matriz 7x12 (dias da semana x horários de 2 em 2h)
         heatmap_data = []
-        for dia in range(7):  # 0=domingo, 6=sábado
+        for dia in range(7):
             linha = []
-            for hora in range(0, 24, 2):  # de 2 em 2 horas
-                count = Ticket.objects.filter(
-                    criado_em__week_day=(dia + 1),  # Django: 1=domingo
-                    criado_em__hour__range=(hora, hora + 1)
-                ).count()
-                linha.append(count)
+            for hora in range(0, 24, 2):
+                total = sum(
+                    heatmap_lookup.get((dia + 1, h), 0) for h in range(hora, hora + 2)
+                )
+                linha.append(total)
             heatmap_data.append(linha)
         
-        # 5. Atendimentos por hora (gráfico existente)
-        atendimentos_por_hora = []
-        for hora in range(24):
-            count = Ticket.objects.filter(criado_em__hour=hora).count()
-            atendimentos_por_hora.append(count)
+        # 5. Atendimentos por hora — UMA query
+        hora_qs = (
+            Ticket.objects
+            .annotate(hora=ExtractHour('criado_em'))
+            .values('hora')
+            .annotate(count=Count('id'))
+        )
+        hora_dict = {item['hora']: item['count'] for item in hora_qs}
+        atendimentos_por_hora = [hora_dict.get(h, 0) for h in range(24)]
         
-        # Serializar dados para JSON
-        import json
-        
-        # Adicionar dados dos gráficos ao contexto
         context.update({
             'tickets_por_mes': json.dumps(tickets_por_mes),
             'status_data': json.dumps(status_data),
@@ -417,26 +472,18 @@ class DashboardView(TemplateView):
             last_login__gte=timezone.now() - timedelta(hours=24)
         ).count()
         
-        # Tickets por status
-        try:
-            tickets_abertos = Ticket.objects.filter(
-                status__nome__in=['Aberto', 'Em Andamento']
-            ).count()
-        except:
-            # Fallback se não houver campo 'nome' no status
-            tickets_abertos = Ticket.objects.filter(status='aberto').count()
+        # Tickets abertos
+        tickets_abertos = Ticket.objects.filter(
+            status__in=[StatusTicket.ABERTO, StatusTicket.EM_ANDAMENTO]
+        ).count()
         
         # Taxa de resolução
         tickets_mes = Ticket.objects.filter(criado_em__gte=mes_atual)
         total_mes = tickets_mes.count()
-        try:
-            resolvidos_mes = tickets_mes.filter(
-                status__nome__in=['Resolvido', 'Fechado']
-            ).count()
-        except:
-            resolvidos_mes = tickets_mes.filter(status='resolvido').count()
-        
-        taxa_resolucao = (resolvidos_mes / total_mes * 100) if total_mes > 0 else 94.2
+        resolvidos_mes = tickets_mes.filter(
+            status__in=[StatusTicket.RESOLVIDO, StatusTicket.FECHADO]
+        ).count()
+        taxa_resolucao = (resolvidos_mes / total_mes * 100) if total_mes > 0 else 0
         
         # Dados para o template
         context.update({
@@ -449,15 +496,18 @@ class DashboardView(TemplateView):
         
         # Tickets recentes com relacionamentos
         context['tickets_recentes'] = Ticket.objects.select_related(
-            'cliente', 'categoria'
+            'cliente'
         ).order_by('-criado_em')[:10]
         
-        # Agentes status (simulado por enquanto)
-        context['agentes_status'] = [
-            {'user': {'get_full_name': lambda: 'João Silva'}, 'status': 'online', 'tickets_ativos': 3},
-            {'user': {'get_full_name': lambda: 'Maria Santos'}, 'status': 'ocupado', 'tickets_ativos': 5},
-            {'user': {'get_full_name': lambda: 'Carlos Lima'}, 'status': 'online', 'tickets_ativos': 1},
-        ]
+        # Agentes status (busca real do banco)
+        try:
+            from dashboard.models import PerfilAgente
+            agentes_qs = PerfilAgente.objects.select_related('user').filter(
+                user__is_active=True
+            )[:10]
+            context['agentes_status'] = agentes_qs
+        except Exception:
+            context['agentes_status'] = []
         
         # Dados para gráficos (em formato JSON-ready) são gerados acima
         
@@ -466,6 +516,206 @@ class DashboardView(TemplateView):
         context['tickets_fechados'] = resolvidos_mes
         context['total_tickets'] = Ticket.objects.count()
         
+        # === SLA Dados dinâmicos ===
+        try:
+            from dashboard.models import SLAPolicy, SLAAlert
+            context['sla_policies_count'] = SLAPolicy.objects.filter(is_active=True).count()
+            context['sla_alerts_count'] = SLAAlert.objects.filter(resolved_at__isnull=True).count()
+        except Exception:
+            context['sla_policies_count'] = 0
+            context['sla_alerts_count'] = 0
+        
+        # === WhatsApp status dinâmico ===
+        try:
+            from dashboard.models_whatsapp import WhatsAppBusinessAccount
+            whatsapp_ativo = WhatsAppBusinessAccount.objects.filter(ativo=True).exists()
+            context['whatsapp_status'] = 'Conectado' if whatsapp_ativo else 'Desconectado'
+        except Exception:
+            context['whatsapp_status'] = 'Desconectado'
+        
+        # === Variações percentuais reais ===
+        # Variação de usuários ativos (mês atual vs mês anterior)
+        inicio_mes_passado = (mes_atual - timedelta(days=1)).replace(day=1)
+        usuarios_mes_passado = User.objects.filter(
+            last_login__gte=inicio_mes_passado,
+            last_login__lt=mes_atual
+        ).count()
+        if usuarios_mes_passado > 0:
+            context['variacao_usuarios'] = round(((usuarios_ativos - usuarios_mes_passado) / usuarios_mes_passado) * 100, 1)
+        else:
+            context['variacao_usuarios'] = 100 if usuarios_ativos > 0 else 0
+        
+        # Variação de tickets abertos (semana atual vs semana passada)
+        semana_passada_inicio = hoje - timedelta(days=14)
+        semana_passada_fim = hoje - timedelta(days=7)
+        tickets_semana_passada = Ticket.objects.filter(
+            criado_em__date__gte=semana_passada_inicio,
+            criado_em__date__lt=semana_passada_fim,
+            status__in=[StatusTicket.ABERTO, StatusTicket.EM_ANDAMENTO]
+        ).count()
+        if tickets_semana_passada > 0:
+            context['variacao_tickets'] = round(((tickets_abertos - tickets_semana_passada) / tickets_semana_passada) * 100, 1)
+        else:
+            context['variacao_tickets'] = 0
+        
+        # Variação da taxa de resolução (mês atual vs mês anterior)
+        tickets_mes_passado = Ticket.objects.filter(
+            criado_em__gte=inicio_mes_passado,
+            criado_em__lt=mes_atual
+        )
+        total_mes_passado = tickets_mes_passado.count()
+        resolvidos_mes_passado = tickets_mes_passado.filter(
+            status__in=[StatusTicket.RESOLVIDO, StatusTicket.FECHADO]
+        ).count()
+        taxa_resolucao_passada = (resolvidos_mes_passado / total_mes_passado * 100) if total_mes_passado > 0 else 0
+        context['variacao_resolucao'] = round(taxa_resolucao - taxa_resolucao_passada, 1)
+        
+        # === Tendência de tickets (últimos 30 dias vs 30 dias anteriores) ===
+        trinta_dias = hoje - timedelta(days=30)
+        sessenta_dias = hoje - timedelta(days=60)
+        tickets_30d = Ticket.objects.filter(criado_em__date__gte=trinta_dias).count()
+        tickets_60_30d = Ticket.objects.filter(
+            criado_em__date__gte=sessenta_dias,
+            criado_em__date__lt=trinta_dias
+        ).count()
+        if tickets_60_30d > 0:
+            context['tendencia_tickets'] = round(((tickets_30d - tickets_60_30d) / tickets_60_30d) * 100, 1)
+        else:
+            context['tendencia_tickets'] = 100 if tickets_30d > 0 else 0
+        
+        # === Resumo mensal (tickets resolvidos este mês vs mês passado) ===
+        if total_mes_passado > 0:
+            context['resumo_mensal_pct'] = round(((total_mes - total_mes_passado) / total_mes_passado) * 100, 1)
+        else:
+            context['resumo_mensal_pct'] = 100 if total_mes > 0 else 0
+        
+        # === Tickets recentes para timeline ===
+        context['tickets_timeline'] = Ticket.objects.select_related(
+            'cliente', 'agente'
+        ).order_by('-criado_em')[:3]
+        
+        # === Labels de meses dinâmicos para gráficos ===
+        meses_labels = []
+        for i in range(11, -1, -1):
+            year = now.year
+            month = now.month - i
+            while month <= 0:
+                month += 12
+                year -= 1
+            dt = datetime(year, month, 1)
+            meses_labels.append(dt.strftime('%b'))
+        context['meses_labels'] = json.dumps(meses_labels)
+        
+        # === NOVO: Tempo Médio de Resolução ===
+        tempo_medio_qs = Ticket.objects.filter(
+            status__in=[StatusTicket.RESOLVIDO, StatusTicket.FECHADO],
+            resolvido_em__isnull=False,
+            criado_em__isnull=False,
+        ).annotate(
+            duracao=ExpressionWrapper(
+                F('resolvido_em') - F('criado_em'),
+                output_field=DurationField()
+            )
+        ).aggregate(media=Avg('duracao'))
+        
+        tempo_medio = tempo_medio_qs.get('media')
+        if tempo_medio:
+            total_seconds = int(tempo_medio.total_seconds())
+            hours = total_seconds // 3600
+            if hours >= 24:
+                days = hours // 24
+                context['tempo_medio_resolucao'] = f'{days}d {hours % 24}h'
+            else:
+                minutes = (total_seconds % 3600) // 60
+                context['tempo_medio_resolucao'] = f'{hours}h {minutes}m'
+        else:
+            context['tempo_medio_resolucao'] = '--'
+        
+        # Variação do tempo médio vs mês anterior
+        tempo_medio_atual_qs = Ticket.objects.filter(
+            status__in=[StatusTicket.RESOLVIDO, StatusTicket.FECHADO],
+            resolvido_em__isnull=False,
+            resolvido_em__gte=mes_atual,
+        ).annotate(
+            duracao=ExpressionWrapper(F('resolvido_em') - F('criado_em'), output_field=DurationField())
+        ).aggregate(media=Avg('duracao'))
+        
+        tempo_medio_passado_qs = Ticket.objects.filter(
+            status__in=[StatusTicket.RESOLVIDO, StatusTicket.FECHADO],
+            resolvido_em__isnull=False,
+            resolvido_em__gte=inicio_mes_passado,
+            resolvido_em__lt=mes_atual,
+        ).annotate(
+            duracao=ExpressionWrapper(F('resolvido_em') - F('criado_em'), output_field=DurationField())
+        ).aggregate(media=Avg('duracao'))
+        
+        tm_atual = tempo_medio_atual_qs.get('media')
+        tm_passado = tempo_medio_passado_qs.get('media')
+        if tm_atual and tm_passado and tm_passado.total_seconds() > 0:
+            context['variacao_tempo_medio'] = round(
+                ((tm_atual.total_seconds() - tm_passado.total_seconds()) / tm_passado.total_seconds()) * 100, 1
+            )
+        else:
+            context['variacao_tempo_medio'] = 0
+        
+        # === NOVO: Tickets Urgentes (SLA expirado ou prioridade crítica aberto) ===
+        tickets_urgentes = list(Ticket.objects.filter(
+            Q(prioridade='critica', status__in=[StatusTicket.ABERTO, StatusTicket.EM_ANDAMENTO]) |
+            Q(sla_resolution_deadline__lt=now, status__in=[StatusTicket.ABERTO, StatusTicket.EM_ANDAMENTO]) |
+            Q(is_escalated=True, status__in=[StatusTicket.ABERTO, StatusTicket.EM_ANDAMENTO])
+        ).select_related('cliente', 'agente', 'categoria').distinct().order_by('-criado_em')[:10])
+        context['tickets_urgentes'] = tickets_urgentes
+        
+        # === NOVO: Agentes Online ===
+        try:
+            from dashboard.models import PerfilAgente
+            context['agentes_online'] = PerfilAgente.objects.filter(status='online').count()
+        except Exception:
+            context['agentes_online'] = 0
+        
+        return context
+
+
+# ========== KANBAN BOARD ==========
+
+@method_decorator(login_required, name='dispatch')
+class KanbanBoardView(TemplateView):
+    """Visualização Kanban do pipeline de tickets"""
+    template_name = 'dashboard/tickets/kanban.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        base_qs = Ticket.objects.select_related('cliente', 'agente', 'categoria').order_by('-prioridade', '-criado_em')
+
+        # Filtros opcionais
+        agente = self.request.GET.get('agente')
+        if agente:
+            base_qs = base_qs.filter(agente_id=agente)
+        categoria = self.request.GET.get('categoria')
+        if categoria:
+            base_qs = base_qs.filter(categoria_id=categoria)
+
+        columns = [
+            ('aberto', 'Aberto', 'info'),
+            ('em_andamento', 'Em Andamento', 'warning'),
+            ('pendente', 'Pendente', 'secondary'),
+            ('resolvido', 'Resolvido', 'success'),
+            ('fechado', 'Fechado', 'dark'),
+        ]
+        kanban_columns = []
+        for status_key, label, color in columns:
+            tickets = base_qs.filter(status=status_key)[:50]
+            kanban_columns.append({
+                'status': status_key,
+                'label': label,
+                'color': color,
+                'tickets': tickets,
+                'count': tickets.count() if hasattr(tickets, 'count') else len(tickets),
+            })
+
+        context['columns'] = kanban_columns
+        context['agentes'] = User.objects.filter(perfilagente__isnull=False, is_active=True).order_by('first_name')
+        context['categorias'] = CategoriaTicket.objects.all()
         return context
 
 
@@ -476,7 +726,7 @@ class TicketListView(ListView):
     model = Ticket
     template_name = 'dashboard/tickets/list.html'
     context_object_name = 'tickets'
-    paginate_by = 10
+    paginate_by = 15
     
     def get_queryset(self):
         queryset = Ticket.objects.select_related('cliente', 'categoria', 'agente').order_by('-criado_em')
@@ -493,6 +743,21 @@ class TicketListView(ListView):
         prioridade_filter = self.request.GET.get('prioridade')
         if prioridade_filter:
             queryset = queryset.filter(prioridade=prioridade_filter)
+        
+        agente_filter = self.request.GET.get('agente')
+        if agente_filter:
+            if agente_filter == 'none':
+                queryset = queryset.filter(agente__isnull=True)
+            else:
+                queryset = queryset.filter(agente_id=agente_filter)
+        
+        # Filtro por data
+        data_inicio = self.request.GET.get('data_inicio')
+        data_fim = self.request.GET.get('data_fim')
+        if data_inicio:
+            queryset = queryset.filter(criado_em__date__gte=data_inicio)
+        if data_fim:
+            queryset = queryset.filter(criado_em__date__lte=data_fim)
             
         search = self.request.GET.get('search')
         if search:
@@ -500,9 +765,11 @@ class TicketListView(ListView):
                 Q(numero__icontains=search) |
                 Q(titulo__icontains=search) |
                 Q(cliente__nome__icontains=search) |
-                Q(cliente__email__icontains=search)
+                Q(cliente__email__icontains=search) |
+                Q(descricao__icontains=search)
             )
         
+        self._filtered_queryset = queryset
         return queryset
     
     def get_context_data(self, **kwargs):
@@ -511,6 +778,42 @@ class TicketListView(ListView):
         context['status_choices'] = StatusTicket.choices
         context['prioridade_choices'] = PrioridadeTicket.choices
         context['filters'] = self.request.GET
+        context['agentes'] = User.objects.filter(perfilagente__isnull=False, is_active=True).order_by('first_name')
+        
+        # KPIs baseados no queryset completo (sem paginação)
+        all_tickets = Ticket.objects.all()
+        context['kpi_total'] = all_tickets.count()
+        context['kpi_abertos'] = all_tickets.filter(status=StatusTicket.ABERTO).count()
+        context['kpi_andamento'] = all_tickets.filter(status=StatusTicket.EM_ANDAMENTO).count()
+        context['kpi_resolvidos'] = all_tickets.filter(status__in=[StatusTicket.RESOLVIDO, StatusTicket.FECHADO]).count()
+        context['kpi_criticos'] = all_tickets.filter(prioridade=PrioridadeTicket.CRITICA, status__in=[StatusTicket.ABERTO, StatusTicket.EM_ANDAMENTO]).count()
+        context['kpi_nao_atribuidos'] = all_tickets.filter(agente__isnull=True, status__in=[StatusTicket.ABERTO, StatusTicket.EM_ANDAMENTO]).count()
+        
+        # Tempo médio de resolução
+        from django.db.models import Avg, F, ExpressionWrapper, DurationField
+        tempo_medio_qs = all_tickets.filter(
+            status__in=[StatusTicket.RESOLVIDO, StatusTicket.FECHADO],
+            resolvido_em__isnull=False,
+        ).annotate(
+            duracao=ExpressionWrapper(F('resolvido_em') - F('criado_em'), output_field=DurationField())
+        ).aggregate(media=Avg('duracao'))
+        tempo = tempo_medio_qs.get('media')
+        if tempo:
+            total_sec = int(tempo.total_seconds())
+            h = total_sec // 3600
+            m = (total_sec % 3600) // 60
+            context['kpi_tempo_medio'] = f'{h}h {m}min' if h < 24 else f'{h // 24}d {h % 24}h'
+        else:
+            context['kpi_tempo_medio'] = '--'
+        
+        # Taxa de resolução (este mês)
+        from datetime import timedelta
+        mes_atual = timezone.now().date().replace(day=1)
+        tickets_mes = all_tickets.filter(criado_em__date__gte=mes_atual)
+        total_mes = tickets_mes.count()
+        resolvidos_mes = tickets_mes.filter(status__in=[StatusTicket.RESOLVIDO, StatusTicket.FECHADO]).count()
+        context['kpi_taxa_resolucao'] = round((resolvidos_mes / total_mes * 100), 1) if total_mes > 0 else 0
+        
         return context
 
 
@@ -526,6 +829,10 @@ class TicketDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['interacoes'] = self.object.interacoes.all().order_by('criado_em')
+        context['anexos'] = self.object.anexos.all() if hasattr(self.object, 'anexos') else []
+        context['status_choices'] = StatusTicket.choices
+        # Total de tickets do mesmo cliente
+        context['cliente_total_tickets'] = Ticket.objects.filter(cliente=self.object.cliente).count()
         return context
 
 
@@ -600,12 +907,12 @@ class TicketCreateView(CreateView):
                         
                     except Produto.DoesNotExist:
                         # Log do produto não encontrado, mas não interrompe o processo
-                        print(f"Produto ID {produto_id} não encontrado")
+                        logger.warning("Produto ID %s nao encontrado", produto_id)
                         continue
                         
             except (json.JSONDecodeError, KeyError, ValueError) as e:
                 # Log do erro, mas não interrompe a criação do ticket
-                print(f"Erro ao processar produtos: {e}")
+                logger.error("Erro ao processar produtos: %s", e, exc_info=True)
         
         # Processar anexos
         if 'anexos' in self.request.FILES:
@@ -688,7 +995,7 @@ class AgenteDashboardView(TemplateView):
         context['tickets_nao_atribuidos'] = Ticket.objects.filter(agente__isnull=True, status='aberto').count()
         
         # Tickets recentes do agente
-        context['tickets_recentes'] = tickets_agente.order_by('-atualizado_em')[:5]
+        context['tickets_recentes'] = tickets_agente.select_related('cliente', 'categoria').order_by('-atualizado_em')[:5]
         
         # Status do agente - criar perfil se não existir
         try:
@@ -718,59 +1025,104 @@ class AgenteTicketsView(ListView):
 
 # ========== PORTAL DO CLIENTE ==========
 
+def _calcular_tempo_medio_resposta(tickets_qs):
+    """Calcula o tempo médio de primeira resposta dos tickets"""
+    tickets_com_interacao = tickets_qs.filter(
+        interacoes__isnull=False
+    ).annotate(
+        primeira_resposta=Min('interacoes__criado_em')
+    ).filter(primeira_resposta__isnull=False)
+    
+    total_minutos = 0
+    count = 0
+    for t in tickets_com_interacao[:100]:
+        diff = t.primeira_resposta - t.criado_em
+        total_minutos += diff.total_seconds() / 60
+        count += 1
+    
+    if count == 0:
+        return 'N/A'
+    
+    media_min = total_minutos / count
+    if media_min < 60:
+        return f'{int(media_min)}min'
+    horas = int(media_min // 60)
+    minutos = int(media_min % 60)
+    return f'{horas}h {minutos:02d}min'
+
+
 @method_decorator(login_required, name='dispatch')
 class ClientePortalView(TemplateView):
     template_name = 'dashboard/cliente/portal.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        user = self.request.user
+        is_admin = user.is_staff or user.is_superuser
+        context['is_admin'] = is_admin
         
-        # Buscar cliente pelo email do usuário
-        try:
-            cliente = Cliente.objects.get(email=self.request.user.email)
-            tickets_cliente = Ticket.objects.filter(cliente=cliente)
+        if is_admin:
+            # Admin vê visão geral de TODOS os clientes
+            clientes = Cliente.objects.all()
+            all_tickets = Ticket.objects.filter(cliente__isnull=False)
             
-            # Estatísticas básicas
-            context['cliente'] = cliente
-            context['total_tickets'] = tickets_cliente.count()
-            context['tickets_abertos'] = tickets_cliente.filter(status='aberto').count()
-            context['tickets_em_andamento'] = tickets_cliente.filter(status='em_andamento').count()
-            context['tickets_resolvidos'] = tickets_cliente.filter(status='resolvido').count()
-            context['tickets_fechados'] = tickets_cliente.filter(status='fechado').count()
-            context['tickets_recentes'] = tickets_cliente.order_by('-criado_em')[:5]
+            context['cliente'] = True  # flag para template não mostrar "Acesso Restrito"
+            context['admin_view'] = True
+            context['total_clientes'] = clientes.count()
+            context['clientes_recentes'] = clientes.order_by('-criado_em')[:5]
+            context['total_tickets'] = all_tickets.count()
+            context['tickets_abertos'] = all_tickets.filter(status='aberto').count()
+            context['tickets_em_andamento'] = all_tickets.filter(status='em_andamento').count()
+            context['tickets_resolvidos'] = all_tickets.filter(status='resolvido').count()
+            context['tickets_fechados'] = all_tickets.filter(status='fechado').count()
+            context['tickets_recentes'] = all_tickets.order_by('-criado_em')[:10]
+            context['tickets_alta_prioridade'] = all_tickets.filter(prioridade='alta').count()
+            context['tickets_media_prioridade'] = all_tickets.filter(prioridade='media').count()
+            context['tickets_baixa_prioridade'] = all_tickets.filter(prioridade='baixa').count()
+            context['tempo_medio_resposta'] = _calcular_tempo_medio_resposta(all_tickets)
             
-            # Estatísticas por prioridade
-            context['tickets_alta_prioridade'] = tickets_cliente.filter(prioridade='alta').count()
-            context['tickets_media_prioridade'] = tickets_cliente.filter(prioridade='media').count()
-            context['tickets_baixa_prioridade'] = tickets_cliente.filter(prioridade='baixa').count()
-            
-            # Estatísticas por categoria (se existir)
-            if hasattr(tickets_cliente.first(), 'categoria'):
-                context['tickets_por_categoria'] = tickets_cliente.values('categoria').annotate(
-                    count=Count('categoria')
-                ).order_by('-count')[:5]
-            
-            # Tempo médio de resposta (simulado por enquanto)
-            context['tempo_medio_resposta'] = '2h 15min'
-            
-            # Último ticket criado
-            ultimo_ticket = tickets_cliente.order_by('-criado_em').first()
+            ultimo_ticket = all_tickets.order_by('-criado_em').first()
             context['ultimo_ticket'] = ultimo_ticket
             
-            # Notificações - tickets com mudanças recentes (últimas 24h)
             agora = timezone.now()
             ontem = agora - timedelta(days=1)
-            context['tickets_recentes_mudancas'] = tickets_cliente.filter(
-                atualizado_em__gte=ontem
-            ).count()
+            context['tickets_recentes_mudancas'] = all_tickets.filter(atualizado_em__gte=ontem).count()
+            context['tickets_aguardando_cliente'] = all_tickets.filter(status='aguardando_cliente').count()
             
-            # Tickets aguardando resposta do cliente
-            context['tickets_aguardando_cliente'] = tickets_cliente.filter(
-                status='aguardando_cliente'
-            ).count()
-            
-        except Cliente.DoesNotExist:
-            context['cliente'] = None
+            # Top clientes por tickets
+            context['top_clientes'] = Cliente.objects.annotate(
+                num_tickets=Count('tickets')
+            ).order_by('-num_tickets')[:10]
+        else:
+            # Usuário normal: buscar pelo email
+            try:
+                cliente = Cliente.objects.get(email=user.email)
+                tickets_cliente = Ticket.objects.filter(cliente=cliente)
+                
+                context['cliente'] = cliente
+                context['admin_view'] = False
+                context['total_tickets'] = tickets_cliente.count()
+                context['tickets_abertos'] = tickets_cliente.filter(status='aberto').count()
+                context['tickets_em_andamento'] = tickets_cliente.filter(status='em_andamento').count()
+                context['tickets_resolvidos'] = tickets_cliente.filter(status='resolvido').count()
+                context['tickets_fechados'] = tickets_cliente.filter(status='fechado').count()
+                context['tickets_recentes'] = tickets_cliente.order_by('-criado_em')[:5]
+                context['tickets_alta_prioridade'] = tickets_cliente.filter(prioridade='alta').count()
+                context['tickets_media_prioridade'] = tickets_cliente.filter(prioridade='media').count()
+                context['tickets_baixa_prioridade'] = tickets_cliente.filter(prioridade='baixa').count()
+                context['tempo_medio_resposta'] = _calcular_tempo_medio_resposta(tickets_cliente)
+                
+                ultimo_ticket = tickets_cliente.order_by('-criado_em').first()
+                context['ultimo_ticket'] = ultimo_ticket
+                
+                agora = timezone.now()
+                ontem = agora - timedelta(days=1)
+                context['tickets_recentes_mudancas'] = tickets_cliente.filter(atualizado_em__gte=ontem).count()
+                context['tickets_aguardando_cliente'] = tickets_cliente.filter(status='aguardando_cliente').count()
+                
+            except Cliente.DoesNotExist:
+                context['cliente'] = None
+                context['admin_view'] = False
             
         return context
 
@@ -783,108 +1135,246 @@ class ClienteTicketsView(ListView):
     paginate_by = 10
     
     def get_queryset(self):
-        try:
-            cliente = Cliente.objects.get(email=self.request.user.email)
-            queryset = Ticket.objects.filter(cliente=cliente).select_related('categoria', 'agente')
+        user = self.request.user
+        is_admin = user.is_staff or user.is_superuser
+        
+        if is_admin:
+            queryset = Ticket.objects.filter(cliente__isnull=False).select_related('categoria', 'agente', 'cliente')
+        else:
+            try:
+                cliente = Cliente.objects.get(email=user.email)
+                queryset = Ticket.objects.filter(cliente=cliente).select_related('categoria', 'agente')
+            except Cliente.DoesNotExist:
+                return Ticket.objects.none()
+        
+        # Aplicar filtros
+        status_filter = self.request.GET.get('status')
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
             
-            # Aplicar filtros se fornecidos
-            status_filter = self.request.GET.get('status')
-            if status_filter:
-                queryset = queryset.filter(status=status_filter)
-                
-            prioridade_filter = self.request.GET.get('prioridade')
-            if prioridade_filter:
-                queryset = queryset.filter(prioridade=prioridade_filter)
-                
-            search_query = self.request.GET.get('q')
-            if search_query:
-                queryset = queryset.filter(
-                    Q(numero__icontains=search_query) |
-                    Q(titulo__icontains=search_query) |
-                    Q(descricao__icontains=search_query)
-                )
+        prioridade_filter = self.request.GET.get('prioridade')
+        if prioridade_filter:
+            queryset = queryset.filter(prioridade=prioridade_filter)
             
-            # Ordenação (padrão: mais recentes primeiro)
-            order_by = self.request.GET.get('order', '-criado_em')
-            queryset = queryset.order_by(order_by)
+        cliente_filter = self.request.GET.get('cliente')
+        if cliente_filter and is_admin:
+            queryset = queryset.filter(cliente_id=cliente_filter)
             
-            return queryset
-        except Cliente.DoesNotExist:
-            return Ticket.objects.none()
+        search_query = self.request.GET.get('q')
+        if search_query:
+            queryset = queryset.filter(
+                Q(numero__icontains=search_query) |
+                Q(titulo__icontains=search_query) |
+                Q(descricao__icontains=search_query)
+            )
+        
+        order_by = self.request.GET.get('order', '-criado_em')
+        queryset = queryset.order_by(order_by)
+        
+        return queryset
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        try:
-            cliente = Cliente.objects.get(email=self.request.user.email)
-            context['cliente'] = cliente
-            
-            # Estatísticas para filtros
-            all_tickets = Ticket.objects.filter(cliente=cliente)
+        user = self.request.user
+        is_admin = user.is_staff or user.is_superuser
+        context['is_admin'] = is_admin
+        
+        if is_admin:
+            all_tickets = Ticket.objects.filter(cliente__isnull=False)
+            context['cliente'] = True
+            context['admin_view'] = True
             context['total_tickets'] = all_tickets.count()
             context['tickets_abertos'] = all_tickets.filter(status='aberto').count()
             context['tickets_em_andamento'] = all_tickets.filter(status='em_andamento').count()
             context['tickets_resolvidos'] = all_tickets.filter(status='resolvido').count()
             context['tickets_fechados'] = all_tickets.filter(status='fechado').count()
-            
-        except Cliente.DoesNotExist:
-            context['cliente'] = None
+            context['clientes_list'] = Cliente.objects.all().order_by('nome')
+        else:
+            try:
+                cliente = Cliente.objects.get(email=user.email)
+                context['cliente'] = cliente
+                context['admin_view'] = False
+                all_tickets = Ticket.objects.filter(cliente=cliente)
+                context['total_tickets'] = all_tickets.count()
+                context['tickets_abertos'] = all_tickets.filter(status='aberto').count()
+                context['tickets_em_andamento'] = all_tickets.filter(status='em_andamento').count()
+                context['tickets_resolvidos'] = all_tickets.filter(status='resolvido').count()
+                context['tickets_fechados'] = all_tickets.filter(status='fechado').count()
+            except Cliente.DoesNotExist:
+                context['cliente'] = None
+                context['admin_view'] = False
             
         return context
+
+
+# ========== CRUD DE CLIENTES (Admin) ==========
+
+@method_decorator(login_required, name='dispatch')
+class ClienteListView(ListView):
+    model = Cliente
+    template_name = 'dashboard/cliente/cliente_list.html'
+    context_object_name = 'clientes'
+    paginate_by = 15
+    
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_staff or request.user.is_superuser):
+            messages.error(request, 'Acesso restrito a administradores.')
+            return redirect('dashboard:index')
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        queryset = Cliente.objects.annotate(
+            num_tickets=Count('tickets'),
+            tickets_abertos=Count('tickets', filter=Q(tickets__status='aberto')),
+            tickets_andamento=Count('tickets', filter=Q(tickets__status='em_andamento')),
+        ).order_by('-criado_em')
+        
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(nome__icontains=search) |
+                Q(email__icontains=search) |
+                Q(empresa__icontains=search) |
+                Q(telefone__icontains=search)
+            )
+        
+        empresa = self.request.GET.get('empresa')
+        if empresa:
+            queryset = queryset.filter(empresa__icontains=empresa)
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['total_clientes'] = Cliente.objects.count()
+        context['clientes_com_tickets'] = Cliente.objects.filter(tickets__isnull=False).distinct().count()
+        context['empresas'] = Cliente.objects.exclude(empresa='').values_list('empresa', flat=True).distinct().order_by('empresa')
+        context['search'] = self.request.GET.get('search', '')
+        context['empresa_selected'] = self.request.GET.get('empresa', '')
+        return context
+
+
+from .forms import ClienteForm
+
+@method_decorator(login_required, name='dispatch')
+class ClienteCreateView(CreateView):
+    model = Cliente
+    form_class = ClienteForm
+    template_name = 'dashboard/cliente/cliente_form.html'
+    success_url = reverse_lazy('dashboard:cliente_list')
+    
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_staff or request.user.is_superuser):
+            messages.error(request, 'Acesso restrito a administradores.')
+            return redirect('dashboard:index')
+        return super().dispatch(request, *args, **kwargs)
+    
+    def form_valid(self, form):
+        messages.success(self.request, f'Cliente "{form.instance.nome}" criado com sucesso!')
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo'] = 'Novo Cliente'
+        context['btn_text'] = 'Cadastrar'
+        return context
+
+
+@method_decorator(login_required, name='dispatch')
+class ClienteUpdateView(UpdateView):
+    model = Cliente
+    form_class = ClienteForm
+    template_name = 'dashboard/cliente/cliente_form.html'
+    success_url = reverse_lazy('dashboard:cliente_list')
+    
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_staff or request.user.is_superuser):
+            messages.error(request, 'Acesso restrito a administradores.')
+            return redirect('dashboard:index')
+        return super().dispatch(request, *args, **kwargs)
+    
+    def form_valid(self, form):
+        messages.success(self.request, f'Cliente "{form.instance.nome}" atualizado com sucesso!')
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo'] = f'Editar Cliente: {self.object.nome}'
+        context['btn_text'] = 'Salvar Alterações'
+        return context
+
+
+@login_required
+def cliente_detail_view(request, pk):
+    """Detalhe de um cliente com seus tickets"""
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, 'Acesso restrito a administradores.')
+        return redirect('dashboard:index')
+    
+    cliente = get_object_or_404(Cliente, pk=pk)
+    tickets = Ticket.objects.filter(cliente=cliente).select_related('categoria', 'agente').order_by('-criado_em')
+    
+    context = {
+        'cliente': cliente,
+        'tickets': tickets[:20],
+        'total_tickets': tickets.count(),
+        'tickets_abertos': tickets.filter(status='aberto').count(),
+        'tickets_em_andamento': tickets.filter(status='em_andamento').count(),
+        'tickets_resolvidos': tickets.filter(status='resolvido').count(),
+        'tickets_fechados': tickets.filter(status='fechado').count(),
+        'tickets_alta': tickets.filter(prioridade='alta').count(),
+        'tempo_medio': _calcular_tempo_medio_resposta(tickets),
+    }
+    return render(request, 'dashboard/cliente/cliente_detail.html', context)
+
+
+@login_required
+def cliente_delete_view(request, pk):
+    """Excluir um cliente"""
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, 'Acesso restrito a administradores.')
+        return redirect('dashboard:index')
+    
+    cliente = get_object_or_404(Cliente, pk=pk)
+    if request.method == 'POST':
+        nome = cliente.nome
+        cliente.delete()
+        messages.success(request, f'Cliente "{nome}" excluído com sucesso!')
+        return redirect('dashboard:cliente_list')
+    
+    return redirect('dashboard:cliente_list')
 
 
 # ========== APIs AJAX ==========
 
 @login_required
-@rate_limit(max_requests=120, window_seconds=3600)  # 120 requests per hour for stats
-@api_version(supported_versions=['v1', 'v2'])
+@rate_limit(max_requests=120, window_seconds=3600)
 def cliente_stats_ajax(request):
     """
     API para estatísticas do cliente em tempo real
-    Suporta versões v1 (formato legado) e v2 (formato estruturado)
+    Retorna sempre formato v1 (flat) compatível com o template
     """
+    user = request.user
+    is_admin = user.is_staff or user.is_superuser
+    
     try:
-        cliente = Cliente.objects.get(email=request.user.email)
-        tickets_cliente = Ticket.objects.filter(cliente=cliente)
-        
-        version = getattr(request, 'api_version', 'v2')
-        
-        if version == 'v1':
-            # Formato legado (v1)
-            stats = {
-                'total_tickets': tickets_cliente.count(),
-                'tickets_abertos': tickets_cliente.filter(status='aberto').count(),
-                'tickets_em_andamento': tickets_cliente.filter(status='em_andamento').count(),
-                'tickets_resolvidos': tickets_cliente.filter(status='resolvido').count(),
-                'tickets_fechados': tickets_cliente.filter(status='fechado').count(),
-                'ultimo_update': timezone.now().strftime('%H:%M:%S'),
-                'tickets_alta_prioridade': tickets_cliente.filter(prioridade='alta').count(),
-                'tickets_media_prioridade': tickets_cliente.filter(prioridade='media').count(),
-                'tickets_baixa_prioridade': tickets_cliente.filter(prioridade='baixa').count(),
-            }
+        if is_admin:
+            tickets_cliente = Ticket.objects.filter(cliente__isnull=False)
         else:
-            # Formato estruturado (v2)
-            stats = {
-                'summary': {
-                    'total_tickets': tickets_cliente.count(),
-                    'last_updated': timezone.now().isoformat()
-                },
-                'status_breakdown': {
-                    'open': tickets_cliente.filter(status='aberto').count(),
-                    'in_progress': tickets_cliente.filter(status='em_andamento').count(),
-                    'resolved': tickets_cliente.filter(status='resolvido').count(),
-                    'closed': tickets_cliente.filter(status='fechado').count()
-                },
-                'priority_breakdown': {
-                    'high': tickets_cliente.filter(prioridade='alta').count(),
-                    'medium': tickets_cliente.filter(prioridade='media').count(),
-                    'low': tickets_cliente.filter(prioridade='baixa').count()
-                },
-                'client_info': {
-                    'id': cliente.id,
-                    'name': cliente.nome,
-                    'email': cliente.email
-                }
-            }
+            cliente = Cliente.objects.get(email=user.email)
+            tickets_cliente = Ticket.objects.filter(cliente=cliente)
+        
+        stats = {
+            'total_tickets': tickets_cliente.count(),
+            'tickets_abertos': tickets_cliente.filter(status='aberto').count(),
+            'tickets_em_andamento': tickets_cliente.filter(status='em_andamento').count(),
+            'tickets_resolvidos': tickets_cliente.filter(status='resolvido').count(),
+            'tickets_fechados': tickets_cliente.filter(status='fechado').count(),
+            'ultimo_update': timezone.now().strftime('%H:%M:%S'),
+            'tickets_alta_prioridade': tickets_cliente.filter(prioridade='alta').count(),
+            'tickets_media_prioridade': tickets_cliente.filter(prioridade='media').count(),
+            'tickets_baixa_prioridade': tickets_cliente.filter(prioridade='baixa').count(),
+        }
         
         return JsonResponse(stats)
     except Cliente.DoesNotExist:
@@ -894,10 +1384,6 @@ def cliente_stats_ajax(request):
 def update_ticket_status(request):
     """API para atualizar status do ticket via AJAX"""
     if request.method == 'POST':
-        # Verificar autenticação
-        if not request.user.is_authenticated:
-            return JsonResponse({'success': False, 'message': 'Usuário não autenticado!'}, status=401)
-            
         ticket_id = request.POST.get('ticket_id')
         new_status = request.POST.get('status')
         
@@ -908,7 +1394,16 @@ def update_ticket_status(request):
             })
         
         try:
-            ticket = Ticket.objects.get(id=ticket_id)
+            ticket = Ticket.objects.select_related('agente').get(id=ticket_id)
+            
+            # Verificação de permissão: usuário deve ser staff ou agente atribuído
+            is_assigned = hasattr(ticket, 'agente') and ticket.agente == request.user
+            if not (request.user.is_staff or is_assigned):
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Sem permissão para alterar este ticket.'
+                }, status=403)
+            
             old_status = ticket.status
             old_status_display = ticket.get_status_display()
             
@@ -937,10 +1432,11 @@ def update_ticket_status(request):
                 'message': 'Ticket não encontrado!'
             })
         except Exception as e:
+            logger.error(f'Erro ao atualizar ticket {ticket_id}: {e}', exc_info=True)
             return JsonResponse({
                 'success': False,
-                'message': f'Erro interno: {str(e)}'
-            })
+                'message': 'Erro interno ao processar a solicitação.'
+            }, status=500)
     
     return JsonResponse({'success': False, 'message': 'Método não permitido!'}, status=405)
 
@@ -950,11 +1446,11 @@ def update_ticket_status(request):
 @log_suspicious_activity("Agent status update")
 def update_agent_status(request):
     """API para atualizar status do agente"""
-    print(f"DEBUG: update_agent_status called by {request.user.username}, method: {request.method}")
+    logger.debug("update_agent_status called by %s, method: %s", request.user.username, request.method)
     
     if request.method == 'POST':
         new_status = request.POST.get('status', '').lower().strip()
-        print(f"DEBUG: Novo status solicitado: '{new_status}'")
+        logger.debug("Novo status solicitado: '%s'", new_status)
         
         # Validar status
         valid_statuses = ['online', 'ocupado', 'ausente', 'offline']
@@ -975,9 +1471,7 @@ def update_agent_status(request):
                 perfil_agente.save()
             
             # Log da mudança de status
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.info(f'Agente {request.user.username} mudou status para {new_status}')
+            logger.info('Agente %s mudou status para %s', request.user.username, new_status)
             
             return JsonResponse({
                 'success': True,
@@ -986,9 +1480,7 @@ def update_agent_status(request):
                 'status_value': new_status
             })
         except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f'Erro ao atualizar status do agente {request.user.username}: {str(e)}')
+            logger.error('Erro ao atualizar status do agente %s: %s', request.user.username, str(e), exc_info=True)
             
             return JsonResponse({
                 'success': False,
@@ -1000,48 +1492,139 @@ def update_agent_status(request):
 @method_decorator(login_required, name='dispatch')
 class ProfileView(TemplateView):
     template_name = 'dashboard/profile.html'
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        user = self.request.user
+
         # Busca ou cria o perfil do usuário
         perfil, created = PerfilUsuario.objects.get_or_create(
-            user=self.request.user,
+            user=user,
             defaults={'telefone': ''}
         )
         context['perfil'] = perfil
+
+        # Estatísticas do usuário
+        from django.db.models import Q
+        user_tickets = Ticket.objects.filter(
+            Q(agente=user) | Q(cliente__user=user) if hasattr(user, 'cliente') else Q(agente=user)
+        )
+        context['user_stats'] = {
+            'ocorrencias': user_tickets.filter(prioridade__in=['critica', 'alta']).count(),
+            'chamados': user_tickets.count(),
+            'atendimentos': user_tickets.filter(status__in=['resolvido', 'fechado']).count(),
+        }
+
+        # Atividades recentes (últimas interações do usuário)
+        recent = InteracaoTicket.objects.filter(
+            usuario=user
+        ).select_related('ticket').order_by('-criado_em')[:5]
+
+        activities = []
+        color_map = {
+            'resposta': 'info', 'nota_interna': 'warning',
+            'sistema': 'secondary', 'status_change': 'success',
+        }
+        for interaction in recent:
+            msg_preview = interaction.mensagem
+            if len(msg_preview) > 80:
+                msg_preview = msg_preview[:80] + '...'
+            activities.append({
+                'title': f'Ticket #{interaction.ticket.numero}',
+                'description': msg_preview,
+                'created_at': interaction.criado_em,
+                'color': color_map.get(interaction.tipo, 'primary'),
+            })
+        context['recent_activities'] = activities
+
         return context
-    
+
     def post(self, request, *args, **kwargs):
+        action = request.POST.get('action', 'update_profile')
+
+        if action == 'change_password':
+            return self._handle_password_change(request)
+
+        return self._handle_profile_update(request)
+
+    def _handle_password_change(self, request):
+        """Processa a troca de senha"""
+        from django.contrib.auth import update_session_auth_hash
+
+        current_password = request.POST.get('current_password', '')
+        new_password = request.POST.get('new_password', '')
+        confirm_password = request.POST.get('confirm_password', '')
+
+        if not current_password:
+            messages.error(request, 'Informe sua senha atual.')
+            return redirect('dashboard:profile')
+
+        if not request.user.check_password(current_password):
+            messages.error(request, 'Senha atual incorreta.')
+            return redirect('dashboard:profile')
+
+        if not new_password or len(new_password) < 8:
+            messages.error(request, 'A nova senha deve ter pelo menos 8 caracteres.')
+            return redirect('dashboard:profile')
+
+        if new_password != confirm_password:
+            messages.error(request, 'As senhas nao coincidem.')
+            return redirect('dashboard:profile')
+
+        # Validar senha com os validators do Django
+        from django.contrib.auth.password_validation import validate_password
+        from django.core.exceptions import ValidationError
         try:
-            # Busca ou cria o perfil do usuário
+            validate_password(new_password, request.user)
+        except ValidationError as e:
+            for error in e.messages:
+                messages.error(request, error)
+            return redirect('dashboard:profile')
+
+        request.user.set_password(new_password)
+        request.user.save()
+        update_session_auth_hash(request, request.user)
+        messages.success(request, 'Senha alterada com sucesso!')
+        return redirect('dashboard:profile')
+
+    def _handle_profile_update(self, request):
+        """Processa a atualização do perfil"""
+        try:
             perfil, created = PerfilUsuario.objects.get_or_create(
                 user=request.user,
                 defaults={'telefone': ''}
             )
-            
+
             # Atualiza dados básicos do usuário
             user = request.user
             user.first_name = request.POST.get('first_name', '')
             user.last_name = request.POST.get('last_name', '')
             user.email = request.POST.get('email', '')
             user.save()
-            
+
             # Atualiza dados do perfil
             perfil.telefone = request.POST.get('telefone', '')
+            perfil.telefone_alternativo = request.POST.get('telefone_alternativo', '')
             perfil.endereco = request.POST.get('endereco', '')
+            perfil.cidade = request.POST.get('cidade', '')
+            perfil.estado = request.POST.get('estado', '')
+            perfil.cep = request.POST.get('cep', '')
+            perfil.cargo = request.POST.get('cargo', '')
+            perfil.departamento = request.POST.get('departamento', '')
             perfil.bio = request.POST.get('bio', '')
-            
+
             # Processa upload de avatar
             if 'avatar' in request.FILES:
                 perfil.avatar = request.FILES['avatar']
-            
+
             perfil.save()
-            
+
             messages.success(request, 'Perfil atualizado com sucesso!')
-            
+
         except Exception as e:
-            messages.error(request, f'Erro ao atualizar perfil: {str(e)}')
-            
+            logger.error(f'Erro ao atualizar perfil: {e}')
+            messages.error(request, 'Erro ao atualizar perfil. Tente novamente.')
+
         return redirect('dashboard:profile')
 
 
@@ -1077,7 +1660,7 @@ def ajax_metrics(request):
             ).count()
             
             tickets_abertos = Ticket.objects.filter(
-                status__nome__in=['Aberto', 'Em Andamento']
+                status__in=[StatusTicket.ABERTO, StatusTicket.EM_ANDAMENTO]
             ).count()
             
             # Taxa de resolução
@@ -1085,7 +1668,7 @@ def ajax_metrics(request):
             tickets_mes = Ticket.objects.filter(criado_em__gte=mes_atual)
             total_mes = tickets_mes.count()
             resolvidos_mes = tickets_mes.filter(
-                status__nome__in=['Resolvido', 'Fechado']
+                status__in=[StatusTicket.RESOLVIDO, StatusTicket.FECHADO]
             ).count()
             taxa_resolucao = (resolvidos_mes / total_mes * 100) if total_mes > 0 else 0
             
@@ -1100,7 +1683,8 @@ def ajax_metrics(request):
             return JsonResponse(metrics)
             
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+            logger.error(f'Erro em ajax_metrics: {e}', exc_info=True)
+            return JsonResponse({'error': 'Erro interno ao processar métricas.'}, status=500)
     
     return JsonResponse({'error': 'Método não permitido'}, status=405)
 
@@ -1108,8 +1692,11 @@ def ajax_metrics(request):
 @login_required
 def export_tickets(request):
     """
-    View para exportar dados dos tickets
+    View para exportar dados dos tickets (somente staff).
     """
+    if not request.user.is_staff:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden('Sem permissão para exportar dados.')
     from django.http import HttpResponse
     import csv
     from datetime import datetime
@@ -1121,16 +1708,18 @@ def export_tickets(request):
     writer.writerow(['ID', 'Número', 'Cliente', 'Status', 'Data Criação', 'Categoria'])
     
     # Buscar tickets do banco de dados
-    tickets = Ticket.objects.select_related('cliente', 'status', 'categoria')[:1000]  # Limitar a 1000
+    tickets = Ticket.objects.select_related('cliente', 'categoria').only(
+        'id', 'numero', 'cliente__nome', 'status', 'criado_em', 'categoria__nome'
+    )[:1000]
     
     for ticket in tickets:
         writer.writerow([
             ticket.id,
             ticket.numero,
             ticket.cliente.nome if ticket.cliente else 'N/A',
-            ticket.status.nome if ticket.status else 'N/A',
+            ticket.get_status_display() if hasattr(ticket, 'get_status_display') else ticket.status,
             ticket.criado_em.strftime('%d/%m/%Y %H:%M'),
-            ticket.categoria.nome if ticket.categoria else 'N/A'
+            ticket.categoria.nome if ticket.categoria else 'N/A',
         ])
     
     return response
@@ -1250,7 +1839,8 @@ def chatbot_api(request):
                 'type': response.response_type
             })
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+            logger.error(f'Erro no chatbot_api: {e}', exc_info=True)
+            return JsonResponse({'error': 'Erro interno.'}, status=500)
     
     return JsonResponse({'error': 'Método não permitido'}, status=405)
 
@@ -1265,33 +1855,311 @@ def chat_interface(request):
 @login_required
 def automation_dashboard(request):
     """Dashboard do Sistema de Automação"""
-    return render(request, 'dashboard/automation/dashboard.html', {
-        'title': 'Automation Engine',
-        'current_page': 'automation'
-    })
+    from .models import WorkflowRule, WorkflowExecution
+    
+    # Handle POST: ativar template
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        try:
+            data = json.loads(request.body)
+            if data.get('action') == 'activate_template':
+                tpl = data.get('template')
+                TEMPLATE_CONFIGS = {
+                    'auto_assign': {
+                        'name': 'Atribuição Automática',
+                        'description': 'Distribui tickets automaticamente entre agentes',
+                        'trigger_event': 'ticket_created',
+                        'conditions': {'has_agent': False},
+                        'actions': [{'type': 'assign_agent', 'value': 'auto'}],
+                        'priority': 8,
+                    },
+                    'sla_monitor': {
+                        'name': 'Monitoramento de SLA',
+                        'description': 'Alerta quando SLA está próximo de ser violado',
+                        'trigger_event': 'sla_warning',
+                        'conditions': {},
+                        'actions': [{'type': 'send_notification', 'value': 'Alerta: SLA prestes a ser violado'}],
+                        'priority': 9,
+                    },
+                    'escalation': {
+                        'name': 'Escalação por Prioridade',
+                        'description': 'Escala tickets sem resposta por tempo prolongado',
+                        'trigger_event': 'ticket_updated',
+                        'conditions': {'status': 'aberto', 'time_since_creation': '24h'},
+                        'actions': [{'type': 'escalate', 'value': 'supervisor'}, {'type': 'change_priority', 'value': 'alta'}],
+                        'priority': 7,
+                    },
+                    'email_notify': {
+                        'name': 'Notificações por E-mail',
+                        'description': 'Envia e-mails ao cliente quando há mudanças',
+                        'trigger_event': 'status_changed',
+                        'conditions': {},
+                        'actions': [{'type': 'send_notification', 'value': 'Status do seu ticket foi atualizado'}],
+                        'priority': 5,
+                    },
+                    'auto_resolve': {
+                        'name': 'Auto-Resolução',
+                        'description': 'Fecha tickets resolvidos após 72h de inatividade',
+                        'trigger_event': 'status_changed',
+                        'conditions': {'status': 'resolvido', 'time_since_creation': '72h'},
+                        'actions': [{'type': 'change_status', 'value': 'fechado'}, {'type': 'add_comment', 'value': 'Ticket fechado automaticamente após 72h sem interação.'}],
+                        'priority': 3,
+                    },
+                }
+                if tpl in TEMPLATE_CONFIGS:
+                    cfg = TEMPLATE_CONFIGS[tpl]
+                    rule, created = WorkflowRule.objects.get_or_create(
+                        name=cfg['name'],
+                        defaults={
+                            'description': cfg['description'],
+                            'trigger_event': cfg['trigger_event'],
+                            'conditions': cfg['conditions'],
+                            'actions': cfg['actions'],
+                            'priority': cfg['priority'],
+                            'is_active': True,
+                        }
+                    )
+                    if not created and not rule.is_active:
+                        rule.is_active = True
+                        rule.save()
+                    return JsonResponse({'success': True, 'created': created})
+                return JsonResponse({'success': False, 'error': 'Template não encontrado'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    # GET: dashboard data
+    active_workflows = WorkflowRule.objects.filter(is_active=True).count()
+    all_workflows = WorkflowRule.objects.all()
+    total_executions = WorkflowExecution.objects.count()
+    failed_executions = WorkflowExecution.objects.filter(success=False).count()
+    success_executions = total_executions - failed_executions
+    success_rate = round((success_executions / total_executions * 100) if total_executions > 0 else 0)
+    recent_executions = WorkflowExecution.objects.select_related('rule', 'ticket').order_by('-created_at')[:10]
+    
+    # Template status checks
+    tpl_names = {
+        'tpl_auto_assign': 'Atribuição Automática',
+        'tpl_sla_monitor': 'Monitoramento de SLA',
+        'tpl_escalation': 'Escalação por Prioridade',
+        'tpl_email_notify': 'Notificações por E-mail',
+        'tpl_auto_resolve': 'Auto-Resolução',
+    }
+    tpl_status = {}
+    for key, name in tpl_names.items():
+        tpl_status[key] = WorkflowRule.objects.filter(name=name, is_active=True).exists()
+    
+    # Chart data: execuções últimos 7 dias
+    from datetime import timedelta
+    chart_labels = []
+    chart_data = []
+    for i in range(6, -1, -1):
+        day = timezone.now().date() - timedelta(days=i)
+        chart_labels.append(day.strftime('%d/%m'))
+        chart_data.append(WorkflowExecution.objects.filter(
+            created_at__date=day
+        ).count())
+    
+    context = {
+        'title': 'Motor de Automação',
+        'current_page': 'automation',
+        'active_workflows': active_workflows,
+        'total_executions': total_executions,
+        'failed_executions': failed_executions,
+        'success_executions': success_executions,
+        'success_rate': success_rate,
+        'workflows': all_workflows,
+        'recent_executions': recent_executions,
+        'chart_labels': json.dumps(chart_labels),
+        'chart_data': json.dumps(chart_data),
+    }
+    context.update(tpl_status)
+    
+    return render(request, 'dashboard/automation/dashboard.html', context)
 
 @login_required
 def automation_rules(request):
     """Gerenciamento de Regras de Automação"""
+    from .models import WorkflowRule, WorkflowExecution
+    
+    # POST: CRUD de regras
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        try:
+            data = json.loads(request.body)
+            action = data.get('action')
+            
+            if action == 'create':
+                conditions = data.get('conditions', '{}')
+                actions_field = data.get('actions', '[]')
+                try:
+                    conditions = json.loads(conditions) if isinstance(conditions, str) else conditions
+                except json.JSONDecodeError:
+                    conditions = {}
+                try:
+                    actions_field = json.loads(actions_field) if isinstance(actions_field, str) else actions_field
+                except json.JSONDecodeError:
+                    actions_field = []
+                    
+                rule = WorkflowRule.objects.create(
+                    name=data.get('name', 'Nova Regra'),
+                    description=data.get('description', ''),
+                    trigger_event=data.get('trigger_event', 'ticket_created'),
+                    conditions=conditions,
+                    actions=actions_field,
+                    priority=int(data.get('priority', 5)),
+                    is_active=True,
+                )
+                return JsonResponse({'success': True, 'id': rule.id, 'message': 'Regra criada com sucesso'})
+            
+            elif action == 'toggle':
+                rule = WorkflowRule.objects.get(id=data.get('rule_id'))
+                rule.is_active = not rule.is_active
+                rule.save()
+                return JsonResponse({'success': True, 'is_active': rule.is_active})
+            
+            elif action == 'delete':
+                WorkflowRule.objects.filter(id=data.get('rule_id')).delete()
+                return JsonResponse({'success': True, 'message': 'Regra excluída'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    # GET
+    rules = WorkflowRule.objects.all().order_by('-priority', 'name')
+    total_rules = rules.count()
+    active_rules = rules.filter(is_active=True).count()
+    inactive_rules = total_rules - active_rules
+    total_executions = WorkflowExecution.objects.count()
+    
     return render(request, 'dashboard/automation/rules.html', {
         'title': 'Regras de Automação',
-        'current_page': 'automation'
+        'current_page': 'automation_rules',
+        'rules': rules,
+        'total_rules': total_rules,
+        'active_rules': active_rules,
+        'inactive_rules': inactive_rules,
+        'total_executions': total_executions,
     })
 
 @login_required
 def automation_workflows(request):
     """Gerenciamento de Workflows"""
+    from .models import WorkflowRule, WorkflowExecution
+    
+    # POST: CRUD de workflows
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        try:
+            data = json.loads(request.body)
+            action = data.get('action')
+            
+            if action == 'create':
+                tpl = data.get('template')
+                QUICK_TEMPLATES = {
+                    'auto_assign_high_priority': {
+                        'name': 'Auto-Atribuir Alta Prioridade',
+                        'description': 'Atribui automaticamente tickets de alta prioridade ao melhor agente disponível',
+                        'trigger_event': 'ticket_created',
+                        'conditions': {'priority': 'alta'},
+                        'actions': [{'type': 'assign_agent', 'value': 'auto'}, {'type': 'send_notification', 'value': 'Ticket de alta prioridade atribuído'}],
+                        'priority': 9,
+                    },
+                    'escalate_old_tickets': {
+                        'name': 'Escalar Tickets Antigos',
+                        'description': 'Escala tickets abertos há mais de 48h sem atualização',
+                        'trigger_event': 'ticket_updated',
+                        'conditions': {'status': 'aberto', 'time_since_creation': '48h'},
+                        'actions': [{'type': 'escalate', 'value': 'supervisor'}, {'type': 'change_priority', 'value': 'urgente'}],
+                        'priority': 8,
+                    },
+                    'close_resolved_tickets': {
+                        'name': 'Fechar Tickets Resolvidos',
+                        'description': 'Fecha automaticamente tickets resolvidos após 48h de inatividade',
+                        'trigger_event': 'status_changed',
+                        'conditions': {'status': 'resolvido', 'time_since_creation': '48h'},
+                        'actions': [{'type': 'change_status', 'value': 'fechado'}, {'type': 'add_comment', 'value': 'Ticket fechado automaticamente.'}],
+                        'priority': 4,
+                    },
+                }
+                if tpl and tpl in QUICK_TEMPLATES:
+                    cfg = QUICK_TEMPLATES[tpl]
+                    rule = WorkflowRule.objects.create(
+                        name=cfg['name'],
+                        description=cfg['description'],
+                        trigger_event=cfg['trigger_event'],
+                        conditions=cfg['conditions'],
+                        actions=cfg['actions'],
+                        priority=cfg['priority'],
+                        is_active=True,
+                    )
+                    return JsonResponse({'success': True, 'id': rule.id, 'message': f'Workflow "{cfg["name"]}" criado'})
+                else:
+                    # Custom workflow
+                    conditions = data.get('conditions', '{}')
+                    actions_field = data.get('actions', '[]')
+                    try:
+                        conditions = json.loads(conditions) if isinstance(conditions, str) else conditions
+                    except json.JSONDecodeError:
+                        conditions = {}
+                    try:
+                        actions_field = json.loads(actions_field) if isinstance(actions_field, str) else actions_field
+                    except json.JSONDecodeError:
+                        actions_field = []
+                    rule = WorkflowRule.objects.create(
+                        name=data.get('name', 'Novo Workflow'),
+                        description=data.get('description', ''),
+                        trigger_event=data.get('trigger_event', 'ticket_created'),
+                        conditions=conditions,
+                        actions=actions_field,
+                        priority=int(data.get('priority', 5)),
+                        is_active=True,
+                    )
+                    return JsonResponse({'success': True, 'id': rule.id, 'message': 'Workflow criado com sucesso'})
+            
+            elif action == 'toggle':
+                rule = WorkflowRule.objects.get(id=data.get('workflow_id'))
+                rule.is_active = not rule.is_active
+                rule.save()
+                return JsonResponse({'success': True, 'is_active': rule.is_active})
+            
+            elif action == 'delete':
+                WorkflowRule.objects.filter(id=data.get('workflow_id')).delete()
+                return JsonResponse({'success': True, 'message': 'Workflow excluído'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    # GET
+    workflows = WorkflowRule.objects.all().order_by('-priority', 'name')
+    total_workflows = workflows.count()
+    active_workflows = workflows.filter(is_active=True).count()
+    total_executions = WorkflowExecution.objects.count()
+    success_execs = WorkflowExecution.objects.filter(success=True).count()
+    success_rate = round((success_execs / total_executions * 100) if total_executions > 0 else 0)
+    
     return render(request, 'dashboard/automation/workflows.html', {
         'title': 'Workflows Automáticos',
-        'current_page': 'automation'
+        'current_page': 'automation_workflows',
+        'workflows': workflows,
+        'total_workflows': total_workflows,
+        'active_workflows': active_workflows,
+        'total_executions': total_executions,
+        'success_rate': success_rate,
     })
 
 @login_required
 def reports_dashboard(request):
     """Dashboard de Relatórios Avançados"""
+    from .models import RelatorioFinanceiro
+    
+    total_reports = RelatorioFinanceiro.objects.count()
+    
+    # Relatórios recentes
+    relatorios_recentes = RelatorioFinanceiro.objects.order_by('-gerado_em')[:10]
+    
     return render(request, 'dashboard/reports/advanced.html', {
         'title': 'Relatórios Avançados',
-        'current_page': 'reports'
+        'current_page': 'reports',
+        'total_reports': total_reports,
+        'scheduled_reports': 0,
+        'avg_generation_time': 0,
+        'data_sources': 0,
+        'relatorios_recentes': relatorios_recentes,
     })
 
 @login_required
@@ -1331,7 +2199,9 @@ def advanced_search(request):
     
     if query:
         # Implementar busca avançada aqui
-        tickets = Ticket.objects.filter(
+        tickets = Ticket.objects.select_related(
+            'cliente', 'agente', 'categoria'
+        ).filter(
             Q(titulo__icontains=query) |
             Q(descricao__icontains=query) |
             Q(numero__icontains=query)
@@ -1392,8 +2262,8 @@ def manifest(request):
         "description": "Sistema completo de atendimento ao cliente",
         "start_url": "/dashboard/",
         "display": "standalone",
-        "theme_color": "#667eea",
-        "background_color": "#ffffff",
+        "theme_color": "#334155",
+        "background_color": "#f8fafc",
         "icons": [
             {
                 "src": "/static/img/icon-192x192.png",
@@ -1446,7 +2316,6 @@ self.addEventListener('fetch', event => {
     return response
 
 @login_required
-@csrf_exempt
 def tickets_chart_api(request):
     """
     API para filtrar dados do gráfico de tickets por período
@@ -1598,9 +2467,35 @@ def api_notifications_mark_all_read(request):
         
         return JsonResponse({
             'success': True,
-            'message': f'{updated_count} notificações marcadas como lidas'
+            'message': f'{updated_count} notificações marcadas como lidas',
+            'updated_count': updated_count
         })
         
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_notification_delete(request, notification_id):
+    """
+    API para deletar uma notificação
+    """
+    try:
+        notification = get_object_or_404(
+            Notification,
+            id=notification_id,
+            user=request.user
+        )
+        notification.delete()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Notificação removida'
+        })
     except Exception as e:
         return JsonResponse({
             'success': False,
@@ -1667,10 +2562,14 @@ def notifications_list(request):
         ).count()
     }
     
-    # Tipos disponíveis
-    tipos_disponiveis = Notification.objects.filter(
+    # Tipos disponíveis com labels (order_by() limpa o ordering padrão para distinct funcionar)
+    tipos_raw = Notification.objects.filter(
         user=request.user
-    ).values_list('type', flat=True).distinct()
+    ).order_by('type').values_list('type', flat=True).distinct()
+    
+    type_labels = dict(Notification.NOTIFICATION_TYPES)
+    tipos_disponiveis = [(t, type_labels.get(t, t.replace('_', ' ').title())) for t in tipos_raw]
+    tipos_disponiveis.sort(key=lambda x: x[1])
     
     context = {
         'notifications': page_obj,
@@ -1726,7 +2625,7 @@ def communication_center(request):
             ).count()
         except Exception as e:
             # Em caso de erro, usar valores padrão
-            print(f"Erro ao carregar dados do chat: {e}")
+            logger.error("Erro ao carregar dados do chat: %s", e, exc_info=True)
     
     # Dados do Chatbot IA
     chatbot = None
@@ -1754,11 +2653,42 @@ def communication_center(request):
         except Exception:
             pass
     
+    # Calcular tempo médio de resposta real (em minutos)
+    avg_response_time_val = 0
+    if ChatMessage:
+        try:
+            from django.db.models import Avg, F
+            avg_rt = ChatMessage.objects.filter(
+                created_at__date=timezone.now().date(),
+                reply_to__isnull=False,
+            ).annotate(
+                response_delta=F('created_at') - F('reply_to__created_at')
+            ).aggregate(avg=Avg('response_delta'))['avg']
+            if avg_rt:
+                avg_response_time_val = round(avg_rt.total_seconds() / 60, 1)
+        except Exception:
+            pass
+
+    # Taxa de satisfação real (baseada em avaliações)
+    satisfaction_rate_val = 0
+    try:
+        from .models_satisfacao import AvaliacaoSatisfacao
+        avaliacoes = AvaliacaoSatisfacao.objects.filter(
+            criado_em__date=timezone.now().date()
+        )
+        total_aval = avaliacoes.count()
+        if total_aval > 0:
+            from django.db.models import Avg as AvgAval
+            media = avaliacoes.aggregate(m=AvgAval('nota'))['m'] or 0
+            satisfaction_rate_val = round(media / 5 * 100)  # normalizar para %
+    except Exception:
+        pass
+
     analytics_data = {
         'total_messages': total_messages_today,
         'active_conversations': active_conversations,
-        'avg_response_time': 2.1,  # Mock data
-        'satisfaction_rate': 94,   # Mock data
+        'avg_response_time': avg_response_time_val,
+        'satisfaction_rate': satisfaction_rate_val,
     }
     
     # Lista de usuários da equipe para nova conversa
@@ -1777,7 +2707,7 @@ def communication_center(request):
         'recent_conversations': recent_conversations,
         'total_conversations': total_conversations,
         'active_conversations': active_conversations,
-        'avg_response_time': "2.3m",
+        'avg_response_time': f"{avg_response_time_val}m" if avg_response_time_val else "0m",
         'chatbot': chatbot,
         'recent_knowledge': recent_knowledge,
         'analytics': analytics_data,
@@ -1961,7 +2891,13 @@ def api_remover_item_atendimento(request, item_id):
 def relatorio_itens_atendimento(request):
     """Relatório de produtos e serviços mais utilizados"""
     from .models import ItemAtendimento
-    from django.db.models import Sum, Count, Avg
+    from django.db.models import Sum, Count, Avg, F, ExpressionWrapper, DecimalField
+    
+    # Expressão para valor_total calculado (quantidade * valor_unitario * (1 - desconto/100))
+    valor_total_expr = ExpressionWrapper(
+        F('quantidade') * F('valor_unitario') * (1 - F('desconto_percentual') / 100),
+        output_field=DecimalField(max_digits=12, decimal_places=2)
+    )
     
     # Filtros
     data_inicio = request.GET.get('data_inicio')
@@ -1988,8 +2924,8 @@ def relatorio_itens_atendimento(request):
     ).annotate(
         total_quantidade=Sum('quantidade'),
         total_tickets=Count('ticket', distinct=True),
-        valor_total=Sum('valor_total'),
-        valor_medio=Avg('valor_total')
+        valor_total=Sum(valor_total_expr),
+        valor_medio=Avg(valor_total_expr)
     ).order_by('-total_quantidade')[:10]
     
     # Resumo por categoria
@@ -1997,7 +2933,7 @@ def relatorio_itens_atendimento(request):
         'produto__categoria__nome'
     ).annotate(
         total_quantidade=Sum('quantidade'),
-        total_valor=Sum('valor_total'),
+        total_valor=Sum(valor_total_expr),
         total_itens=Count('id')
     ).order_by('-total_valor')
     
@@ -2005,17 +2941,17 @@ def relatorio_itens_atendimento(request):
     resumo_agentes = queryset.values(
         'ticket__agente__first_name', 'ticket__agente__last_name'
     ).annotate(
-        total_valor=Sum('valor_total'),
+        total_valor=Sum(valor_total_expr),
         total_tickets=Count('ticket', distinct=True),
-        valor_medio_ticket=Avg('valor_total')
+        valor_medio_ticket=Avg(valor_total_expr)
     ).order_by('-total_valor')
     
     # Totais gerais
     totais = queryset.aggregate(
         total_itens=Count('id'),
-        total_valor=Sum('valor_total'),
+        total_valor=Sum(valor_total_expr),
         total_tickets=Count('ticket', distinct=True),
-        valor_medio_item=Avg('valor_total')
+        valor_medio_item=Avg(valor_total_expr)
     )
     
     context = {

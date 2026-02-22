@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
+{% block title %}Dashboard do Agente - iConnect{% endblock %}
 
 {% block page_title %}Dashboard do Agente{% endblock %}
+{% block breadcrumb_title %}Dashboard do Agente{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -159,7 +161,7 @@
             <div class="col-lg-6 col-7">
               <h6>Meus Tickets Recentes</h6>
               <p class="text-sm mb-0">
-                <i class="fa fa-check text-info" aria-hidden="true"></i>
+                <i class="fas fa-check text-info" aria-hidden="true"></i>
                 <span class="font-weight-bold ms-1">{{ tickets_recentes|length }}</span> tickets
               </p>
             </div>
@@ -281,8 +283,6 @@
 
 <script>
 function updateAgentStatus(newStatus) {
-  console.log('updateAgentStatus chamada com status:', newStatus);
-  
   // Feedback visual imediato
   const button = document.getElementById('statusDropdown');
   if (!button) {
@@ -356,44 +356,23 @@ function updateAgentStatus(newStatus) {
 }
 
 function showNotification(message, type) {
-  // Criar notificação toast
-  const toast = document.createElement('div');
-  toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
-  toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-  toast.innerHTML = `
-    ${message}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-  `;
-  
-  document.body.appendChild(toast);
-  
-  // Remover após 5 segundos
-  setTimeout(() => {
-    if (toast.parentNode) {
-      toast.parentNode.removeChild(toast);
-    }
-  }, 5000);
+  // Usar sistema global de toasts
+  if (typeof showToastMessage === 'function') {
+    showToastMessage(message, type);
+  } else {
+    alert(message);
+  }
 }
 
 // Inicializar dropdown quando a página carregar
 function initializeStatusDropdown() {
   const statusDropdown = document.getElementById('statusDropdown');
   const statusMenu = statusDropdown ? statusDropdown.nextElementSibling : null;
-  
-  console.log('Elementos encontrados:', {
-    statusDropdown: !!statusDropdown,
-    statusMenu: !!statusMenu,
-    statusMenuClass: statusMenu ? statusMenu.className : 'N/A'
-  });
-  
   if (statusDropdown && statusMenu && statusMenu.classList.contains('dropdown-menu')) {
-    console.log('Inicializando dropdown de status...');
-    
     // Método 1: Tentar usar Bootstrap nativo
     if (typeof bootstrap !== 'undefined') {
       try {
         const bsDropdown = new bootstrap.Dropdown(statusDropdown);
-        console.log('Bootstrap dropdown inicializado com sucesso');
         return; // Se Bootstrap funcionar, não precisa do fallback
       } catch(e) {
         console.warn('Erro Bootstrap nativo:', e);
@@ -401,13 +380,9 @@ function initializeStatusDropdown() {
     }
     
     // Método 2: Implementação manual como fallback
-    console.log('Usando implementação manual do dropdown');
     statusDropdown.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
-      
-      console.log('Clique no dropdown de status detectado');
-      
       // Fechar outros dropdowns
       document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
         if (menu !== statusMenu) {
@@ -424,8 +399,6 @@ function initializeStatusDropdown() {
         statusMenu.classList.add('show');
         statusDropdown.setAttribute('aria-expanded', 'true');
       }
-      
-      console.log('Menu agora está:', isShowing ? 'fechado' : 'aberto');
     });
   } else {
     console.error('Elementos do dropdown de status não encontrados!', {

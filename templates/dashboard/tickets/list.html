@@ -1,85 +1,241 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block page_title %}Lista de Tickets{% endblock %}
+{% block title %}Tickets — iConnect{% endblock %}
+{% block page_title %}Tickets{% endblock %}
+{% block breadcrumb_title %}Tickets{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-2">
-  <!-- Page Header -->
-  <div class="ms-3">
-    <h3 class="mb-0 h4 font-weight-bolder">Gerenciar Tickets</h3>
-    <p class="mb-4">Visualize e gerencie todos os tickets do sistema</p>
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+      <div class="ms-3">
+        <h3 class="mb-0 h4 font-weight-bolder">Gerenciar Tickets</h3>
+        <p class="mb-0 text-sm">Visualize e gerencie todos os chamados do sistema</p>
+      </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end">
+      <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-sm mb-0" style="background: linear-gradient(195deg, #06b6d4, #0891b2); color: #fff;">
+        <i class="material-symbols-rounded text-sm me-1">add</i> Novo Ticket
+      </a>
+      {% if user.is_staff %}
+      <a href="{% url 'dashboard:export_tickets' %}" class="btn btn-sm btn-outline-secondary mb-0 ms-1">
+        <i class="material-symbols-rounded text-sm me-1">download</i> Exportar
+      </a>
+      {% endif %}
+    </div>
   </div>
 
-  <div class="row">
-    <div class="col-12">
-      <div class="card my-4">
-        <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-          <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <h6 class="text-white text-capitalize ps-3 mb-0">Lista de Tickets</h6>
-              <div class="me-3">
-                <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-outline-white btn-sm mb-0">
-                  <i class="material-symbols-rounded text-sm">add</i>&nbsp;&nbsp;Novo Ticket
-                </a>
-              </div>
+  <!-- KPIs -->
+  <div class="row mb-4">
+    <div class="col-xl-2 col-md-4 col-6 mb-xl-0 mb-3">
+      <div class="card">
+        <div class="card-header p-2 ps-3">
+          <div class="d-flex justify-content-between">
+            <div>
+              <p class="text-xs text-uppercase font-weight-bold mb-0">Total</p>
+              <h4 class="mb-0 font-weight-bolder">{{ kpi_total }}</h4>
+            </div>
+            <div class="icon icon-md icon-shape shadow-sm border-radius-lg text-center me-2 d-flex align-items-center justify-content-center" style="background: linear-gradient(195deg, #334155, #1e293b);">
+              <i class="material-symbols-rounded opacity-10 text-white text-lg">confirmation_number</i>
             </div>
           </div>
         </div>
-        
-        <div class="card-body px-0 pb-2">
-          <!-- Filtros -->
-          <div class="row px-4 mb-3">
-            <div class="col-md-12">
-              <form method="get" class="row g-3">
-                <div class="col-md-3">
-                  <label class="form-label">Status</label>
-                  <select name="status" class="form-select">
-                    <option value="">Todos os Status</option>
-                    {% for value, label in status_choices %}
-                      <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label">Categoria</label>
-                  <select name="categoria" class="form-select">
-                    <option value="">Todas as Categorias</option>
-                    {% for categoria in categorias %}
-                      <option value="{{ categoria.id }}" {% if filters.categoria == categoria.id|stringformat:"s" %}selected{% endif %}>{{ categoria.nome }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label">Prioridade</label>
-                  <select name="prioridade" class="form-select">
-                    <option value="">Todas as Prioridades</option>
-                    {% for value, label in prioridade_choices %}
-                      <option value="{{ value }}" {% if filters.prioridade == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label">Buscar</label>
-                  <div class="input-group">
-                    <input type="text" name="search" class="form-control" placeholder="Número, título, cliente..." value="{{ filters.search }}">
-                    <button class="btn btn-outline-secondary" type="submit">
-                      <i class="material-symbols-rounded">search</i>
-                    </button>
-                  </div>
-                </div>
-              </form>
+        <hr class="horizontal dark my-0">
+        <div class="card-footer p-2 ps-3">
+          <p class="mb-0 text-xs"><span class="font-weight-bolder">{{ kpi_taxa_resolucao }}%</span> resolução este mês</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6 mb-xl-0 mb-3">
+      <div class="card">
+        <div class="card-header p-2 ps-3">
+          <div class="d-flex justify-content-between">
+            <div>
+              <p class="text-xs text-uppercase font-weight-bold mb-0">Abertos</p>
+              <h4 class="mb-0 font-weight-bolder" style="color: #ef4444;">{{ kpi_abertos }}</h4>
+            </div>
+            <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger border-radius-lg text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="material-symbols-rounded opacity-10 text-white text-lg">error</i>
             </div>
           </div>
+        </div>
+        <hr class="horizontal dark my-0">
+        <div class="card-footer p-2 ps-3">
+          <p class="mb-0 text-xs">Aguardando atendimento</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6 mb-xl-0 mb-3">
+      <div class="card">
+        <div class="card-header p-2 ps-3">
+          <div class="d-flex justify-content-between">
+            <div>
+              <p class="text-xs text-uppercase font-weight-bold mb-0">Em Andamento</p>
+              <h4 class="mb-0 font-weight-bolder" style="color: #f59e0b;">{{ kpi_andamento }}</h4>
+            </div>
+            <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning border-radius-lg text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="material-symbols-rounded opacity-10 text-white text-lg">pending</i>
+            </div>
+          </div>
+        </div>
+        <hr class="horizontal dark my-0">
+        <div class="card-footer p-2 ps-3">
+          <p class="mb-0 text-xs">Sendo tratados</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6 mb-xl-0 mb-3">
+      <div class="card">
+        <div class="card-header p-2 ps-3">
+          <div class="d-flex justify-content-between">
+            <div>
+              <p class="text-xs text-uppercase font-weight-bold mb-0">Resolvidos</p>
+              <h4 class="mb-0 font-weight-bolder" style="color: #10b981;">{{ kpi_resolvidos }}</h4>
+            </div>
+            <div class="icon icon-md icon-shape bg-gradient-success shadow-success border-radius-lg text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="material-symbols-rounded opacity-10 text-white text-lg">check_circle</i>
+            </div>
+          </div>
+        </div>
+        <hr class="horizontal dark my-0">
+        <div class="card-footer p-2 ps-3">
+          <p class="mb-0 text-xs">Resolvidos + Fechados</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6 mb-xl-0 mb-3">
+      <div class="card">
+        <div class="card-header p-2 ps-3">
+          <div class="d-flex justify-content-between">
+            <div>
+              <p class="text-xs text-uppercase font-weight-bold mb-0">Críticos</p>
+              <h4 class="mb-0 font-weight-bolder" style="color: #dc2626;">{{ kpi_criticos }}</h4>
+            </div>
+            <div class="icon icon-md icon-shape shadow-sm border-radius-lg text-center me-2 d-flex align-items-center justify-content-center" style="background: linear-gradient(195deg, #dc2626, #991b1b);">
+              <i class="material-symbols-rounded opacity-10 text-white text-lg">priority_high</i>
+            </div>
+          </div>
+        </div>
+        <hr class="horizontal dark my-0">
+        <div class="card-footer p-2 ps-3">
+          <p class="mb-0 text-xs">Prioridade crítica ativos</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6 mb-xl-0 mb-3">
+      <div class="card">
+        <div class="card-header p-2 ps-3">
+          <div class="d-flex justify-content-between">
+            <div>
+              <p class="text-xs text-uppercase font-weight-bold mb-0">Tempo Médio</p>
+              <h4 class="mb-0 font-weight-bolder" style="color: #06b6d4;">{{ kpi_tempo_medio }}</h4>
+            </div>
+            <div class="icon icon-md icon-shape shadow-sm border-radius-lg text-center me-2 d-flex align-items-center justify-content-center" style="background: linear-gradient(195deg, #06b6d4, #0891b2);">
+              <i class="material-symbols-rounded opacity-10 text-white text-lg">schedule</i>
+            </div>
+          </div>
+        </div>
+        <hr class="horizontal dark my-0">
+        <div class="card-footer p-2 ps-3">
+          <p class="mb-0 text-xs">Resolução média</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
-          <!-- Tabela de Tickets -->
+  <!-- Filtros -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body p-3">
+          <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-2">
+              <label class="form-label text-xs text-uppercase mb-1">Status</label>
+              <select name="status" class="form-select form-select-sm">
+                <option value="">Todos</option>
+                {% for value, label in status_choices %}
+                <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label text-xs text-uppercase mb-1">Categoria</label>
+              <select name="categoria" class="form-select form-select-sm">
+                <option value="">Todas</option>
+                {% for cat in categorias %}
+                <option value="{{ cat.id }}" {% if filters.categoria == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label text-xs text-uppercase mb-1">Prioridade</label>
+              <select name="prioridade" class="form-select form-select-sm">
+                <option value="">Todas</option>
+                {% for value, label in prioridade_choices %}
+                <option value="{{ value }}" {% if filters.prioridade == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label text-xs text-uppercase mb-1">Agente</label>
+              <select name="agente" class="form-select form-select-sm">
+                <option value="">Todos</option>
+                <option value="none" {% if filters.agente == 'none' %}selected{% endif %}>Não atribuído</option>
+                {% for ag in agentes %}
+                <option value="{{ ag.id }}" {% if filters.agente == ag.id|stringformat:"s" %}selected{% endif %}>{{ ag.get_full_name|default:ag.username }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label text-xs text-uppercase mb-1">Buscar</label>
+              <div class="input-group input-group-sm">
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="Nº, título, cliente..." value="{{ filters.search }}">
+              </div>
+            </div>
+            <div class="col-md-2 text-end">
+              <button type="submit" class="btn btn-sm mb-0 w-100" style="background: linear-gradient(195deg, #334155, #1e293b); color: #fff;">
+                <i class="material-symbols-rounded text-sm me-1">search</i> Filtrar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabela -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card mb-4">
+        <div class="card-header p-3 pt-2">
+          <div class="icon icon-lg icon-shape shadow text-center border-radius-xl mt-n4 me-3 float-start" style="background: linear-gradient(195deg, #334155, #1e293b);">
+            <i class="material-symbols-rounded opacity-10 text-white">confirmation_number</i>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="mb-0">Tickets</h6>
+              <p class="text-sm mb-0 text-muted">{{ paginator.count }} ticket{{ paginator.count|pluralize:"s" }} encontrado{{ paginator.count|pluralize:"s" }}</p>
+            </div>
+            {% if kpi_nao_atribuidos > 0 %}
+            <span class="badge" style="background: #fef3c7; color: #92400e;">
+              <i class="material-symbols-rounded text-sm me-1">person_off</i>
+              {{ kpi_nao_atribuidos }} não atribuído{{ kpi_nao_atribuidos|pluralize:"s" }}
+            </span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="card-body px-0 pb-2">
           <div class="table-responsive p-0">
             <table class="table align-items-center mb-0">
               <thead>
                 <tr>
-                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ticket</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4">Ticket</th>
                   <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cliente</th>
                   <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                   <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Prioridade</th>
+                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Categoria</th>
                   <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Agente</th>
                   <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Criado</th>
                   <th class="text-secondary opacity-7"></th>
@@ -89,22 +245,26 @@
                 {% for ticket in tickets %}
                 <tr>
                   <td>
-                    <div class="d-flex px-2 py-1">
+                    <div class="d-flex px-3 py-1">
                       <div class="d-flex flex-column justify-content-center">
-                        <h6 class="mb-0 text-sm">#{{ ticket.numero }}</h6>
-                        <p class="text-xs text-secondary mb-0">{{ ticket.titulo|truncatechars:50 }}</p>
+                        <a href="{% url 'dashboard:ticket_detail' ticket.pk %}" class="mb-0 text-sm font-weight-bold" style="color: #06b6d4;">
+                          #{{ ticket.numero }}
+                        </a>
+                        <p class="text-xs text-secondary mb-0">{{ ticket.titulo|truncatechars:45 }}</p>
                       </div>
                     </div>
                   </td>
                   <td>
                     <p class="text-xs font-weight-bold mb-0">{{ ticket.cliente.nome }}</p>
-                    <p class="text-xs text-secondary mb-0">{{ ticket.cliente.email }}</p>
+                    <p class="text-xs text-secondary mb-0">{{ ticket.cliente.empresa|default:"—" }}</p>
                   </td>
                   <td class="align-middle text-center text-sm">
                     {% if ticket.status == 'aberto' %}
                       <span class="badge badge-sm bg-gradient-danger">{{ ticket.get_status_display }}</span>
                     {% elif ticket.status == 'em_andamento' %}
                       <span class="badge badge-sm bg-gradient-warning">{{ ticket.get_status_display }}</span>
+                    {% elif ticket.status == 'aguardando_cliente' %}
+                      <span class="badge badge-sm" style="background: linear-gradient(195deg, #f59e0b, #d97706); color: #fff;">{{ ticket.get_status_display }}</span>
                     {% elif ticket.status == 'resolvido' %}
                       <span class="badge badge-sm bg-gradient-info">{{ ticket.get_status_display }}</span>
                     {% else %}
@@ -117,47 +277,62 @@
                     {% elif ticket.prioridade == 'alta' %}
                       <span class="badge badge-sm bg-gradient-warning">{{ ticket.get_prioridade_display }}</span>
                     {% elif ticket.prioridade == 'media' %}
-                      <span class="badge badge-sm bg-gradient-info">{{ ticket.get_prioridade_display }}</span>
+                      <span class="badge badge-sm" style="background: linear-gradient(195deg, #06b6d4, #0891b2); color: #fff;">{{ ticket.get_prioridade_display }}</span>
                     {% else %}
                       <span class="badge badge-sm bg-gradient-secondary">{{ ticket.get_prioridade_display }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="align-middle text-center">
+                    {% if ticket.categoria %}
+                    <span class="text-xs font-weight-bold" style="color: {{ ticket.categoria.cor }};">
+                      {{ ticket.categoria.nome }}
+                    </span>
+                    {% else %}
+                    <span class="text-xs text-secondary">—</span>
                     {% endif %}
                   </td>
                   <td class="align-middle text-center">
                     {% if ticket.agente %}
                       <span class="text-secondary text-xs font-weight-bold">{{ ticket.agente.get_full_name|default:ticket.agente.username }}</span>
                     {% else %}
-                      <span class="text-secondary text-xs">Não atribuído</span>
+                      <span class="badge badge-sm" style="background: #fef3c7; color: #92400e;">Não atribuído</span>
                     {% endif %}
                   </td>
                   <td class="align-middle text-center">
-                    <span class="text-secondary text-xs font-weight-bold">{{ ticket.criado_em|date:"d/m/Y H:i" }}</span>
+                    <span class="text-secondary text-xs font-weight-bold">{{ ticket.criado_em|date:"d/m/Y" }}</span>
+                    <br><span class="text-secondary text-xs">{{ ticket.criado_em|date:"H:i" }}</span>
                   </td>
                   <td class="align-middle">
                     <div class="dropdown">
-                      <button class="btn btn-link text-secondary mb-0" data-bs-toggle="dropdown">
+                      <button class="btn btn-link text-secondary mb-0 p-1" data-bs-toggle="dropdown">
                         <i class="material-symbols-rounded">more_vert</i>
                       </button>
-                      <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{% url 'dashboard:ticket_detail' ticket.pk %}">Ver Detalhes</a></li>
-                        <li><a class="dropdown-item" href="{% url 'dashboard:ticket_update' ticket.pk %}">Editar</a></li>
+                      <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'dashboard:ticket_detail' ticket.pk %}">
+                          <i class="material-symbols-rounded text-sm me-2">visibility</i> Ver Detalhes
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'dashboard:ticket_update' ticket.pk %}">
+                          <i class="material-symbols-rounded text-sm me-2">edit</i> Editar
+                        </a></li>
                       </ul>
                     </div>
                   </td>
                 </tr>
                 {% empty %}
                 <tr>
-                  <td colspan="7" class="text-center py-4">
-                    <div class="d-flex flex-column align-items-center">
-                      <i class="material-symbols-rounded text-muted" style="font-size: 48px;">inbox</i>
-                      <p class="text-muted mt-2">Nenhum ticket encontrado</p>
-                    </div>
+                  <td colspan="8" class="text-center py-5">
+                    <i class="material-symbols-rounded text-muted" style="font-size: 48px;">inbox</i>
+                    <p class="text-muted mt-2 mb-0">Nenhum ticket encontrado</p>
+                    <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-sm mt-3" style="background: linear-gradient(195deg, #06b6d4, #0891b2); color: #fff;">
+                      <i class="material-symbols-rounded text-sm me-1">add</i> Criar Primeiro Ticket
+                    </a>
                   </td>
                 </tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
-          
+
           <!-- Paginação -->
           {% if is_paginated %}
           <div class="d-flex justify-content-between align-items-center px-4 py-3">
@@ -169,27 +344,25 @@
             <nav>
               <ul class="pagination pagination-sm mb-0">
                 {% if page_obj.has_previous %}
-                  <li class="page-item">
-                    <a class="page-link" href="?{% for key, value in filters.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">Anterior</a>
-                  </li>
+                <li class="page-item">
+                  <a class="page-link" href="?{% for key, value in filters.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">
+                    <i class="material-symbols-rounded text-sm">chevron_left</i>
+                  </a>
+                </li>
                 {% endif %}
-                
                 {% for num in page_obj.paginator.page_range %}
                   {% if page_obj.number == num %}
-                    <li class="page-item active">
-                      <span class="page-link">{{ num }}</span>
-                    </li>
+                  <li class="page-item active"><span class="page-link" style="background: #334155; border-color: #334155;">{{ num }}</span></li>
                   {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                    <li class="page-item">
-                      <a class="page-link" href="?{% for key, value in filters.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
-                    </li>
+                  <li class="page-item"><a class="page-link" href="?{% for key, value in filters.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a></li>
                   {% endif %}
                 {% endfor %}
-                
                 {% if page_obj.has_next %}
-                  <li class="page-item">
-                    <a class="page-link" href="?{% for key, value in filters.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">Próximo</a>
-                  </li>
+                <li class="page-item">
+                  <a class="page-link" href="?{% for key, value in filters.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">
+                    <i class="material-symbols-rounded text-sm">chevron_right</i>
+                  </a>
+                </li>
                 {% endif %}
               </ul>
             </nav>

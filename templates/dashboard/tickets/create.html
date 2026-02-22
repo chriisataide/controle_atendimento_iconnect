@@ -2,1080 +2,268 @@
 {% load static %}
 
 {% block title %}Criar Novo Ticket{% endblock %}
+{% block page_title %}Novo Ticket{% endblock %}
+{% block breadcrumb_title %}Novo Ticket{% endblock %}
 
 {% block extra_css %}
 <style>
-  /* Estilos melhorados dos templates */
   .template-selector {
-    margin-bottom: 2rem;
-    padding: 1.5rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 15px;
-    border: none;
-    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .template-selector::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 1px, transparent 1px),
-                radial-gradient(circle at 75% 75%, rgba(255,255,255,0.1) 1px, transparent 1px),
-                radial-gradient(circle at 50% 10%, rgba(255,255,255,0.08) 0.5px, transparent 0.5px);
-    background-size: 100px 100px, 100px 100px, 100px 100px;
-    opacity: 0.3;
-    z-index: 0;
-  }
-
-  .template-selector h6 {
-    color: white;
-    font-weight: 600;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    position: relative;
-    z-index: 1;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+    border-radius: 12px;
     margin-bottom: 1.5rem;
   }
-
+  .template-selector h6 { color: #fff; font-weight: 600; margin-bottom: 1rem; }
   .template-option {
-    padding: 1.2rem;
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 12px;
+    padding: 1rem .75rem;
+    background: rgba(255,255,255,.95);
+    border-radius: 10px;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-align: center;
     border: 2px solid transparent;
-    margin-bottom: 0.5rem;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-    backdrop-filter: blur(10px);
-    position: relative;
-    z-index: 1;
-    /* Garantir altura uniforme */
-    height: 120px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 120px;
-    max-height: 120px;
+    transition: all .25s ease;
+    height: 100px;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
   }
+  .template-option:hover { border-color: #06b6d4; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(6,182,212,.2); }
+  .template-option.active { background: linear-gradient(135deg, #06b6d4, #0891b2); color: #fff; border-color: #0891b2; }
+  .template-option i { font-size: 1.6rem; margin-bottom: .35rem; }
+  .template-option small { font-size: .72rem; opacity: .7; }
 
-  .template-option:hover {
-    background: rgba(255, 255, 255, 1);
-    border-color: #667eea;
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
-  }
-
-  .template-option.active {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    border-color: #764ba2;
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
-  }
-
-  .template-option i {
-    font-size: 1.8rem;
-    margin-bottom: 0.5rem;
-    display: block;
-    opacity: 0.8;
-    flex-shrink: 0;
-  }
-
-  .template-option.active i {
-    opacity: 1;
-  }
-
-  .template-option small {
-    font-size: 0.75rem;
-    opacity: 0.7;
-    display: block;
-    margin-top: 0.25rem;
-    line-height: 1.2;
-  }
-
-  /* Texto do template responsivo */
-  .template-option {
-    font-size: 0.85rem;
-    font-weight: 500;
-    line-height: 1.2;
-  }
-
-  /* Formulários melhorados */
   .form-section {
-    background: white;
-    border-radius: 16px;
-    padding: 2rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    border: 1px solid rgba(0,0,0,0.06);
-  }
-
-  .input-group-outline {
-    position: relative;
-    margin-bottom: 1.5rem;
-  }
-
-  .input-group-outline .form-control {
-    background-color: #f8f9fa;
-    border: 2px solid #e9ecef;
+    background: #fff;
+    border: 1px solid #e2e8f0;
     border-radius: 12px;
-    padding: 1rem 1.25rem;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
   }
+  .form-section h6 {
+    color: #334155;
+    font-weight: 600;
+    display: flex; align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: .75rem;
+    border-bottom: 2px solid #06b6d4;
+  }
+  .form-section h6 i { color: #06b6d4; }
 
-  .input-group-outline .form-control:focus {
-    background-color: white;
-    border-color: #667eea;
-    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
-    outline: none;
-  }
-  
-  /* Melhorias para selects */
-  select.form-control {
-    cursor: pointer;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 1rem center;
-    background-size: 1rem;
-    padding-right: 2.5rem;
-  }
-  
-  select.form-control:focus {
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23667eea' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
-  }
-  
-  /* Placeholder styles para select */
-  select.form-control option[disabled] {
-    color: #6c757d;
-    font-style: italic;
-    background-color: #f8f9fa;
-    font-weight: 400;
-  }
-  
-  select.form-control option:not([disabled]) {
-    color: #495057;
-    font-weight: 500;
-    background-color: #ffffff;
-  }
-  
-  /* Select sem valor selecionado (mostra placeholder) */
-  select.form-control:invalid {
-    color: #6c757d;
-    font-style: italic;
-  }
-  
-  /* Select com valor válido selecionado */
-  select.form-control:valid {
-    color: #495057;
-    font-style: normal;
-    font-weight: 500;
-  }
-  
-  /* Hover effect nas opções */
-  select.form-control option:hover {
-    background-color: #e9ecef;
-  }
-
+  .input-group-outline { position: relative; margin-bottom: 1.25rem; }
   .input-group-outline .form-label {
-    position: absolute;
-    top: 1rem;
-    left: 1.25rem;
-    background: transparent;
-    color: #6c757d;
-    font-size: 0.95rem;
-    font-weight: 400;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    pointer-events: none;
-    z-index: 2;
+    font-size: .8rem; font-weight: 600; color: #475569; margin-bottom: .35rem; display: block;
   }
+  .input-group-outline .form-control,
+  .input-group-outline select.form-control {
+    border: 1px solid #cbd5e1; border-radius: 8px; padding: .6rem .85rem; font-size: .875rem;
+    transition: border-color .2s, box-shadow .2s; width: 100%; background: #fff;
+  }
+  .input-group-outline .form-control:focus {
+    border-color: #06b6d4; box-shadow: 0 0 0 3px rgba(6,182,212,.15); outline: none;
+  }
+  .input-group-outline textarea.form-control { min-height: 120px; resize: vertical; }
 
-  .input-group-outline.is-focused .form-label,
-  .input-group-outline.is-filled .form-label {
-    transform: translateY(-2.2rem) scale(0.85);
-    color: #667eea;
-    font-weight: 500;
-    background: white;
-    padding: 0 0.5rem;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  }
-  
-  /* Labels especiais para selects - sempre visíveis no topo */
-  .input-group-outline.select-field .form-label {
-    position: absolute;
-    top: -0.8rem;
-    left: 1.25rem;
-    transform: scale(0.85);
-    background: white;
-    padding: 0 0.5rem;
-    border-radius: 4px;
-    color: #6c757d;
-    font-weight: 500;
-    z-index: 10;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    pointer-events: none;
-  }
-  
-  /* Label ativo em selects */
-  .input-group-outline.select-field.has-selection .form-label {
-    color: #28a745;
-  }
-  
-  .input-group-outline.select-field:focus-within .form-label {
-    color: #667eea;
-  }
-  
-  /* Ajuste do padding do select para não interferir com label fixo */
-  .input-group-outline.select-field .form-control {
-    padding-top: 1.2rem;
-  }
-
-  /* Rich Editor melhorado */
-  .rich-editor {
-    border: 2px solid #e9ecef;
-    border-radius: 12px;
-    background: white;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    overflow: hidden;
-    transition: all 0.3s ease;
-  }
-
-  .rich-editor:focus-within {
-    border-color: #667eea;
-    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
-  }
-
+  /* Rich editor */
+  .rich-editor-wrapper { border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; }
+  .rich-editor-wrapper:focus-within { border-color: #06b6d4; box-shadow: 0 0 0 3px rgba(6,182,212,.15); }
   .editor-toolbar {
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-    padding: 1rem;
-    border-bottom: 1px solid #dee2e6;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    align-items: center;
+    background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: .4rem .6rem;
+    display: flex; gap: .25rem; flex-wrap: wrap;
   }
-
   .format-btn {
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 0.5rem 0.75rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 0.875rem;
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
+    background: none; border: 1px solid transparent; border-radius: 4px; padding: .25rem .45rem;
+    cursor: pointer; color: #475569; font-size: .85rem; transition: all .15s;
+  }
+  .format-btn:hover { background: #e2e8f0; border-color: #cbd5e1; }
+  .editor-content {
+    min-height: 180px; padding: 1rem; font-size: .875rem; outline: none; line-height: 1.6;
+  }
+  .editor-content:empty::before {
+    content: 'Descreva detalhadamente o problema ou solicitação...';
+    color: #94a3b8; font-style: italic;
   }
 
-  .format-btn:hover {
-    background: #667eea;
-    color: white;
-    border-color: #667eea;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-  }
-
-  #editorContent {
-    min-height: 280px;
-    padding: 1.5rem;
-    outline: none;
-    font-family: inherit;
-    line-height: 1.6;
-    overflow-y: auto;
-    background: white;
-  }
-
-  #editorContent.empty::before {
-    content: "Digite a descrição detalhada do ticket aqui... Use os botões acima para formatar o texto.";
-    color: #999;
-    font-style: italic;
-  }
-
-  /* Cliente Autocomplete melhorado */
-  .client-autocomplete {
-    position: relative;
-  }
-
-  .client-suggestions {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    border: 2px solid #667eea;
-    border-top: none;
-    border-radius: 0 0 12px 12px;
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 1000;
-    display: none;
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
-  }
-
-  .suggestion-item {
-    padding: 1rem;
-    cursor: pointer;
-    border-bottom: 1px solid #f1f3f4;
-    transition: all 0.2s ease;
-  }
-
-  .suggestion-item:hover {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
-  }
-
-  .suggestion-name {
-    font-weight: 500;
-    color: #333;
-    margin-bottom: 0.25rem;
-  }
-
-  .suggestion-email {
-    font-size: 0.875rem;
-    color: #666;
-  }
-
-  /* Prioridade visual melhorada */
-  .priority-indicator {
-    display: inline-block;
-    padding: 0.375rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  }
-
-  .priority-baixa { 
-    background: linear-gradient(135deg, #d4edda, #c3e6cb); 
-    color: #155724; 
-  }
-  .priority-media { 
-    background: linear-gradient(135deg, #fff3cd, #ffeaa7); 
-    color: #856404; 
-  }
-  .priority-alta { 
-    background: linear-gradient(135deg, #f8d7da, #f5c6cb); 
-    color: #721c24; 
-  }
-
-  /* Botões melhorados */
-  .btn {
-    border-radius: 12px;
-    padding: 0.75rem 1.5rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    border: none;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  }
-
-  .btn-primary {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-  }
-
-  .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
-  }
-
-  .btn-light {
-    background: #f8f9fa;
-    color: #6c757d;
-    border: 1px solid #dee2e6;
-  }
-
-  .btn-light:hover {
-    background: #e9ecef;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  }
-
-  /* Upload de arquivos melhorado com drag & drop */
-  .file-upload-area {
-    border: 2px dashed #dee2e6;
-    border-radius: 12px;
-    padding: 2rem;
-    text-align: center;
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
-    position: relative;
-  }
-
-  .file-upload-area:hover {
-    border-color: #e91e63;
-    background: linear-gradient(135deg, #fdf2f8 0%, #ffffff 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(233, 30, 99, 0.15);
-  }
-
-  .file-upload-area.drag-over {
-    border-color: #e91e63;
-    background: linear-gradient(135deg, #fce7f3 0%, #ffffff 100%);
-    transform: scale(1.02);
-  }
-  
-  .file-item {
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    border: 1px solid #e3e6ea !important;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    animation: slideInUp 0.3s ease forwards;
-  }
-  
-  .file-item:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border-color: #e91e63 !important;
-  }
-  
-  @keyframes slideInUp {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  /* Botões de formatação aprimorados */
-  .format-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.375rem 0.75rem;
-    border: 1px solid #dee2e6;
-    background: #ffffff;
-    border-radius: 6px;
-    color: #495057;
-    font-size: 0.75rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    cursor: pointer;
-  }
-  
-  .format-btn:hover {
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    border-color: #e91e63;
-    color: #e91e63;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(233, 30, 99, 0.15);
-  }
-  
-  .format-btn:active,
-  .format-btn.active {
-    background: linear-gradient(135deg, #e91e63 0%, #ad1457 100%);
-    border-color: #e91e63;
-    color: #ffffff;
-    transform: translateY(0);
-  }
-  
-  /* Animações de entrada */
-  .template-card {
-    animation: templateSlideIn 0.4s ease forwards;
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  
-  .template-card:nth-child(1) { animation-delay: 0.1s; }
-  .template-card:nth-child(2) { animation-delay: 0.2s; }
-  .template-card:nth-child(3) { animation-delay: 0.3s; }
-  .template-card:nth-child(4) { animation-delay: 0.4s; }
-  .template-card:nth-child(5) { animation-delay: 0.5s; }
-  .template-card:nth-child(6) { animation-delay: 0.6s; }
-  
-  @keyframes templateSlideIn {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  /* Rich editor melhorado */
-  #editorContent:focus {
-    outline: none;
-    border-color: #e91e63;
-    box-shadow: 0 0 0 2px rgba(233, 30, 99, 0.1);
-  }
-  
-  /* Scrollbar personalizada */
-  #editorContent::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  #editorContent::-webkit-scrollbar-track {
-    background: #f1f3f4;
-    border-radius: 3px;
-  }
-  
-  #editorContent::-webkit-scrollbar-thumb {
-    background: #e91e63;
-    border-radius: 3px;
-  }
-  
-  #editorContent::-webkit-scrollbar-thumb:hover {
-    background: #ad1457;
-  }
-  
-  /* Estilos especiais para categorias */
-  #categoriaSelect {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  }
-  
-  /* Melhor aparência das opções */
-  select.form-control option {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-    line-height: 1.4;
-  }
-  
-  /* Feedback visual ao selecionar categoria */
-  #categoriaSelect:valid {
-    border-left: 4px solid #28a745;
-  }
-  
-  /* Container com seleção válida */
-  .input-group-outline.has-selection .form-control {
-    background-color: rgba(40, 167, 69, 0.05);
-    border-color: #28a745;
-  }
-  
-  .input-group-outline.has-selection .form-label {
-    color: #28a745 !important;
-  }
-  
-  /* Estados de prioridade */
-  #prioridadeSelect.priority-baixa {
-    background: linear-gradient(135deg, #d1f2eb 0%, #a3e4d7 100%);
-    border-color: #1e7e34;
-    color: #155724;
-  }
-  
-  #prioridadeSelect.priority-media {
-    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-    border-color: #d39e00;
-    color: #856404;
-  }
-  
-  #prioridadeSelect.priority-alta {
-    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-    border-color: #dc3545;
-    color: #721c24;
-  }
-  
-  /* Ícone de prioridade dinâmico */
-  .priority-icon {
-    position: absolute;
-    right: 2.5rem;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 1.2rem;
-    opacity: 0;
-    transition: all 0.3s ease;
-    pointer-events: none;
-    z-index: 10;
-  }
-  
-  .priority-icon.show {
-    opacity: 1;
-    transform: translateY(-50%) scale(1.1);
-  }
-  
-  .priority-icon.baixa {
-    color: #28a745;
-  }
-  
-  .priority-icon.media {
-    color: #ffc107;
-  }
-  
-  .priority-icon.alta {
-    color: #dc3545;
-    animation: gentlePulse 2.5s infinite;
-  }
-  
-  @keyframes gentlePulse {
-    0%, 100% {
-      transform: translateY(-50%) scale(1.1);
-      opacity: 0.8;
-    }
-    50% {
-      transform: translateY(-50%) scale(1.15);
-      opacity: 1;
-    }
-  }
-  
-  /* Hover effects para prioridade */
-  #prioridadeSelect:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-  }
-  
-  /* Label da prioridade com cor dinâmica */
-  .input-group-outline.priority-baixa .form-label {
-    color: #28a745 !important;
-  }
-  
-  .input-group-outline.priority-media .form-label {
-    color: #ffc107 !important;
-  }
-  
-  .input-group-outline.priority-alta .form-label {
-    color: #dc3545 !important;
-  }
-  
-  @keyframes shake {
-    0%, 20%, 40%, 60%, 80% {
-      transform: translateX(0);
-    }
-    10%, 30%, 50%, 70%, 90% {
-      transform: translateX(-5px);
-    }
-  }
-
-  /* Animações */
-  @keyframes slideInUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .form-section {
-    animation: slideInUp 0.6s ease-out;
-  }
-
-  /* Responsivo */
-  @media (max-width: 768px) {
-    .template-option {
-      margin-bottom: 1rem;
-      /* Ajustar tamanho em tablet */
-      height: 100px;
-      min-height: 100px;
-      max-height: 100px;
-      padding: 0.8rem;
-      font-size: 0.8rem;
-    }
-    
-    .template-option i {
-      font-size: 1.5rem;
-      margin-bottom: 0.3rem;
-    }
-    
-    .form-section {
-      padding: 1.5rem;
-    }
-
-    .editor-toolbar {
-      padding: 0.75rem;
-    }
-
-    .format-btn {
-      padding: 0.375rem 0.5rem;
-      font-size: 0.8rem;
-    }
-  }
-  
-  /* Mobile pequeno */
-  @media (max-width: 576px) {
-    .template-option {
-      height: 90px;
-      min-height: 90px;
-      max-height: 90px;
-      padding: 0.6rem;
-      font-size: 0.75rem;
-    }
-    
-    .template-option i {
-      font-size: 1.3rem;
-      margin-bottom: 0.25rem;
-    }
-  }
-
-  /* ========== ESTILOS PARA PRODUTOS E SERVIÇOS ========== */
-  
-  .produtos-section {
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid rgba(0,0,0,0.08);
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-  }
-  
-  .produto-autocomplete {
-    position: relative;
-  }
-  
+  /* Produtos */
+  .produto-autocomplete { position: relative; }
   .produto-suggestions {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    border: 2px solid #667eea;
-    border-top: none;
-    border-radius: 0 0 12px 12px;
-    max-height: 300px;
-    overflow-y: auto;
-    z-index: 1000;
-    display: none;
-    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 50;
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+    max-height: 250px; overflow-y: auto; display: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,.12);
   }
-  
   .produto-suggestion {
-    padding: 1rem;
-    cursor: pointer;
-    border-bottom: 1px solid #f1f3f4;
-    transition: all 0.2s ease;
+    padding: .75rem 1rem; cursor: pointer; border-bottom: 1px solid #f1f5f9;
+    transition: background .15s;
   }
-  
-  .produto-suggestion:hover {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
-  }
-  
-  .produto-suggestion:last-child {
-    border-bottom: none;
-  }
-  
-  .produto-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .produto-nome {
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 0.25rem;
-  }
-  
-  .produto-codigo {
-    font-size: 0.875rem;
-    color: #666;
-    margin-bottom: 0.25rem;
-  }
-  
-  .produto-preco {
-    font-size: 1rem;
-    color: #28a745;
-    font-weight: 600;
-  }
-  
-  .produto-tipo {
-    display: inline-block;
-    padding: 0.25rem 0.5rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-transform: uppercase;
-  }
-  
-  .produto-tipo.produto {
-    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-    color: #1565c0;
-  }
-  
-  .produto-tipo.servico {
-    background: linear-gradient(135deg, #f3e5f5, #e1bee7);
-    color: #7b1fa2;
-  }
-  
-  .produto-tipo.kit {
-    background: linear-gradient(135deg, #fff3e0, #ffcc02);
-    color: #e65100;
-  }
-  
-  .item-produto {
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    transition: all 0.3s ease;
-    animation: slideInUp 0.3s ease forwards;
-  }
-  
-  .item-produto:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
-    border-color: #667eea;
-  }
-  
-  .item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-  }
-  
-  .item-info h6 {
-    margin: 0;
-    color: #333;
-    font-weight: 600;
-  }
-  
-  .item-info small {
-    color: #666;
-    font-size: 0.875rem;
-  }
-  
-  .item-valores {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 1rem;
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid #f1f3f4;
-  }
-  
-  .valor-item {
-    text-align: center;
-  }
-  
-  .valor-item .label {
-    font-size: 0.75rem;
-    color: #666;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 0.25rem;
-  }
-  
-  .valor-item .value {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #333;
-  }
-  
-  .valor-item.subtotal .value {
-    color: #667eea;
-  }
-  
-  .valor-item.desconto .value {
-    color: #dc3545;
-  }
-  
-  .valor-item.total .value {
-    color: #28a745;
-    font-size: 1.25rem;
-  }
-  
-  .resumo-produtos {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 12px;
-    padding: 1.5rem;
-    color: white;
-    margin-top: 1.5rem;
-    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
-  }
-  
-  .resumo-produtos h6 {
-    color: white;
-    margin-bottom: 1rem;
-    font-weight: 600;
-  }
-  
-  .resumo-linha {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-    padding: 0.25rem 0;
-  }
-  
-  .resumo-linha.total {
-    border-top: 1px solid rgba(255,255,255,0.3);
-    padding-top: 0.75rem;
-    margin-top: 0.75rem;
-    font-size: 1.1rem;
-    font-weight: 600;
-  }
-  
-  .resumo-linha .label {
-    opacity: 0.9;
-  }
-  
-  .resumo-linha .value {
-    font-weight: 600;
-  }
-  
+  .produto-suggestion:hover { background: #f0fdfa; }
+  .produto-info { display: flex; justify-content: space-between; align-items: center; }
+  .produto-nome { font-weight: 600; color: #334155; font-size: .875rem; }
+  .produto-codigo { font-size: .75rem; color: #64748b; }
+  .produto-preco { font-weight: 700; color: #06b6d4; }
+  .produto-tipo { font-size: .65rem; padding: .15rem .45rem; border-radius: 4px; background: #f1f5f9; color: #475569; }
+
   .btn-add-produto {
-    background: linear-gradient(135deg, #28a745, #20c997);
-    border: none;
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border-radius: 12px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+    background: linear-gradient(135deg, #06b6d4, #0891b2); color: #fff;
+    border: none; border-radius: 8px; padding: .55rem 1rem; font-size: .8rem; font-weight: 600;
+    transition: all .2s;
   }
-  
-  .btn-add-produto:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(40, 167, 69, 0.4);
-    color: white;
+  .btn-add-produto:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(6,182,212,.3); color: #fff; }
+  .btn-add-produto:disabled { opacity: .5; cursor: not-allowed; }
+
+  .item-produto {
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+    padding: 1rem; margin-bottom: .75rem;
   }
-  
+  .item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: .5rem; }
+  .item-header h6 { margin: 0; font-size: .875rem; color: #334155; }
   .btn-remove-item {
-    background: #dc3545;
-    border: none;
-    color: white;
-    padding: 0.5rem;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+    background: none; border: none; color: #ef4444; cursor: pointer; padding: .15rem;
+    border-radius: 4px; transition: background .15s;
   }
-  
-  .btn-remove-item:hover {
-    background: #c82333;
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
-    color: white;
+  .btn-remove-item:hover { background: #fee2e2; }
+
+  .resumo-produtos {
+    background: linear-gradient(135deg, #334155, #1e293b); color: #fff;
+    border-radius: 10px; padding: 1.25rem; margin-top: 1rem;
   }
-  
+  .resumo-produtos h6 { color: #fff; margin-bottom: .75rem; }
+  .resumo-linha { display: flex; justify-content: space-between; padding: .35rem 0; font-size: .875rem; }
+  .resumo-linha.total { border-top: 1px solid rgba(255,255,255,.2); padding-top: .75rem; margin-top: .5rem; font-weight: 700; font-size: 1rem; }
+  .resumo-linha .value { color: #67e8f9; }
+
   .empty-produtos {
-    text-align: center;
-    padding: 3rem 2rem;
-    color: #6c757d;
+    text-align: center; padding: 2rem; color: #94a3b8;
   }
-  
-  .empty-produtos i {
-    font-size: 3rem;
-    opacity: 0.5;
-    margin-bottom: 1rem;
-  }
-  
-  .empty-produtos p {
-    margin: 0;
-    font-size: 1.1rem;
-  }
-  
-  /* Inputs específicos dos produtos */
-  .produto-form .input-group-outline {
-    margin-bottom: 1rem;
-  }
-  
-  .produto-form .row {
-    margin-bottom: 0.5rem;
-  }
-  
-  /* Indicador de carregamento */
+  .empty-produtos i { font-size: 2.5rem; margin-bottom: .5rem; display: block; }
   .loading-produtos {
-    display: none;
-    text-align: center;
-    padding: 2rem;
-    color: #667eea;
+    display: none; text-align: center; padding: 1rem; color: #64748b;
   }
-  
-  .loading-produtos i {
-    font-size: 2rem;
-    animation: spin 1s linear infinite;
+  .loading-produtos i { animation: spin 1s linear infinite; font-size: 1.5rem; }
+
+  /* File upload */
+  .file-upload-area {
+    border: 2px dashed #cbd5e1; border-radius: 10px; padding: 2rem;
+    text-align: center; position: relative; transition: all .25s; cursor: pointer;
+    background: #f8fafc;
   }
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  .file-upload-area:hover, .file-upload-area.drag-over {
+    border-color: #06b6d4; background: #f0fdfa;
   }
-  
-  /* Responsivo para produtos */
+  .file-item {
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+    padding: .6rem .85rem; margin-bottom: .5rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  /* Priority visual */
+  .priority-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: .35rem; }
+
+  /* Sidebar summary */
+  .sidebar-card {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+    padding: 1.25rem; margin-bottom: 1rem;
+  }
+  .sidebar-card h6 {
+    color: #334155; font-weight: 600; font-size: .85rem;
+    margin-bottom: .75rem; padding-bottom: .5rem; border-bottom: 2px solid #06b6d4;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
   @media (max-width: 768px) {
-    .item-valores {
-      grid-template-columns: 1fr;
-      gap: 0.5rem;
-    }
-    
-    .produto-info {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.5rem;
-    }
-    
-    .resumo-linha {
-      font-size: 0.9rem;
-    }
-    
-    .item-produto {
-      padding: 1rem;
-    }
+    .template-option { height: auto; padding: .75rem; }
+    .form-section { padding: 1rem; }
+    .produto-info { flex-direction: column; gap: .5rem; }
   }
+
+  /* Dark mode overrides */
+  .dark-version .form-section { background: var(--bg-card) !important; border-color: var(--border-color) !important; }
+  .dark-version .form-section h6 { color: var(--text-primary) !important; }
+  .dark-version .input-group-outline .form-label { color: var(--text-secondary) !important; }
+  .dark-version .input-group-outline .form-control { background: var(--bg-primary) !important; color: var(--text-primary) !important; border-color: var(--border-color) !important; }
+  .dark-version .input-group-outline .form-control:focus { border-color: var(--accent) !important; }
+  .dark-version .template-option { background: var(--bg-card) !important; color: var(--text-primary) !important; }
+  .dark-version .template-option.active { background: linear-gradient(135deg, #06b6d4, #0891b2) !important; color: #fff !important; }
+  .dark-version .produto-suggestion { border-bottom-color: var(--border-color) !important; }
+  .dark-version .produto-suggestion:hover { background: rgba(6,182,212,0.06) !important; }
+  .dark-version .produto-suggestions { background: var(--bg-card) !important; border-color: var(--border-color) !important; }
+  .dark-version .produto-nome { color: var(--text-primary) !important; }
+  .dark-version .produto-tipo { background: var(--bg-primary) !important; color: var(--text-secondary) !important; }
+  .dark-version .item-produto { background: var(--bg-primary) !important; border-color: var(--border-color) !important; }
+  .dark-version .item-header h6 { color: var(--text-primary) !important; }
+  .dark-version .file-upload-area { border-color: var(--border-color) !important; background: var(--bg-primary) !important; }
+  .dark-version .file-upload-area:hover { border-color: var(--accent) !important; background: rgba(6,182,212,0.04) !important; }
+  .dark-version .file-item { background: var(--bg-primary) !important; border-color: var(--border-color) !important; }
+  .dark-version .sidebar-card { background: var(--bg-card) !important; border-color: var(--border-color) !important; }
+  .dark-version .sidebar-card h6 { color: var(--text-primary) !important; }
+  .dark-version .editor-toolbar { background: var(--bg-primary) !important; border-bottom-color: var(--border-color) !important; }
+  .dark-version .editor-content { color: var(--text-primary) !important; }
+  .dark-version .rich-editor-wrapper { border-color: var(--border-color) !important; }
+  .dark-version .format-btn { color: var(--text-secondary) !important; }
+  .dark-version .format-btn:hover { background: var(--bg-secondary) !important; border-color: var(--border-color) !important; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid py-2">
-  <!-- Page Header -->
   <div class="ms-3">
     <h3 class="mb-0 h4 font-weight-bolder">Criar Novo Ticket</h3>
-    <p class="mb-4">Crie um novo ticket de suporte usando templates pré-configurados</p>
+    <p class="mb-4 text-sm text-muted">Preencha os dados abaixo para registrar um novo ticket de suporte</p>
   </div>
 
   <div class="row">
-    <div class="col-12">
-      <div class="card my-4">
+    <!-- Main Form Column -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
         <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-          <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
-            <h6 class="text-white text-capitalize ps-3">
-              <i class="material-symbols-rounded me-2">add_circle</i>
-              Criar Novo Ticket de Suporte
+          <div class="border-radius-lg pt-4 pb-3 d-flex align-items-center" style="background: linear-gradient(135deg, #334155, #1e293b);">
+            <h6 class="text-white text-capitalize ps-3 mb-0">
+              <i class="material-symbols-rounded me-2 opacity-8">confirmation_number</i>
+              Novo Ticket de Suporte
             </h6>
           </div>
         </div>
-        <div class="card-body">
-          <!-- Templates de Ticket -->
+        <div class="card-body pt-3">
+
+          <!-- Templates Rápidos -->
           <div class="template-selector">
-            <h6 class="mb-3">
+            <h6>
               <i class="material-symbols-rounded me-2">library_books</i>
-              Templates Rápidos (Opcional)
+              Templates Rápidos <small class="fw-normal opacity-75 ms-2">(Opcional - clique para preencher)</small>
             </h6>
-            <div class="row" id="templateOptions">
-              <div class="col-md-2">
+            <div class="row g-2" id="templateOptions">
+              <div class="col-4 col-md-2">
                 <div class="template-option" data-template="suporte-tecnico">
                   <i class="material-symbols-rounded">computer</i>
-                  Suporte Técnico
+                  <small>Suporte Técnico</small>
                 </div>
               </div>
-              <div class="col-md-2">
+              <div class="col-4 col-md-2">
                 <div class="template-option" data-template="duvida">
                   <i class="material-symbols-rounded">help</i>
-                  Dúvida/Pergunta
+                  <small>Dúvida</small>
                 </div>
               </div>
-              <div class="col-md-2">
+              <div class="col-4 col-md-2">
                 <div class="template-option" data-template="solicitacao">
                   <i class="material-symbols-rounded">request_quote</i>
-                  Solicitação
+                  <small>Solicitação</small>
                 </div>
               </div>
-              <div class="col-md-2">
+              <div class="col-4 col-md-2">
                 <div class="template-option" data-template="bug">
                   <i class="material-symbols-rounded">bug_report</i>
-                  Relatar Bug
+                  <small>Bug Report</small>
                 </div>
               </div>
-              <div class="col-md-2">
+              <div class="col-4 col-md-2">
                 <div class="template-option" data-template="melhoria">
                   <i class="material-symbols-rounded">lightbulb</i>
-                  Melhoria
+                  <small>Melhoria</small>
                 </div>
               </div>
-              <div class="col-md-2">
+              <div class="col-4 col-md-2">
                 <div class="template-option" data-template="acesso">
                   <i class="material-symbols-rounded">key</i>
-                  Acesso
+                  <small>Acesso</small>
                 </div>
               </div>
             </div>
@@ -1083,17 +271,16 @@
 
           <form method="post" id="ticketForm" enctype="multipart/form-data">
             {% csrf_token %}
-            
-            <!-- Seção: Informações Básicas -->
+
+            <!-- Informações Básicas -->
             <div class="form-section">
-              <h6 class="mb-4">
+              <h6>
                 <i class="material-symbols-rounded me-2">info</i>
                 Informações Básicas
               </h6>
-              
               <div class="row">
                 <div class="col-md-6">
-                  <div class="input-group-outline select-field">
+                  <div class="input-group-outline">
                     <label class="form-label">Cliente</label>
                     {{ form.cliente }}
                   </div>
@@ -1105,213 +292,250 @@
                   </div>
                 </div>
               </div>
-
               <div class="row">
-                <div class="col-md-6">
-                  <div class="input-group-outline select-field">
-                    <label class="form-label">Categoria do Ticket</label>
+                <div class="col-md-4">
+                  <div class="input-group-outline">
+                    <label class="form-label">Categoria</label>
                     {{ form.categoria }}
                   </div>
                 </div>
-                <div class="col-md-6">
-                  <div class="input-group-outline select-field" id="prioridadeContainer">
-                    <label class="form-label">Nível de Prioridade</label>
+                <div class="col-md-4">
+                  <div class="input-group-outline" id="prioridadeContainer">
+                    <label class="form-label">Prioridade</label>
                     {{ form.prioridade }}
-                    <i class="material-symbols-rounded priority-icon" id="priorityIcon"></i>
                   </div>
                 </div>
-              </div>
-
-              <div class="row">
-                <div class="col-md-12">
+                <div class="col-md-4">
                   <div class="input-group-outline">
-                    <label class="form-label">Tags do Ticket</label>
+                    <label class="form-label">Tags</label>
                     {{ form.tags }}
+                    <small class="text-muted mt-1 d-block" style="font-size:.72rem;">Separe por vírgula (ex: sistema, login, urgente)</small>
                   </div>
-                  <small class="text-muted ms-2 mt-1">
-                    <i class="material-symbols-rounded me-1" style="font-size: 14px;">info</i>
-                    Separe as tags por vírgula (ex: sistema, login, urgente)
-                  </small>
                 </div>
               </div>
             </div>
 
-            <!-- Seção: Descrição Detalhada -->
+            <!-- Descrição Detalhada -->
             <div class="form-section">
-              <h6 class="mb-4">
+              <h6>
                 <i class="material-symbols-rounded me-2">description</i>
                 Descrição Detalhada
               </h6>
-              
-              <div class="input-group-outline">
-                <label class="form-label">Descrição do Problema</label>
-                {{ form.descricao }}
+              <div class="rich-editor-wrapper">
+                <div class="editor-toolbar">
+                  <button type="button" class="format-btn" data-command="bold" title="Negrito"><b>B</b></button>
+                  <button type="button" class="format-btn" data-command="italic" title="Itálico"><i>I</i></button>
+                  <button type="button" class="format-btn" data-command="underline" title="Sublinhado"><u>U</u></button>
+                  <button type="button" class="format-btn" data-command="insertUnorderedList" title="Lista">
+                    <i class="material-symbols-rounded" style="font-size:1rem;">format_list_bulleted</i>
+                  </button>
+                  <button type="button" class="format-btn" data-command="insertOrderedList" title="Lista Numerada">
+                    <i class="material-symbols-rounded" style="font-size:1rem;">format_list_numbered</i>
+                  </button>
+                </div>
+                <div class="editor-content" id="editorContent" contenteditable="true"></div>
               </div>
-              <small class="text-muted ms-2 mt-1">
-                <i class="material-symbols-rounded me-1" style="font-size: 14px;">info</i>
-                Descreva detalhadamente o problema ou solicitação
-              </small>
+              <input type="hidden" name="descricao" id="descricaoHidden">
             </div>
 
-            <!-- Seção: Produtos e Serviços Utilizados -->
-            <div class="form-section produtos-section">
-              <h6 class="mb-4">
+            <!-- Produtos e Serviços -->
+            <div class="form-section">
+              <h6>
                 <i class="material-symbols-rounded me-2">inventory_2</i>
-                Produtos e Serviços Utilizados
-                <small class="text-muted ms-2">(Opcional)</small>
+                Produtos e Serviços
+                <small class="text-muted fw-normal ms-2">(Opcional)</small>
               </h6>
-              
-              <!-- Formulário para adicionar produtos -->
-              <div class="produto-form mb-4">
-                <div class="row">
-                  <div class="col-md-6">
-                    <div class="input-group-outline produto-autocomplete">
-                      <label class="form-label">Buscar Produto/Serviço</label>
-                      <input type="text" 
-                             class="form-control" 
-                             id="produtoSearch"
-                             placeholder="Digite o nome ou código..."
-                             autocomplete="off">
-                      <div class="produto-suggestions" id="produtoSuggestions"></div>
-                    </div>
-                  </div>
-                  <div class="col-md-2">
-                    <div class="input-group-outline">
-                      <label class="form-label">Quantidade</label>
-                      <input type="number" 
-                             class="form-control" 
-                             id="quantidadeProduto"
-                             value="1"
-                             min="0.001"
-                             step="0.001">
-                    </div>
-                  </div>
-                  <div class="col-md-2">
-                    <div class="input-group-outline">
-                      <label class="form-label">Valor Unit. (R$)</label>
-                      <input type="number" 
-                             class="form-control" 
-                             id="valorProduto"
-                             step="0.01"
-                             min="0">
-                    </div>
-                  </div>
-                  <div class="col-md-2">
-                    <div class="input-group-outline">
-                      <label class="form-label">Desconto (%)</label>
-                      <input type="number" 
-                             class="form-control" 
-                             id="descontoProduto"
-                             value="0"
-                             min="0"
-                             max="100"
-                             step="0.01">
-                    </div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-md-5">
+                  <div class="input-group-outline produto-autocomplete">
+                    <label class="form-label">Buscar Produto/Serviço</label>
+                    <input type="text" class="form-control" id="produtoSearch" placeholder="Digite o nome ou código..." autocomplete="off">
+                    <div class="produto-suggestions" id="produtoSuggestions"></div>
                   </div>
                 </div>
-                
-                <div class="row">
-                  <div class="col-md-10">
-                    <div class="input-group-outline">
-                      <label class="form-label">Observações do Item</label>
-                      <input type="text" 
-                             class="form-control" 
-                             id="observacoesProduto"
-                             placeholder="Observações específicas sobre o uso deste item...">
-                    </div>
+                <div class="col-md-2">
+                  <div class="input-group-outline">
+                    <label class="form-label">Qtd</label>
+                    <input type="number" class="form-control" id="quantidadeProduto" value="1" min="0.001" step="0.001">
                   </div>
-                  <div class="col-md-2 d-flex align-items-end">
-                    <button type="button" 
-                            class="btn btn-add-produto w-100" 
-                            id="btnAddProduto"
-                            disabled>
-                      <i class="material-symbols-rounded me-1">add</i>
-                      Adicionar
-                    </button>
+                </div>
+                <div class="col-md-2">
+                  <div class="input-group-outline">
+                    <label class="form-label">Valor Unit. (R$)</label>
+                    <input type="number" class="form-control" id="valorProduto" step="0.01" min="0">
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="input-group-outline">
+                    <label class="form-label">Desconto (%)</label>
+                    <input type="number" class="form-control" id="descontoProduto" value="0" min="0" max="100" step="0.01">
+                  </div>
+                </div>
+                <div class="col-md-1 d-flex align-items-end" style="padding-bottom:1.25rem;">
+                  <button type="button" class="btn-add-produto w-100" id="btnAddProduto" disabled title="Adicionar">
+                    <i class="material-symbols-rounded" style="font-size:1.1rem;">add</i>
+                  </button>
+                </div>
+              </div>
+              <div class="row g-2 mb-3">
+                <div class="col-12">
+                  <div class="input-group-outline" style="margin-bottom:0;">
+                    <label class="form-label">Observações do Item</label>
+                    <input type="text" class="form-control" id="observacoesProduto" placeholder="Observações específicas sobre o item...">
                   </div>
                 </div>
               </div>
-              
-              <!-- Loading indicator -->
+
               <div class="loading-produtos" id="loadingProdutos">
                 <i class="material-symbols-rounded">refresh</i>
-                <p class="mt-2">Carregando produtos...</p>
+                <p class="mt-1 mb-0">Carregando produtos...</p>
               </div>
-              
-              <!-- Lista de produtos adicionados -->
+
               <div id="listaProdutos">
                 <div class="empty-produtos" id="emptyProdutos">
                   <i class="material-symbols-rounded">inventory</i>
-                  <p>Nenhum produto ou serviço adicionado ainda.</p>
-                  <small class="text-muted">Use o formulário acima para adicionar itens ao ticket.</small>
+                  <p class="mb-0">Nenhum produto adicionado.</p>
+                  <small>Use o campo acima para buscar e adicionar itens.</small>
                 </div>
               </div>
-              
-              <!-- Resumo financeiro -->
-              <div class="resumo-produtos" id="resumoProdutos" style="display: none;">
+
+              <div class="resumo-produtos" id="resumoProdutos" style="display:none;">
                 <h6>
                   <i class="material-symbols-rounded me-2">calculate</i>
                   Resumo Financeiro
                 </h6>
                 <div class="resumo-linha">
-                  <span class="label">Subtotal:</span>
+                  <span>Subtotal:</span>
                   <span class="value" id="subtotalResumo">R$ 0,00</span>
                 </div>
                 <div class="resumo-linha">
-                  <span class="label">Desconto Total:</span>
+                  <span>Desconto Total:</span>
                   <span class="value" id="descontoResumo">R$ 0,00</span>
                 </div>
                 <div class="resumo-linha total">
-                  <span class="label">Total Geral:</span>
+                  <span>Total Geral:</span>
                   <span class="value" id="totalResumo">R$ 0,00</span>
                 </div>
               </div>
             </div>
 
-            <!-- Seção: Anexos -->
+            <!-- Anexos -->
             <div class="form-section">
-              <h6 class="mb-4">
+              <h6>
                 <i class="material-symbols-rounded me-2">attach_file</i>
-                Anexos (Opcional)
+                Anexos
+                <small class="text-muted fw-normal ms-2">(Opcional)</small>
               </h6>
-              
-              <div class="file-upload-area">
-                <i class="material-symbols-rounded mb-2" style="font-size: 2rem; color: #6c757d;">cloud_upload</i>
-                <p class="mb-2"><strong>Clique para selecionar arquivos ou arraste aqui</strong></p>
-                <p class="text-muted mb-3">Formatos aceitos: PDF, DOC, DOCX, TXT, PNG, JPG, JPEG, GIF (máx. 10MB por arquivo)</p>
-                <input type="file" id="anexosInput" name="anexos" class="form-control" 
+              <div class="file-upload-area" id="uploadArea">
+                <i class="material-symbols-rounded mb-2" style="font-size:2rem;color:#64748b;">cloud_upload</i>
+                <p class="mb-1"><strong>Clique ou arraste arquivos aqui</strong></p>
+                <p class="text-muted mb-0" style="font-size:.8rem;">PDF, DOC, DOCX, TXT, PNG, JPG, JPEG, GIF (máx. 10MB)</p>
+                <input type="file" id="anexosInput" name="anexos" class="form-control"
                        multiple accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif"
-                       style="position: absolute; opacity: 0; width: 100%; height: 100%; top: 0; left: 0; cursor: pointer;">
+                       style="position:absolute;opacity:0;width:100%;height:100%;top:0;left:0;cursor:pointer;">
               </div>
-              
-              <div id="filePreview" class="mt-3" style="display: none;">
-                <small class="text-muted">Arquivos selecionados:</small>
-                <div id="fileList" class="mt-2"></div>
+              <div id="filePreview" class="mt-2" style="display:none;">
+                <small class="text-muted fw-600">Arquivos selecionados:</small>
+                <div id="fileList" class="mt-1"></div>
               </div>
             </div>
 
-            <!-- Botões de Ação -->
-            <div class="form-section">
-              <div class="row align-items-center">
-                <div class="col-md-6">
-                  <small class="text-muted">
-                    <i class="material-symbols-rounded me-1" style="font-size: 16px;">keyboard</i>
-                    <strong>Atalhos:</strong> Ctrl+S (Salvar) • Ctrl+Enter (Enviar)
-                  </small>
-                </div>
-                <div class="col-md-6 text-end">
-                  <a href="{% url 'dashboard:ticket_list' %}" class="btn btn-light me-2">
-                    <i class="material-symbols-rounded me-1">cancel</i>
-                    Cancelar
-                  </a>
-                  <button type="submit" class="btn btn-primary" id="submitBtn">
-                    <i class="material-symbols-rounded me-1">send</i>
-                    Criar Ticket
-                  </button>
-                </div>
+            <!-- Ações -->
+            <div class="d-flex justify-content-between align-items-center mt-3 mb-4">
+              <small class="text-muted">
+                <i class="material-symbols-rounded me-1" style="font-size:14px;vertical-align:middle;">keyboard</i>
+                <strong>Ctrl+Enter</strong> para enviar
+              </small>
+              <div>
+                <a href="{% url 'dashboard:ticket_list' %}" class="btn btn-outline-secondary me-2">
+                  <i class="material-symbols-rounded me-1" style="font-size:1rem;">close</i>
+                  Cancelar
+                </a>
+                <button type="submit" class="btn text-white px-4" id="submitBtn" style="background:linear-gradient(135deg,#06b6d4,#0891b2);">
+                  <i class="material-symbols-rounded me-1" style="font-size:1rem;">send</i>
+                  Criar Ticket
+                </button>
               </div>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <!-- Dicas -->
+      <div class="sidebar-card">
+        <h6>
+          <i class="material-symbols-rounded me-2" style="color:#06b6d4;font-size:1rem;">tips_and_updates</i>
+          Dicas para um bom ticket
+        </h6>
+        <ul class="list-unstyled mb-0" style="font-size:.8rem;color:#475569;">
+          <li class="mb-2">
+            <i class="material-symbols-rounded me-1" style="font-size:.85rem;color:#06b6d4;vertical-align:middle;">check_circle</i>
+            Use um título claro e descritivo
+          </li>
+          <li class="mb-2">
+            <i class="material-symbols-rounded me-1" style="font-size:.85rem;color:#06b6d4;vertical-align:middle;">check_circle</i>
+            Detalhe os passos para reproduzir o problema
+          </li>
+          <li class="mb-2">
+            <i class="material-symbols-rounded me-1" style="font-size:.85rem;color:#06b6d4;vertical-align:middle;">check_circle</i>
+            Selecione a prioridade corretamente
+          </li>
+          <li class="mb-2">
+            <i class="material-symbols-rounded me-1" style="font-size:.85rem;color:#06b6d4;vertical-align:middle;">check_circle</i>
+            Anexe prints de tela quando possível
+          </li>
+          <li>
+            <i class="material-symbols-rounded me-1" style="font-size:.85rem;color:#06b6d4;vertical-align:middle;">check_circle</i>
+            Use templates para agilizar o preenchimento
+          </li>
+        </ul>
+      </div>
+
+      <!-- Prioridades -->
+      <div class="sidebar-card">
+        <h6>
+          <i class="material-symbols-rounded me-2" style="color:#06b6d4;font-size:1rem;">priority_high</i>
+          Níveis de Prioridade
+        </h6>
+        <div style="font-size:.8rem;">
+          <div class="d-flex align-items-center mb-2">
+            <span class="priority-indicator" style="background:#22c55e;"></span>
+            <strong class="me-1">Baixa</strong> — Pode aguardar, sem impacto
+          </div>
+          <div class="d-flex align-items-center mb-2">
+            <span class="priority-indicator" style="background:#f59e0b;"></span>
+            <strong class="me-1">Média</strong> — Atenção normal
+          </div>
+          <div class="d-flex align-items-center mb-2">
+            <span class="priority-indicator" style="background:#ef4444;"></span>
+            <strong class="me-1">Alta</strong> — Urgente, impacta operação
+          </div>
+          <div class="d-flex align-items-center">
+            <span class="priority-indicator" style="background:#7c2d12;"></span>
+            <strong class="me-1">Crítica</strong> — Sistema parado
+          </div>
+        </div>
+      </div>
+
+      <!-- Atalhos -->
+      <div class="sidebar-card">
+        <h6>
+          <i class="material-symbols-rounded me-2" style="color:#06b6d4;font-size:1rem;">keyboard</i>
+          Atalhos de Teclado
+        </h6>
+        <div style="font-size:.8rem;color:#475569;">
+          <div class="d-flex justify-content-between mb-1">
+            <span>Enviar formulário</span>
+            <kbd style="background:#334155;color:#fff;padding:.15rem .4rem;border-radius:4px;font-size:.7rem;">Ctrl+Enter</kbd>
+          </div>
+          <div class="d-flex justify-content-between mb-1">
+            <span>Cancelar</span>
+            <kbd style="background:#334155;color:#fff;padding:.15rem .4rem;border-radius:4px;font-size:.7rem;">Esc</kbd>
+          </div>
         </div>
       </div>
     </div>
@@ -1322,869 +546,365 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    
-    // Templates de ticket
-    window.ticketTemplates = {
+
+    // ============================================
+    // TEMPLATES DE TICKET
+    // ============================================
+    const ticketTemplates = {
         'suporte-tecnico': {
-            title: 'Suporte Técnico - [Descreva o problema brevemente]',
-            description: `<div>
-<h4 style="color: #d32f2f;">🔧 PROBLEMA TÉCNICO</h4>
-<p><strong>📋 Descrição do Problema:</strong><br>
-Descreva detalhadamente qual problema técnico você está enfrentando.</p>
-
-<p><strong>🔄 Passos para Reproduzir:</strong></p>
-<ol>
-  <li>Acesse [sistema/página específica]</li>
-  <li>Execute a ação [descreva a ação]</li>
-  <li>Observe o resultado [descreva o que acontece]</li>
-</ol>
-
-<p><strong>✅ Resultado Esperado:</strong><br>
-O que deveria acontecer quando você executa essas ações.</p>
-
-<p><strong>❌ Resultado Atual:</strong><br>
-O que realmente está acontecendo (comportamento incorreto).</p>
-
-<p><strong>💻 Informações do Sistema:</strong></p>
-<ul>
-  <li><strong>Navegador:</strong> [Chrome/Firefox/Safari + versão]</li>
-  <li><strong>Sistema:</strong> [Windows/Mac/Linux]</li>
-  <li><strong>Hora do Incidente:</strong> [Data e hora]</li>
-</ul>
-</div>`,
+            title: 'Suporte Técnico - [Descreva o problema]',
+            description: '<h4>🔧 PROBLEMA TÉCNICO</h4><p><strong>Descrição:</strong><br>Descreva o problema técnico.</p><p><strong>Passos para Reproduzir:</strong></p><ol><li>Acesse [sistema/página]</li><li>Execute [ação]</li><li>Observe [resultado]</li></ol><p><strong>Resultado Esperado:</strong><br>O que deveria acontecer.</p><p><strong>Resultado Atual:</strong><br>O que está acontecendo.</p><p><strong>Info do Sistema:</strong><br>Navegador: [Chrome/Firefox] | SO: [Windows/Mac]</p>',
             priority: 'media',
             tags: 'suporte, técnico, sistema'
         },
-        
         'duvida': {
-            title: 'Dúvida - [Assunto específico]',
-            description: `<div>
-<h4 style="color: #1976d2;">❓ DÚVIDA / CONSULTA</h4>
-<p><strong>🎯 Sua Dúvida:</strong><br>
-Formule sua pergunta de forma clara e específica.</p>
-
-<p><strong>📝 Contexto:</strong><br>
-Explique a situação em que surgiu esta dúvida.</p>
-
-<p><strong>🔍 O que já foi tentado:</strong><br>
-Liste as tentativas de solução realizadas.</p>
-</div>`,
+            title: 'Dúvida - [Assunto]',
+            description: '<h4>❓ DÚVIDA / CONSULTA</h4><p><strong>Sua Dúvida:</strong><br>Formule sua pergunta.</p><p><strong>Contexto:</strong><br>Explique a situação.</p><p><strong>O que já tentou:</strong><br>Liste tentativas anteriores.</p>',
             priority: 'baixa',
             tags: 'dúvida, consulta, orientação'
         },
-        
         'solicitacao': {
-            title: 'Solicitação - [Tipo de solicitação]',
-            description: `<div>
-<h4 style="color: #f57c00;">📋 SOLICITAÇÃO DE SERVIÇO</h4>
-<p><strong>🎯 O que você precisa:</strong><br>
-Descreva claramente qual serviço você está solicitando.</p>
-
-<p><strong>💼 Justificativa:</strong><br>
-Por que esta solicitação é necessária?</p>
-
-<p><strong>📅 Prazo:</strong><br>
-Quando você precisa que seja atendido?</p>
-</div>`,
+            title: 'Solicitação - [Tipo]',
+            description: '<h4>📋 SOLICITAÇÃO DE SERVIÇO</h4><p><strong>O que precisa:</strong><br>Descreva o serviço.</p><p><strong>Justificativa:</strong><br>Por que é necessário?</p><p><strong>Prazo:</strong><br>Quando precisa?</p>',
             priority: 'media',
             tags: 'solicitação, serviço, demanda'
         },
-        
         'bug': {
             title: 'Bug Report - [Sistema/Funcionalidade]',
-            description: `<div>
-<h4 style="color: #d32f2f;">🐛 RELATÓRIO DE BUG</h4>
-<p><strong>🎯 Resumo do Bug:</strong><br>
-Descreva em uma frase o que está funcionando incorretamente.</p>
-
-<p><strong>🔄 Passos para Reproduzir:</strong></p>
-<ol>
-  <li>Primeiro passo</li>
-  <li>Segundo passo</li>
-  <li>Terceiro passo</li>
-</ol>
-
-<p><strong>✅ Comportamento Esperado:</strong><br>
-O que deveria acontecer?</p>
-
-<p><strong>❌ Comportamento Atual:</strong><br>
-O que está acontecendo?</p>
-</div>`,
+            description: '<h4>🐛 RELATÓRIO DE BUG</h4><p><strong>Resumo:</strong><br>Descreva o bug.</p><p><strong>Passos para Reproduzir:</strong></p><ol><li>Primeiro passo</li><li>Segundo passo</li><li>Terceiro passo</li></ol><p><strong>Esperado:</strong><br>O que deveria acontecer?</p><p><strong>Atual:</strong><br>O que está acontecendo?</p>',
             priority: 'alta',
             tags: 'bug, erro, defeito'
         },
-        
         'melhoria': {
             title: 'Sugestão de Melhoria - [Área]',
-            description: `<div>
-<h4 style="color: #7b1fa2;">💡 SUGESTÃO DE MELHORIA</h4>
-<p><strong>🎯 Melhoria Proposta:</strong><br>
-Descreva sua sugestão de melhoria.</p>
-
-<p><strong>📍 Situação Atual:</strong><br>
-Como funciona hoje?</p>
-
-<p><strong>✨ Situação Desejada:</strong><br>
-Como deveria funcionar?</p>
-</div>`,
+            description: '<h4>💡 SUGESTÃO DE MELHORIA</h4><p><strong>Melhoria Proposta:</strong><br>Descreva sua sugestão.</p><p><strong>Situação Atual:</strong><br>Como funciona hoje?</p><p><strong>Situação Desejada:</strong><br>Como deveria funcionar?</p>',
             priority: 'baixa',
             tags: 'melhoria, sugestão, otimização'
         },
-        
         'acesso': {
             title: 'Solicitação de Acesso - [Sistema/Recurso]',
-            description: `<div>
-<h4 style="color: #2e7d32;">🔑 SOLICITAÇÃO DE ACESSO</h4>
-<p><strong>🎯 Acesso Solicitado:</strong><br>
-A qual sistema ou recurso você precisa de acesso?</p>
-
-<p><strong>💼 Justificativa:</strong><br>
-Por que você precisa deste acesso?</p>
-
-<p><strong>⏰ Período:</strong><br>
-Por quanto tempo precisa do acesso?</p>
-</div>`,
+            description: '<h4>🔑 SOLICITAÇÃO DE ACESSO</h4><p><strong>Acesso Solicitado:</strong><br>Sistema ou recurso.</p><p><strong>Justificativa:</strong><br>Por que precisa?</p><p><strong>Período:</strong><br>Por quanto tempo?</p>',
             priority: 'media',
             tags: 'acesso, permissão, sistema'
         }
     };
 
-    // Inicializar templates
-    console.log('=== INICIALIZAÇÃO DOS TEMPLATES ===');
-    
-    setTimeout(() => {
-        const templateOptions = document.querySelectorAll('.template-option');
-        console.log('Templates encontrados:', templateOptions.length);
-        
-        templateOptions.forEach(option => {
-            const templateKey = option.dataset.template;
-            console.log('Configurando template:', templateKey);
-            
-            option.addEventListener('click', function(e) {
-                e.preventDefault();
-                console.log('✓ Clique detectado:', templateKey);
-                
-                const template = window.ticketTemplates[templateKey];
-                if (!template) {
-                    console.error('Template não encontrado:', templateKey);
-                    return;
-                }
-                
-                // Feedback visual
-                document.querySelectorAll('.template-option').forEach(opt => {
-                    opt.classList.remove('active');
-                });
-                this.classList.add('active');
-                
-                // Aplicar campos
-                const titulo = document.getElementById('tituloInput');
-                if (titulo) {
-                    titulo.value = template.title;
-                    titulo.closest('.input-group-outline').classList.add('is-filled');
-                    console.log('✓ Título preenchido');
-                }
-                
-                const editor = document.getElementById('editorContent');
-                const hidden = document.getElementById('descricaoHidden');
-                if (editor && hidden) {
-                    editor.innerHTML = template.description;
-                    hidden.value = template.description;
-                    editor.classList.remove('empty');
-                    editor.classList.add('has-content');
-                    console.log('✓ Descrição preenchida');
-                }
-                
-                const prioridade = document.getElementById('prioridadeSelect');
-                if (prioridade) {
-                    prioridade.value = template.priority;
-                    prioridade.closest('.input-group-outline').classList.add('is-filled');
-                    // Atualizar visualmente a prioridade
-                    prioridade.dispatchEvent(new Event('change'));
-                    console.log('✓ Prioridade definida:', template.priority);
-                }
-                
-                const tags = document.getElementById('tagsInput');
-                if (tags) {
-                    tags.value = template.tags;
-                    tags.closest('.input-group-outline').classList.add('is-filled');
-                    console.log('✓ Tags preenchidas');
-                }
-                
-                console.log('✅ Template aplicado com sucesso!');
-            });
-        });
-        
-        console.log('✅ Todos os templates configurados!');
-    }, 100);
-
-    // Configurar Rich Text Editor
-    const editorContent = document.getElementById('editorContent');
-    const descricaoHidden = document.getElementById('descricaoHidden');
-    
-    if (editorContent && descricaoHidden) {
-        // Sincronização
-        editorContent.addEventListener('input', function() {
-            const content = this.innerHTML;
-            const textContent = this.textContent || this.innerText || '';
-            
-            descricaoHidden.value = content;
-            
-            if (textContent.trim() === '') {
-                this.classList.add('empty');
-                this.classList.remove('has-content');
-            } else {
-                this.classList.remove('empty');
-                this.classList.add('has-content');
-            }
-        });
-
-        // Focar
-        editorContent.addEventListener('focus', function() {
-            if (this.classList.contains('empty')) {
-                this.innerHTML = '';
-                this.classList.remove('empty');
-            }
-        });
-
-        // Blur
-        editorContent.addEventListener('blur', function() {
-            const textContent = this.textContent || this.innerText || '';
-            if (textContent.trim() === '') {
-                this.classList.add('empty');
-                this.classList.remove('has-content');
-            }
-        });
-    }
-
-    // Botões de formatação
-    document.querySelectorAll('.format-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
+    // Template click handlers
+    document.querySelectorAll('.template-option').forEach(option => {
+        option.addEventListener('click', function(e) {
             e.preventDefault();
-            const command = this.dataset.command;
-            document.execCommand(command);
-            editorContent.focus();
-            editorContent.dispatchEvent(new Event('input'));
+            const template = ticketTemplates[this.dataset.template];
+            if (!template) return;
+
+            document.querySelectorAll('.template-option').forEach(o => o.classList.remove('active'));
+            this.classList.add('active');
+
+            // Fill title
+            const titulo = document.querySelector('[name="titulo"]');
+            if (titulo) titulo.value = template.title;
+
+            // Fill rich editor
+            const editor = document.getElementById('editorContent');
+            const hidden = document.getElementById('descricaoHidden');
+            if (editor && hidden) {
+                editor.innerHTML = template.description;
+                hidden.value = template.description;
+            }
+
+            // Fill priority
+            const prioridade = document.querySelector('[name="prioridade"]');
+            if (prioridade) {
+                prioridade.value = template.priority;
+                prioridade.dispatchEvent(new Event('change'));
+            }
+
+            // Fill tags
+            const tags = document.querySelector('[name="tags"]');
+            if (tags) tags.value = template.tags;
         });
     });
 
-    // Sistema de Labels Flutuantes Aprimorado
-    function initFloatingLabels() {
-        const inputGroups = document.querySelectorAll('.input-group-outline');
-        
-        inputGroups.forEach(group => {
-            const input = group.querySelector('input, select, textarea');
-            const label = group.querySelector('.form-label');
-            
-            if (!input || !label) return;
-            
-            // Função para atualizar estado
-            function updateState() {
-                const hasValue = input.value && input.value.trim() !== '';
-                const isFocused = document.activeElement === input;
-                
-                // Remover todas as classes de estado
-                group.classList.remove('is-focused', 'is-filled');
-                
-                if (isFocused) {
-                    group.classList.add('is-focused');
-                }
-                
-                if (hasValue) {
-                    group.classList.add('is-filled');
-                }
-            }
-            
-            // Event listeners
-            input.addEventListener('focus', function() {
-                group.classList.add('is-focused');
-                // Animação suave para o label
-                label.style.transition = 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
-            });
-            
-            input.addEventListener('blur', function() {
-                group.classList.remove('is-focused');
-                updateState();
-            });
-            
-            input.addEventListener('input', updateState);
-            input.addEventListener('change', updateState);
-            
-            // Estado inicial
-            updateState();
+    // ============================================
+    // RICH TEXT EDITOR
+    // ============================================
+    const editorContent = document.getElementById('editorContent');
+    const descricaoHidden = document.getElementById('descricaoHidden');
+
+    if (editorContent && descricaoHidden) {
+        editorContent.addEventListener('input', function() {
+            descricaoHidden.value = this.innerHTML;
         });
     }
-    
-    // Sistema de Selects Aprimorado
-    function initSelectSystem() {
-        const selects = document.querySelectorAll('select.form-control');
-        
-        selects.forEach(select => {
-            // Estado inicial
-            updateSelectState(select);
-            
-            // Event listener para mudanças
-            select.addEventListener('change', function() {
-                updateSelectState(this);
-                
-                // Feedback visual para seleção
-                const container = this.closest('.input-group-outline');
-                if (container) {
-                    container.style.transform = 'scale(1.02)';
-                    setTimeout(() => {
-                        container.style.transform = 'scale(1)';
-                    }, 150);
-                }
-            });
-            
-            // Melhorar visual no focus
-            select.addEventListener('focus', function() {
-                const container = this.closest('.input-group-outline');
-                if (container) {
-                    container.style.transition = 'all 0.3s ease';
-                }
-            });
+
+    document.querySelectorAll('.format-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.execCommand(this.dataset.command);
+            editorContent.focus();
+            if (descricaoHidden) descricaoHidden.value = editorContent.innerHTML;
         });
-        
-        function updateSelectState(select) {
-            const container = select.closest('.input-group-outline');
-            const selectedOption = select.options[select.selectedIndex];
-            
-            // Atualizar classe filled
-            if (select.value && select.value !== '') {
-                container.classList.add('is-filled', 'has-selection');
-            } else {
-                container.classList.remove('is-filled', 'has-selection');
-            }
-            
-            // Log para debug
-            if (select.value) {
-                console.log(`📋 ${select.name} selecionado: ${selectedOption.text}`);
-            }
-        }
+    });
+
+    // ============================================
+    // SISTEMA DE PRODUTOS
+    // ============================================
+    const produtoSearch = document.getElementById('produtoSearch');
+    const produtoSuggestions = document.getElementById('produtoSuggestions');
+    const quantidadeInput = document.getElementById('quantidadeProduto');
+    const valorInput = document.getElementById('valorProduto');
+    const descontoInput = document.getElementById('descontoProduto');
+    const observacoesInput = document.getElementById('observacoesProduto');
+    const btnAddProduto = document.getElementById('btnAddProduto');
+    const listaProdutos = document.getElementById('listaProdutos');
+    const emptyProdutos = document.getElementById('emptyProdutos');
+    const resumoProdutos = document.getElementById('resumoProdutos');
+    const loadingProdutos = document.getElementById('loadingProdutos');
+
+    let produtoSelecionado = null;
+    window.itensProdutos = [];
+    let searchTimeout = null;
+
+    function buscarProdutos(termo) {
+        if (termo.length < 2) { produtoSuggestions.style.display = 'none'; return; }
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            loadingProdutos.style.display = 'block';
+            fetch('/dashboard/api/produtos-ativos/')
+                .then(r => r.json())
+                .then(data => {
+                    loadingProdutos.style.display = 'none';
+                    if (data.success) {
+                        const filtrados = data.produtos.filter(p =>
+                            p.nome.toLowerCase().includes(termo.toLowerCase()) ||
+                            p.codigo.toLowerCase().includes(termo.toLowerCase())
+                        );
+                        mostrarSugestoes(filtrados);
+                    }
+                })
+                .catch(() => { loadingProdutos.style.display = 'none'; });
+        }, 300);
     }
-    
-    // Sistema de Prioridade Dinâmica
-    function initPrioritySystem() {
-        const prioridadeSelect = document.getElementById('prioridadeSelect');
-        const prioridadeContainer = document.getElementById('prioridadeContainer');
-        const priorityIcon = document.getElementById('priorityIcon');
-        
-        if (!prioridadeSelect || !prioridadeContainer || !priorityIcon) return;
-        
-        function updatePriorityVisuals(value) {
-            // Remover classes anteriores
-            prioridadeSelect.classList.remove('priority-baixa', 'priority-media', 'priority-alta');
-            prioridadeContainer.classList.remove('priority-baixa', 'priority-media', 'priority-alta');
-            priorityIcon.classList.remove('show', 'baixa', 'media', 'alta');
-            
-            // Configurações para cada prioridade
-            const configs = {
-                'baixa': {
-                    icon: 'trending_down',
-                    class: 'baixa',
-                    tooltip: 'Prioridade Baixa - Pode aguardar'
-                },
-                'media': {
-                    icon: 'trending_flat',
-                    class: 'media', 
-                    tooltip: 'Prioridade Média - Atenção normal'
-                },
-                'alta': {
-                    icon: 'trending_up',
-                    class: 'alta',
-                    tooltip: 'Prioridade Alta - Urgente!'
-                }
-            };
-            
-            if (configs[value]) {
-                const config = configs[value];
-                
-                // Aplicar classes
-                prioridadeSelect.classList.add(`priority-${config.class}`);
-                prioridadeContainer.classList.add(`priority-${config.class}`);
-                
-                // Configurar ícone
-                priorityIcon.textContent = config.icon;
-                priorityIcon.classList.add('show', config.class);
-                priorityIcon.title = config.tooltip;
-                
-                // Feedback visual mais sutil para prioridade alta
-                if (value === 'alta') {
-                    // Apenas um glow suave ao invés de pulse forte
-                    prioridadeContainer.style.animation = 'none';
-                    setTimeout(() => {
-                        prioridadeContainer.style.boxShadow = '0 0 15px rgba(220, 53, 69, 0.3)';
-                    }, 10);
-                } else {
-                    prioridadeContainer.style.animation = 'none';
-                    prioridadeContainer.style.boxShadow = '';
-                }
-                
-                console.log(`📊 Prioridade alterada para: ${value.toUpperCase()}`);
-            } else {
-                priorityIcon.classList.remove('show');
-                prioridadeContainer.style.animation = 'none';
-            }
-        }
-        
-        // Event listener para mudanças
-        prioridadeSelect.addEventListener('change', function() {
-            updatePriorityVisuals(this.value);
-        });
-        
-        // Estado inicial - apenas se já houver um valor selecionado
-        if (prioridadeSelect.value && prioridadeSelect.value !== '') {
-            updatePriorityVisuals(prioridadeSelect.value);
-        }
-    }
-    
-    // Inicializar labels flutuantes
-    initFloatingLabels();
-    
-    // Inicializar sistema de selects aprimorado
-    initSelectSystem();
-    
-    // Inicializar sistema de prioridade dinâmica
-    initPrioritySystem();
-    
-    // Inicializar sistema de produtos e serviços
-    initProdutosSystem();
-    
-    // Inicializar sistema de produtos e serviços
-    initProdutosSystem();
-    
-    // Sistema de Produtos e Serviços
-    function initProdutosSystem() {
-        console.log('🛍️ Inicializando sistema de produtos...');
-        
-        // Elementos
-        const produtoSearch = document.getElementById('produtoSearch');
-        const produtoSuggestions = document.getElementById('produtoSuggestions');
-        const quantidadeInput = document.getElementById('quantidadeProduto');
-        const valorInput = document.getElementById('valorProduto');
-        const descontoInput = document.getElementById('descontoProduto');
-        const observacoesInput = document.getElementById('observacoesProduto');
-        const btnAddProduto = document.getElementById('btnAddProduto');
-        const listaProdutos = document.getElementById('listaProdutos');
-        const emptyProdutos = document.getElementById('emptyProdutos');
-        const resumoProdutos = document.getElementById('resumoProdutos');
-        const loadingProdutos = document.getElementById('loadingProdutos');
-        
-        // Estado global
-        let produtoSelecionado = null;
-        window.itensProdutos = []; // Tornar global
-        let searchTimeout = null;
-        
-        // Buscar produtos
-        function buscarProdutos(termo) {
-            if (termo.length < 2) {
-                produtoSuggestions.style.display = 'none';
-                return;
-            }
-            
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                loadingProdutos.style.display = 'block';
-                
-                fetch('/dashboard/api/produtos-ativos/')
-                    .then(response => response.json())
-                    .then(data => {
-                        loadingProdutos.style.display = 'none';
-                        
-                        if (data.success) {
-                            const produtosFiltrados = data.produtos.filter(produto => 
-                                produto.nome.toLowerCase().includes(termo.toLowerCase()) ||
-                                produto.codigo.toLowerCase().includes(termo.toLowerCase())
-                            );
-                            
-                            mostrarSugestoesProdutos(produtosFiltrados);
-                        }
-                    })
-                    .catch(error => {
-                        loadingProdutos.style.display = 'none';
-                        console.error('Erro ao buscar produtos:', error);
-                    });
-            }, 300);
-        }
-        
-        // Mostrar sugestões
-        function mostrarSugestoesProdutos(produtos) {
-            produtoSuggestions.innerHTML = '';
-            
-            if (produtos.length === 0) {
-                produtoSuggestions.innerHTML = `
-                    <div class="produto-suggestion">
-                        <div class="text-muted text-center">
-                            <i class="material-symbols-rounded">search_off</i>
-                            <p class="mb-0 mt-2">Nenhum produto encontrado</p>
-                        </div>
-                    </div>
-                `;
-                produtoSuggestions.style.display = 'block';
-                return;
-            }
-            
-            produtos.forEach(produto => {
-                const div = document.createElement('div');
-                div.className = 'produto-suggestion';
-                div.innerHTML = `
-                    <div class="produto-info">
-                        <div>
-                            <div class="produto-nome">${produto.nome}</div>
-                            <div class="produto-codigo">Código: ${produto.codigo}</div>
-                            <span class="produto-tipo ${produto.tipo}">${produto.tipo}</span>
-                        </div>
-                        <div class="text-end">
-                            <div class="produto-preco">R$ ${produto.preco_venda}</div>
-                            <small class="text-muted">Estoque: ${produto.estoque_atual}</small>
-                        </div>
-                    </div>
-                `;
-                
-                div.addEventListener('click', () => {
-                    selecionarProduto(produto);
-                });
-                
-                produtoSuggestions.appendChild(div);
-            });
-            
+
+    function mostrarSugestoes(produtos) {
+        produtoSuggestions.innerHTML = '';
+        if (produtos.length === 0) {
+            produtoSuggestions.innerHTML = '<div class="produto-suggestion text-center text-muted py-3"><i class="material-symbols-rounded">search_off</i><p class="mb-0 mt-1">Nenhum produto encontrado</p></div>';
             produtoSuggestions.style.display = 'block';
+            return;
         }
-        
-        // Selecionar produto
-        function selecionarProduto(produto) {
-            produtoSelecionado = produto;
-            produtoSearch.value = `${produto.codigo} - ${produto.nome}`;
-            valorInput.value = produto.preco_venda;
-            produtoSuggestions.style.display = 'none';
-            
-            // Atualizar labels
-            produtoSearch.closest('.input-group-outline').classList.add('is-filled');
-            valorInput.closest('.input-group-outline').classList.add('is-filled');
-            
-            // Habilitar botão adicionar
-            btnAddProduto.disabled = false;
-            
-            console.log('✓ Produto selecionado:', produto.nome);
-        }
-        
-        // Adicionar produto à lista
-        function adicionarProduto() {
-            if (!produtoSelecionado) return;
-            
-            const quantidade = parseFloat(quantidadeInput.value) || 1;
-            const valor = parseFloat(valorInput.value) || 0;
-            const desconto = parseFloat(descontoInput.value) || 0;
-            const observacoes = observacoesInput.value.trim();
-            
-            // Verificar se já existe
-            const existente = window.itensProdutos.find(item => item.produto.id === produtoSelecionado.id);
-            if (existente) {
-                alert('Este produto já foi adicionado. Edite o item existente se necessário.');
-                return;
-            }
-            
-            // Calcular valores
-            const subtotal = quantidade * valor;
-            const valorDesconto = subtotal * (desconto / 100);
-            const total = subtotal - valorDesconto;
-            
-            // Criar item
-            const item = {
-                id: Date.now(),
-                produto: produtoSelecionado,
-                quantidade: quantidade,
-                valorUnitario: valor,
-                descontoPercentual: desconto,
-                observacoes: observacoes,
-                subtotal: subtotal,
-                valorDesconto: valorDesconto,
-                total: total
-            };
-            
-            window.itensProdutos.push(item);
-            renderizarListaProdutos();
-            limparFormulario();
-            
-            console.log('✓ Produto adicionado:', item.produto.nome);
-        }
-        
-        // Renderizar lista
-        function renderizarListaProdutos() {
-            if (window.itensProdutos.length === 0) {
-                emptyProdutos.style.display = 'block';
-                resumoProdutos.style.display = 'none';
-                return;
-            }
-            
-            emptyProdutos.style.display = 'none';
-            resumoProdutos.style.display = 'block';
-            
-            // Limpar lista atual
-            const itensExistentes = listaProdutos.querySelectorAll('.item-produto');
-            itensExistentes.forEach(item => item.remove());
-            
-            // Adicionar itens
-            window.itensProdutos.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'item-produto';
-                div.innerHTML = `
-                    <div class="item-header">
-                        <div class="item-info">
-                            <h6>${item.produto.nome}</h6>
-                            <small>Código: ${item.produto.codigo} • Tipo: ${item.produto.tipo}</small>
-                            ${item.observacoes ? `<br><small class="text-info">💬 ${item.observacoes}</small>` : ''}
-                        </div>
-                        <button type="button" class="btn btn-remove-item" onclick="removerProduto(${item.id})">
-                            <i class="material-symbols-rounded">close</i>
-                        </button>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-3">
-                            <small class="text-muted">Quantidade:</small>
-                            <div class="fw-bold">${item.quantidade}</div>
-                        </div>
-                        <div class="col-md-3">
-                            <small class="text-muted">Valor Unitário:</small>
-                            <div class="fw-bold">R$ ${item.valorUnitario.toFixed(2)}</div>
-                        </div>
-                        <div class="col-md-3">
-                            <small class="text-muted">Desconto:</small>
-                            <div class="fw-bold text-danger">${item.descontoPercentual}%</div>
-                        </div>
-                        <div class="col-md-3">
-                            <small class="text-muted">Total:</small>
-                            <div class="fw-bold text-success fs-5">R$ ${item.total.toFixed(2)}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="item-valores">
-                        <div class="valor-item subtotal">
-                            <div class="label">Subtotal</div>
-                            <div class="value">R$ ${item.subtotal.toFixed(2)}</div>
-                        </div>
-                        <div class="valor-item desconto">
-                            <div class="label">Desconto</div>
-                            <div class="value">- R$ ${item.valorDesconto.toFixed(2)}</div>
-                        </div>
-                        <div class="valor-item total">
-                            <div class="label">Total</div>
-                            <div class="value">R$ ${item.total.toFixed(2)}</div>
-                        </div>
-                    </div>
-                `;
-                
-                listaProdutos.insertBefore(div, emptyProdutos);
-            });
-            
-            atualizarResumo();
-        }
-        
-        // Atualizar resumo financeiro
-        function atualizarResumo() {
-            const subtotalGeral = window.itensProdutos.reduce((acc, item) => acc + item.subtotal, 0);
-            const descontoGeral = window.itensProdutos.reduce((acc, item) => acc + item.valorDesconto, 0);
-            const totalGeral = window.itensProdutos.reduce((acc, item) => acc + item.total, 0);
-            
-            document.getElementById('subtotalResumo').textContent = `R$ ${subtotalGeral.toFixed(2)}`;
-            document.getElementById('descontoResumo').textContent = `R$ ${descontoGeral.toFixed(2)}`;
-            document.getElementById('totalResumo').textContent = `R$ ${totalGeral.toFixed(2)}`;
-        }
-        
-        // Limpar formulário
-        function limparFormulario() {
-            produtoSearch.value = '';
-            quantidadeInput.value = '1';
-            valorInput.value = '';
-            descontoInput.value = '0';
-            observacoesInput.value = '';
-            produtoSelecionado = null;
-            btnAddProduto.disabled = true;
-            
-            // Remover classes de preenchimento
-            produtoSearch.closest('.input-group-outline').classList.remove('is-filled');
-            valorInput.closest('.input-group-outline').classList.remove('is-filled');
-            observacoesInput.closest('.input-group-outline').classList.remove('is-filled');
-        }
-        
-        // Função global para remover produto
-        window.removerProduto = function(itemId) {
-            if (confirm('Deseja remover este item?')) {
-                window.itensProdutos = window.itensProdutos.filter(item => item.id !== itemId);
-                renderizarListaProdutos();
-                console.log('✓ Produto removido');
-            }
-        };
-        
-        // Event listeners
-        produtoSearch.addEventListener('input', (e) => {
-            buscarProdutos(e.target.value);
-            if (e.target.value.length < 2) {
-                produtoSelecionado = null;
-                btnAddProduto.disabled = true;
-            }
+        produtos.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'produto-suggestion';
+            div.innerHTML = `<div class="produto-info"><div><div class="produto-nome">${p.nome}</div><div class="produto-codigo">${p.codigo}</div><span class="produto-tipo">${p.tipo}</span></div><div class="text-end"><div class="produto-preco">R$ ${p.preco_venda}</div><small class="text-muted">Estoque: ${p.estoque_atual}</small></div></div>`;
+            div.addEventListener('click', () => selecionarProduto(p));
+            produtoSuggestions.appendChild(div);
         });
-        
-        produtoSearch.addEventListener('focus', () => {
-            if (produtoSearch.value.length >= 2) {
-                produtoSuggestions.style.display = 'block';
-            }
-        });
-        
-        // Fechar sugestões ao clicar fora
-        document.addEventListener('click', (e) => {
-            if (!produtoSearch.contains(e.target) && !produtoSuggestions.contains(e.target)) {
-                produtoSuggestions.style.display = 'none';
-            }
-        });
-        
-        btnAddProduto.addEventListener('click', adicionarProduto);
-        
-        // Enter para adicionar
-        [quantidadeInput, valorInput, descontoInput, observacoesInput].forEach(input => {
-            input.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && !btnAddProduto.disabled) {
-                    e.preventDefault();
-                    adicionarProduto();
-                }
-            });
-        });
-        
-        console.log('✅ Sistema de produtos inicializado');
+        produtoSuggestions.style.display = 'block';
     }
-    
-    // Submissão do formulário - incluir produtos
+
+    function selecionarProduto(produto) {
+        produtoSelecionado = produto;
+        produtoSearch.value = `${produto.codigo} - ${produto.nome}`;
+        valorInput.value = produto.preco_venda;
+        produtoSuggestions.style.display = 'none';
+        btnAddProduto.disabled = false;
+    }
+
+    function adicionarProduto() {
+        if (!produtoSelecionado) return;
+        const qtd = parseFloat(quantidadeInput.value) || 1;
+        const val = parseFloat(valorInput.value) || 0;
+        const desc = parseFloat(descontoInput.value) || 0;
+        const obs = observacoesInput.value.trim();
+
+        if (window.itensProdutos.find(i => i.produto.id === produtoSelecionado.id)) {
+            alert('Este produto já foi adicionado.');
+            return;
+        }
+
+        const subtotal = qtd * val;
+        const valorDesc = subtotal * (desc / 100);
+        const total = subtotal - valorDesc;
+
+        window.itensProdutos.push({
+            id: Date.now(),
+            produto: produtoSelecionado,
+            quantidade: qtd,
+            valorUnitario: val,
+            descontoPercentual: desc,
+            observacoes: obs,
+            subtotal, valorDesconto: valorDesc, total
+        });
+
+        renderizarProdutos();
+        limparFormProduto();
+    }
+
+    function renderizarProdutos() {
+        const itensExistentes = listaProdutos.querySelectorAll('.item-produto');
+        itensExistentes.forEach(i => i.remove());
+
+        if (window.itensProdutos.length === 0) {
+            emptyProdutos.style.display = 'block';
+            resumoProdutos.style.display = 'none';
+            return;
+        }
+        emptyProdutos.style.display = 'none';
+        resumoProdutos.style.display = 'block';
+
+        window.itensProdutos.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'item-produto';
+            div.innerHTML = `
+                <div class="item-header">
+                    <div>
+                        <h6>${item.produto.nome}</h6>
+                        <small class="text-muted">${item.produto.codigo} • ${item.produto.tipo}${item.observacoes ? ' • <span class="text-info">' + item.observacoes + '</span>' : ''}</small>
+                    </div>
+                    <button type="button" class="btn-remove-item" onclick="removerProduto(${item.id})">
+                        <i class="material-symbols-rounded" style="font-size:1.1rem;">close</i>
+                    </button>
+                </div>
+                <div class="d-flex justify-content-between mt-2" style="font-size:.8rem;">
+                    <span>Qtd: <strong>${item.quantidade}</strong></span>
+                    <span>Unit: <strong>R$ ${item.valorUnitario.toFixed(2)}</strong></span>
+                    <span>Desc: <strong class="text-danger">${item.descontoPercentual}%</strong></span>
+                    <span>Total: <strong class="text-success">R$ ${item.total.toFixed(2)}</strong></span>
+                </div>`;
+            listaProdutos.insertBefore(div, emptyProdutos);
+        });
+
+        atualizarResumo();
+    }
+
+    function atualizarResumo() {
+        const sub = window.itensProdutos.reduce((a, i) => a + i.subtotal, 0);
+        const des = window.itensProdutos.reduce((a, i) => a + i.valorDesconto, 0);
+        const tot = window.itensProdutos.reduce((a, i) => a + i.total, 0);
+        document.getElementById('subtotalResumo').textContent = `R$ ${sub.toFixed(2)}`;
+        document.getElementById('descontoResumo').textContent = `R$ ${des.toFixed(2)}`;
+        document.getElementById('totalResumo').textContent = `R$ ${tot.toFixed(2)}`;
+    }
+
+    function limparFormProduto() {
+        produtoSearch.value = '';
+        quantidadeInput.value = '1';
+        valorInput.value = '';
+        descontoInput.value = '0';
+        observacoesInput.value = '';
+        produtoSelecionado = null;
+        btnAddProduto.disabled = true;
+    }
+
+    window.removerProduto = function(itemId) {
+        if (confirm('Remover este item?')) {
+            window.itensProdutos = window.itensProdutos.filter(i => i.id !== itemId);
+            renderizarProdutos();
+        }
+    };
+
+    if (produtoSearch) {
+        produtoSearch.addEventListener('input', e => {
+            buscarProdutos(e.target.value);
+            if (e.target.value.length < 2) { produtoSelecionado = null; btnAddProduto.disabled = true; }
+        });
+        produtoSearch.addEventListener('focus', () => {
+            if (produtoSearch.value.length >= 2) produtoSuggestions.style.display = 'block';
+        });
+    }
+
+    document.addEventListener('click', e => {
+        if (produtoSearch && !produtoSearch.contains(e.target) && !produtoSuggestions.contains(e.target)) {
+            produtoSuggestions.style.display = 'none';
+        }
+    });
+
+    if (btnAddProduto) btnAddProduto.addEventListener('click', adicionarProduto);
+
+    [quantidadeInput, valorInput, descontoInput, observacoesInput].forEach(input => {
+        if (input) input.addEventListener('keypress', e => {
+            if (e.key === 'Enter' && !btnAddProduto.disabled) { e.preventDefault(); adicionarProduto(); }
+        });
+    });
+
+    // ============================================
+    // FORM SUBMIT — Include products
+    // ============================================
     const ticketForm = document.getElementById('ticketForm');
     if (ticketForm) {
-        ticketForm.addEventListener('submit', function(e) {
-            // Adicionar produtos como dados ocultos se houver
+        ticketForm.addEventListener('submit', function() {
             if (window.itensProdutos && window.itensProdutos.length > 0) {
-                // Remover inputs anteriores se existirem
-                const existingInputs = ticketForm.querySelectorAll('input[name^="produtos_"]');
-                existingInputs.forEach(input => input.remove());
-                
-                // Adicionar produtos como JSON
-                const produtosInput = document.createElement('input');
-                produtosInput.type = 'hidden';
-                produtosInput.name = 'produtos_dados';
-                produtosInput.value = JSON.stringify(window.itensProdutos);
-                ticketForm.appendChild(produtosInput);
-                
-                console.log('📋 Produtos incluídos no formulário:', window.itensProdutos.length);
+                const existing = ticketForm.querySelectorAll('input[name="produtos_dados"]');
+                existing.forEach(i => i.remove());
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'produtos_dados';
+                input.value = JSON.stringify(window.itensProdutos);
+                ticketForm.appendChild(input);
             }
         });
     }
-    
-    // Upload de arquivos
+
+    // ============================================
+    // FILE UPLOAD
+    // ============================================
     const fileInput = document.getElementById('anexosInput');
     const filePreview = document.getElementById('filePreview');
     const fileList = document.getElementById('fileList');
-    const uploadArea = document.querySelector('.file-upload-area');
-    
+    const uploadArea = document.getElementById('uploadArea');
+
     if (fileInput && uploadArea) {
-        // Drag & Drop
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, preventDefaults, false);
-            document.body.addEventListener(eventName, preventDefaults, false);
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(ev => {
+            uploadArea.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); }, false);
         });
-        
-        ['dragenter', 'dragover'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, highlight, false);
+        ['dragenter', 'dragover'].forEach(ev => {
+            uploadArea.addEventListener(ev, () => uploadArea.classList.add('drag-over'), false);
         });
-        
-        ['dragleave', 'drop'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, unhighlight, false);
+        ['dragleave', 'drop'].forEach(ev => {
+            uploadArea.addEventListener(ev, () => uploadArea.classList.remove('drag-over'), false);
         });
-        
-        uploadArea.addEventListener('drop', handleDrop, false);
-        
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-        
-        function highlight() {
-            uploadArea.classList.add('drag-over');
-        }
-        
-        function unhighlight() {
-            uploadArea.classList.remove('drag-over');
-        }
-        
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            
-            fileInput.files = files;
-            updateFilePreview(files);
-        }
-        
-        fileInput.addEventListener('change', function() {
-            updateFilePreview(this.files);
-        });
-        
+        uploadArea.addEventListener('drop', e => {
+            fileInput.files = e.dataTransfer.files;
+            updateFilePreview(e.dataTransfer.files);
+        }, false);
+
+        fileInput.addEventListener('change', function() { updateFilePreview(this.files); });
+
         function updateFilePreview(files) {
-            if (files.length === 0) {
-                filePreview.style.display = 'none';
-                return;
-            }
-            
+            if (!files.length) { filePreview.style.display = 'none'; return; }
             filePreview.style.display = 'block';
             fileList.innerHTML = '';
-            
-            Array.from(files).forEach((file, index) => {
-                const fileItem = document.createElement('div');
-                fileItem.className = 'file-item d-flex align-items-center justify-content-between p-2 mb-2 border rounded';
-                fileItem.innerHTML = `
-                    <div class="d-flex align-items-center">
-                        <i class="material-symbols-rounded me-2 text-primary">description</i>
-                        <div>
-                            <div class="fw-medium">${file.name}</div>
-                            <small class="text-muted">${formatFileSize(file.size)}</small>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile(${index})">
-                        <i class="material-symbols-rounded">close</i>
-                    </button>
-                `;
-                fileList.appendChild(fileItem);
+            Array.from(files).forEach(file => {
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                div.innerHTML = `<div class="d-flex align-items-center"><i class="material-symbols-rounded me-2" style="color:#06b6d4;">description</i><div><div class="fw-medium" style="font-size:.85rem;">${file.name}</div><small class="text-muted">${formatSize(file.size)}</small></div></div>`;
+                fileList.appendChild(div);
             });
         }
-        
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+
+        function formatSize(bytes) {
+            if (!bytes) return '0 B';
+            const k = 1024, s = ['B', 'KB', 'MB', 'GB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + s[i];
         }
     }
-    
-    // Atalhos de teclado
+
+    // ============================================
+    // KEYBOARD SHORTCUTS
+    // ============================================
     document.addEventListener('keydown', function(e) {
-        // Ctrl+S para salvar
-        if (e.ctrlKey && e.key === 's') {
-            e.preventDefault();
-            // Implementar salvamento como rascunho
-            console.log('Salvar rascunho');
-        }
-        
-        // Ctrl+Enter para enviar
         if (e.ctrlKey && e.key === 'Enter') {
             e.preventDefault();
             document.getElementById('submitBtn').click();
         }
-        
-        // ESC para cancelar
         if (e.key === 'Escape') {
-            if (confirm('Deseja cancelar a criação do ticket? Todas as informações serão perdidas.')) {
+            if (confirm('Cancelar criação do ticket?')) {
                 window.location.href = "{% url 'dashboard:ticket_list' %}";
             }
         }
     });
-    
-    console.log('=== SISTEMA COMPLETAMENTE INICIALIZADO ===');
+
 });
 </script>
 {% endblock %}

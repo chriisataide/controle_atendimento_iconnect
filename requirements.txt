@@ -48,15 +48,28 @@ textblob==0.17.1
 scikit-learn==1.3.2
 nltk==3.8.1
 pandas==2.1.4
-numpy>=1.24.3,<1.25.0
+numpy==1.26.4
 joblib==1.3.2
 
-# Development Tools (comentar em produção)
+# Database
+psycopg2-binary==2.9.9
+
+# RBAC & Security (Phase 2)
+django-axes==6.1.1
+
+# API (Phase 4)
+djangorestframework-simplejwt==5.3.1
+django-filter==23.5
+django-cors-headers==4.3.1
+
+# Reports (Phase 6)
+openpyxl==3.1.2
+
+# Testing (Phase 8)
+pytest==7.4.3
+pytest-django==4.7.0
+pytest-cov==4.1.0
+factory-boy==3.3.0
+
+# Development Tools (comentar em producao)
 django-extensions==3.2.3
-
-# Advanced Features
-pandas==2.1.4
-numpy==1.24.4
-
-# Push Notifications
-pywebpush==1.14.0

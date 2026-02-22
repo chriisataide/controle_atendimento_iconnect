@@ -1,541 +1,337 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ title }} - iConnect{% endblock %}
-
-{% block page_title %}{{ title }}{% endblock %}
-{% block breadcrumb_title %}{{ title }}{% endblock %}
+{% block title %}Relatórios — Estoque{% endblock %}
+{% block page_title %}Relatórios{% endblock %}
+{% block breadcrumb_title %}Relatórios de Estoque{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="ms-3">
-        <h3 class="mb-0 h4 font-weight-bolder">{{ title }}</h3>
-        <p class="mb-4">
-            Central de relatórios para análise completa do estoque
-        </p>
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Relatórios de Estoque</h3>
+            <p class="mb-0 text-sm">Análise de posição de estoque e movimentações por período</p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end">
+        <a href="{% url 'estoque:dashboard' %}" class="btn btn-sm bg-gradient-dark mb-0">
+            <i class="material-symbols-rounded text-sm me-1">dashboard</i> Dashboard
+        </a>
     </div>
 </div>
 
-<!-- Navegação entre tipos de relatório -->
-<div class="row">
+<!-- Abas de tipo de relatório -->
+<div class="row mb-3">
     <div class="col-12">
-        <div class="card my-4">
-            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
-                    <h6 class="text-white text-capitalize ps-3">Tipo de Relatório</h6>
-                </div>
-            </div>
-            <div class="card-body px-4 pb-2">
-                <div class="row">
-                    <div class="col-md-6">
-                        <button type="button" onclick="alterarTipoRelatorio('estoque')" 
-                                class="btn w-100 mb-3 {% if tipo_relatorio == 'estoque' %}btn-primary{% else %}btn-outline-primary{% endif %}">
-                            <i class="material-symbols-rounded me-2">inventory</i>
-                            Posição de Estoque
-                        </button>
-                    </div>
-                    <div class="col-md-6">
-                        <button type="button" onclick="alterarTipoRelatorio('movimentacoes')" 
-                                class="btn w-100 mb-3 {% if tipo_relatorio == 'movimentacoes' %}btn-primary{% else %}btn-outline-primary{% endif %}">
-                            <i class="material-symbols-rounded me-2">history</i>
-                            Movimentações
-                        </button>
-                    </div>
+        <div class="card">
+            <div class="card-body p-3">
+                <div class="d-flex gap-2">
+                    <a href="?tipo=estoque" class="btn btn-sm {% if tipo_relatorio == 'estoque' %}bg-gradient-primary{% else %}btn-outline-primary{% endif %} mb-0">
+                        <i class="material-symbols-rounded text-sm me-1">inventory</i> Posição de Estoque
+                    </a>
+                    <a href="?tipo=movimentacoes" class="btn btn-sm {% if tipo_relatorio == 'movimentacoes' %}bg-gradient-primary{% else %}btn-outline-primary{% endif %} mb-0">
+                        <i class="material-symbols-rounded text-sm me-1">sync_alt</i> Movimentações
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Relatório de Estoque -->
 {% if tipo_relatorio == 'estoque' %}
-<div id="relatorio-estoque">
-    <!-- Cards de Resumo -->
-    <div class="row">
-        <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
-            <div class="card">
-                <div class="card-header p-2 ps-3">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <p class="text-sm mb-0 text-capitalize">Valor Total Estoque</p>
-                            <h4 class="mb-0">R$ {{ total_valor_estoque|floatformat:2|default:"0,00" }}</h4>
-                        </div>
-                        <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
-                            <i class="material-symbols-rounded opacity-10">attach_money</i>
-                        </div>
+<!-- ═══ RELATÓRIO DE ESTOQUE ═══ -->
+
+<!-- KPIs -->
+<div class="row">
+    <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Total de Produtos</p>
+                        <h4 class="mb-0">{{ produtos|length }}</h4>
                     </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
-            <div class="card">
-                <div class="card-header p-2 ps-3">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <p class="text-sm mb-0 text-capitalize">Total de Produtos</p>
-                            <h4 class="mb-0">{{ produtos|length }}</h4>
-                        </div>
-                        <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
-                            <i class="material-symbols-rounded opacity-10">inventory</i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
-            <div class="card">
-                <div class="card-header p-2 ps-3">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <p class="text-sm mb-0 text-capitalize">Produtos Críticos</p>
-                            <h4 class="mb-0 text-danger">{{ total_produtos_criticos|default:"0" }}</h4>
-                        </div>
-                        <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
-                            <i class="material-symbols-rounded opacity-10">warning</i>
-                        </div>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">inventory_2</i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Filtros para Estoque -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card my-4">
-                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-                    <div class="bg-gradient-info shadow-info border-radius-lg pt-4 pb-3">
-                        <h6 class="text-white text-capitalize ps-3">Filtros</h6>
+    <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Valor Total</p>
+                        <h4 class="mb-0">R$ {{ total_valor_estoque|floatformat:2 }}</h4>
                     </div>
-                </div>
-                <div class="card-body px-4 pb-2">
-                    <form method="get" class="row g-3" id="form-estoque">
-                        <input type="hidden" name="tipo" value="estoque">
-                        <div class="col-md-4">
-                            <div class="input-group input-group-outline">
-                                <label class="form-label">Categoria</label>
-                                <select name="categoria" class="form-control">
-                                    <option value="">Todas as categorias</option>
-                                    {% for categoria in categorias %}
-                                        <option value="{{ categoria.id }}" 
-                                            {% if categoria.id|stringformat:"s" == categoria_selected %}selected{% endif %}>
-                                            {{ categoria.nome }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-4">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="apenas_criticos" value="true" 
-                                    {% if apenas_criticos %}checked{% endif %} id="apenas_criticos">
-                                <label class="form-check-label" for="apenas_criticos">
-                                    Apenas produtos críticos
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-4">
-                            <button type="submit" class="btn btn-info mb-0">
-                                <i class="material-symbols-rounded">search</i> Filtrar
-                            </button>
-                            <button type="button" onclick="limparFiltros('estoque')" class="btn btn-outline-secondary mb-0 ms-2">
-                                <i class="material-symbols-rounded">clear</i> Limpar
-                            </button>
-                        </div>
-                    </form>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">payments</i>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Tabela de Produtos -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card my-4">
-                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-                    <div class="bg-gradient-success shadow-success border-radius-lg pt-4 pb-3">
-                        <h6 class="text-white text-capitalize ps-3">Posição do Estoque</h6>
+    <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Produtos Críticos</p>
+                        <h4 class="mb-0 {% if total_produtos_criticos > 0 %}text-danger{% endif %}">{{ total_produtos_criticos }}</h4>
                     </div>
-                </div>
-                <div class="card-body px-0 pb-2">
-                    <div class="table-responsive p-0">
-                        <table class="table align-items-center mb-0">
-                            <thead>
-                                <tr>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Produto</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Categoria</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Estoque Atual</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Estoque Mín.</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Valor Unit.</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Valor Total</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for produto in produtos %}
-                                <tr>
-                                    <td>
-                                        <div class="d-flex px-2 py-1">
-                                            <div class="d-flex flex-column justify-content-center">
-                                                <h6 class="mb-0 text-sm">{{ produto.nome }}</h6>
-                                                <p class="text-xs text-secondary mb-0">{{ produto.codigo }}</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <p class="text-xs font-weight-bold mb-0">{{ produto.categoria.nome }}</p>
-                                    </td>
-                                    <td class="align-middle text-center text-sm">
-                                        <span class="badge badge-sm bg-gradient-info">
-                                            {{ produto.estoque_atual }} {{ produto.unidade_medida.sigla }}
-                                        </span>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="text-secondary text-xs font-weight-bold">
-                                            {{ produto.estoque_minimo }} {{ produto.unidade_medida.sigla }}
-                                        </span>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="text-secondary text-xs font-weight-bold">
-                                            R$ {{ produto.preco_custo|floatformat:2 }}
-                                        </span>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="text-secondary text-xs font-weight-bold">
-                                            R$ {{ produto.valor_estoque|floatformat:2 }}
-                                        </span>
-                                    </td>
-                                    <td class="align-middle text-center text-sm">
-                                        {% if produto.estoque_critico %}
-                                            <span class="badge badge-sm bg-gradient-danger">Crítico</span>
-                                        {% elif produto.estoque_baixo %}
-                                            <span class="badge badge-sm bg-gradient-warning">Baixo</span>
-                                        {% else %}
-                                            <span class="badge badge-sm bg-gradient-success">Normal</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="7" class="text-center py-4">
-                                        <div class="d-flex flex-column align-items-center">
-                                            <i class="material-symbols-rounded text-muted mb-2" style="font-size: 3rem;">inventory</i>
-                                            <h6 class="text-muted">Nenhum produto encontrado</h6>
-                                            <p class="text-sm text-muted mb-0">
-                                                {% if apenas_criticos %}
-                                                    Não há produtos com estoque crítico no momento.
-                                                {% else %}
-                                                    Ajuste os filtros ou cadastre novos produtos.
-                                                {% endif %}
-                                            </p>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">warning</i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endif %}
 
-<!-- Relatório de Movimentações -->
-{% if tipo_relatorio == 'movimentacoes' %}
-<div id="relatorio-movimentacoes">
-    <!-- Cards de Resumo -->
-    <div class="row">
-        {% for resumo in resumo_tipos %}
-        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-            <div class="card">
-                <div class="card-header p-2 ps-3">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <p class="text-sm mb-0 text-capitalize">{{ resumo.tipo_operacao|capfirst }}</p>
-                            <h4 class="mb-0">{{ resumo.total_movimentacoes }}</h4>
-                            <p class="text-xs mb-0">R$ {{ resumo.valor_total|floatformat:2|default:"0,00" }}</p>
-                        </div>
-                        <div class="icon icon-md icon-shape 
-                            {% if resumo.tipo_operacao == 'entrada' %}bg-gradient-success{% elif resumo.tipo_operacao == 'saida' %}bg-gradient-danger{% else %}bg-gradient-info{% endif %} 
-                            shadow text-center border-radius-lg">
-                            {% if resumo.tipo_operacao == 'entrada' %}
-                                <i class="material-symbols-rounded opacity-10">arrow_downward</i>
-                            {% elif resumo.tipo_operacao == 'saida' %}
-                                <i class="material-symbols-rounded opacity-10">arrow_upward</i>
-                            {% else %}
-                                <i class="material-symbols-rounded opacity-10">swap_horiz</i>
-                            {% endif %}
+<!-- Filtros -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body p-3">
+                <form method="get" class="row g-2 align-items-end">
+                    <input type="hidden" name="tipo" value="estoque">
+                    <div class="col-md-4">
+                        <label class="form-label text-xs text-uppercase mb-1">Categoria</label>
+                        <select name="categoria" class="form-select form-select-sm">
+                            <option value="">Todas</option>
+                            {% for cat in categorias %}
+                            <option value="{{ cat.id }}" {% if categoria_selected == cat.id|stringformat:"d" %}selected{% endif %}>{{ cat.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check mt-3">
+                            <input type="checkbox" name="apenas_criticos" value="true" class="form-check-input" id="chk-criticos" {% if apenas_criticos %}checked{% endif %}>
+                            <label class="custom-control-label text-sm" for="chk-criticos">Apenas críticos</label>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    
-    <!-- Filtros para Movimentações -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card my-4">
-                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-                    <div class="bg-gradient-info shadow-info border-radius-lg pt-4 pb-3">
-                        <h6 class="text-white text-capitalize ps-3">Filtros</h6>
+                    <div class="col-md-5 text-end">
+                        <button type="submit" class="btn btn-sm bg-gradient-primary mb-0">
+                            <i class="material-symbols-rounded text-sm me-1">filter_list</i> Filtrar
+                        </button>
                     </div>
-                </div>
-                <div class="card-body px-4 pb-2">
-                    <form method="get" class="row g-3" id="form-movimentacoes">
-                        <input type="hidden" name="tipo" value="movimentacoes">
-                        <div class="col-md-3">
-                            <div class="input-group input-group-outline">
-                                <label class="form-label">Data Início</label>
-                                <input type="date" name="data_inicio" class="form-control" 
-                                    value="{{ data_inicio|date:'Y-m-d' }}">
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-3">
-                            <div class="input-group input-group-outline">
-                                <label class="form-label">Data Fim</label>
-                                <input type="date" name="data_fim" class="form-control" 
-                                    value="{{ data_fim|date:'Y-m-d' }}">
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-3">
-                            <div class="input-group input-group-outline">
-                                <label class="form-label">Tipo de Operação</label>
-                                <select name="tipo_operacao" class="form-control">
-                                    <option value="">Todas as operações</option>
-                                    <option value="entrada" {% if tipo_operacao == 'entrada' %}selected{% endif %}>Entrada</option>
-                                    <option value="saida" {% if tipo_operacao == 'saida' %}selected{% endif %}>Saída</option>
-                                    <option value="ajuste" {% if tipo_operacao == 'ajuste' %}selected{% endif %}>Ajuste</option>
-                                    <option value="transferencia" {% if tipo_operacao == 'transferencia' %}selected{% endif %}>Transferência</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-3">
-                            <button type="submit" class="btn btn-info mb-0">
-                                <i class="material-symbols-rounded">search</i> Filtrar
-                            </button>
-                            <button type="button" onclick="limparFiltros('movimentacoes')" class="btn btn-outline-secondary mb-0 ms-2">
-                                <i class="material-symbols-rounded">clear</i> Limpar
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                </form>
             </div>
         </div>
     </div>
-    
-    <!-- Tabela de Movimentações -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card my-4">
-                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-                    <div class="bg-gradient-warning shadow-warning border-radius-lg pt-4 pb-3">
-                        <h6 class="text-white text-capitalize ps-3">Histórico de Movimentações</h6>
-                    </div>
+</div>
+
+<!-- Tabela de Estoque -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">inventory</i>
                 </div>
-                <div class="card-body px-0 pb-2">
-                    <div class="table-responsive p-0">
-                        <table class="table align-items-center mb-0">
-                            <thead>
-                                <tr>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Data/Hora</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Produto</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tipo</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Operação</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Quantidade</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Valor Total</th>
-                                    <th class="text-secondary opacity-7">Observações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for mov in movimentacoes %}
-                                <tr>
-                                    <td>
-                                        <div class="d-flex px-2 py-1">
-                                            <div class="d-flex flex-column justify-content-center">
-                                                <h6 class="mb-0 text-sm">{{ mov.data_movimentacao|date:"d/m/Y" }}</h6>
-                                                <p class="text-xs text-secondary mb-0">{{ mov.data_movimentacao|time:"H:i" }}</p>
-                                            </div>
+                <h6 class="mb-0">Posição de Estoque</h6>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Produto</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Categoria</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Estoque</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Mínimo</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Valor Estoque</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in produtos %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ p.nome }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ p.codigo }}</p>
                                         </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex px-2 py-1">
-                                            <div class="d-flex flex-column justify-content-center">
-                                                <h6 class="mb-0 text-sm">{{ mov.produto.nome }}</h6>
-                                                <p class="text-xs text-secondary mb-0">{{ mov.produto.codigo }}</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="text-secondary text-xs font-weight-bold">
-                                            {{ mov.tipo_movimentacao.nome }}
-                                        </span>
-                                    </td>
-                                    <td class="align-middle text-center text-sm">
-                                        {% if mov.tipo_operacao == 'entrada' %}
-                                            <span class="badge badge-sm bg-gradient-success">
-                                                <i class="material-symbols-rounded text-xs">arrow_downward</i> Entrada
-                                            </span>
-                                        {% elif mov.tipo_operacao == 'saida' %}
-                                            <span class="badge badge-sm bg-gradient-danger">
-                                                <i class="material-symbols-rounded text-xs">arrow_upward</i> Saída
-                                            </span>
-                                        {% elif mov.tipo_operacao == 'ajuste' %}
-                                            <span class="badge badge-sm bg-gradient-info">
-                                                <i class="material-symbols-rounded text-xs">tune</i> Ajuste
-                                            </span>
-                                        {% else %}
-                                            <span class="badge badge-sm bg-gradient-warning">
-                                                <i class="material-symbols-rounded text-xs">swap_horiz</i> Transfer.
-                                            </span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="text-secondary text-xs font-weight-bold">
-                                            {{ mov.quantidade }} {{ mov.produto.unidade_medida.sigla }}
-                                        </span>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="text-secondary text-xs font-weight-bold">
-                                            R$ {{ mov.valor_total|floatformat:2 }}
-                                        </span>
-                                    </td>
-                                    <td class="align-middle">
-                                        <span class="text-secondary text-xs">
-                                            {{ mov.observacoes|truncatechars:40 }}
-                                        </span>
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="7" class="text-center py-4">
-                                        <div class="d-flex flex-column align-items-center">
-                                            <i class="material-symbols-rounded text-muted mb-2" style="font-size: 3rem;">history</i>
-                                            <h6 class="text-muted">Nenhuma movimentação encontrada</h6>
-                                            <p class="text-sm text-muted mb-0">
-                                                Ajuste o período ou realize algumas movimentações de estoque.
-                                            </p>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                                    </div>
+                                </td>
+                                <td><span class="text-xs">{{ p.categoria.nome }}</span></td>
+                                <td class="text-center">
+                                    <span class="text-sm font-weight-bold {{ p.status_estoque_css }}">{{ p.estoque_atual|floatformat:0 }}</span>
+                                    <span class="text-xs text-muted">{{ p.unidade_medida.sigla }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-xs">{{ p.estoque_minimo|floatformat:0 }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-sm font-weight-bold">R$ {{ p.valor_estoque|floatformat:2 }}</span>
+                                </td>
+                                <td class="text-center">
+                                    {% if p.estoque_critico %}
+                                    <span class="badge bg-gradient-danger">Crítico</span>
+                                    {% elif p.estoque_baixo %}
+                                    <span class="badge bg-gradient-warning">Baixo</span>
+                                    {% else %}
+                                    <span class="badge bg-gradient-success">Normal</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <p class="text-sm text-muted mb-0">Nenhum produto encontrado</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endif %}
 
-<!-- Ações do Relatório -->
+{% elif tipo_relatorio == 'movimentacoes' %}
+<!-- ═══ RELATÓRIO DE MOVIMENTAÇÕES ═══ -->
+
+<!-- Filtros -->
 <div class="row">
     <div class="col-12">
-        <div class="d-flex justify-content-end">
-            <button onclick="window.print()" class="btn btn-outline-primary mb-0 me-2">
-                <i class="material-symbols-rounded">print</i> Imprimir
-            </button>
-            <button onclick="exportarCSV()" class="btn btn-success mb-0">
-                <i class="material-symbols-rounded">download</i> Exportar CSV
-            </button>
+        <div class="card">
+            <div class="card-body p-3">
+                <form method="get" class="row g-2 align-items-end">
+                    <input type="hidden" name="tipo" value="movimentacoes">
+                    <div class="col-md-3">
+                        <label class="form-label text-xs text-uppercase mb-1">Data Início</label>
+                        <div class="input-group input-group-outline">
+                            <input type="date" name="data_inicio" class="form-control form-control-sm" value="{{ data_inicio|date:'Y-m-d' }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-xs text-uppercase mb-1">Data Fim</label>
+                        <div class="input-group input-group-outline">
+                            <input type="date" name="data_fim" class="form-control form-control-sm" value="{{ data_fim|date:'Y-m-d' }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-xs text-uppercase mb-1">Tipo</label>
+                        <select name="tipo_operacao" class="form-select form-select-sm">
+                            <option value="">Todos</option>
+                            <option value="entrada" {% if tipo_operacao == "entrada" %}selected{% endif %}>Entrada</option>
+                            <option value="saida" {% if tipo_operacao == "saida" %}selected{% endif %}>Saída</option>
+                            <option value="ajuste" {% if tipo_operacao == "ajuste" %}selected{% endif %}>Ajuste</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <button type="submit" class="btn btn-sm bg-gradient-primary mb-0">
+                            <i class="material-symbols-rounded text-sm me-1">filter_list</i> Filtrar
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
-<script>
-function alterarTipoRelatorio(tipo) {
-    const url = new URL(window.location);
-    url.searchParams.set('tipo', tipo);
-    // Limpar outros parâmetros ao mudar o tipo
-    if (tipo === 'estoque') {
-        url.searchParams.delete('data_inicio');
-        url.searchParams.delete('data_fim');
-        url.searchParams.delete('tipo_operacao');
-    } else if (tipo === 'movimentacoes') {
-        url.searchParams.delete('categoria');
-        url.searchParams.delete('apenas_criticos');
-    }
-    window.location.href = url.toString();
-}
+<!-- Resumo por Tipo -->
+<div class="row mt-3">
+    {% for resumo in resumo_tipos %}
+    <div class="col-xl-4 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">{{ resumo.tipo_operacao|title }}</p>
+                        <h4 class="mb-0">{{ resumo.total_movimentacoes }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape {% if resumo.tipo_operacao == 'entrada' %}bg-gradient-success shadow-success{% elif resumo.tipo_operacao == 'saida' %}bg-gradient-danger shadow-danger{% else %}bg-gradient-warning shadow-warning{% endif %} shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">{% if resumo.tipo_operacao == 'entrada' %}arrow_downward{% elif resumo.tipo_operacao == 'saida' %}arrow_upward{% else %}tune{% endif %}</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Valor: R$ <span class="font-weight-bolder">{{ resumo.valor_total|floatformat:2|default:"0,00" }}</span></p>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-body p-3 text-center">
+                <p class="text-sm text-muted mb-0">Nenhuma movimentação no período selecionado</p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
 
-function limparFiltros(tipo) {
-    const url = new URL(window.location);
-    url.searchParams.set('tipo', tipo);
-    if (tipo === 'estoque') {
-        url.searchParams.delete('categoria');
-        url.searchParams.delete('apenas_criticos');
-    } else if (tipo === 'movimentacoes') {
-        url.searchParams.delete('data_inicio');
-        url.searchParams.delete('data_fim');
-        url.searchParams.delete('tipo_operacao');
-    }
-    window.location.href = url.toString();
-}
-
-function exportarCSV() {
-    // Criar CSV dos dados da tabela visível
-    const rows = [];
-    const table = document.querySelector('table');
-    
-    // Cabeçalho
-    const headers = [];
-    table.querySelectorAll('thead th').forEach(th => {
-        if (th.textContent.trim() !== '') {
-            headers.push(th.textContent.trim().replace(/,/g, ';'));
-        }
-    });
-    rows.push(headers.join(','));
-    
-    // Dados
-    table.querySelectorAll('tbody tr').forEach(tr => {
-        const cells = [];
-        tr.querySelectorAll('td').forEach((td, index) => {
-            if (index < headers.length) {
-                let text = td.textContent.trim().replace(/,/g, ';').replace(/\s+/g, ' ');
-                cells.push('"' + text + '"');
-            }
-        });
-        if (cells.length > 0 && !tr.querySelector('td[colspan]')) {
-            rows.push(cells.join(','));
-        }
-    });
-    
-    // Download
-    const csv = rows.join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    
-    const tipoRelatorio = '{{ tipo_relatorio }}';
-    const filename = 'relatorio_' + tipoRelatorio + '_' + new Date().toISOString().slice(0,10) + '.csv';
-    link.download = filename;
-    link.click();
-}
-
-// Estilização para impressão
-const style = document.createElement('style');
-style.textContent = `
-    @media print {
-        .btn, .card-header { display: none !important; }
-        .card { box-shadow: none !important; border: 1px solid #ddd !important; }
-        body { font-size: 12px; }
-        .badge { color: #000 !important; background: #f8f9fa !important; }
-        {% if tipo_relatorio == 'estoque' %}#relatorio-movimentacoes{% else %}#relatorio-estoque{% endif %} { display: none !important; }
-    }
-`;
-document.head.appendChild(style);
-</script>
+<!-- Tabela de Movimentações -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">list_alt</i>
+                </div>
+                <h6 class="mb-0">Movimentações — {{ data_inicio|date:"d/m/Y" }} a {{ data_fim|date:"d/m/Y" }}</h6>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Data</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Produto</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tipo</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Qtd</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Valor Total</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Obs</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mov in movimentacoes %}
+                            <tr>
+                                <td><span class="text-xs px-2">{{ mov.data_movimentacao|date:"d/m/Y H:i" }}</span></td>
+                                <td>
+                                    <h6 class="mb-0 text-sm">{{ mov.produto.nome }}</h6>
+                                    <p class="text-xs text-secondary mb-0">{{ mov.produto.codigo }}</p>
+                                </td>
+                                <td class="text-center">
+                                    {% if mov.tipo_operacao == 'entrada' %}
+                                    <span class="badge bg-gradient-success">Entrada</span>
+                                    {% elif mov.tipo_operacao == 'saida' %}
+                                    <span class="badge bg-gradient-danger">Saída</span>
+                                    {% else %}
+                                    <span class="badge bg-gradient-warning">{{ mov.get_tipo_operacao_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-sm font-weight-bold">{{ mov.quantidade|floatformat:1 }} {{ mov.produto.unidade_medida.sigla }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-sm">R$ {{ mov.valor_total|floatformat:2 }}</span>
+                                </td>
+                                <td>
+                                    <span class="text-xs">{{ mov.observacoes|truncatewords:8|default:"—" }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <p class="text-sm text-muted mb-0">Nenhuma movimentação no período</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}

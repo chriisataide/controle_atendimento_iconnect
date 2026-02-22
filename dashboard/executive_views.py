@@ -33,13 +33,56 @@ def executive_dashboard(request):
         is_resolved=False,
         severity__in=['high', 'critical']
     )[:5]
-    
+
+    # ---- Dados reais para KPIs ----
+    from .models import MovimentacaoFinanceira
+    from decimal import Decimal
+
+    # Receita total do mês
+    total_revenue = MovimentacaoFinanceira.objects.filter(
+        tipo='receita',
+        data_movimentacao__month=timezone.now().month,
+        data_movimentacao__year=timezone.now().year,
+    ).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+
+    # Tickets resolvidos
+    tickets_resolved = Ticket.objects.filter(
+        status__in=['resolvido', 'fechado']
+    ).count()
+
+    # Satisfação média
+    satisfaction_avg = AvaliacaoSatisfacao.objects.aggregate(
+        avg=Avg('nota_atendimento')
+    )['avg'] or 0
+
+    # SLA compliance
+    tickets_with_sla = Ticket.objects.exclude(sla_deadline__isnull=True)
+    if tickets_with_sla.exists():
+        sla_compliant = tickets_with_sla.filter(
+            resolvido_em__lte=F('sla_deadline')
+        ).count()
+        sla_compliance = round(sla_compliant / tickets_with_sla.count() * 100, 1)
+    else:
+        sla_compliance = 0
+
+    # Tickets por status (para gráfico)
+    tickets_abertos = Ticket.objects.filter(status='aberto').count()
+    tickets_andamento = Ticket.objects.filter(status='em_andamento').count()
+    tickets_aguardando = Ticket.objects.filter(status='aguardando_cliente').count()
+
     context = {
         'title': 'Dashboard Executivo',
         'kpis': kpis,
         'widgets': widgets,
         'critical_alerts': critical_alerts,
-        'current_page': 'executive'
+        'current_page': 'executive',
+        'total_revenue': total_revenue,
+        'tickets_resolved': tickets_resolved,
+        'satisfaction_avg': satisfaction_avg,
+        'sla_compliance': sla_compliance,
+        'tickets_abertos': tickets_abertos,
+        'tickets_andamento': tickets_andamento,
+        'tickets_aguardando': tickets_aguardando,
     }
     
     return render(request, 'dashboard/executive_dashboard.html', context)
@@ -91,10 +134,10 @@ def executive_kpis_api(request):
     
     # 5. Produtividade dos Agentes
     agents_productivity = PerfilAgente.objects.filter(
-        usuario__is_active=True
+        user__is_active=True
     ).annotate(
-        tickets_today=Count('usuario__ticket', filter=Q(
-            usuario__ticket__criado_em__date=timezone.now().date()
+        tickets_today=Count('user__tickets_agente', filter=Q(
+            user__tickets_agente__criado_em__date=timezone.now().date()
         ))
     )
     
@@ -151,9 +194,9 @@ def executive_charts_api(request):
     last_30_days = timezone.now() - timedelta(days=30)
     tickets_by_date = Ticket.objects.filter(
         criado_em__gte=last_30_days
-    ).extra({
-        'date': 'DATE(criado_em)'
-    }).values('date').annotate(
+    ).annotate(
+        date=TruncDate('criado_em')
+    ).values('date').annotate(
         count=Count('id')
     ).order_by('date')
     
@@ -168,24 +211,24 @@ def executive_charts_api(request):
     # Gráfico de Satisfação por Período
     satisfaction_trend = AvaliacaoSatisfacao.objects.filter(
         avaliado_em__gte=last_30_days
-    ).extra({
-        'date': 'DATE(avaliado_em)'
-    }).values('date').annotate(
+    ).annotate(
+        date=TruncDate('avaliado_em')
+    ).values('date').annotate(
         avg_score=Avg('nota_atendimento')
     ).order_by('date')
     
     # Gráfico de Performance dos Agentes
     agents_performance = PerfilAgente.objects.filter(
-        usuario__is_active=True
+        user__is_active=True
     ).annotate(
-        tickets_resolved=Count('usuario__ticket', filter=Q(
-            usuario__ticket__status='fechado',
-            usuario__ticket__resolvido_em__month=timezone.now().month
+        tickets_resolved=Count('user__tickets_agente', filter=Q(
+            user__tickets_agente__status='fechado',
+            user__tickets_agente__resolvido_em__month=timezone.now().month
         )),
-        avg_satisfaction=Avg('usuario__ticket__avaliacaosatisfacao__nota_atendimento')
+        avg_satisfaction=Avg('user__tickets_agente__avaliacaosatisfacao__nota_atendimento')
     ).values(
-        'usuario__first_name',
-        'usuario__last_name',
+        'user__first_name',
+        'user__last_name',
         'tickets_resolved',
         'avg_satisfaction'
     )
@@ -208,7 +251,7 @@ def executive_charts_api(request):
             'data': [float(item['avg_score']) if item['avg_score'] else 0 for item in satisfaction_trend]
         },
         'agents_performance': {
-            'labels': [f"{item['usuario__first_name']} {item['usuario__last_name']}" for item in agents_performance],
+            'labels': [f"{item['user__first_name']} {item['user__last_name']}" for item in agents_performance],
             'tickets': [item['tickets_resolved'] for item in agents_performance],
             'satisfaction': [float(item['avg_satisfaction']) if item['avg_satisfaction'] else 0 for item in agents_performance]
         }
@@ -259,9 +302,9 @@ def executive_alerts_api(request):
     
     avg_daily_tickets = Ticket.objects.filter(
         criado_em__gte=timezone.now() - timedelta(days=30)
-    ).extra({
-        'date': 'DATE(criado_em)'
-    }).values('date').annotate(
+    ).annotate(
+        date=TruncDate('criado_em')
+    ).values('date').annotate(
         count=Count('id')
     ).aggregate(avg=Avg('count'))['avg'] or 0
     

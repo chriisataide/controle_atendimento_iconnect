@@ -1,6 +1,8 @@
 """
 Integrações externas para WhatsApp Business API e Slack.
 """
+import hmac
+import hashlib
 import logging
 import json
 from django.http import JsonResponse, HttpResponse
@@ -15,30 +17,66 @@ from .notifications import notification_service
 logger = logging.getLogger(__name__)
 
 
+def _verify_whatsapp_signature(request):
+    """
+    Verifica a assinatura HMAC-SHA256 do webhook do WhatsApp Business API.
+    Retorna True se a assinatura é válida ou se a verificação está desabilitada.
+    """
+    whatsapp_config = getattr(settings, 'WHATSAPP_CONFIG', {})
+    app_secret = whatsapp_config.get('APP_SECRET', '')
+
+    if not app_secret:
+        # Se APP_SECRET não configurado, logar warning e permitir (dev mode)
+        logger.warning("WHATSAPP_CONFIG.APP_SECRET não configurado — assinatura de webhook não verificada")
+        return True
+
+    signature_header = request.META.get('HTTP_X_HUB_SIGNATURE_256', '')
+    if not signature_header or not signature_header.startswith('sha256='):
+        logger.warning("Webhook WhatsApp recebido sem assinatura X-Hub-Signature-256")
+        return False
+
+    expected_signature = signature_header[7:]  # Remove 'sha256=' prefix
+    computed_signature = hmac.new(
+        app_secret.encode('utf-8'),
+        request.body,
+        hashlib.sha256
+    ).hexdigest()
+
+    return hmac.compare_digest(expected_signature, computed_signature)
+
+
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
 def whatsapp_webhook(request):
     """Webhook para receber mensagens do WhatsApp Business API"""
     whatsapp_config = getattr(settings, 'WHATSAPP_CONFIG', {})
     verify_token = whatsapp_config.get('WEBHOOK_VERIFY_TOKEN', '')
-    
+
     if request.method == 'GET':
         # Verificação do webhook
         mode = request.GET.get('hub.mode')
         token = request.GET.get('hub.verify_token')
         challenge = request.GET.get('hub.challenge')
-        
+
         if mode == 'subscribe' and token == verify_token:
             logger.info("WhatsApp webhook verificado com sucesso")
             return HttpResponse(challenge)
         else:
             logger.error("Falha na verificação do webhook WhatsApp")
             return HttpResponse('Verification failed', status=403)
-    
+
     elif request.method == 'POST':
+        # Verificar assinatura HMAC antes de processar
+        if not _verify_whatsapp_signature(request):
+            logger.warning("Webhook WhatsApp rejeitado: assinatura inválida")
+            return JsonResponse({'error': 'Invalid signature'}, status=403)
+
         try:
             body = json.loads(request.body)
             return _process_whatsapp_message(body)
+        except json.JSONDecodeError:
+            logger.error("Webhook WhatsApp: payload JSON inválido")
+            return JsonResponse({'error': 'Invalid payload'}, status=400)
         except Exception as e:
             logger.error(f"Erro ao processar mensagem WhatsApp: {str(e)}")
             return JsonResponse({'error': 'Processing failed'}, status=500)
@@ -160,26 +198,64 @@ def _send_whatsapp_message(to_number, message_text):
         logger.error(f"Erro ao enviar mensagem WhatsApp: {str(e)}")
 
 
+def _verify_slack_signature(request):
+    """
+    Verifica a assinatura do Slack usando Signing Secret.
+    https://api.slack.com/authentication/verifying-requests-from-slack
+    """
+    slack_config = getattr(settings, 'SLACK_CONFIG', {})
+    signing_secret = slack_config.get('SIGNING_SECRET', '')
+
+    if not signing_secret:
+        logger.warning("SLACK_CONFIG.SIGNING_SECRET não configurado — assinatura não verificada")
+        return True
+
+    timestamp = request.META.get('HTTP_X_SLACK_REQUEST_TIMESTAMP', '')
+    signature = request.META.get('HTTP_X_SLACK_SIGNATURE', '')
+
+    if not timestamp or not signature:
+        return False
+
+    # Proteger contra replay attacks (5 minutos)
+    import time
+    if abs(time.time() - int(timestamp)) > 300:
+        return False
+
+    sig_basestring = f"v0:{timestamp}:{request.body.decode('utf-8')}"
+    computed = 'v0=' + hmac.new(
+        signing_secret.encode('utf-8'),
+        sig_basestring.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest()
+
+    return hmac.compare_digest(computed, signature)
+
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def slack_webhook(request):
     """Webhook para receber comandos do Slack"""
     try:
         data = json.loads(request.body) if request.content_type == 'application/json' else dict(request.POST.items())
-        
-        # Verificação do URL do Slack
+
+        # Verificação do URL do Slack (não precisa de assinatura)
         if data.get('type') == 'url_verification':
             return JsonResponse({'challenge': data.get('challenge')})
-        
+
+        # Verificar assinatura do Slack
+        if not _verify_slack_signature(request):
+            logger.warning("Webhook Slack rejeitado: assinatura inválida")
+            return JsonResponse({'error': 'Invalid signature'}, status=403)
+
         # Processar comando
         if data.get('command'):
             return _process_slack_command(data)
-        
+
         return JsonResponse({'status': 'ok'})
-        
+
     except Exception as e:
         logger.error(f"Erro ao processar webhook Slack: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({'error': 'Internal server error'}, status=500)
 
 
 def _process_slack_command(command_data):
@@ -202,7 +278,7 @@ def _process_slack_command(command_data):
         logger.error(f"Erro ao processar comando Slack: {str(e)}")
         return JsonResponse({
             'response_type': 'ephemeral',
-            'text': f'Erro ao processar comando: {str(e)}'
+            'text': 'Erro interno do servidor.'
         })
 
 

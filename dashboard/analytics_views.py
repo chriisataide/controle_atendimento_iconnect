@@ -1,10 +1,12 @@
 # Views para Analytics Avançado
 from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 from django.db.models import Avg, Count, Q, F
 from django.utils import timezone
 from datetime import datetime, timedelta
 from .models import Ticket, Cliente
 
+@login_required
 def analytics_dashboard(request):
     """Dashboard executivo com métricas avançadas"""
     
@@ -34,12 +36,18 @@ def analytics_dashboard(request):
         tempo=Avg(F('resolvido_em') - F('criado_em'))
     )['tempo']
     
-    # SLA Performance
+    # SLA Performance (tickets resolvidos dentro do prazo SLA)
     sla_ok = Ticket.objects.filter(
         criado_em__date__gte=inicio_mes,
-        metricasla__sla_resolucao_ok=True
+        status='resolvido',
+        sla_deadline__isnull=False,
+        resolvido_em__lte=F('sla_deadline')
     ).count()
-    sla_performance = (sla_ok / tickets_mes * 100) if tickets_mes > 0 else 0
+    sla_total = Ticket.objects.filter(
+        criado_em__date__gte=inicio_mes,
+        sla_deadline__isnull=False
+    ).count()
+    sla_performance = (sla_ok / sla_total * 100) if sla_total > 0 else 0
     
     # Distribuição por Categoria
     categorias = Ticket.objects.filter(
@@ -76,23 +84,28 @@ def analytics_dashboard(request):
     
     # Top 5 Clientes com Mais Tickets
     top_clientes = Cliente.objects.annotate(
-        total_tickets=Count('ticket'),
-        tickets_mes=Count('ticket', filter=Q(ticket__criado_em__date__gte=inicio_mes))
+        total_tickets=Count('tickets'),
+        tickets_mes=Count('tickets', filter=Q(tickets__criado_em__date__gte=inicio_mes))
     ).order_by('-tickets_mes')[:5]
     
     # Satisfação por Categoria
+    from django.db.models import Value, FloatField
+    from django.db.models.functions import Cast
     satisfacao_categoria = Ticket.objects.filter(
         criado_em__date__gte=inicio_mes,
         avaliacaosatisfacao__isnull=False
     ).values('categoria').annotate(
-        satisfacao_media=Avg('avaliacaosatisfacao__media_geral'),
+        satisfacao_media=Avg(
+            Cast(F('avaliacaosatisfacao__nota_atendimento') + F('avaliacaosatisfacao__nota_resolucao') + F('avaliacaosatisfacao__nota_tempo'), FloatField()) / Value(3.0)
+        ),
         total_avaliacoes=Count('avaliacaosatisfacao')
     ).order_by('-satisfacao_media')
     
     # Horário de Pico
+    from django.db.models.functions import ExtractHour
     tickets_por_hora = Ticket.objects.filter(
         criado_em__date__gte=inicio_mes
-    ).extra({'hora': 'EXTRACT(hour FROM criado_em)'}).values('hora').annotate(
+    ).annotate(hora=ExtractHour('criado_em')).values('hora').annotate(
         total=Count('id')
     ).order_by('hora')
     
@@ -118,7 +131,7 @@ def analytics_dashboard(request):
         'hoje': hoje,
     }
     
-    return render(request, 'analytics/dashboard_executivo.html', context)
+    return render(request, 'dashboard/analytics/dashboard.html', context)
 
 def relatorio_detalhado(request):
     """Relatório detalhado personalizável"""
@@ -159,7 +172,7 @@ def relatorio_detalhado(request):
     satisfacao_media = tickets.filter(
         avaliacaosatisfacao__isnull=False
     ).aggregate(
-        satisfacao=Avg('avaliacaosatisfacao__media_geral')
+        satisfacao=Avg('avaliacaosatisfacao__nota_atendimento')
     )['satisfacao']
     
     context = {

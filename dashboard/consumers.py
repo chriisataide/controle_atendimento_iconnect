@@ -18,6 +18,9 @@ from .models import (
     ChatRoom, ChatMessage, ChatParticipant, ChatMessageReadReceipt
 )
 
+import logging
+logger = logging.getLogger('dashboard')
+
 class NotificationConsumer(AsyncWebsocketConsumer):
     """
     WebSocket consumer para notificações em tempo real
@@ -65,7 +68,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         # Enviar estatísticas iniciais
         await self.send_dashboard_stats()
         
-        print(f"✅ WebSocket conectado: {self.user.username}")
+        logger.info("WebSocket conectado: %s", self.user.username)
     
     async def disconnect(self, close_code):
         """Desconecta o cliente WebSocket"""
@@ -90,7 +93,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             )
             await self.update_agent_activity(agent, False)
         
-        print(f"❌ WebSocket desconectado: {self.user.username}")
+        logger.info("WebSocket desconectado: %s", self.user.username)
     
     async def receive(self, text_data):
         """Recebe mensagens do cliente"""
@@ -122,12 +125,12 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 await self.broadcast_agent_typing(data.get('ticket_id'))
                 
             else:
-                print(f"⚠️ Tipo de mensagem desconhecido: {message_type}")
+                logger.warning("Tipo de mensagem desconhecido: %s", message_type)
                 
         except json.JSONDecodeError:
-            print("❌ Erro ao decodificar JSON do WebSocket")
+            logger.error("Erro ao decodificar JSON do WebSocket")
         except Exception as e:
-            print(f"❌ Erro no WebSocket: {e}")
+            logger.error("Erro no WebSocket: %s", e, exc_info=True)
     
     # ====================================
     # HANDLERS DE MENSAGENS
@@ -1085,7 +1088,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return message
             
         except Exception as e:
-            print(f"Error saving message: {e}")
+            logger.error("Error saving message: %s", e, exc_info=True)
             return None
     
     @database_sync_to_async
@@ -1112,7 +1115,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 participant.save(update_fields=['is_online', 'last_seen'])
                 
         except Exception as e:
-            print(f"Error setting user online status: {e}")
+            logger.error("Error setting user online status: %s", e, exc_info=True)
     
     @database_sync_to_async
     def set_user_typing(self, is_typing):
@@ -1124,7 +1127,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             participant.is_typing = is_typing
             participant.save(update_fields=['is_typing'])
         except Exception as e:
-            print(f"Error setting typing status: {e}")
+            logger.error("Error setting typing status: %s", e, exc_info=True)
     
     @database_sync_to_async
     def mark_message_as_read(self, message_id):
@@ -1133,7 +1136,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             message = ChatMessage.objects.get(id=message_id)
             message.mark_as_read_by(self.user)
         except Exception as e:
-            print(f"Error marking message as read: {e}")
+            logger.error("Error marking message as read: %s", e, exc_info=True)
     
     @database_sync_to_async
     def add_reaction(self, message_id, reaction):
@@ -1148,7 +1151,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
             return reaction_obj
         except Exception as e:
-            print(f"Error adding reaction: {e}")
+            logger.error("Error adding reaction: %s", e, exc_info=True)
             return None
     
     @database_sync_to_async
@@ -1159,7 +1162,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             room.last_activity = timezone.now()
             room.save(update_fields=['last_activity'])
         except Exception as e:
-            print(f"Error updating room activity: {e}")
+            logger.error("Error updating room activity: %s", e, exc_info=True)
     
     @database_sync_to_async
     def get_user_avatar(self, user):

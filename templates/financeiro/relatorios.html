@@ -1,258 +1,239 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Relatórios - Sistema Financeiro{% endblock %}
-
-{% block page_title %}Relatórios{% endblock %}
-{% block breadcrumb_title %}Relatórios{% endblock %}
+{% block title %}Relatórios Financeiros{% endblock %}
+{% block page_title %}Relatórios Financeiros{% endblock %}
+{% block breadcrumb_title %}Relatórios Financeiros{% endblock %}
 
 {% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Relatórios Financeiros</h3>
+            <p class="mb-0 text-sm">Análise de receitas, despesas e lucratividade &bull; Indicadores financeiros</p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end d-flex align-items-center justify-content-end">
+        <a href="{% url 'financeiro:dashboard_financeiro' %}" class="btn btn-sm bg-gradient-dark mb-0">
+            <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- KPIs de Resumo Executivo -->
 <div class="row">
-    <!-- Filtros de Relatório -->
-    <div class="col-12">
-        <div class="card my-4">
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Receita Total</p>
+                        <h4 class="mb-0 text-success">R$ {{ receita_total|floatformat:2 }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">payments</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Total acumulado</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Despesa Total</p>
+                        <h4 class="mb-0 text-danger">R$ {{ despesa_total|floatformat:2 }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">money_off</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Total acumulado</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Lucro Líquido</p>
+                        <h4 class="mb-0 {% if lucro_liquido >= 0 %}text-success{% else %}text-danger{% endif %}">R$ {{ lucro_liquido|floatformat:2 }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">trending_up</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Margem: <span class="font-weight-bolder">{{ margem|floatformat:1 }}%</span></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Ticket Médio</p>
+                        <h4 class="mb-0">R$ {{ ticket_medio|floatformat:2 }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">avg_pace</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Inadimplência: <span class="text-danger font-weight-bolder">{{ taxa_inadimplencia|floatformat:1 }}%</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Indicadores de Risco -->
+<div class="row mt-4">
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center">
+                    <div class="icon icon-lg icon-shape bg-gradient-danger shadow-danger border-radius-xl me-3">
+                        <i class="material-symbols-rounded opacity-10">warning</i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0">R$ {{ valor_atraso|floatformat:2 }}</h4>
+                        <p class="text-sm mb-0 text-secondary">Em Atraso ({{ pct_atraso|floatformat:1 }}% da receita)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos -->
+<div class="row mt-4">
+    <div class="col-lg-8 col-md-7 mb-4">
+        <div class="card z-index-2 h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">show_chart</i>
+                </div>
+                <div class="d-block">
+                    <p class="text-sm mb-0 text-capitalize">Evolução Mensal</p>
+                    <h5 class="mb-0">Receitas, Despesas e Lucro</h5>
+                </div>
+            </div>
+            <div class="card-body p-3 pt-0">
+                <div class="chart">
+                    <canvas id="chartEvolucao" class="chart-canvas" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 mb-4">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">pie_chart</i>
+                </div>
+                <div class="d-block">
+                    <p class="text-sm mb-0 text-capitalize">Receitas</p>
+                    <h5 class="mb-0">Por Categoria</h5>
+                </div>
+            </div>
+            <div class="card-body p-3 pt-0">
+                <div class="chart">
+                    <canvas id="chartDist" class="chart-canvas" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Clientes e Despesas -->
+<div class="row mt-4">
+    <div class="col-lg-7 mb-4">
+        <div class="card">
             <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-4 pb-3">
-                    <h6 class="text-white text-capitalize ps-3 mb-0">
-                        <i class="fas fa-chart-bar me-2"></i>Relatórios Financeiros
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3 px-3">
+                    <h6 class="text-white text-capitalize mb-0">
+                        <i class="material-symbols-rounded text-sm me-1 opacity-7">star</i>
+                        Top Clientes por Receita
                     </h6>
                 </div>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="input-group input-group-outline mb-3">
-                            <label class="form-label">Tipo de Relatório</label>
-                            <select class="form-control" id="tipoRelatorio" onchange="alterarTipoRelatorio()">
-                                <option value="geral">Relatório Geral</option>
-                                <option value="receitas">Receitas</option>
-                                <option value="despesas">Despesas</option>
-                                <option value="contratos">Contratos</option>
-                                <option value="faturas">Faturas</option>
-                                <option value="inadimplencia">Inadimplência</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="input-group input-group-outline mb-3">
-                            <label class="form-label">Período</label>
-                            <select class="form-control" id="periodoRelatorio" onchange="alterarPeriodo()">
-                                <option value="mes_atual">Mês Atual</option>
-                                <option value="mes_anterior">Mês Anterior</option>
-                                <option value="trimestre">Trimestre</option>
-                                <option value="ano">Ano</option>
-                                <option value="personalizado">Personalizado</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-2" id="dataInicioDiv" style="display: none;">
-                        <div class="input-group input-group-outline mb-3">
-                            <input type="date" class="form-control" id="dataInicio" placeholder="Data início">
-                        </div>
-                    </div>
-                    <div class="col-md-2" id="dataFimDiv" style="display: none;">
-                        <div class="input-group input-group-outline mb-3">
-                            <input type="date" class="form-control" id="dataFim" placeholder="Data fim">
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <button class="btn btn-primary me-2" onclick="gerarRelatorio()">
-                            <i class="fas fa-chart-line me-2"></i>Gerar Relatório
-                        </button>
-                        <button class="btn btn-success" onclick="exportarRelatorio()">
-                            <i class="fas fa-download me-2"></i>Exportar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Resumo Executivo -->
-<div class="row" id="resumoExecutivo">
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-        <div class="card">
-            <div class="card-header p-3 pt-2">
-                <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
-                    <i class="fas fa-money-bill-wave"></i>
-                </div>
-                <div class="text-end pt-1">
-                    <p class="text-sm mb-0 text-capitalize">Receita Total</p>
-                    <h4 class="mb-0" id="receitaTotal">R$ 45.230,00</h4>
-                    <p class="text-xs text-success mb-0">+12% vs período anterior</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-        <div class="card">
-            <div class="card-header p-3 pt-2">
-                <div class="icon icon-lg icon-shape bg-gradient-danger shadow-danger text-center border-radius-xl mt-n4 position-absolute">
-                    <i class="fas fa-credit-card"></i>
-                </div>
-                <div class="text-end pt-1">
-                    <p class="text-sm mb-0 text-capitalize">Despesa Total</p>
-                    <h4 class="mb-0" id="despesaTotal">R$ 28.450,00</h4>
-                    <p class="text-xs text-danger mb-0">+8% vs período anterior</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-        <div class="card">
-            <div class="card-header p-3 pt-2">
-                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
-                    <i class="fas fa-calculator"></i>
-                </div>
-                <div class="text-end pt-1">
-                    <p class="text-sm mb-0 text-capitalize">Lucro Líquido</p>
-                    <h4 class="mb-0" id="lucroLiquido">R$ 16.780,00</h4>
-                    <p class="text-xs text-info mb-0">Margem: 37,1%</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-sm-6">
-        <div class="card">
-            <div class="card-header p-3 pt-2">
-                <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </div>
-                <div class="text-end pt-1">
-                    <p class="text-sm mb-0 text-capitalize">Em Atraso</p>
-                    <h4 class="mb-0" id="valorAtraso">R$ 3.240,00</h4>
-                    <p class="text-xs text-warning mb-0">7,2% do total</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Gráficos Principais -->
-<div class="row mt-4">
-    <div class="col-lg-8">
-        <div class="card h-100">
-            <div class="card-header pb-0">
-                <div class="d-flex justify-content-between">
-                    <h6>Evolução Financeira</h6>
-                    <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-primary active" onclick="alterarGraficoEvolucao('mensal')">Mensal</button>
-                        <button type="button" class="btn btn-outline-primary" onclick="alterarGraficoEvolucao('diario')">Diário</button>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body p-3">
-                <div class="chart">
-                    <canvas id="chart-evolucao-financeira" class="chart-canvas" height="400px"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-4">
-        <div class="card h-100">
-            <div class="card-header pb-0">
-                <h6>Distribuição de Receitas</h6>
-            </div>
-            <div class="card-body p-3">
-                <div class="chart">
-                    <canvas id="chart-distribuicao-receitas" class="chart-canvas" height="400px"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Análises Detalhadas -->
-<div class="row mt-4">
-    <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header pb-0">
-                <h6>Top 10 Clientes por Receita</h6>
-            </div>
-            <div class="card-body p-3">
-                <div class="table-responsive">
-                    <table class="table table-sm">
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
                         <thead>
                             <tr>
-                                <th>Cliente</th>
-                                <th class="text-end">Receita</th>
-                                <th class="text-end">%</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">#</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cliente</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Receita</th>
                             </tr>
                         </thead>
-                        <tbody id="topClientes">
+                        <tbody>
+                            {% for cliente in top_clientes %}
                             <tr>
-                                <td>João Silva</td>
-                                <td class="text-end">R$ 2.950,00</td>
-                                <td class="text-end">6.5%</td>
+                                <td class="ps-4"><span class="text-xs font-weight-bold">{{ forloop.counter }}</span></td>
+                                <td><span class="text-sm font-weight-bold">{{ cliente.contrato__cliente__nome }}</span></td>
+                                <td class="align-middle text-center">
+                                    <span class="text-success text-sm font-weight-bold">R$ {{ cliente.receita|floatformat:2 }}</span>
+                                </td>
                             </tr>
-                            <tr>
-                                <td>Maria Santos</td>
-                                <td class="text-end">R$ 2.400,00</td>
-                                <td class="text-end">5.3%</td>
-                            </tr>
-                            <tr>
-                                <td>Tech Corp LTDA</td>
-                                <td class="text-end">R$ 2.200,00</td>
-                                <td class="text-end">4.9%</td>
-                            </tr>
-                            <tr>
-                                <td>Carlos Oliveira</td>
-                                <td class="text-end">R$ 1.800,00</td>
-                                <td class="text-end">4.0%</td>
-                            </tr>
-                            <tr>
-                                <td>Ana Costa</td>
-                                <td class="text-end">R$ 1.650,00</td>
-                                <td class="text-end">3.6%</td>
-                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center py-3"><p class="text-sm text-secondary mb-0">Sem dados</p></td></tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-lg-6">
+    <div class="col-lg-5 mb-4">
         <div class="card">
-            <div class="card-header pb-0">
-                <h6>Principais Despesas</h6>
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-danger shadow-danger border-radius-lg pt-4 pb-3 px-3">
+                    <h6 class="text-white text-capitalize mb-0">
+                        <i class="material-symbols-rounded text-sm me-1 opacity-7">arrow_downward</i>
+                        Maiores Despesas
+                    </h6>
+                </div>
             </div>
-            <div class="card-body p-3">
-                <div class="table-responsive">
-                    <table class="table table-sm">
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
                         <thead>
                             <tr>
-                                <th>Categoria</th>
-                                <th class="text-end">Valor</th>
-                                <th class="text-end">%</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Categoria</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Valor</th>
                             </tr>
                         </thead>
-                        <tbody id="principaisDespesas">
+                        <tbody>
+                            {% for despesa in top_despesas %}
                             <tr>
-                                <td>Salários</td>
-                                <td class="text-end">R$ 15.200,00</td>
-                                <td class="text-end">53.4%</td>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <span class="text-sm font-weight-bold">{{ despesa.categoria__nome|default:"Sem Categoria" }}</span>
+                                    </div>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-danger text-sm font-weight-bold">R$ {{ despesa.total|floatformat:2 }}</span>
+                                </td>
                             </tr>
-                            <tr>
-                                <td>Aluguel</td>
-                                <td class="text-end">R$ 4.500,00</td>
-                                <td class="text-end">15.8%</td>
-                            </tr>
-                            <tr>
-                                <td>Marketing</td>
-                                <td class="text-end">R$ 3.200,00</td>
-                                <td class="text-end">11.2%</td>
-                            </tr>
-                            <tr>
-                                <td>Fornecedores</td>
-                                <td class="text-end">R$ 2.800,00</td>
-                                <td class="text-end">9.8%</td>
-                            </tr>
-                            <tr>
-                                <td>Outros</td>
-                                <td class="text-end">R$ 2.750,00</td>
-                                <td class="text-end">9.7%</td>
-                            </tr>
+                            {% empty %}
+                            <tr><td colspan="2" class="text-center py-3"><p class="text-sm text-secondary mb-0">Sem dados</p></td></tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
@@ -260,292 +241,65 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
-<!-- Indicadores de Performance -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header pb-0">
-                <h6>Indicadores de Performance (KPIs)</h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-lg-3 col-md-6">
-                        <div class="border-radius-lg p-3 bg-gradient-light">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <p class="text-sm mb-0">Ticket Médio</p>
-                                    <h5 class="font-weight-bolder mb-0">R$ 387,50</h5>
-                                </div>
-                                <div class="icon icon-md icon-shape bg-gradient-primary shadow text-center border-radius-md">
-                                    <i class="fas fa-receipt text-lg opacity-10" aria-hidden="true"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-6 mt-4 mt-md-0">
-                        <div class="border-radius-lg p-3 bg-gradient-light">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <p class="text-sm mb-0">Taxa de Inadimplência</p>
-                                    <h5 class="font-weight-bolder mb-0">4.2%</h5>
-                                </div>
-                                <div class="icon icon-md icon-shape bg-gradient-warning shadow text-center border-radius-md">
-                                    <i class="fas fa-exclamation-triangle text-lg opacity-10" aria-hidden="true"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-6 mt-4 mt-lg-0">
-                        <div class="border-radius-lg p-3 bg-gradient-light">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <p class="text-sm mb-0">Tempo Médio Recebimento</p>
-                                    <h5 class="font-weight-bolder mb-0">12 dias</h5>
-                                </div>
-                                <div class="icon icon-md icon-shape bg-gradient-info shadow text-center border-radius-md">
-                                    <i class="fas fa-clock text-lg opacity-10" aria-hidden="true"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-6 mt-4 mt-lg-0">
-                        <div class="border-radius-lg p-3 bg-gradient-light">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <p class="text-sm mb-0">ROI</p>
-                                    <h5 class="font-weight-bolder mb-0">159%</h5>
-                                </div>
-                                <div class="icon icon-md icon-shape bg-gradient-success shadow text-center border-radius-md">
-                                    <i class="fas fa-chart-line text-lg opacity-10" aria-hidden="true"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Projeções -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header pb-0">
-                <h6>Projeções para os Próximos 3 Meses</h6>
-            </div>
-            <div class="card-body p-3">
-                <div class="chart">
-                    <canvas id="chart-projecoes" class="chart-canvas" height="300px"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% block extra_js %}
+<script src="{% static 'js/plugins/chartjs.min.js' %}"></script>
 <script>
-// Variáveis globais
-let chartEvolucao, chartDistribuicao, chartProjecoes;
-
-// Gráfico de Evolução Financeira
-function criarGraficoEvolucao() {
-    const ctx = document.getElementById('chart-evolucao-financeira').getContext('2d');
-    chartEvolucao = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-            datasets: [{
-                label: 'Receitas',
-                data: [25000, 28000, 32000, 35000, 38000, 42000],
-                borderColor: 'rgb(75, 192, 192)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                tension: 0.4
-            }, {
-                label: 'Despesas',
-                data: [18000, 20000, 22000, 24000, 26000, 28000],
-                borderColor: 'rgb(255, 99, 132)',
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                tension: 0.4
-            }, {
-                label: 'Lucro',
-                data: [7000, 8000, 10000, 11000, 12000, 14000],
-                borderColor: 'rgb(54, 162, 235)',
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'top',
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return 'R$ ' + value.toLocaleString();
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-// Gráfico de Distribuição de Receitas
-function criarGraficoDistribuicao() {
-    const ctx = document.getElementById('chart-distribuicao-receitas').getContext('2d');
-    chartDistribuicao = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Serviços Recorrentes', 'Projetos', 'Consultoria', 'Produtos', 'Outros'],
-            datasets: [{
-                data: [45, 25, 15, 10, 5],
-                backgroundColor: [
-                    '#4CAF50',
-                    '#2196F3',
-                    '#FF9800',
-                    '#F44336',
-                    '#9C27B0'
-                ]
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                }
-            }
-        }
-    });
-}
-
-// Gráfico de Projeções
-function criarGraficoProjecoes() {
-    const ctx = document.getElementById('chart-projecoes').getContext('2d');
-    chartProjecoes = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Julho', 'Agosto', 'Setembro'],
-            datasets: [{
-                label: 'Receita Projetada',
-                data: [45000, 48000, 52000],
-                backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1
-            }, {
-                label: 'Despesa Projetada',
-                data: [30000, 32000, 34000],
-                backgroundColor: 'rgba(255, 99, 132, 0.6)',
-                borderColor: 'rgba(255, 99, 132, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'top',
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return 'R$ ' + value.toLocaleString();
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-// Funções de controle
-function alterarTipoRelatorio() {
-    const tipo = document.getElementById('tipoRelatorio').value;
-    console.log('Alterando tipo de relatório para:', tipo);
-}
-
-function alterarPeriodo() {
-    const periodo = document.getElementById('periodoRelatorio').value;
-    const dataInicioDiv = document.getElementById('dataInicioDiv');
-    const dataFimDiv = document.getElementById('dataFimDiv');
-    
-    if (periodo === 'personalizado') {
-        dataInicioDiv.style.display = 'block';
-        dataFimDiv.style.display = 'block';
-    } else {
-        dataInicioDiv.style.display = 'none';
-        dataFimDiv.style.display = 'none';
-    }
-}
-
-function alterarGraficoEvolucao(periodo) {
-    console.log('Alterando gráfico para período:', periodo);
-    // Atualizar dados do gráfico baseado no período
-    // chartEvolucao.data = ...
-    // chartEvolucao.update();
-}
-
-function gerarRelatorio() {
-    const tipo = document.getElementById('tipoRelatorio').value;
-    const periodo = document.getElementById('periodoRelatorio').value;
-    
-    console.log('Gerando relatório:', { tipo, periodo });
-    alert('Relatório gerado com sucesso!');
-    
-    // Atualizar todos os gráficos e dados
-    // Simular carregamento
-    setTimeout(() => {
-        location.reload();
-    }, 1000);
-}
-
-function exportarRelatorio() {
-    const tipo = document.getElementById('tipoRelatorio').value;
-    
-    const opcoes = [
-        { texto: 'PDF', valor: 'pdf' },
-        { texto: 'Excel', valor: 'excel' },
-        { texto: 'CSV', valor: 'csv' },
-        { texto: 'PowerPoint', valor: 'ppt' }
-    ];
-    
-    let menu = 'Escolha o formato:\n';
-    opcoes.forEach((opcao, index) => {
-        menu += `${index + 1}. ${opcao.texto}\n`;
-    });
-    
-    const escolha = prompt(menu);
-    if (escolha && escolha >= 1 && escolha <= 4) {
-        const formato = opcoes[escolha - 1].valor;
-        console.log(`Exportando relatório ${tipo} em formato ${formato}`);
-        alert(`Exportação em ${formato.toUpperCase()} iniciada!`);
-    }
-}
-
-// Inicialização
 document.addEventListener('DOMContentLoaded', function() {
-    criarGraficoEvolucao();
-    criarGraficoDistribuicao();
-    criarGraficoProjecoes();
-    
-    // Definir período padrão
-    const hoje = new Date();
-    const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-    const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-    
-    document.getElementById('dataInicio').value = primeiroDia.toISOString().split('T')[0];
-    document.getElementById('dataFim').value = ultimoDia.toISOString().split('T')[0];
+    const SLATE = '#334155';
+    const CYAN = '#06b6d4';
+
+    // Evolução Mensal
+    const ctxEv = document.getElementById('chartEvolucao');
+    if (ctxEv) {
+        new Chart(ctxEv.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: {{ evolucao_labels_json|safe }},
+                datasets: [{
+                    label: 'Receitas', data: {{ evolucao_receitas_json|safe }},
+                    borderColor: '#4CAF50', backgroundColor: 'rgba(76,175,80,0.1)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3
+                }, {
+                    label: 'Despesas', data: {{ evolucao_despesas_json|safe }},
+                    borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3
+                }, {
+                    label: 'Lucro', data: {{ evolucao_lucro_json|safe }},
+                    borderColor: CYAN, backgroundColor: 'transparent', tension: 0.4, borderWidth: 2, pointRadius: 3, borderDash: [5,5]
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: true, position: 'top', labels: { usePointStyle: true, padding: 15, font: { size: 11 } } } },
+                scales: {
+                    y: { beginAtZero: true, grid: { borderDash: [5,5] }, ticks: { callback: v => 'R$ ' + v.toLocaleString('pt-BR'), font: { size: 10 } } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    // Distribuição por Categoria
+    const ctxDist = document.getElementById('chartDist');
+    if (ctxDist) {
+        const labels = {{ dist_labels_json|safe }};
+        const values = {{ dist_values_json|safe }};
+        const palette = [CYAN, SLATE, '#f59e0b', '#10b981', '#8b5cf6'];
+        new Chart(ctxDist.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: labels.length ? labels : ['Sem dados'],
+                datasets: [{ data: values.length ? values : [1], backgroundColor: values.length ? palette.slice(0, labels.length) : ['#e5e7eb'], cutout: '65%', borderWidth: 2 }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true, position: 'bottom', labels: { usePointStyle: true, padding: 10, font: { size: 10 } } },
+                    tooltip: { callbacks: { label: ctx => ctx.label + ': R$ ' + ctx.parsed.toLocaleString('pt-BR', {minimumFractionDigits: 2}) } }
+                }
+            }
+        });
+    }
 });
 </script>
 {% endblock %}

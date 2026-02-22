@@ -1,973 +1,362 @@
 {% extends 'mobile/base.html' %}
-{% load static %}
 
-{% block title %}Novo Ticket{% endblock %}
+{% block title %}Novo Chamado - iConnect Mobile{% endblock %}
+{% block bar_title %}Novo Chamado{% endblock %}
+{% block bar_subtitle %}Registre seu atendimento{% endblock %}
+
+{% block bar_back %}
+<a href="{% url 'mobile:mobile_ticket_list' %}" class="icon-btn" style="margin-right:4px;" aria-label="Voltar">
+    <span class="material-symbols-rounded">arrow_back</span>
+</a>
+{% endblock %}
+
+{% block fab %}{% endblock %}
 
 {% block extra_css %}
-<style>
-    .create-ticket-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        margin: -0.5rem -0.5rem 1.5rem -0.5rem;
-        padding: 1.5rem;
-        border-radius: 0 0 20px 20px;
-    }
-    
-    .form-section {
-        background: white;
-        border-radius: 16px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 2px 20px rgba(0,0,0,0.06);
-    }
-    
-    .form-section h6 {
-        color: #2d3748;
-        font-weight: 600;
-        margin-bottom: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .form-floating {
-        margin-bottom: 1.5rem;
-    }
-    
-    .form-floating .form-control {
-        border: 2px solid #e2e8f0;
-        border-radius: 12px;
-        font-size: 1rem;
-        padding-top: 1.5rem;
-        transition: all 0.3s ease;
-    }
-    
-    .form-floating .form-control:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-    
-    .form-floating label {
-        color: #64748b;
-        font-weight: 500;
-    }
-    
-    .form-select {
-        border: 2px solid #e2e8f0;
-        border-radius: 12px;
-        font-size: 1rem;
-        padding: 1rem;
-        transition: all 0.3s ease;
-    }
-    
-    .form-select:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-    
-    .priority-options {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .priority-option {
-        position: relative;
-    }
-    
-    .priority-option input[type="radio"] {
-        position: absolute;
-        opacity: 0;
-        pointer-events: none;
-    }
-    
-    .priority-label {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 1rem 0.5rem;
-        border: 2px solid #e2e8f0;
-        border-radius: 12px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        background: white;
-    }
-    
-    .priority-option input:checked + .priority-label {
-        border-color: #667eea;
-        background: #f7fafc;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-    }
-    
-    .priority-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 0.5rem;
-        color: white;
-        font-size: 1.2rem;
-    }
-    
-    .priority-baixa .priority-icon { background: #10b981; }
-    .priority-media .priority-icon { background: #f59e0b; }
-    .priority-alta .priority-icon { background: #ef4444; }
-    
-    .priority-text {
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: #374151;
-    }
-    
-    .photo-section {
-        background: white;
-        border-radius: 16px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 2px 20px rgba(0,0,0,0.06);
-    }
-    
-    .photo-upload-area {
-        border: 2px dashed #cbd5e0;
-        border-radius: 12px;
-        padding: 2rem;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        background: #f8fafc;
-    }
-    
-    .photo-upload-area:hover {
-        border-color: #667eea;
-        background: #f0f4ff;
-    }
-    
-    .photo-upload-area.dragover {
-        border-color: #667eea;
-        background: #e0e7ff;
-    }
-    
-    .upload-icon {
-        font-size: 3rem;
-        color: #9ca3af;
-        margin-bottom: 1rem;
-    }
-    
-    .upload-text {
-        color: #6b7280;
-        font-size: 1rem;
-        margin-bottom: 0.5rem;
-    }
-    
-    .upload-hint {
-        color: #9ca3af;
-        font-size: 0.875rem;
-    }
-    
-    .photo-preview {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-        gap: 1rem;
-        margin-top: 1rem;
-    }
-    
-    .photo-item {
-        position: relative;
-        aspect-ratio: 1;
-        border-radius: 8px;
-        overflow: hidden;
-        background: #f1f5f9;
-    }
-    
-    .photo-item img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    
-    .photo-remove {
-        position: absolute;
-        top: 0.25rem;
-        right: 0.25rem;
-        width: 24px;
-        height: 24px;
-        background: rgba(239, 68, 68, 0.9);
-        color: white;
-        border: none;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.75rem;
-        cursor: pointer;
-    }
-    
-    .location-section {
-        background: white;
-        border-radius: 16px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 2px 20px rgba(0,0,0,0.06);
-    }
-    
-    .location-button {
-        width: 100%;
-        padding: 1rem;
-        border: 2px dashed #cbd5e0;
-        background: #f8fafc;
-        border-radius: 12px;
-        color: #6b7280;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-    }
-    
-    .location-button:hover {
-        border-color: #667eea;
-        background: #f0f4ff;
-        color: #667eea;
-    }
-    
-    .location-button.active {
-        border-color: #10b981;
-        background: #ecfdf5;
-        color: #059669;
-    }
-    
-    .location-info {
-        margin-top: 1rem;
-        padding: 1rem;
-        background: #f0fdf4;
-        border: 1px solid #bbf7d0;
-        border-radius: 8px;
-        font-size: 0.875rem;
-        color: #166534;
-    }
-    
-    .submit-section {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: white;
-        padding: 1rem;
-        border-top: 1px solid #e2e8f0;
-        box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
-    }
-    
-    .submit-btn {
-        width: 100%;
-        padding: 1rem;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        border-radius: 12px;
-        color: white;
-        font-weight: 600;
-        font-size: 1.1rem;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-    }
-    
-    .submit-btn:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-    }
-    
-    .submit-btn:disabled {
-        opacity: 0.6;
-        transform: none;
-        box-shadow: none;
-    }
-    
-    .loading-spinner {
-        display: inline-block;
-        width: 20px;
-        height: 20px;
-        border: 2px solid rgba(255,255,255,0.3);
-        border-radius: 50%;
-        border-top-color: white;
-        animation: spin 1s ease-in-out infinite;
-    }
-    
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-    
-    .form-validation {
-        margin-top: 0.5rem;
-        font-size: 0.875rem;
-        color: #ef4444;
-    }
-    
-    .form-floating .form-control:invalid {
-        border-color: #ef4444;
-    }
-    
-    .form-floating .form-control:valid {
-        border-color: #10b981;
-    }
-    
-    .quick-templates {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-    }
-    
-    .template-btn {
-        padding: 0.5rem;
-        border: 1px solid #e2e8f0;
-        background: white;
-        border-radius: 8px;
-        font-size: 0.875rem;
-        color: #64748b;
-        transition: all 0.2s ease;
-    }
-    
-    .template-btn:hover {
-        background: #f8fafc;
-        border-color: #cbd5e0;
-        color: #475569;
-    }
-    
-    .voice-input-btn {
-        position: absolute;
-        right: 0.75rem;
-        top: 50%;
-        transform: translateY(-50%);
-        background: none;
-        border: none;
-        color: #9ca3af;
-        font-size: 1.25rem;
-        cursor: pointer;
-        z-index: 10;
-    }
-    
-    .voice-input-btn:hover {
-        color: #667eea;
-    }
-    
-    .voice-input-btn.recording {
-        color: #ef4444;
-        animation: pulse 1s infinite;
-    }
-    
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-    }
-    
-    .character-count {
-        text-align: right;
-        font-size: 0.75rem;
-        color: #9ca3af;
-        margin-top: 0.25rem;
-    }
-    
-    .category-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .category-option {
-        position: relative;
-    }
-    
-    .category-option input[type="radio"] {
-        position: absolute;
-        opacity: 0;
-        pointer-events: none;
-    }
-    
-    .category-label {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 1rem;
-        border: 2px solid #e2e8f0;
-        border-radius: 12px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        background: white;
-        text-align: center;
-    }
-    
-    .category-option input:checked + .category-label {
-        border-color: #667eea;
-        background: #f7fafc;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-    }
-    
-    .category-icon {
-        font-size: 1.5rem;
-        color: #667eea;
-        margin-bottom: 0.5rem;
-    }
-    
-    .category-text {
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: #374151;
-    }
-</style>
+.priority-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.priority-opt { position: relative; }
+.priority-opt input { position: absolute; opacity: 0; pointer-events: none; }
+.priority-label {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 14px 8px; border: 2px solid var(--slate-200); border-radius: var(--radius-sm);
+    cursor: pointer; transition: all .2s; background: #fff; text-align: center;
+}
+.priority-opt input:checked + .priority-label {
+    border-color: var(--cyan-500); background: var(--cyan-50);
+}
+.priority-dot {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; color: #fff;
+}
+.pri-baixa { background: var(--cyan-500); }
+.pri-media { background: var(--amber-500); }
+.pri-alta { background: var(--red-500); }
+.priority-text { font-size: .8rem; font-weight: 600; color: var(--slate-700); }
+
+.category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+.cat-opt { position: relative; }
+.cat-opt input { position: absolute; opacity: 0; pointer-events: none; }
+.cat-label {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 14px 8px; border: 2px solid var(--slate-200); border-radius: var(--radius-sm);
+    cursor: pointer; transition: all .2s; background: #fff; text-align: center;
+}
+.cat-opt input:checked + .cat-label {
+    border-color: var(--cyan-500); background: var(--cyan-50);
+}
+.cat-icon { font-size: 24px; color: var(--cyan-500); }
+.cat-text { font-size: .75rem; font-weight: 600; color: var(--slate-700); }
+
+.photo-area {
+    border: 2px dashed var(--slate-300); border-radius: var(--radius-sm);
+    padding: 24px; text-align: center; cursor: pointer; transition: all .2s;
+    background: var(--slate-50);
+}
+.photo-area:hover { border-color: var(--cyan-500); background: var(--cyan-50); }
+.photo-preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; margin-top: 10px; }
+.photo-thumb { position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; }
+.photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.photo-remove {
+    position: absolute; top: 4px; right: 4px; width: 22px; height: 22px;
+    background: var(--red-500); color: #fff; border: none; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px;
+}
+
+.submit-bar {
+    position: fixed; bottom: calc(72px + var(--safe-bottom)); left: 0; right: 0;
+    background: #fff; padding: 12px 16px; border-top: 1px solid var(--slate-200);
+    box-shadow: 0 -2px 12px rgba(0,0,0,.06); z-index: 50;
+}
 {% endblock %}
 
 {% block content %}
-<div class="create-ticket-header">
-    <h5 class="mb-0">
-        <i class="fas fa-plus-circle me-2"></i>
-        Novo Ticket de Atendimento
-    </h5>
-    <p class="mb-0 opacity-75">Registre um novo chamado para atendimento</p>
-</div>
-
-<form method="post" id="createTicketForm" enctype="multipart/form-data">
+<form method="post" id="ticketForm" enctype="multipart/form-data">
     {% csrf_token %}
-    
-    <!-- Informações Básicas -->
-    <div class="form-section">
-        <h6><i class="fas fa-info-circle"></i> Informações Básicas</h6>
-        
-        <div class="form-floating">
-            <input type="text" 
-                   class="form-control" 
-                   id="titulo" 
-                   name="titulo" 
-                   placeholder="Título do ticket"
-                   required
-                   maxlength="200">
-            <label for="titulo">Título do Problema *</label>
-            <div class="character-count">
-                <span id="tituloCount">0</span>/200
+
+    <!-- Title -->
+    <div class="m-card">
+        <div class="m-card-header">
+            <h3><span class="material-symbols-rounded">edit_note</span> Informações do Chamado</h3>
+        </div>
+        <div class="m-card-body">
+            <div class="form-group">
+                <label class="form-label">Título *</label>
+                <input type="text" name="titulo" class="form-input" placeholder="Ex: Sem conexão com internet"
+                       required maxlength="200" id="tituloInput">
+                <div style="text-align:right; font-size:.7rem; color:var(--slate-400); margin-top:4px;">
+                    <span id="tituloCount">0</span>/200
+                </div>
             </div>
-        </div>
-        
-        <div class="quick-templates">
-            <button type="button" class="template-btn" data-template="Sem conexão com internet">
-                <i class="fas fa-wifi me-1"></i> Sem Internet
-            </button>
-            <button type="button" class="template-btn" data-template="Equipamento não funciona">
-                <i class="fas fa-tools me-1"></i> Equipamento
-            </button>
-            <button type="button" class="template-btn" data-template="Instalação de novo sistema">
-                <i class="fas fa-download me-1"></i> Instalação
-            </button>
-            <button type="button" class="template-btn" data-template="Manutenção preventiva">
-                <i class="fas fa-wrench me-1"></i> Manutenção
-            </button>
-        </div>
-        
-        <div class="form-floating position-relative">
-            <textarea class="form-control" 
-                      id="descricao" 
-                      name="descricao" 
-                      placeholder="Descrição detalhada"
-                      style="height: 120px;"
-                      required
-                      maxlength="1000"></textarea>
-            <label for="descricao">Descrição Detalhada *</label>
-            <button type="button" class="voice-input-btn" id="voiceBtn" title="Gravação de voz">
-                <i class="fas fa-microphone"></i>
-            </button>
-            <div class="character-count">
-                <span id="descricaoCount">0</span>/1000
+
+            <!-- Quick Templates -->
+            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;">
+                <button type="button" class="btn-m btn-outline-m btn-sm-m tpl-btn" data-tpl="Sem conexão com internet">
+                    <span class="material-symbols-rounded">wifi_off</span> Sem Internet
+                </button>
+                <button type="button" class="btn-m btn-outline-m btn-sm-m tpl-btn" data-tpl="Equipamento não funciona">
+                    <span class="material-symbols-rounded">build</span> Equipamento
+                </button>
+                <button type="button" class="btn-m btn-outline-m btn-sm-m tpl-btn" data-tpl="Instalação de novo sistema">
+                    <span class="material-symbols-rounded">install_desktop</span> Instalação
+                </button>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Descrição *</label>
+                <textarea name="descricao" class="form-textarea" placeholder="Descreva o problema em detalhes..."
+                          required maxlength="1000" id="descInput"></textarea>
+                <div style="text-align:right; font-size:.7rem; color:var(--slate-400); margin-top:4px;">
+                    <span id="descCount">0</span>/1000
+                </div>
             </div>
         </div>
     </div>
-    
-    <!-- Categoria -->
-    <div class="form-section">
-        <h6><i class="fas fa-tags"></i> Categoria do Atendimento</h6>
-        
-        <div class="category-grid">
-            {% for categoria in categorias %}
-            <div class="category-option">
-                <input type="radio" 
-                       id="categoria_{{ categoria.id }}" 
-                       name="categoria" 
-                       value="{{ categoria.id }}">
-                <label for="categoria_{{ categoria.id }}" class="category-label">
-                    <div class="category-icon">
-                        <i class="fas fa-{{ categoria.icone|default:'folder' }}"></i>
-                    </div>
-                    <div class="category-text">{{ categoria.nome }}</div>
-                </label>
-            </div>
-            {% endfor %}
+
+    <!-- Category -->
+    {% if categorias %}
+    <div class="m-card">
+        <div class="m-card-header">
+            <h3><span class="material-symbols-rounded">category</span> Categoria</h3>
         </div>
-    </div>
-    
-    <!-- Prioridade -->
-    <div class="form-section">
-        <h6><i class="fas fa-flag"></i> Prioridade</h6>
-        
-        <div class="priority-options">
-            <div class="priority-option priority-baixa">
-                <input type="radio" id="priority_baixa" name="prioridade" value="baixa" checked>
-                <label for="priority_baixa" class="priority-label">
-                    <div class="priority-icon">
-                        <i class="fas fa-arrow-down"></i>
-                    </div>
-                    <div class="priority-text">Baixa</div>
-                </label>
-            </div>
-            
-            <div class="priority-option priority-media">
-                <input type="radio" id="priority_media" name="prioridade" value="media">
-                <label for="priority_media" class="priority-label">
-                    <div class="priority-icon">
-                        <i class="fas fa-minus"></i>
-                    </div>
-                    <div class="priority-text">Média</div>
-                </label>
-            </div>
-            
-            <div class="priority-option priority-alta">
-                <input type="radio" id="priority_alta" name="prioridade" value="alta">
-                <label for="priority_alta" class="priority-label">
-                    <div class="priority-icon">
-                        <i class="fas fa-arrow-up"></i>
-                    </div>
-                    <div class="priority-text">Alta</div>
-                </label>
+        <div class="m-card-body">
+            <div class="category-grid">
+                {% for cat in categorias %}
+                <div class="cat-opt">
+                    <input type="radio" name="categoria" value="{{ cat.id }}" id="cat_{{ cat.id }}">
+                    <label for="cat_{{ cat.id }}" class="cat-label">
+                        <span class="material-symbols-rounded cat-icon">folder</span>
+                        <span class="cat-text">{{ cat.nome }}</span>
+                    </label>
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
-    
-    <!-- Localização -->
-    <div class="location-section">
-        <h6><i class="fas fa-map-marker-alt"></i> Localização do Atendimento</h6>
-        
-        <button type="button" class="location-button" id="getLocationBtn">
-            <i class="fas fa-crosshairs"></i>
-            Obter Localização Atual
-        </button>
-        
-        <div id="locationInfo" class="location-info d-none">
-            <div><strong>Localização capturada:</strong></div>
-            <div id="locationText">Aguardando...</div>
-            <div class="mt-2">
-                <small class="text-muted">
-                    <i class="fas fa-info-circle"></i>
-                    Esta informação ajuda no planejamento da visita técnica
-                </small>
+    {% endif %}
+
+    <!-- Priority -->
+    <div class="m-card">
+        <div class="m-card-header">
+            <h3><span class="material-symbols-rounded">flag</span> Prioridade</h3>
+        </div>
+        <div class="m-card-body">
+            <div class="priority-grid">
+                <div class="priority-opt">
+                    <input type="radio" name="prioridade" value="baixa" id="pri_baixa" checked>
+                    <label for="pri_baixa" class="priority-label">
+                        <div class="priority-dot pri-baixa">
+                            <span class="material-symbols-rounded" style="font-size:18px;">arrow_downward</span>
+                        </div>
+                        <span class="priority-text">Baixa</span>
+                    </label>
+                </div>
+                <div class="priority-opt">
+                    <input type="radio" name="prioridade" value="media" id="pri_media">
+                    <label for="pri_media" class="priority-label">
+                        <div class="priority-dot pri-media">
+                            <span class="material-symbols-rounded" style="font-size:18px;">remove</span>
+                        </div>
+                        <span class="priority-text">Média</span>
+                    </label>
+                </div>
+                <div class="priority-opt">
+                    <input type="radio" name="prioridade" value="alta" id="pri_alta">
+                    <label for="pri_alta" class="priority-label">
+                        <div class="priority-dot pri-alta">
+                            <span class="material-symbols-rounded" style="font-size:18px;">arrow_upward</span>
+                        </div>
+                        <span class="priority-text">Alta</span>
+                    </label>
+                </div>
             </div>
         </div>
-        
-        <input type="hidden" id="latitude" name="latitude">
-        <input type="hidden" id="longitude" name="longitude">
     </div>
-    
-    <!-- Fotos -->
-    <div class="photo-section">
-        <h6><i class="fas fa-camera"></i> Fotos do Problema</h6>
-        
-        <div class="photo-upload-area" id="photoUploadArea">
-            <div class="upload-icon">
-                <i class="fas fa-camera"></i>
-            </div>
-            <div class="upload-text">Adicionar fotos do problema</div>
-            <div class="upload-hint">Toque para selecionar ou arraste as imagens</div>
+
+    <!-- Location -->
+    <div class="m-card">
+        <div class="m-card-header">
+            <h3><span class="material-symbols-rounded">location_on</span> Localização</h3>
         </div>
-        
-        <input type="file" 
-               id="photoInput" 
-               name="photos" 
-               accept="image/*" 
-               capture="environment" 
-               multiple 
-               style="display: none;">
-        
-        <div id="photoPreview" class="photo-preview"></div>
+        <div class="m-card-body">
+            <button type="button" class="btn-m btn-outline-m btn-block" id="locBtn">
+                <span class="material-symbols-rounded">my_location</span> Obter Localização Atual
+            </button>
+            <div id="locInfo" style="display:none; margin-top:10px; padding:10px; background:var(--green-100); border-radius:8px; font-size:.8rem; color:#15803d;">
+                <span class="material-symbols-rounded" style="font-size:16px; vertical-align:middle;">check_circle</span>
+                <span id="locText">Localização capturada</span>
+            </div>
+            <input type="hidden" name="latitude" id="latInput">
+            <input type="hidden" name="longitude" id="lngInput">
+        </div>
     </div>
+
+    <!-- Photos -->
+    <div class="m-card">
+        <div class="m-card-header">
+            <h3><span class="material-symbols-rounded">photo_camera</span> Fotos</h3>
+        </div>
+        <div class="m-card-body">
+            <div class="photo-area" id="photoArea">
+                <span class="material-symbols-rounded" style="font-size:36px; color:var(--slate-400); display:block; margin-bottom:6px;">add_a_photo</span>
+                <div style="font-size:.85rem; color:var(--slate-600); font-weight:500;">Tocar para adicionar fotos</div>
+                <div style="font-size:.75rem; color:var(--slate-400);">Máximo 5 fotos, 10MB cada</div>
+            </div>
+            <input type="file" id="photoInput" name="photos" accept="image/*" capture="environment" multiple style="display:none;">
+            <div class="photo-preview" id="photoPreview"></div>
+        </div>
+    </div>
+
+    <!-- Spacer for submit bar -->
+    <div style="height:80px;"></div>
 </form>
 
-<!-- Barra de envio fixa -->
-<div class="submit-section">
-    <button type="submit" form="createTicketForm" class="submit-btn" id="submitBtn">
-        <span class="btn-text">
-            <i class="fas fa-paper-plane"></i>
-            Criar Ticket
-        </span>
-        <span class="btn-loading d-none">
-            <span class="loading-spinner"></span>
-            Criando...
+<!-- Fixed Submit Bar -->
+<div class="submit-bar">
+    <button type="submit" form="ticketForm" class="btn-m btn-cyan-m btn-block" id="submitBtn">
+        <span class="material-symbols-rounded">send</span>
+        <span id="btnText">Criar Chamado</span>
+        <span id="btnLoading" style="display:none;">
+            <span class="spinner" style="width:18px; height:18px; border-width:2px;"></span> Criando...
         </span>
     </button>
 </div>
 
-<!-- Espaçador para a barra fixa -->
-<div style="height: 100px;"></div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+const tituloInput = document.getElementById('tituloInput');
+const descInput = document.getElementById('descInput');
 let selectedPhotos = [];
-let currentLocation = null;
 
-// Contadores de caracteres
-document.getElementById('titulo').addEventListener('input', function() {
-    document.getElementById('tituloCount').textContent = this.value.length;
-});
+// Character counts
+tituloInput.addEventListener('input', () => document.getElementById('tituloCount').textContent = tituloInput.value.length);
+descInput.addEventListener('input', () => document.getElementById('descCount').textContent = descInput.value.length);
 
-document.getElementById('descricao').addEventListener('input', function() {
-    document.getElementById('descricaoCount').textContent = this.value.length;
-});
-
-// Templates rápidos
-document.querySelectorAll('.template-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const template = this.dataset.template;
-        document.getElementById('titulo').value = template;
-        document.getElementById('tituloCount').textContent = template.length;
-        
-        // Focar na descrição
-        document.getElementById('descricao').focus();
+// Quick templates
+document.querySelectorAll('.tpl-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        tituloInput.value = btn.dataset.tpl;
+        document.getElementById('tituloCount').textContent = tituloInput.value.length;
+        descInput.focus();
     });
 });
 
-// Gravação de voz (se suportado)
-if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = 'pt-BR';
+// Geolocation
+document.getElementById('locBtn').addEventListener('click', function() {
+    if (!navigator.geolocation) { alert('Geolocalização não suportada'); return; }
+    this.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;"></span> Obtendo...';
+    this.disabled = true;
+    navigator.geolocation.getCurrentPosition(pos => {
+        document.getElementById('latInput').value = pos.coords.latitude;
+        document.getElementById('lngInput').value = pos.coords.longitude;
+        document.getElementById('locText').textContent = `Lat: ${pos.coords.latitude.toFixed(5)}, Lon: ${pos.coords.longitude.toFixed(5)} (±${Math.round(pos.coords.accuracy)}m)`;
+        document.getElementById('locInfo').style.display = 'block';
+        this.innerHTML = '<span class="material-symbols-rounded">check</span> Localização Capturada';
+        this.style.borderColor = 'var(--green-500)';
+        this.style.color = 'var(--green-500)';
+        if (navigator.vibrate) navigator.vibrate(100);
+    }, () => {
+        alert('Não foi possível obter a localização');
+        this.innerHTML = '<span class="material-symbols-rounded">my_location</span> Obter Localização Atual';
+        this.disabled = false;
+    }, { enableHighAccuracy: true, timeout: 10000 });
+});
 
-    document.getElementById('voiceBtn').addEventListener('click', function() {
-        const btn = this;
-        const icon = btn.querySelector('i');
-        
-        if (btn.classList.contains('recording')) {
-            recognition.stop();
-            return;
-        }
-        
-        btn.classList.add('recording');
-        icon.className = 'fas fa-stop';
-        
-        recognition.start();
-        
-        recognition.onresult = function(event) {
-            const transcript = event.results[0][0].transcript;
-            const descricaoField = document.getElementById('descricao');
-            
-            if (descricaoField.value) {
-                descricaoField.value += ' ' + transcript;
-            } else {
-                descricaoField.value = transcript;
-            }
-            
-            // Atualizar contador
-            document.getElementById('descricaoCount').textContent = descricaoField.value.length;
-        };
-        
-        recognition.onend = function() {
-            btn.classList.remove('recording');
-            icon.className = 'fas fa-microphone';
-        };
-        
-        recognition.onerror = function() {
-            btn.classList.remove('recording');
-            icon.className = 'fas fa-microphone';
-            alert('Erro na gravação de voz');
-        };
+// Photo upload
+document.getElementById('photoArea').addEventListener('click', () => document.getElementById('photoInput').click());
+document.getElementById('photoInput').addEventListener('change', e => {
+    [...e.target.files].forEach(f => {
+        if (!f.type.startsWith('image/')) return;
+        if (selectedPhotos.length >= 5) { alert('Máximo 5 fotos'); return; }
+        if (f.size > 10 * 1024 * 1024) { alert('Arquivo muito grande (max 10MB)'); return; }
+        selectedPhotos.push(f);
     });
-} else {
-    document.getElementById('voiceBtn').style.display = 'none';
+    renderPhotos();
+});
+
+function renderPhotos() {
+    const preview = document.getElementById('photoPreview');
+    preview.innerHTML = '';
+    selectedPhotos.forEach((f, i) => {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const div = document.createElement('div');
+            div.className = 'photo-thumb';
+            div.innerHTML = `<img src="${e.target.result}" alt="Foto ${i+1}">
+                <button type="button" class="photo-remove" onclick="removePhoto(${i})">
+                    <span class="material-symbols-rounded" style="font-size:14px;">close</span>
+                </button>`;
+            preview.appendChild(div);
+        };
+        reader.readAsDataURL(f);
+    });
 }
+function removePhoto(i) { selectedPhotos.splice(i, 1); renderPhotos(); }
 
-// Geolocalização
-document.getElementById('getLocationBtn').addEventListener('click', function() {
-    const btn = this;
-    const originalContent = btn.innerHTML;
-    
-    btn.innerHTML = '<span class="loading-spinner"></span> Obtendo localização...';
-    btn.disabled = true;
-    
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            function(position) {
-                currentLocation = {
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude
-                };
-                
-                document.getElementById('latitude').value = currentLocation.latitude;
-                document.getElementById('longitude').value = currentLocation.longitude;
-                
-                // Mostrar informações da localização
-                const locationInfo = document.getElementById('locationInfo');
-                const locationText = document.getElementById('locationText');
-                
-                locationText.innerHTML = `
-                    Latitude: ${currentLocation.latitude.toFixed(6)}<br>
-                    Longitude: ${currentLocation.longitude.toFixed(6)}<br>
-                    <small class="text-muted">Precisão: ±${Math.round(position.coords.accuracy)}m</small>
-                `;
-                
-                locationInfo.classList.remove('d-none');
-                btn.classList.add('active');
-                btn.innerHTML = '<i class="fas fa-check"></i> Localização Capturada';
-                
-                // Vibração de feedback
-                if (navigator.vibrate) {
-                    navigator.vibrate(100);
-                }
-            },
-            function(error) {
-                console.error('Erro de geolocalização:', error);
-                alert('Não foi possível obter a localização. Verifique as permissões.');
-                btn.innerHTML = originalContent;
-                btn.disabled = false;
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 300000
-            }
-        );
-    } else {
-        alert('Geolocalização não é suportada neste dispositivo');
-        btn.innerHTML = originalContent;
-        btn.disabled = false;
-    }
-});
-
-// Upload de fotos
-document.getElementById('photoUploadArea').addEventListener('click', function() {
-    document.getElementById('photoInput').click();
-});
-
-// Drag and drop para fotos
-const uploadArea = document.getElementById('photoUploadArea');
-
-['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    uploadArea.addEventListener(eventName, preventDefaults, false);
-});
-
-function preventDefaults(e) {
+// Form submit
+document.getElementById('ticketForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    e.stopPropagation();
-}
+    const titulo = tituloInput.value.trim();
+    const desc = descInput.value.trim();
+    if (!titulo || !desc) { alert('Preencha título e descrição'); return; }
 
-['dragenter', 'dragover'].forEach(eventName => {
-    uploadArea.addEventListener(eventName, highlight, false);
-});
-
-['dragleave', 'drop'].forEach(eventName => {
-    uploadArea.addEventListener(eventName, unhighlight, false);
-});
-
-function highlight() {
-    uploadArea.classList.add('dragover');
-}
-
-function unhighlight() {
-    uploadArea.classList.remove('dragover');
-}
-
-uploadArea.addEventListener('drop', handleDrop, false);
-
-function handleDrop(e) {
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    
-    handleFiles(files);
-}
-
-document.getElementById('photoInput').addEventListener('change', function(e) {
-    handleFiles(e.target.files);
-});
-
-function handleFiles(files) {
-    [...files].forEach(file => {
-        if (file.type.startsWith('image/')) {
-            if (selectedPhotos.length < 5) { // Limite de 5 fotos
-                selectedPhotos.push(file);
-                displayPhoto(file);
-            } else {
-                alert('Máximo de 5 fotos permitido');
-            }
-        }
-    });
-}
-
-function displayPhoto(file) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const photoPreview = document.getElementById('photoPreview');
-        const photoItem = document.createElement('div');
-        photoItem.className = 'photo-item';
-        photoItem.innerHTML = `
-            <img src="${e.target.result}" alt="Foto">
-            <button type="button" class="photo-remove" onclick="removePhoto(${selectedPhotos.length - 1})">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-        photoPreview.appendChild(photoItem);
-    };
-    reader.readAsDataURL(file);
-}
-
-function removePhoto(index) {
-    selectedPhotos.splice(index, 1);
-    updatePhotoPreview();
-}
-
-function updatePhotoPreview() {
-    const photoPreview = document.getElementById('photoPreview');
-    photoPreview.innerHTML = '';
-    selectedPhotos.forEach((file, index) => {
-        displayPhoto(file);
-    });
-}
-
-// Envio do formulário
-document.getElementById('createTicketForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
     const btn = document.getElementById('submitBtn');
-    const btnText = btn.querySelector('.btn-text');
-    const btnLoading = btn.querySelector('.btn-loading');
-    
-    // Validação básica
-    const titulo = document.getElementById('titulo').value.trim();
-    const descricao = document.getElementById('descricao').value.trim();
-    
-    if (!titulo || !descricao) {
-        alert('Por favor, preencha o título e a descrição');
-        return;
-    }
-    
-    // Mostrar loading
-    btnText.classList.add('d-none');
-    btnLoading.classList.remove('d-none');
+    document.getElementById('btnText').style.display = 'none';
+    document.getElementById('btnLoading').style.display = 'inline-flex';
     btn.disabled = true;
-    
-    // Preparar FormData
-    const formData = new FormData(this);
-    
-    // Adicionar fotos
-    selectedPhotos.forEach((file, index) => {
-        formData.append(`photo_${index}`, file);
-    });
-    
-    // Enviar formulário
-    fetch(this.action || window.location.href, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => {
-        if (response.ok) {
-            return response.json();
-        }
-        throw new Error('Erro na resposta do servidor');
-    })
-    .then(data => {
-        if (data.success) {
-            // Sucesso - redirecionar
-            window.location.href = data.redirect_url || '/mobile/tickets/';
-        } else {
-            throw new Error(data.error || 'Erro desconhecido');
-        }
-    })
-    .catch(error => {
-        console.error('Erro:', error);
-        alert('Erro ao criar ticket: ' + error.message);
-        
-        // Restaurar botão
-        btnText.classList.remove('d-none');
-        btnLoading.classList.add('d-none');
-        btn.disabled = false;
-    });
+
+    const fd = new FormData(this);
+    selectedPhotos.forEach((f, i) => fd.append(`photo_${i}`, f));
+
+    fetch(window.location.href, { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                localStorage.removeItem('ticket_draft');
+                window.location.href = data.redirect_url || '{% url "mobile:mobile_ticket_list" %}';
+            } else {
+                throw new Error(data.error || 'Erro ao criar chamado');
+            }
+        })
+        .catch(err => {
+            alert(err.message);
+            document.getElementById('btnText').style.display = '';
+            document.getElementById('btnLoading').style.display = 'none';
+            btn.disabled = false;
+        });
 });
 
-// Auto-save do formulário
-let saveTimeout;
-function autoSave() {
-    clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(() => {
-        const formData = {
-            titulo: document.getElementById('titulo').value,
-            descricao: document.getElementById('descricao').value,
-            prioridade: document.querySelector('input[name="prioridade"]:checked')?.value,
-            categoria: document.querySelector('input[name="categoria"]:checked')?.value
-        };
-        
-        localStorage.setItem('ticket_draft', JSON.stringify(formData));
+// Auto-save draft
+let saveTimer;
+function saveDraft() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+        localStorage.setItem('ticket_draft', JSON.stringify({
+            titulo: tituloInput.value,
+            descricao: descInput.value,
+            prioridade: document.querySelector('input[name=prioridade]:checked')?.value
+        }));
     }, 1000);
 }
+tituloInput.addEventListener('input', saveDraft);
+descInput.addEventListener('input', saveDraft);
 
-// Eventos para auto-save
-document.getElementById('titulo').addEventListener('input', autoSave);
-document.getElementById('descricao').addEventListener('input', autoSave);
-document.querySelectorAll('input[name="prioridade"], input[name="categoria"]').forEach(input => {
-    input.addEventListener('change', autoSave);
-});
-
-// Restaurar rascunho
-function restoreDraft() {
-    const draft = localStorage.getItem('ticket_draft');
-    if (draft) {
-        try {
-            const data = JSON.parse(draft);
-            
-            if (data.titulo) {
-                document.getElementById('titulo').value = data.titulo;
-                document.getElementById('tituloCount').textContent = data.titulo.length;
-            }
-            
-            if (data.descricao) {
-                document.getElementById('descricao').value = data.descricao;
-                document.getElementById('descricaoCount').textContent = data.descricao.length;
-            }
-            
-            if (data.prioridade) {
-                document.getElementById(`priority_${data.prioridade}`).checked = true;
-            }
-            
-            if (data.categoria) {
-                document.getElementById(`categoria_${data.categoria}`).checked = true;
-            }
-            
-            // Mostrar notificação de rascunho restaurado
-            setTimeout(() => {
-                if (confirm('Rascunho encontrado. Deseja continuar de onde parou?')) {
-                    // Já restaurou acima
-                } else {
-                    localStorage.removeItem('ticket_draft');
-                    document.getElementById('createTicketForm').reset();
-                }
-            }, 500);
-        } catch (e) {
+// Restore draft
+const draft = localStorage.getItem('ticket_draft');
+if (draft) {
+    try {
+        const d = JSON.parse(draft);
+        if (d.titulo && confirm('Rascunho encontrado. Restaurar?')) {
+            tituloInput.value = d.titulo || '';
+            descInput.value = d.descricao || '';
+            document.getElementById('tituloCount').textContent = (d.titulo || '').length;
+            document.getElementById('descCount').textContent = (d.descricao || '').length;
+            if (d.prioridade) { const el = document.getElementById('pri_' + d.prioridade); if (el) el.checked = true; }
+        } else {
             localStorage.removeItem('ticket_draft');
         }
-    }
+    } catch(e) { localStorage.removeItem('ticket_draft'); }
 }
-
-// Restaurar rascunho ao carregar
-document.addEventListener('DOMContentLoaded', restoreDraft);
-
-// Limpar rascunho após envio bem-sucedido
-document.getElementById('createTicketForm').addEventListener('submit', function() {
-    localStorage.removeItem('ticket_draft');
-});
 </script>
 {% endblock %}

@@ -1,331 +1,256 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Advanced Reports - iConnect{% endblock %}
-
-{% block extra_css %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-.report-card {
-    border-radius: 15px;
-    transition: transform 0.2s;
-    cursor: pointer;
-}
-
-.report-card:hover {
-    transform: translateY(-5px);
-}
-
-.report-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    margin: 0 auto 15px;
-}
-</style>
-{% endblock %}
+{% block title %}Relatórios Avançados - iConnect{% endblock %}
+{% block page_title %}Relatórios{% endblock %}
+{% block breadcrumb_title %}Relatórios Avançados{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card mb-4">
-                <div class="card-header pb-0">
-                    <div class="d-flex align-items-center">
-                        <i class="material-icons text-lg me-2">assessment</i>
-                        <h6>📊 Advanced Reports</h6>
-                        <div class="ms-auto">
-                            <button class="btn btn-outline-primary btn-sm me-2" id="scheduleReport">
-                                <i class="material-icons text-sm">schedule</i> Agendar
-                            </button>
-                            <button class="btn btn-outline-success btn-sm" id="exportAll">
-                                <i class="material-icons text-sm">download</i> Exportar
-                            </button>
-                        </div>
+<!-- ===== HEADER ===== -->
+<div class="row">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Relatórios Avançados</h3>
+            <p class="mb-0 text-sm">Geração e análise de relatórios com dados em tempo real</p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+        <a href="{% url 'dashboard:generate_report' %}" class="btn btn-sm bg-gradient-primary mb-0 me-2">
+            <i class="material-symbols-rounded text-sm me-1">add</i> Novo Relatório
+        </a>
+        <a href="{% url 'dashboard:custom_reports' %}" class="btn btn-outline-primary btn-sm mb-0">
+            <i class="material-symbols-rounded text-sm me-1">tune</i> Customizado
+        </a>
+    </div>
+</div>
+
+<!-- ===== KPI CARDS ===== -->
+<div class="row mt-4">
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Relatórios Gerados</p>
+                        <h4 class="mb-0">{{ total_reports|default:"0" }}</h4>
                     </div>
-                    <p class="text-sm mb-0 mt-2">
-                        Relatórios avançados com análise de dados usando pandas e numpy
-                    </p>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">description</i>
+                    </div>
                 </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Total <span class="text-primary font-weight-bolder">acumulado</span></p>
             </div>
         </div>
     </div>
-
-    <!-- Report Categories -->
-    <div class="row">
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card report-card h-100" data-report="performance">
-                <div class="card-body text-center">
-                    <div class="report-icon bg-gradient-primary text-white">
-                        <i class="material-icons">speed</i>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Agendados</p>
+                        <h4 class="mb-0">{{ scheduled_reports|default:"0" }}</h4>
                     </div>
-                    <h6>Performance Report</h6>
-                    <p class="text-sm text-secondary">Análise de performance da equipe e tempos de resposta</p>
-                    <div class="mt-3">
-                        <button class="btn btn-sm btn-primary generate-report" data-type="performance">
-                            Gerar Relatório
-                        </button>
+                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">schedule</i>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card report-card h-100" data-report="customer">
-                <div class="card-body text-center">
-                    <div class="report-icon bg-gradient-success text-white">
-                        <i class="material-icons">person</i>
-                    </div>
-                    <h6>Customer Analytics</h6>
-                    <p class="text-sm text-secondary">Satisfação do cliente e tendências de atendimento</p>
-                    <div class="mt-3">
-                        <button class="btn btn-sm btn-success generate-report" data-type="customer">
-                            Gerar Relatório
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card report-card h-100" data-report="sla">
-                <div class="card-body text-center">
-                    <div class="report-icon bg-gradient-warning text-white">
-                        <i class="material-icons">timer</i>
-                    </div>
-                    <h6>SLA Compliance</h6>
-                    <p class="text-sm text-secondary">Cumprimento de SLA e análise de prazos</p>
-                    <div class="mt-3">
-                        <button class="btn btn-sm btn-warning generate-report" data-type="sla">
-                            Gerar Relatório
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card report-card h-100" data-report="trends">
-                <div class="card-body text-center">
-                    <div class="report-icon bg-gradient-info text-white">
-                        <i class="material-icons">trending_up</i>
-                    </div>
-                    <h6>Trend Analysis</h6>
-                    <p class="text-sm text-secondary">Análise de tendências e previsões</p>
-                    <div class="mt-3">
-                        <button class="btn btn-sm btn-info generate-report" data-type="trends">
-                            Gerar Relatório
-                        </button>
-                    </div>
-                </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Geração <span class="text-info font-weight-bolder">automática</span></p>
             </div>
         </div>
     </div>
-
-    <!-- Quick Stats -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header pb-0">
-                    <h6>⚡ Estatísticas Rápidas</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3 text-center">
-                            <h4 class="text-primary">{{ total_reports|default:"0" }}</h4>
-                            <p class="text-sm text-secondary mb-0">Relatórios Gerados</p>
-                        </div>
-                        <div class="col-md-3 text-center">
-                            <h4 class="text-success">{{ scheduled_reports|default:"5" }}</h4>
-                            <p class="text-sm text-secondary mb-0">Relatórios Agendados</p>
-                        </div>
-                        <div class="col-md-3 text-center">
-                            <h4 class="text-info">{{ avg_generation_time|default:"2.3" }}s</h4>
-                            <p class="text-sm text-secondary mb-0">Tempo Médio Geração</p>
-                        </div>
-                        <div class="col-md-3 text-center">
-                            <h4 class="text-warning">{{ data_sources|default:"12" }}</h4>
-                            <p class="text-sm text-secondary mb-0">Fontes de Dados</p>
-                        </div>
+    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Tempo Médio</p>
+                        <h4 class="mb-0">{{ avg_generation_time|default:"0" }}s</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">speed</i>
                     </div>
                 </div>
             </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">De <span class="text-success font-weight-bolder">geração</span></p>
+            </div>
         </div>
     </div>
-
-    <!-- Recent Reports -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header pb-0">
-                    <h6>📋 Relatórios Recentes</h6>
-                </div>
-                <div class="card-body px-0 pt-0 pb-2">
-                    <div class="table-responsive p-0">
-                        <table class="table align-items-center mb-0">
-                            <thead>
-                                <tr>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Relatório</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Tipo</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Gerado em</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
-                                    <th class="text-secondary opacity-7">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>
-                                        <div class="d-flex px-2 py-1">
-                                            <div class="d-flex flex-column justify-content-center">
-                                                <h6 class="mb-0 text-sm">Performance Semanal</h6>
-                                                <p class="text-xs text-secondary mb-0">Análise de performance da equipe</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-sm bg-gradient-primary">Performance</span>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="text-secondary text-xs font-weight-bold">Hoje, 14:30</span>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="badge badge-sm bg-gradient-success">Pronto</span>
-                                    </td>
-                                    <td class="align-middle">
-                                        <div class="d-flex">
-                                            <button class="btn btn-sm btn-outline-info me-1" title="Visualizar">
-                                                <i class="material-icons text-sm">visibility</i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-primary me-1" title="Download">
-                                                <i class="material-icons text-sm">download</i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-secondary" title="Compartilhar">
-                                                <i class="material-icons text-sm">share</i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                
-                                <tr>
-                                    <td>
-                                        <div class="d-flex px-2 py-1">
-                                            <div class="d-flex flex-column justify-content-center">
-                                                <h6 class="mb-0 text-sm">Satisfação Cliente</h6>
-                                                <p class="text-xs text-secondary mb-0">NPS e feedbacks do mês</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-sm bg-gradient-success">Customer</span>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="text-secondary text-xs font-weight-bold">Ontem, 16:45</span>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="badge badge-sm bg-gradient-success">Pronto</span>
-                                    </td>
-                                    <td class="align-middle">
-                                        <div class="d-flex">
-                                            <button class="btn btn-sm btn-outline-info me-1" title="Visualizar">
-                                                <i class="material-icons text-sm">visibility</i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-primary me-1" title="Download">
-                                                <i class="material-icons text-sm">download</i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-secondary" title="Compartilhar">
-                                                <i class="material-icons text-sm">share</i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                
-                                <tr>
-                                    <td>
-                                        <div class="d-flex px-2 py-1">
-                                            <div class="d-flex flex-column justify-content-center">
-                                                <h6 class="mb-0 text-sm">Compliance SLA</h6>
-                                                <p class="text-xs text-secondary mb-0">Cumprimento de prazos</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-sm bg-gradient-warning">SLA</span>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="text-secondary text-xs font-weight-bold">02/09, 09:15</span>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <span class="badge badge-sm bg-gradient-warning">Processando</span>
-                                    </td>
-                                    <td class="align-middle">
-                                        <div class="d-flex">
-                                            <button class="btn btn-sm btn-outline-secondary me-1" title="Aguardando">
-                                                <i class="material-icons text-sm">hourglass_empty</i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-danger" title="Cancelar">
-                                                <i class="material-icons text-sm">cancel</i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+    <div class="col-xl col-sm-6">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Fontes de Dados</p>
+                        <h4 class="mb-0">{{ data_sources|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-dark shadow-dark text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">storage</i>
                     </div>
                 </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Dados <span class="text-dark font-weight-bolder">integrados</span></p>
             </div>
         </div>
     </div>
 </div>
 
+<!-- ===== TIPOS DE RELATÓRIOS ===== -->
+<div class="row mt-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center p-4">
+                <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary text-center border-radius-lg mx-auto mb-3">
+                    <i class="material-symbols-rounded opacity-10">speed</i>
+                </div>
+                <h6 class="mb-1">Performance</h6>
+                <p class="text-xs text-secondary mb-3">Análise de performance da equipe e tempos de resposta</p>
+                <button class="btn btn-sm bg-gradient-primary mb-0 generate-report" data-type="performance">
+                    Gerar Relatório
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center p-4">
+                <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-lg mx-auto mb-3">
+                    <i class="material-symbols-rounded opacity-10">person</i>
+                </div>
+                <h6 class="mb-1">Clientes</h6>
+                <p class="text-xs text-secondary mb-3">Satisfação do cliente e tendências de atendimento</p>
+                <button class="btn btn-sm bg-gradient-success mb-0 generate-report" data-type="customer">
+                    Gerar Relatório
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center p-4">
+                <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-lg mx-auto mb-3">
+                    <i class="material-symbols-rounded opacity-10">timer</i>
+                </div>
+                <h6 class="mb-1">SLA Compliance</h6>
+                <p class="text-xs text-secondary mb-3">Cumprimento de SLA e análise de prazos</p>
+                <button class="btn btn-sm bg-gradient-warning mb-0 generate-report" data-type="sla">
+                    Gerar Relatório
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center p-4">
+                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-lg mx-auto mb-3">
+                    <i class="material-symbols-rounded opacity-10">trending_up</i>
+                </div>
+                <h6 class="mb-1">Tendências</h6>
+                <p class="text-xs text-secondary mb-3">Análise de tendências e previsões</p>
+                <button class="btn btn-sm bg-gradient-info mb-0 generate-report" data-type="trends">
+                    Gerar Relatório
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== RELATÓRIOS RECENTES ===== -->
+<div class="row mt-2">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-4 pb-3">
+                    <h6 class="text-white text-capitalize ps-3 mb-0">Relatórios Recentes</h6>
+                </div>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Relatório</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Tipo</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Gerado em</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                <th class="text-secondary opacity-7"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for relatorio in relatorios_recentes %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="icon icon-sm icon-shape bg-gradient-primary shadow text-center border-radius-md me-2">
+                                            <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">description</i>
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ relatorio.nome }}</h6>
+                                            <p class="text-xs text-secondary mb-0">{{ relatorio.get_tipo_display|default:relatorio.tipo }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-sm bg-gradient-info">{{ relatorio.get_tipo_display|default:relatorio.tipo }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">{{ relatorio.gerado_em|date:"d/m/Y H:i" }}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="badge badge-sm bg-gradient-success">Pronto</span>
+                                </td>
+                                <td class="align-middle">
+                                    <a href="#" class="text-secondary font-weight-bold text-xs" data-bs-toggle="tooltip" title="Ações">
+                                        <i class="material-symbols-rounded">more_vert</i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    <i class="material-symbols-rounded opacity-5 d-block mb-2" style="font-size:48px">description</i>
+                                    <p class="text-sm text-muted mb-0">Nenhum relatório gerado ainda</p>
+                                    <a href="{% url 'dashboard:generate_report' %}" class="btn btn-sm bg-gradient-primary mt-3">Gerar Primeiro Relatório</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Event listeners para gerar relatórios
-    document.querySelectorAll('.generate-report').forEach(button => {
-        button.addEventListener('click', function() {
+    document.querySelectorAll('.generate-report').forEach(btn => {
+        btn.addEventListener('click', function() {
             const type = this.dataset.type;
-            const originalText = this.innerHTML;
-            
-            this.innerHTML = '<i class="material-icons text-sm">hourglass_empty</i> Gerando...';
+            const original = this.innerHTML;
+            this.innerHTML = '<i class="material-symbols-rounded text-sm me-1">hourglass_empty</i> Gerando...';
             this.disabled = true;
-            
-            // Simular geração de relatório
             setTimeout(() => {
-                this.innerHTML = '<i class="material-icons text-sm">check</i> Concluído';
-                this.classList.remove('btn-primary', 'btn-success', 'btn-warning', 'btn-info');
-                this.classList.add('btn-success');
-                
+                this.innerHTML = '<i class="material-symbols-rounded text-sm me-1">check</i> Concluído';
+                this.className = 'btn btn-sm bg-gradient-success mb-0';
                 setTimeout(() => {
-                    this.innerHTML = originalText;
+                    this.innerHTML = original;
                     this.disabled = false;
-                    this.classList.remove('btn-success');
-                    this.classList.add(`btn-${type === 'performance' ? 'primary' : type === 'customer' ? 'success' : type === 'sla' ? 'warning' : 'info'}`);
+                    this.className = 'btn btn-sm bg-gradient-' + (type === 'performance' ? 'primary' : type === 'customer' ? 'success' : type === 'sla' ? 'warning' : 'info') + ' mb-0 generate-report';
                 }, 2000);
-                
-                alert(`Relatório ${type} gerado com sucesso! Verifique a tabela de relatórios recentes.`);
-            }, 3000);
+            }, 2000);
         });
-    });
-    
-    // Event listener para agendar relatório
-    document.getElementById('scheduleReport').addEventListener('click', function() {
-        alert('Funcionalidade de agendamento será implementada em breve!');
-    });
-    
-    // Event listener para exportar todos
-    document.getElementById('exportAll').addEventListener('click', function() {
-        const originalText = this.innerHTML;
-        this.innerHTML = '<i class="material-icons text-sm">downloading</i> Exportando...';
-        this.disabled = true;
-        
-        setTimeout(() => {
-            this.innerHTML = originalText;
-            this.disabled = false;
-            alert('Todos os relatórios foram exportados com sucesso!');
-        }, 2000);
     });
 });
 </script>

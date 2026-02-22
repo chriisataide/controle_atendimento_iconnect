@@ -2,570 +2,164 @@
 {% load static %}
 
 {% block title %}Configurações do Chatbot - iConnect{% endblock %}
-
-{% block extra_css %}
-<style>
-  .chatbot-settings-container {
-    margin-bottom: 2rem;
-    padding: 1.5rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 15px;
-    border: none;
-    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .chatbot-settings-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 1px, transparent 1px),
-                radial-gradient(circle at 75% 75%, rgba(255,255,255,0.1) 1px, transparent 1px),
-                radial-gradient(circle at 50% 10%, rgba(255,255,255,0.08) 0.5px, transparent 0.5px);
-    background-size: 100px 100px, 100px 100px, 100px 100px;
-    opacity: 0.3;
-    z-index: 0;
-  }
-
-  .chatbot-settings-container h6 {
-    color: white;
-    font-weight: 600;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    position: relative;
-    z-index: 1;
-    margin-bottom: 0;
-  }
-
-  .settings-section {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-top: 1rem;
-    position: relative;
-    z-index: 1;
-  }
-
-  .bot-preview {
-    background: #f8f9fa;
-    border-radius: 12px;
-    padding: 1.5rem;
-    border: 1px solid #e9ecef;
-    margin-bottom: 1rem;
-  }
-
-  .bot-avatar {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: #667eea;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-  }
-
-  .response-template {
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-  }
-
-  .response-template .template-header {
-    display: flex;
-    justify-content: between;
-    align-items: center;
-    margin-bottom: 0.5rem;
-  }
-
-  .response-template .template-title {
-    font-weight: 600;
-    color: #333;
-    margin: 0;
-  }
-
-  .response-template .template-content {
-    color: #666;
-    font-size: 0.9rem;
-    margin: 0;
-  }
-
-  .knowledge-base-item {
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 1rem;
-    margin-bottom: 0.75rem;
-    transition: all 0.2s ease;
-  }
-
-  .knowledge-base-item:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    border-color: #667eea;
-  }
-
-  .knowledge-base-item .kb-title {
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 0.5rem;
-  }
-
-  .knowledge-base-item .kb-content {
-    color: #666;
-    font-size: 0.9rem;
-    margin: 0;
-  }
-
-  .switch-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-  }
-
-  .switch-info h6 {
-    color: #333;
-    margin: 0 0 0.25rem 0;
-    font-weight: 600;
-  }
-
-  .switch-info p {
-    color: #666;
-    margin: 0;
-    font-size: 0.9rem;
-  }
-
-  .performance-metric {
-    text-align: center;
-    padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 8px;
-    border: 1px solid #dee2e6;
-  }
-
-  .metric-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #667eea;
-    margin-bottom: 0.25rem;
-  }
-
-  .metric-label {
-    color: #666;
-    font-size: 0.9rem;
-    margin: 0;
-  }
-
-  .training-status {
-    padding: 0.75rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-  }
-
-  .training-status.success {
-    background: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-  }
-
-  .training-status.warning {
-    background: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeaa7;
-  }
-
-  .training-status.error {
-    background: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-  }
-</style>
-{% endblock %}
+{% block page_title %}Chatbot{% endblock %}
+{% block breadcrumb_title %}Configurações do Chatbot{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-2">
-  <!-- Page Header -->
-  <div class="ms-3">
-    <h3 class="mb-0 h4 font-weight-bolder">Configurações do Chatbot</h3>
-    <p class="mb-4">Configure e gerencie o assistente virtual inteligente do iConnect</p>
-  </div>
-
-  <div class="row">
-    <div class="col-12">
-      <div class="card my-4">
-        <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-          <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
-            <h6 class="text-white text-capitalize ps-3">
-              <i class="material-symbols-rounded me-2">smart_toy</i>
-              Configurações do Assistente Virtual
-            </h6>
-          </div>
+<!-- ===== HEADER ===== -->
+<div class="row">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Configurações do Chatbot</h3>
+            <p class="mb-0 text-sm">Configure o comportamento, personalidade e integrações do chatbot IA</p>
         </div>
-        
-        <div class="card-body">
-          <div class="chatbot-settings-container">
-            <h6 class="mb-0">
-              <i class="material-symbols-rounded me-2">settings</i>
-              Configuração do Chatbot iConnect
-            </h6>
-            
-            <div class="settings-section">
-              <form method="post" id="chatbotSettingsForm">
-                {% csrf_token %}
-                
-                <!-- Status e Ativação -->
-                <div class="row mb-4">
-                  <div class="col-12">
-                    <h6 class="text-primary mb-3">
-                      <i class="material-symbols-rounded me-2">power_settings_new</i>
-                      Status e Ativação
-                    </h6>
-                  </div>
-                  <div class="col-12">
-                    <div class="switch-container">
-                      <div class="switch-info">
-                        <h6>Chatbot Ativo</h6>
-                        <p>Ativar ou desativar o assistente virtual em todo o sistema</p>
-                      </div>
-                      <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" name="is_active" id="botActive" checked>
-                        <label class="form-check-label" for="botActive"></label>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="switch-container">
-                      <div class="switch-info">
-                        <h6>Modo Automático</h6>
-                        <p>Responder automaticamente perguntas frequentes</p>
-                      </div>
-                      <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" name="auto_mode" id="autoMode" checked>
-                        <label class="form-check-label" for="autoMode"></label>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="switch-container">
-                      <div class="switch-info">
-                        <h6>Aprendizado Contínuo</h6>
-                        <p>Melhorar respostas com base nas interações</p>
-                      </div>
-                      <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" name="learning_mode" id="learningMode" checked>
-                        <label class="form-check-label" for="learningMode"></label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Informações do Bot -->
-                <div class="row mb-4">
-                  <div class="col-12">
-                    <h6 class="text-primary mb-3">
-                      <i class="material-symbols-rounded me-2">account_circle</i>
-                      Personalização do Bot
-                    </h6>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="input-group input-group-outline mb-3">
-                      <label class="form-label">Nome do Bot</label>
-                      <input type="text" class="form-control" name="bot_name" value="iConnect Assistant">
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="input-group input-group-outline mb-3">
-                      <label class="form-label">Saudação Inicial</label>
-                      <input type="text" class="form-control" name="greeting" value="Olá! Como posso ajudá-lo hoje?">
-                    </div>
-                  </div>
-                  <div class="col-12">
-                    <div class="input-group input-group-outline mb-3">
-                      <label class="form-label">Descrição do Bot</label>
-                      <textarea class="form-control" rows="3" name="description">Assistente virtual inteligente especializado em suporte técnico e atendimento ao cliente do iConnect.</textarea>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Preview do Bot -->
-                <div class="row mb-4">
-                  <div class="col-12">
-                    <h6 class="text-primary mb-3">
-                      <i class="material-symbols-rounded me-2">preview</i>
-                      Pré-visualização
-                    </h6>
-                  </div>
-                  <div class="col-12">
-                    <div class="bot-preview">
-                      <div class="d-flex align-items-center">
-                        <div class="bot-avatar">
-                          <i class="material-symbols-rounded">smart_toy</i>
-                        </div>
-                        <div class="ms-3">
-                          <h6 class="mb-1">iConnect Assistant</h6>
-                          <p class="text-muted mb-0">Olá! Como posso ajudá-lo hoje?</p>
-                        </div>
-                        <div class="ms-auto">
-                          <span class="badge bg-success">Online</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Configurações Avançadas -->
-                <div class="row mb-4">
-                  <div class="col-12">
-                    <h6 class="text-primary mb-3">
-                      <i class="material-symbols-rounded me-2">tune</i>
-                      Configurações Avançadas
-                    </h6>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="input-group input-group-outline mb-3">
-                      <label class="form-label">Tempo de Resposta (s)</label>
-                      <input type="number" class="form-control" name="response_time" value="2" min="1" max="10">
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="input-group input-group-outline mb-3">
-                      <label class="form-label">Confiança Mínima (%)</label>
-                      <input type="number" class="form-control" name="confidence_threshold" value="70" min="50" max="100">
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="input-group input-group-outline mb-3">
-                      <label class="form-label">Max. Interações</label>
-                      <input type="number" class="form-control" name="max_interactions" value="10" min="5" max="50">
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Botões de Ação -->
-                <div class="row">
-                  <div class="col-12">
-                    <div class="d-flex justify-content-between align-items-center">
-                      <div class="d-flex gap-2">
-                        <a href="{% url 'dashboard:chat_dashboard' %}" class="btn btn-outline-secondary">
-                          <i class="material-symbols-rounded me-1">arrow_back</i>
-                          Voltar para Chat
-                        </a>
-                        <button type="button" class="btn btn-outline-warning" id="testBot">
-                          <i class="material-symbols-rounded me-1">bug_report</i>
-                          Testar Bot
-                        </button>
-                      </div>
-                      <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-light" onclick="resetSettings()">
-                          <i class="material-symbols-rounded me-1">restore</i>
-                          Restaurar Padrão
-                        </button>
-                        <button type="submit" class="btn btn-primary">
-                          <i class="material-symbols-rounded me-1">save</i>
-                          Salvar Configurações
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
-  </div>
-
-  <!-- Performance e Estatísticas -->
-  <div class="row">
-    <div class="col-12">
-      <div class="card mb-4">
-        <div class="card-header pb-0">
-          <h6>Performance do Chatbot</h6>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-3">
-              <div class="performance-metric">
-                <div class="metric-value">847</div>
-                <p class="metric-label">Conversas Hoje</p>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="performance-metric">
-                <div class="metric-value">92%</div>
-                <p class="metric-label">Taxa de Sucesso</p>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="performance-metric">
-                <div class="metric-value">1.8s</div>
-                <p class="metric-label">Tempo Médio</p>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="performance-metric">
-                <div class="metric-value">4.7</div>
-                <p class="metric-label">Avaliação Média</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+        <a href="{% url 'dashboard:chatbot' %}" class="btn bg-gradient-primary btn-sm mb-0 me-2">
+            <i class="material-symbols-rounded text-sm me-1">smart_toy</i> Testar Chatbot
+        </a>
+        <a href="{% url 'dashboard:communication_center' %}" class="btn btn-outline-primary btn-sm mb-0">
+            <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Central
+        </a>
     </div>
-  </div>
+</div>
 
-  <!-- Base de Conhecimento -->
-  <div class="row">
-    <div class="col-12">
-      <div class="card mb-4">
-        <div class="card-header pb-0">
-          <div class="d-flex justify-content-between align-items-center">
-            <h6>Base de Conhecimento</h6>
-            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addKnowledgeModal">
-              <i class="material-symbols-rounded me-1">add</i>
-              Adicionar Conhecimento
+<form method="post">
+    {% csrf_token %}
+    <div class="row mt-4">
+        <!-- Configurações Gerais -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header pb-0 pt-3 px-3">
+                    <div class="d-flex align-items-center">
+                        <div class="icon icon-sm icon-shape bg-gradient-primary shadow text-center border-radius-md me-2">
+                            <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">tune</i>
+                        </div>
+                        <h6 class="mb-0">Configurações Gerais</h6>
+                    </div>
+                </div>
+                <div class="card-body pt-3 px-3">
+                    <div class="mb-3">
+                        <label class="form-label text-sm">Nome do Bot</label>
+                        <input type="text" name="bot_name" class="form-control" value="{{ config.bot_name|default:'Assistente iConnect' }}" placeholder="Nome do chatbot">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-sm">Mensagem de Boas-vindas</label>
+                        <textarea name="welcome_message" class="form-control" rows="3" placeholder="Mensagem exibida ao iniciar uma conversa">{{ config.welcome_message|default:"Olá! Como posso ajudar você hoje?" }}</textarea>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="is_active" id="isActive" {% if config.is_active %}checked{% endif %}>
+                        <label class="form-check-label text-sm" for="isActive">Chatbot ativo</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="auto_learn" id="autoLearn" {% if config.auto_learn %}checked{% endif %}>
+                        <label class="form-check-label text-sm" for="autoLearn">Aprendizado automático</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Personalidade -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header pb-0 pt-3 px-3">
+                    <div class="d-flex align-items-center">
+                        <div class="icon icon-sm icon-shape bg-gradient-info shadow text-center border-radius-md me-2">
+                            <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">psychology</i>
+                        </div>
+                        <h6 class="mb-0">Personalidade e IA</h6>
+                    </div>
+                </div>
+                <div class="card-body pt-3 px-3">
+                    <div class="mb-3">
+                        <label class="form-label text-sm">Tom de Conversa</label>
+                        <select name="personality" class="form-select">
+                            <option value="professional" {% if config.personality == 'professional' %}selected{% endif %}>Profissional</option>
+                            <option value="friendly" {% if config.personality == 'friendly' %}selected{% endif %}>Amigável</option>
+                            <option value="formal" {% if config.personality == 'formal' %}selected{% endif %}>Formal</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-sm">Nível de Confiança Mínimo (%)</label>
+                        <input type="number" name="confidence_threshold" class="form-control" min="0" max="100" value="{{ config.confidence_threshold|default:70 }}">
+                        <p class="text-xs text-muted mt-1">Respostas abaixo deste nível serão encaminhadas a um agente</p>
+                    </div>
+                    <div>
+                        <label class="form-label text-sm">Tempo Máximo de Resposta (s)</label>
+                        <input type="number" name="max_response_time" class="form-control" min="1" max="60" value="{{ config.max_response_time|default:10 }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Respostas Fallback -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header pb-0 pt-3 px-3">
+                    <div class="d-flex align-items-center">
+                        <div class="icon icon-sm icon-shape bg-gradient-warning shadow text-center border-radius-md me-2">
+                            <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">help_outline</i>
+                        </div>
+                        <h6 class="mb-0">Respostas Fallback</h6>
+                    </div>
+                </div>
+                <div class="card-body pt-3 px-3">
+                    <div class="mb-3">
+                        <label class="form-label text-sm">Mensagem quando não entende</label>
+                        <textarea name="fallback_message" class="form-control" rows="3" placeholder="Mensagem quando o bot não consegue responder">{{ config.fallback_message|default:"Desculpe, não entendi sua pergunta. Posso encaminhá-lo a um agente?" }}</textarea>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="transfer_to_agent" id="transferAgent" {% if config.transfer_to_agent %}checked{% endif %}>
+                        <label class="form-check-label text-sm" for="transferAgent">Transferir automaticamente para agente quando não souber responder</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Horário de Funcionamento -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header pb-0 pt-3 px-3">
+                    <div class="d-flex align-items-center">
+                        <div class="icon icon-sm icon-shape bg-gradient-success shadow text-center border-radius-md me-2">
+                            <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">schedule</i>
+                        </div>
+                        <h6 class="mb-0">Horário de Funcionamento</h6>
+                    </div>
+                </div>
+                <div class="card-body pt-3 px-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="respect_business_hours" id="businessHours" {% if config.respect_business_hours %}checked{% endif %}>
+                        <label class="form-check-label text-sm" for="businessHours">Respeitar horário comercial</label>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label text-sm">Início</label>
+                            <input type="time" name="business_start" class="form-control" value="{{ config.business_start|default:'08:00' }}">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label text-sm">Fim</label>
+                            <input type="time" name="business_end" class="form-control" value="{{ config.business_end|default:'18:00' }}">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label text-sm">Mensagem fora do horário</label>
+                        <textarea name="off_hours_message" class="form-control" rows="2" placeholder="Mensagem para fora do horário">{{ config.off_hours_message|default:"Nosso atendimento funciona das 08h às 18h. Deixe sua mensagem!" }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botão Salvar -->
+    <div class="row">
+        <div class="col-12 text-end">
+            <button type="submit" class="btn bg-gradient-primary mb-4">
+                <i class="material-symbols-rounded text-sm me-1">save</i> Salvar Configurações
             </button>
-          </div>
         </div>
-        <div class="card-body">
-          <div class="training-status success">
-            <i class="material-symbols-rounded me-2">check_circle</i>
-            <strong>Base de conhecimento atualizada!</strong> Última sincronização: 15/09/2025 às 16:30
-          </div>
-          
-          <div class="knowledge-base-item">
-            <div class="kb-title">Como criar um novo ticket?</div>
-            <div class="kb-content">Para criar um novo ticket, acesse o menu "Tickets" > "Criar Novo" e preencha as informações necessárias...</div>
-          </div>
-          
-          <div class="knowledge-base-item">
-            <div class="kb-title">Como alterar minha senha?</div>
-            <div class="kb-content">Acesse "Configurações" > "Perfil" > "Alterar Senha" e siga as instruções na tela...</div>
-          </div>
-          
-          <div class="knowledge-base-item">
-            <div class="kb-title">Política de SLA</div>
-            <div class="kb-content">Nossos tempos de resposta variam de acordo com a prioridade: Crítico (1h), Alto (4h), Médio (8h), Baixo (24h)...</div>
-          </div>
-        </div>
-      </div>
     </div>
-  </div>
-</div>
-
-<!-- Modal para Adicionar Conhecimento -->
-<div class="modal fade" id="addKnowledgeModal" tabindex="-1" role="dialog" aria-labelledby="addKnowledgeModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="addKnowledgeModalLabel">Adicionar Conhecimento</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="input-group input-group-outline mb-3">
-          <label class="form-label">Pergunta/Tópico</label>
-          <input type="text" class="form-control" id="knowledgeQuestion">
-        </div>
-        <div class="input-group input-group-outline mb-3">
-          <label class="form-label">Resposta/Conteúdo</label>
-          <textarea class="form-control" rows="5" id="knowledgeAnswer"></textarea>
-        </div>
-        <div class="input-group input-group-outline mb-3">
-          <label class="form-label">Tags (separadas por vírgula)</label>
-          <input type="text" class="form-control" id="knowledgeTags" placeholder="suporte, ticket, senha">
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-primary" onclick="addKnowledge()">Adicionar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Atualizar preview do bot em tempo real
-    const botNameInput = document.querySelector('input[name="bot_name"]');
-    const greetingInput = document.querySelector('input[name="greeting"]');
-    
-    function updatePreview() {
-        const preview = document.querySelector('.bot-preview h6');
-        const greeting = document.querySelector('.bot-preview .text-muted');
-        
-        if (preview && botNameInput) {
-            preview.textContent = botNameInput.value || 'iConnect Assistant';
-        }
-        
-        if (greeting && greetingInput) {
-            greeting.textContent = greetingInput.value || 'Olá! Como posso ajudá-lo hoje?';
-        }
-    }
-    
-    if (botNameInput) {
-        botNameInput.addEventListener('input', updatePreview);
-    }
-    
-    if (greetingInput) {
-        greetingInput.addEventListener('input', updatePreview);
-    }
-
-    // Testar bot
-    document.getElementById('testBot').addEventListener('click', function() {
-        alert('Funcionalidade de teste do bot será implementada em breve!');
-    });
-});
-
-function resetSettings() {
-    if (confirm('Tem certeza que deseja restaurar as configurações padrão?')) {
-        // Restaurar valores padrão
-        document.querySelector('input[name="bot_name"]').value = 'iConnect Assistant';
-        document.querySelector('input[name="greeting"]').value = 'Olá! Como posso ajudá-lo hoje?';
-        document.querySelector('textarea[name="description"]').value = 'Assistente virtual inteligente especializado em suporte técnico e atendimento ao cliente do iConnect.';
-        document.querySelector('input[name="response_time"]').value = '2';
-        document.querySelector('input[name="confidence_threshold"]').value = '70';
-        document.querySelector('input[name="max_interactions"]').value = '10';
-        
-        // Atualizar preview
-        const event = new Event('input');
-        document.querySelector('input[name="bot_name"]').dispatchEvent(event);
-        document.querySelector('input[name="greeting"]').dispatchEvent(event);
-    }
-}
-
-function addKnowledge() {
-    const question = document.getElementById('knowledgeQuestion').value;
-    const answer = document.getElementById('knowledgeAnswer').value;
-    const tags = document.getElementById('knowledgeTags').value;
-    
-    if (question && answer) {
-        // Aqui você faria uma requisição AJAX para adicionar o conhecimento
-        console.log('Adicionando conhecimento:', { question, answer, tags });
-        
-        // Fechar modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('addKnowledgeModal'));
-        modal.hide();
-        
-        // Limpar campos
-        document.getElementById('knowledgeQuestion').value = '';
-        document.getElementById('knowledgeAnswer').value = '';
-        document.getElementById('knowledgeTags').value = '';
-        
-        alert('Conhecimento adicionado com sucesso!');
-    } else {
-        alert('Por favor, preencha pelo menos a pergunta e a resposta.');
-    }
-}
-</script>
+</form>
 {% endblock %}

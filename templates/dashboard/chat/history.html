@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Histórico - {{ room.name }} - iConnect{% endblock %}
+{% block page_title %}Histórico{% endblock %}
+{% block breadcrumb_title %}Histórico de Chat{% endblock %}
+
+{% block content %}
+<!-- ===== HEADER ===== -->
+<div class="row">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Histórico - {{ room.name }}</h3>
+            <p class="mb-0 text-sm">Visualize todas as mensagens e atividades desta sala</p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+        <a href="{% url 'dashboard:chat_room' room.id %}" class="btn bg-gradient-primary btn-sm mb-0 me-2">
+            <i class="material-symbols-rounded text-sm me-1">chat</i> Voltar ao Chat
+        </a>
+        <a href="{% url 'dashboard:chat_dashboard' %}" class="btn btn-outline-primary btn-sm mb-0">
+            <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- ===== FILTROS ===== -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header pb-0 pt-3 px-3">
+                <h6 class="mb-1">Filtros</h6>
+            </div>
+            <div class="card-body pt-2 px-3">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label text-xs">Data Início</label>
+                        <input type="date" name="from" class="form-control" value="{{ filters.from }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-xs">Data Fim</label>
+                        <input type="date" name="to" class="form-control" value="{{ filters.to }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-xs">Remetente</label>
+                        <select name="sender" class="form-select">
+                            <option value="">Todos</option>
+                            {% for p in participants %}
+                                <option value="{{ p.user.id }}" {% if filters.sender == p.user.id|stringformat:"s" %}selected{% endif %}>{{ p.user.get_full_name|default:p.user.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-xs">Tipo</label>
+                        <div class="d-flex gap-2 align-items-end h-100 pb-1">
+                            <select name="type" class="form-select">
+                                <option value="">Todos</option>
+                                <option value="text" {% if filters.type == 'text' %}selected{% endif %}>Texto</option>
+                                <option value="file" {% if filters.type == 'file' %}selected{% endif %}>Arquivo</option>
+                                <option value="image" {% if filters.type == 'image' %}selected{% endif %}>Imagem</option>
+                                <option value="system" {% if filters.type == 'system' %}selected{% endif %}>Sistema</option>
+                            </select>
+                            <button type="submit" class="btn bg-gradient-primary btn-sm mb-0 px-3">
+                                <i class="material-symbols-rounded text-sm">search</i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MENSAGENS ===== -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+                    <h6 class="text-white text-capitalize ps-3 mb-0">
+                        Mensagens
+                        {% if messages.paginator.count %}
+                            <span class="text-white-50 text-sm ms-2">({{ messages.paginator.count }} total)</span>
+                        {% endif %}
+                    </h6>
+                </div>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Remetente</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Mensagem</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tipo</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Data/Hora</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for msg in messages %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="avatar avatar-xs bg-gradient-dark border-radius-md me-2 d-flex align-items-center justify-content-center">
+                                            <span class="text-white" style="font-size:10px">{{ msg.sender.first_name|first|default:msg.sender.username|first|upper }}</span>
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ msg.sender.get_full_name|default:msg.sender.username }}</h6>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <p class="text-xs mb-0">{{ msg.content|truncatechars:80 }}</p>
+                                    {% if msg.file %}
+                                        <a href="{{ msg.file.url }}" class="text-xs text-info" target="_blank">
+                                            <i class="material-symbols-rounded" style="font-size:12px">attach_file</i> Anexo
+                                        </a>
+                                    {% endif %}
+                                </td>
+                                <td class="align-middle text-center text-sm">
+                                    {% if msg.message_type == 'text' %}
+                                        <span class="badge badge-sm bg-gradient-primary">Texto</span>
+                                    {% elif msg.message_type == 'image' %}
+                                        <span class="badge badge-sm bg-gradient-info">Imagem</span>
+                                    {% elif msg.message_type == 'file' %}
+                                        <span class="badge badge-sm bg-gradient-warning">Arquivo</span>
+                                    {% elif msg.message_type == 'system' %}
+                                        <span class="badge badge-sm bg-gradient-secondary">Sistema</span>
+                                    {% else %}
+                                        <span class="badge badge-sm bg-gradient-dark">{{ msg.get_message_type_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="align-middle text-center">
+                                    <span class="text-secondary text-xs font-weight-bold">{{ msg.created_at|date:"d/m/Y H:i" }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4">
+                                    <i class="material-symbols-rounded opacity-5 d-block mb-2" style="font-size:48px">search_off</i>
+                                    <p class="text-sm text-muted mb-0">Nenhuma mensagem encontrada</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginação -->
+                {% if messages.has_other_pages %}
+                <div class="d-flex justify-content-center mt-3 mb-2">
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            {% if messages.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ messages.previous_page_number }}{% if filters.from %}&from={{ filters.from }}{% endif %}{% if filters.to %}&to={{ filters.to }}{% endif %}{% if filters.sender %}&sender={{ filters.sender }}{% endif %}{% if filters.type %}&type={{ filters.type }}{% endif %}">
+                                    <i class="material-symbols-rounded text-sm">chevron_left</i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% for num in messages.paginator.page_range %}
+                                {% if messages.number == num %}
+                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                {% elif num > messages.number|add:'-3' and num < messages.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if filters.from %}&from={{ filters.from }}{% endif %}{% if filters.to %}&to={{ filters.to }}{% endif %}{% if filters.sender %}&sender={{ filters.sender }}{% endif %}{% if filters.type %}&type={{ filters.type }}{% endif %}">{{ num }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            {% if messages.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ messages.next_page_number }}{% if filters.from %}&from={{ filters.from }}{% endif %}{% if filters.to %}&to={{ filters.to }}{% endif %}{% if filters.sender %}&sender={{ filters.sender }}{% endif %}{% if filters.type %}&type={{ filters.type }}{% endif %}">
+                                    <i class="material-symbols-rounded text-sm">chevron_right</i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
