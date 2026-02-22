@@ -71,16 +71,22 @@ def analytics_dashboard(request):
         satisfacao_media=Avg('avaliacaosatisfacao__nota_atendimento')
     ).order_by('-total_tickets')
     
-    # Tendência (últimos 30 dias)
-    tendencia_dados = []
-    for i in range(30):
-        data = hoje - timedelta(days=i)
-        tickets_dia = Ticket.objects.filter(criado_em__date=data).count()
-        tendencia_dados.append({
-            'data': data.strftime('%d/%m'),
-            'tickets': tickets_dia
-        })
-    tendencia_dados.reverse()
+    # Tendência (últimos 30 dias) — single aggregated query instead of 30 individual queries
+    from django.db.models.functions import TruncDate
+    data_inicio_tendencia = hoje - timedelta(days=29)
+    tendencia_qs = (
+        Ticket.objects.filter(criado_em__date__gte=data_inicio_tendencia)
+        .annotate(dia=TruncDate('criado_em'))
+        .values('dia')
+        .annotate(total=Count('id'))
+        .order_by('dia')
+    )
+    tendencia_map = {item['dia']: item['total'] for item in tendencia_qs}
+    tendencia_dados = [
+        {'data': (data_inicio_tendencia + timedelta(days=i)).strftime('%d/%m'),
+         'tickets': tendencia_map.get(data_inicio_tendencia + timedelta(days=i), 0)}
+        for i in range(30)
+    ]
     
     # Top 5 Clientes com Mais Tickets
     top_clientes = Cliente.objects.annotate(
@@ -133,6 +139,7 @@ def analytics_dashboard(request):
     
     return render(request, 'dashboard/analytics/dashboard.html', context)
 
+@login_required
 def relatorio_detalhado(request):
     """Relatório detalhado personalizável"""
     

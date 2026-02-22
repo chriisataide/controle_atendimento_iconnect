@@ -55,16 +55,20 @@ def ticket_created_or_updated(sender, instance, created, **kwargs):
             }
         )
         
-        # Criar notificações no banco para agentes
+        # Criar notificações no banco para agentes (bulk_create para performance)
         agents = User.objects.filter(perfilagente__isnull=False, is_active=True)
-        for agent in agents:
-            Notification.objects.create(
+        notifications = [
+            Notification(
                 user=agent,
                 title='Novo Ticket Criado',
                 message=f'Ticket #{instance.numero}: {instance.titulo}',
                 type='new_ticket',
                 ticket=instance
             )
+            for agent in agents
+        ]
+        if notifications:
+            Notification.objects.bulk_create(notifications)
     
     else:
         # 🔄 TICKET ATUALIZADO

@@ -124,12 +124,10 @@ def executive_kpis_api(request):
     
     avg_resolution_time = 0
     if resolved_tickets.exists():
-        total_time = sum([
-            (ticket.resolvido_em - ticket.criado_em).total_seconds() / 3600
-            for ticket in resolved_tickets
-            if ticket.resolvido_em and ticket.criado_em
-        ])
-        avg_resolution_time = total_time / resolved_tickets.count()
+        avg_delta = resolved_tickets.aggregate(
+            avg=Avg(F('resolvido_em') - F('criado_em'))
+        )['avg']
+        avg_resolution_time = round(avg_delta.total_seconds() / 3600, 1) if avg_delta else 0
     
     # 5. Produtividade dos Agentes
     agents_productivity = PerfilAgente.objects.filter(

@@ -18,6 +18,15 @@ from .models import (
     GamificationBadge, AgentBadge, AgentLeaderboard,
 )
 from .rbac import ROLE_ADMIN, ROLE_SUPERVISOR, ROLE_AGENTE, ROLE_CLIENTE, get_user_role
+
+
+def _safe_period_days(request, default=30, max_days=365):
+    """Sanitiza o parâmetro 'days' de query string (previne abuso de recursos)."""
+    try:
+        days = int(request.query_params.get("days", default))
+    except (ValueError, TypeError):
+        days = default
+    return max(1, min(days, max_days))
 from .serializers import (
     TicketSerializer,
     TicketCreateSerializer,
@@ -171,7 +180,7 @@ class ClienteDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 def analytics_overview(request):
     """Visao geral de metricas"""
     now = timezone.now()
-    period = int(request.query_params.get("days", 30))
+    period = _safe_period_days(request)
     since = now - timedelta(days=period)
 
     tickets = Ticket.objects.filter(criado_em__gte=since)
@@ -201,7 +210,7 @@ def analytics_overview(request):
 @permission_classes([IsAuthenticated])
 def analytics_time_series(request):
     """Tickets ao longo do tempo (agrupados por dia)"""
-    period = int(request.query_params.get("days", 30))
+    period = _safe_period_days(request)
     since = timezone.now() - timedelta(days=period)
 
     from django.db.models.functions import TruncDate
@@ -221,7 +230,7 @@ def analytics_satisfaction(request):
     """Metricas de satisfacao"""
     try:
         from .models_satisfacao import AvaliacaoSatisfacao
-        period = int(request.query_params.get("days", 30))
+        period = _safe_period_days(request)
         since = timezone.now() - timedelta(days=period)
         evals = AvaliacaoSatisfacao.objects.filter(criado_em__gte=since)
         avg_data = evals.aggregate(
@@ -242,7 +251,7 @@ def analytics_satisfaction(request):
 @permission_classes([IsAuthenticated])
 def analytics_sla_metrics(request):
     """Metricas de SLA"""
-    period = int(request.query_params.get("days", 30))
+    period = _safe_period_days(request)
     since = timezone.now() - timedelta(days=period)
     violations = SLAViolation.objects.filter(created_at__gte=since)
     total_tickets = Ticket.objects.filter(criado_em__gte=since).count()
@@ -374,7 +383,7 @@ def health_check(request):
     except Exception:
         checks["cache"] = "unavailable"
 
-    checks["tickets_total"] = Ticket.objects.count()
+    # Não expor contagem de tickets em endpoint público (information disclosure)
     http_status = 200 if checks["status"] == "healthy" else 503
     return Response(checks, status=http_status)
 
@@ -429,7 +438,7 @@ def export_tickets_excel(request):
     from openpyxl import Workbook
     from django.http import HttpResponse
 
-    period = int(request.query_params.get("days", 30))
+    period = _safe_period_days(request)  # Already capped at 365
     since = timezone.now() - timedelta(days=period)
 
     tickets = Ticket.objects.filter(criado_em__gte=since).select_related(
@@ -442,7 +451,7 @@ def export_tickets_excel(request):
     headers = ["Numero", "Titulo", "Status", "Prioridade", "Tipo", "Cliente", "Agente", "Categoria", "Criado em", "Resolvido em"]
     ws.append(headers)
 
-    for t in tickets:
+    for t in tickets.iterator():  # .iterator() to avoid loading all into memory
         ws.append([
             t.numero,
             t.titulo,
@@ -712,7 +721,7 @@ def analytics_agent_performance(request):
     if not _is_admin_or_supervisor(request.user):
         return Response({"error": "Apenas admin/supervisor podem ver performance de agentes"}, status=403)
 
-    period = int(request.query_params.get("days", 30))
+    period = _safe_period_days(request)
     since = timezone.now() - timedelta(days=period)
 
     from django.contrib.auth.models import User
@@ -747,7 +756,7 @@ def analytics_agent_performance(request):
 @permission_classes([IsAuthenticated])
 def analytics_period_comparison(request):
     """Comparacao entre dois periodos"""
-    days = int(request.query_params.get("days", 30))
+    days = _safe_period_days(request)
     now = timezone.now()
     current_start = now - timedelta(days=days)
     previous_start = current_start - timedelta(days=days)
