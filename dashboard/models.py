@@ -1,11 +1,14 @@
 from django.db import models, transaction
-from django.db.models import F
+from django.db.models import F, Q
 from django.contrib.auth.models import User
 from django.utils import timezone
 from decimal import Decimal
 from django.core.validators import MinValueValidator, MaxValueValidator
 import uuid
 import logging
+
+# Importar mixins
+from .mixins import SoftDeleteModel
 
 # Importar modelos de estoque
 from .models_estoque import *  # noqa: F401,F403
@@ -16,6 +19,7 @@ logger = logging.getLogger('dashboard')
 # Modelo de Ponto de Venda
 # ----------------------
 class PontoDeVenda(models.Model):
+    """Ponto de venda com campos PII protegidos por criptografia (LGPD)."""
     # Dados da Empresa
     razao_social = models.CharField("Razão Social", max_length=150)
     nome_fantasia = models.CharField("Nome Fantasia", max_length=150)
@@ -34,16 +38,16 @@ class PontoDeVenda(models.Model):
     pais = models.CharField("País", max_length=40, default="Brasil")
 
     # Contatos
-    celular = models.CharField("Celular / WhatsApp", max_length=20)
+    celular = models.CharField("Celular / WhatsApp", max_length=500, help_text="Criptografado em repouso")
     email_principal = models.EmailField("E-mail principal")
     email_financeiro = models.EmailField("E-mail financeiro", blank=True)
     website = models.URLField("Website", blank=True)
 
-    # Responsável pela Empresa
+    # Responsável pela Empresa — PII criptografado (LGPD Art. 46)
     responsavel_nome = models.CharField("Nome do Responsável", max_length=100)
-    responsavel_cpf = models.CharField("CPF do Responsável", max_length=14)
+    responsavel_cpf = models.CharField("CPF do Responsável", max_length=500, help_text="Criptografado em repouso")
     responsavel_cargo = models.CharField("Cargo / Função", max_length=60)
-    responsavel_telefone = models.CharField("Telefone do Responsável", max_length=20)
+    responsavel_telefone = models.CharField("Telefone do Responsável", max_length=500, help_text="Criptografado em repouso")
     responsavel_email = models.EmailField("E-mail do Responsável")
 
     criado_em = models.DateTimeField(auto_now_add=True)
@@ -57,13 +61,40 @@ class PontoDeVenda(models.Model):
     def __str__(self):
         return f"{self.nome_fantasia} ({self.cnpj})"
 
+    def save(self, *args, **kwargs):
+        from .crypto import encrypt_value
+        if self.responsavel_cpf and not self.responsavel_cpf.startswith('enc::'):
+            self.responsavel_cpf = encrypt_value(self.responsavel_cpf)
+        if self.celular and not self.celular.startswith('enc::'):
+            self.celular = encrypt_value(self.celular)
+        if self.responsavel_telefone and not self.responsavel_telefone.startswith('enc::'):
+            self.responsavel_telefone = encrypt_value(self.responsavel_telefone)
+        super().save(*args, **kwargs)
+
+    def get_responsavel_cpf(self):
+        """Retorna CPF do responsável descriptografado."""
+        from .crypto import decrypt_value
+        return decrypt_value(self.responsavel_cpf)
+
+    def get_celular(self):
+        """Retorna celular descriptografado."""
+        from .crypto import decrypt_value
+        return decrypt_value(self.celular)
+
+    def get_responsavel_telefone(self):
+        """Retorna telefone do responsável descriptografado."""
+        from .crypto import decrypt_value
+        return decrypt_value(self.responsavel_telefone)
+
 
 class Cliente(models.Model):
+    """Cliente com campos PII protegidos por criptografia (LGPD)."""
     user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='cliente_profile', help_text="Conta de usuario vinculada")
     nome = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
-    telefone = models.CharField(max_length=20, blank=True)
-    celular = models.CharField(max_length=20, blank=True)
+    # Campos PII criptografados em repouso (LGPD Art. 46)
+    telefone = models.CharField(max_length=500, blank=True, help_text="Criptografado em repouso")
+    celular = models.CharField(max_length=500, blank=True, help_text="Criptografado em repouso")
     empresa = models.CharField(max_length=100, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     
@@ -73,6 +104,24 @@ class Cliente(models.Model):
         
     def __str__(self):
         return self.nome
+
+    def save(self, *args, **kwargs):
+        from .crypto import encrypt_value
+        if self.telefone and not self.telefone.startswith('enc::'):
+            self.telefone = encrypt_value(self.telefone)
+        if self.celular and not self.celular.startswith('enc::'):
+            self.celular = encrypt_value(self.celular)
+        super().save(*args, **kwargs)
+
+    def get_telefone(self):
+        """Retorna telefone descriptografado."""
+        from .crypto import decrypt_value
+        return decrypt_value(self.telefone)
+
+    def get_celular(self):
+        """Retorna celular descriptografado."""
+        from .crypto import decrypt_value
+        return decrypt_value(self.celular)
 
 
 class StatusTicket(models.TextChoices):
@@ -121,7 +170,11 @@ class SLAPolicy(models.Model):
     work_days = models.CharField(max_length=7, default='1234567', help_text="Dias da semana (1=Seg, 7=Dom)")
     
     # Configurações de alerta
-    warning_percentage = models.IntegerField(default=80, help_text="% do tempo SLA para enviar alerta")
+    warning_percentage = models.IntegerField(
+        default=80,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="% do tempo SLA para enviar alerta"
+    )
     escalation_enabled = models.BooleanField(default=True)
     escalation_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, 
                                     related_name='sla_escalations', help_text="Supervisor para escalação")
@@ -134,6 +187,24 @@ class SLAPolicy(models.Model):
         verbose_name = "Política de SLA"
         verbose_name_plural = "Políticas de SLA"
         unique_together = ['categoria', 'prioridade']
+        constraints = [
+            models.CheckConstraint(
+                check=Q(first_response_time__gt=0),
+                name='sla_first_response_time_gt_0',
+            ),
+            models.CheckConstraint(
+                check=Q(resolution_time__gt=0),
+                name='sla_resolution_time_gt_0',
+            ),
+            models.CheckConstraint(
+                check=Q(escalation_time__gt=0),
+                name='sla_escalation_time_gt_0',
+            ),
+            models.CheckConstraint(
+                check=Q(warning_percentage__gte=0, warning_percentage__lte=100),
+                name='sla_warning_pct_0_100',
+            ),
+        ]
     
     def __str__(self):
         return self.name
@@ -156,7 +227,7 @@ class WorkflowRule(models.Model):
     
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
-    trigger_event = models.CharField(max_length=50, choices=EVENT_CHOICES)
+    trigger_event = models.CharField(max_length=50, choices=EVENT_CHOICES, db_index=True)
     conditions = models.JSONField(help_text="Condições em formato JSON")
     actions = models.JSONField(help_text="Ações em formato JSON")
     priority = models.IntegerField(default=1, help_text="Prioridade de execução (1-10)")
@@ -298,7 +369,7 @@ class SLAHistory(models.Model):
     escalation_deadline = models.DateTimeField()
     
     # Status atual
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='on_track')
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='on_track', db_index=True)
     warning_sent = models.BooleanField(default=False)
     escalated = models.BooleanField(default=False)
     escalated_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
@@ -332,7 +403,7 @@ class SLAAlert(models.Model):
     
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='sla_alerts')
     sla_history = models.ForeignKey(SLAHistory, on_delete=models.CASCADE)
-    alert_type = models.CharField(max_length=15, choices=ALERT_TYPES)
+    alert_type = models.CharField(max_length=15, choices=ALERT_TYPES, db_index=True)
     message = models.TextField()
     
     # Destinatários
@@ -389,8 +460,8 @@ class InteracaoTicket(models.Model):
         return f"Interação em {self.ticket.numero} por {self.usuario.username}"
 
 
-class ItemAtendimento(models.Model):
-    """Produtos e serviços utilizados em um atendimento/ticket"""
+class ItemAtendimento(SoftDeleteModel):
+    """Produtos e serviços utilizados em um atendimento/ticket (soft delete habilitado)"""
     
     TIPO_ITEM_CHOICES = [
         ('produto', 'Produto'),
@@ -419,6 +490,20 @@ class ItemAtendimento(models.Model):
         verbose_name_plural = "Itens de Atendimento"
         ordering = ['adicionado_em']
         unique_together = ['ticket', 'produto']  # Evita duplicação do mesmo produto no mesmo ticket
+        constraints = [
+            models.CheckConstraint(
+                check=Q(quantidade__gt=0),
+                name='item_atend_quantidade_gt_0',
+            ),
+            models.CheckConstraint(
+                check=Q(valor_unitario__gte=0),
+                name='item_atend_valor_unitario_gte_0',
+            ),
+            models.CheckConstraint(
+                check=Q(desconto_percentual__gte=0, desconto_percentual__lte=100),
+                name='item_atend_desconto_0_100',
+            ),
+        ]
     
     def __str__(self):
         return f"{self.produto.nome} - Ticket #{self.ticket.numero}"
@@ -454,7 +539,7 @@ class StatusAgente(models.TextChoices):
 
 class PerfilAgente(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    status = models.CharField(max_length=10, choices=StatusAgente.choices, default=StatusAgente.OFFLINE)
+    status = models.CharField(max_length=10, choices=StatusAgente.choices, default=StatusAgente.OFFLINE, db_index=True)
     max_tickets_simultaneos = models.IntegerField(default=5)
     especialidades = models.ManyToManyField(CategoriaTicket, blank=True)
     
@@ -474,18 +559,18 @@ class PerfilAgente(models.Model):
 
 
 class PerfilUsuario(models.Model):
-    """Modelo para estender as informações de perfil do usuário"""
+    """Modelo para estender as informações de perfil do usuário (PII protegido - LGPD)"""
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
     
-    # Informações pessoais
-    telefone = models.CharField(max_length=20, blank=True, verbose_name="Telefone")
-    telefone_alternativo = models.CharField(max_length=20, blank=True, verbose_name="Telefone Alternativo")
+    # Informações pessoais — PII criptografado (LGPD Art. 46)
+    telefone = models.CharField(max_length=500, blank=True, verbose_name="Telefone", help_text="Criptografado em repouso")
+    telefone_alternativo = models.CharField(max_length=500, blank=True, verbose_name="Telefone Alternativo", help_text="Criptografado em repouso")
     
-    # Endereço
-    endereco = models.CharField(max_length=200, blank=True, verbose_name="Endereço")
+    # Endereço — PII criptografado
+    endereco = models.CharField(max_length=500, blank=True, verbose_name="Endereço", help_text="Criptografado em repouso")
     cidade = models.CharField(max_length=100, blank=True, verbose_name="Cidade")
     estado = models.CharField(max_length=2, blank=True, verbose_name="Estado")
-    cep = models.CharField(max_length=9, blank=True, verbose_name="CEP")
+    cep = models.CharField(max_length=500, blank=True, verbose_name="CEP", help_text="Criptografado em repouso")
     
     # Informações profissionais
     cargo = models.CharField(max_length=100, blank=True, verbose_name="Cargo")
@@ -512,7 +597,39 @@ class PerfilUsuario(models.Model):
     
     def __str__(self):
         return f"Perfil de {self.user.get_full_name() or self.user.username}"
-    
+
+    def save(self, *args, **kwargs):
+        from .crypto import encrypt_value
+        if self.telefone and not self.telefone.startswith('enc::'):
+            self.telefone = encrypt_value(self.telefone)
+        if self.telefone_alternativo and not self.telefone_alternativo.startswith('enc::'):
+            self.telefone_alternativo = encrypt_value(self.telefone_alternativo)
+        if self.endereco and not self.endereco.startswith('enc::'):
+            self.endereco = encrypt_value(self.endereco)
+        if self.cep and not self.cep.startswith('enc::'):
+            self.cep = encrypt_value(self.cep)
+        super().save(*args, **kwargs)
+
+    def get_telefone(self):
+        """Retorna telefone descriptografado."""
+        from .crypto import decrypt_value
+        return decrypt_value(self.telefone)
+
+    def get_telefone_alternativo(self):
+        """Retorna telefone alternativo descriptografado."""
+        from .crypto import decrypt_value
+        return decrypt_value(self.telefone_alternativo)
+
+    def get_endereco(self):
+        """Retorna endereço descriptografado."""
+        from .crypto import decrypt_value
+        return decrypt_value(self.endereco)
+
+    def get_cep(self):
+        """Retorna CEP descriptografado."""
+        from .crypto import decrypt_value
+        return decrypt_value(self.cep)
+
     @property
     def perfil_completo_percentual(self):
         """Calcula o percentual de preenchimento do perfil"""
@@ -548,13 +665,13 @@ class SLAViolation(models.Model):
     ]
     
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='sla_violations')
-    violation_type = models.CharField(max_length=20, choices=VIOLATION_TYPES)
-    severity = models.CharField(max_length=10, choices=SEVERITY_LEVELS, default='medium')
+    violation_type = models.CharField(max_length=20, choices=VIOLATION_TYPES, db_index=True)
+    severity = models.CharField(max_length=10, choices=SEVERITY_LEVELS, default='medium', db_index=True)
     expected_deadline = models.DateTimeField()
     actual_time = models.DateTimeField()
     time_exceeded = models.DurationField()
     description = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     
     class Meta:
         verbose_name = "Violação de SLA"
@@ -575,13 +692,12 @@ class WorkflowExecution(models.Model):
     execution_time = models.DurationField(null=True, blank=True)
     success = models.BooleanField(default=True)
     error_message = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     
     class Meta:
         verbose_name = "Execução de Workflow"
         verbose_name_plural = "Execuções de Workflow"
-        ordering = ['-created_at']
-    
+        ordering = ['-created_at']    
     def __str__(self):
         return f"Execução {self.rule.name} - Ticket #{self.ticket.numero}"
 
@@ -606,11 +722,11 @@ class NotificationLog(models.Model):
     
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
     recipient = models.CharField(max_length=200)
-    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES, db_index=True)
     event_type = models.CharField(max_length=50)
     subject = models.CharField(max_length=200, blank=True)
     message = models.TextField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', db_index=True)
     sent_at = models.DateTimeField(null=True, blank=True)
     delivered_at = models.DateTimeField(null=True, blank=True)
     error_message = models.TextField(blank=True)
@@ -662,6 +778,20 @@ class KnowledgeBase(models.Model):
         verbose_name = "Base de Conhecimento (Deprecado)"
         verbose_name_plural = "Base de Conhecimento (Deprecado)"
         ordering = ['-view_count', '-created_at']
+        constraints = [
+            models.CheckConstraint(
+                check=Q(view_count__gte=0),
+                name='kb_view_count_gte_0',
+            ),
+            models.CheckConstraint(
+                check=Q(helpful_votes__gte=0),
+                name='kb_helpful_votes_gte_0',
+            ),
+            models.CheckConstraint(
+                check=Q(unhelpful_votes__gte=0),
+                name='kb_unhelpful_votes_gte_0',
+            ),
+        ]
     
     def __str__(self):
         return self.title
@@ -673,9 +803,9 @@ class SystemMetrics(models.Model):
     total_tickets = models.IntegerField(default=0)
     new_tickets = models.IntegerField(default=0)
     resolved_tickets = models.IntegerField(default=0)
-    sla_compliance_rate = models.FloatField(default=0.0)
-    avg_resolution_time = models.FloatField(default=0.0)  # em horas
-    customer_satisfaction = models.FloatField(default=0.0)
+    sla_compliance_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    avg_resolution_time = models.DecimalField(max_digits=8, decimal_places=2, default=0, help_text="em horas")
+    customer_satisfaction = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     agent_productivity = models.JSONField(default=dict)  # métricas por agente
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -710,7 +840,7 @@ class Notification(models.Model):
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
-    type = models.CharField(max_length=30, choices=NOTIFICATION_TYPES)
+    type = models.CharField(max_length=30, choices=NOTIFICATION_TYPES, db_index=True)
     title = models.CharField(max_length=200)
     message = models.TextField()
     icon = models.CharField(max_length=50, default='notifications')
@@ -743,7 +873,8 @@ class Notification(models.Model):
 
 # ========== MODELOS FINANCEIROS ==========
 
-class CategoriaFinanceira(models.Model):
+class CategoriaFinanceira(SoftDeleteModel):
+    """Categorias financeiras (soft delete habilitado)"""
     nome = models.CharField(max_length=100)
     descricao = models.TextField(blank=True, null=True)
     tipo = models.CharField(max_length=20, choices=[
@@ -762,7 +893,8 @@ class CategoriaFinanceira(models.Model):
         return f"{self.nome} ({self.get_tipo_display()})"
 
 
-class FormaPagamento(models.Model):
+class FormaPagamento(SoftDeleteModel):
+    """Formas de pagamento (soft delete habilitado)"""
     nome = models.CharField(max_length=50)
     descricao = models.TextField(blank=True, null=True)
     ativo = models.BooleanField(default=True)
@@ -775,7 +907,8 @@ class FormaPagamento(models.Model):
         return self.nome
 
 
-class Contrato(models.Model):
+class Contrato(SoftDeleteModel):
+    """Contratos com clientes (soft delete habilitado)"""
     STATUS_CHOICES = [
         ('ativo', 'Ativo'),
         ('suspenso', 'Suspenso'),
@@ -787,9 +920,9 @@ class Contrato(models.Model):
     numero_contrato = models.CharField(max_length=50, unique=True)
     descricao = models.TextField()
     valor_mensal = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
-    data_inicio = models.DateField()
-    data_fim = models.DateField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ativo')
+    data_inicio = models.DateField(db_index=True)
+    data_fim = models.DateField(null=True, blank=True, db_index=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ativo', db_index=True)
     observacoes = models.TextField(blank=True, null=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
@@ -798,12 +931,19 @@ class Contrato(models.Model):
         verbose_name = "Contrato"
         verbose_name_plural = "Contratos"
         ordering = ['-criado_em']
+        constraints = [
+            models.CheckConstraint(
+                check=Q(valor_mensal__gte=Decimal('0.01')),
+                name='contrato_valor_mensal_gte_001',
+            ),
+        ]
     
     def __str__(self):
         return f"Contrato {self.numero_contrato} - {self.cliente.nome}"
 
 
-class Fatura(models.Model):
+class Fatura(SoftDeleteModel):
+    """Faturas de contratos (soft delete habilitado)"""
     STATUS_CHOICES = [
         ('pendente', 'Pendente'),
         ('pago', 'Pago'),
@@ -814,9 +954,9 @@ class Fatura(models.Model):
     contrato = models.ForeignKey(Contrato, on_delete=models.PROTECT, related_name='faturas')
     numero_fatura = models.CharField(max_length=50, unique=True)
     valor = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
-    data_vencimento = models.DateField()
-    data_pagamento = models.DateField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
+    data_vencimento = models.DateField(db_index=True)
+    data_pagamento = models.DateField(null=True, blank=True, db_index=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente', db_index=True)
     observacoes = models.TextField(blank=True, null=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     
@@ -824,16 +964,23 @@ class Fatura(models.Model):
         verbose_name = "Fatura"
         verbose_name_plural = "Faturas"
         ordering = ['-data_vencimento']
+        constraints = [
+            models.CheckConstraint(
+                check=Q(valor__gte=Decimal('0.01')),
+                name='fatura_valor_gte_001',
+            ),
+        ]
     
     def __str__(self):
         return f"Fatura {self.numero_fatura} - {self.contrato.cliente.nome}"
 
 
-class Pagamento(models.Model):
+class Pagamento(SoftDeleteModel):
+    """Pagamentos de faturas (soft delete habilitado)"""
     fatura = models.ForeignKey(Fatura, on_delete=models.PROTECT, related_name='pagamentos')
     forma_pagamento = models.ForeignKey(FormaPagamento, on_delete=models.PROTECT)
     valor_pago = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
-    data_pagamento = models.DateTimeField()
+    data_pagamento = models.DateTimeField(db_index=True)
     numero_transacao = models.CharField(max_length=100, blank=True, null=True)
     observacoes = models.TextField(blank=True, null=True)
     criado_em = models.DateTimeField(auto_now_add=True)
@@ -842,12 +989,19 @@ class Pagamento(models.Model):
         verbose_name = "Pagamento"
         verbose_name_plural = "Pagamentos"
         ordering = ['-data_pagamento']
+        constraints = [
+            models.CheckConstraint(
+                check=Q(valor_pago__gte=Decimal('0.01')),
+                name='pagamento_valor_pago_gte_001',
+            ),
+        ]
     
     def __str__(self):
         return f"Pagamento {self.fatura.numero_fatura} - R$ {self.valor_pago}"
 
 
-class MovimentacaoFinanceira(models.Model):
+class MovimentacaoFinanceira(SoftDeleteModel):
+    """Movimentações financeiras (soft delete habilitado)"""
     TIPO_CHOICES = [
         ('receita', 'Receita'),
         ('despesa', 'Despesa'),
@@ -855,9 +1009,9 @@ class MovimentacaoFinanceira(models.Model):
     
     categoria = models.ForeignKey(CategoriaFinanceira, on_delete=models.PROTECT)
     descricao = models.CharField(max_length=200)
-    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, db_index=True)
     valor = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
-    data_movimentacao = models.DateField()
+    data_movimentacao = models.DateField(db_index=True)
     observacoes = models.TextField(blank=True, null=True)
     usuario = models.ForeignKey(User, on_delete=models.PROTECT)
     # Relacionamento opcional com fatura (para receitas de faturas pagas)
@@ -871,6 +1025,12 @@ class MovimentacaoFinanceira(models.Model):
         verbose_name = "Movimentação Financeira"
         verbose_name_plural = "Movimentações Financeiras"
         ordering = ['-data_movimentacao']
+        constraints = [
+            models.CheckConstraint(
+                check=Q(valor__gte=Decimal('0.01')),
+                name='mov_financeira_valor_gte_001',
+            ),
+        ]
     
     def __str__(self):
         return f"{self.get_tipo_display()} - {self.descricao} - R$ {self.valor}"
@@ -903,8 +1063,8 @@ class RelatorioFinanceiro(models.Model):
         return f"{self.nome} - {self.get_tipo_display()}"
 
 
-class CentroCusto(models.Model):
-    """Centro de Custos para controle financeiro por departamento/projeto"""
+class CentroCusto(SoftDeleteModel):
+    """Centro de Custos para controle financeiro (soft delete habilitado)"""
     STATUS_CHOICES = [
         ('ativo', 'Ativo'),
         ('inativo', 'Inativo'),
@@ -936,7 +1096,7 @@ class CentroCusto(models.Model):
                                          help_text="Orçamento anual planejado")
     
     # Status e configurações
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ativo')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ativo', db_index=True)
     permite_suborçamento = models.BooleanField(default=False, 
                                                help_text="Permite estourar o orçamento")
     alerta_percentual = models.DecimalField(max_digits=5, decimal_places=2, default=80,
@@ -952,6 +1112,20 @@ class CentroCusto(models.Model):
         verbose_name = "Centro de Custo"
         verbose_name_plural = "Centros de Custo"
         ordering = ['departamento', 'codigo']
+        constraints = [
+            models.CheckConstraint(
+                check=Q(orcamento_mensal__gte=0),
+                name='cc_orcamento_mensal_gte_0',
+            ),
+            models.CheckConstraint(
+                check=Q(orcamento_anual__gte=0),
+                name='cc_orcamento_anual_gte_0',
+            ),
+            models.CheckConstraint(
+                check=Q(alerta_percentual__gte=0, alerta_percentual__lte=100),
+                name='cc_alerta_pct_0_100',
+            ),
+        ]
         
     def __str__(self):
         return f"{self.codigo} - {self.nome}"
@@ -1019,7 +1193,7 @@ class CannedResponse(models.Model):
     """Respostas prontas / Macros para agentes"""
     titulo = models.CharField(max_length=200)
     corpo = models.TextField(help_text="Suporta variaveis: {{cliente_nome}}, {{ticket_numero}}, {{agente_nome}}")
-    categoria = models.CharField(max_length=100, blank=True)
+    categoria = models.CharField(max_length=100, blank=True, db_index=True)
     atalho = models.CharField(max_length=50, blank=True, help_text="Atalho de teclado, ex: /saudacao")
     criado_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='canned_responses')
     compartilhado = models.BooleanField(default=True, help_text="Visivel para todos os agentes")
@@ -1174,6 +1348,12 @@ class WebhookEndpoint(models.Model):
     class Meta:
         verbose_name = "Webhook Endpoint"
         verbose_name_plural = "Webhook Endpoints"
+        constraints = [
+            models.CheckConstraint(
+                check=Q(failure_count__gte=0),
+                name='webhook_failure_count_gte_0',
+            ),
+        ]
 
     def save(self, *args, **kwargs):
         from .crypto import encrypt_value
@@ -1228,6 +1408,12 @@ class APIKey(models.Model):
     class Meta:
         verbose_name = "API Key"
         verbose_name_plural = "API Keys"
+        constraints = [
+            models.CheckConstraint(
+                check=Q(rate_limit__gt=0),
+                name='apikey_rate_limit_gt_0',
+            ),
+        ]
 
     def __str__(self):
         return f"{self.nome} ({self.prefix}...)"
@@ -1312,6 +1498,12 @@ class EscalationLevel(models.Model):
         verbose_name_plural = "Niveis de Escalonamento"
         ordering = ['chain', 'nivel']
         unique_together = ('chain', 'nivel')
+        constraints = [
+            models.CheckConstraint(
+                check=Q(timeout_minutos__gt=0),
+                name='escalation_timeout_gt_0',
+            ),
+        ]
 
     def __str__(self):
         return f"{self.chain.nome} - Nivel {self.nivel}: {self.destino}"
@@ -1373,7 +1565,7 @@ class AIInteraction(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, null=True, blank=True, related_name='ai_interactions')
     input_text = models.TextField()
     output_text = models.TextField()
-    confidence = models.FloatField(null=True, blank=True)
+    confidence = models.DecimalField(max_digits=3, decimal_places=2, null=True, blank=True)
     provider = models.CharField(max_length=20, blank=True)
     model_used = models.CharField(max_length=100, blank=True)
     tokens_used = models.IntegerField(default=0)
@@ -1493,7 +1685,7 @@ class KPIAlert(models.Model):
     ]
     nome = models.CharField(max_length=200)
     metric = models.CharField(max_length=30, choices=METRIC_CHOICES)
-    threshold = models.FloatField(help_text="Valor limite para disparo")
+    threshold = models.DecimalField(max_digits=10, decimal_places=2, help_text="Valor limite para disparo")
     recipients = models.JSONField(default=list, help_text="Emails notificados")
     is_active = models.BooleanField(default=True)
     last_triggered = models.DateTimeField(null=True, blank=True)
@@ -1565,7 +1757,7 @@ class InboundEmail(models.Model):
     in_reply_to = models.CharField(max_length=255, blank=True)
     references = models.TextField(blank=True)
     ticket = models.ForeignKey(Ticket, on_delete=models.SET_NULL, null=True, blank=True, related_name='inbound_emails')
-    processed = models.BooleanField(default=False)
+    processed = models.BooleanField(default=False, db_index=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -1622,23 +1814,45 @@ class EmailTemplate(models.Model):
 class CustomerHealthScore(models.Model):
     """Score de saude do cliente — identifica clientes em risco"""
     cliente = models.OneToOneField(Cliente, on_delete=models.CASCADE, related_name='health_score')
-    score = models.FloatField(default=100.0, help_text="0-100, onde 100 = saudavel")
-    ticket_frequency_score = models.FloatField(default=100.0)
-    satisfaction_score = models.FloatField(default=100.0)
-    resolution_time_score = models.FloatField(default=100.0)
-    escalation_score = models.FloatField(default=100.0)
+    score = models.DecimalField(max_digits=5, decimal_places=2, default=100, help_text="0-100, onde 100 = saudavel")
+    ticket_frequency_score = models.DecimalField(max_digits=5, decimal_places=2, default=100)
+    satisfaction_score = models.DecimalField(max_digits=5, decimal_places=2, default=100)
+    resolution_time_score = models.DecimalField(max_digits=5, decimal_places=2, default=100)
+    escalation_score = models.DecimalField(max_digits=5, decimal_places=2, default=100)
     risk_level = models.CharField(max_length=10, choices=[
         ('low', 'Baixo'),
         ('medium', 'Medio'),
         ('high', 'Alto'),
         ('critical', 'Critico'),
-    ], default='low')
+    ], default='low', db_index=True)
     last_calculated = models.DateTimeField(auto_now=True)
     factors = models.JSONField(default=dict, help_text="Detalhamento dos fatores")
 
     class Meta:
         verbose_name = "Health Score do Cliente"
         verbose_name_plural = "Health Scores dos Clientes"
+        constraints = [
+            models.CheckConstraint(
+                check=Q(score__gte=0, score__lte=100),
+                name='health_score_0_100',
+            ),
+            models.CheckConstraint(
+                check=Q(ticket_frequency_score__gte=0, ticket_frequency_score__lte=100),
+                name='health_ticket_freq_0_100',
+            ),
+            models.CheckConstraint(
+                check=Q(satisfaction_score__gte=0, satisfaction_score__lte=100),
+                name='health_satisfaction_0_100',
+            ),
+            models.CheckConstraint(
+                check=Q(resolution_time_score__gte=0, resolution_time_score__lte=100),
+                name='health_resolution_0_100',
+            ),
+            models.CheckConstraint(
+                check=Q(escalation_score__gte=0, escalation_score__lte=100),
+                name='health_escalation_0_100',
+            ),
+        ]
 
     def __str__(self):
         return f"{self.cliente.nome}: {self.score:.0f} ({self.risk_level})"
@@ -1754,17 +1968,23 @@ class AgentLeaderboard(models.Model):
     usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='leaderboard')
     pontos_total = models.IntegerField(default=0)
     tickets_resolved = models.IntegerField(default=0)
-    avg_satisfaction = models.FloatField(default=0)
-    avg_resolution_hours = models.FloatField(default=0)
-    first_response_rate = models.FloatField(default=0, help_text="% respondidos dentro do SLA")
-    rank = models.IntegerField(default=0)
-    periodo = models.CharField(max_length=7, help_text="YYYY-MM")
+    avg_satisfaction = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    avg_resolution_hours = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    first_response_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0, help_text="% respondidos dentro do SLA")
+    rank = models.IntegerField(default=0, db_index=True)
+    periodo = models.CharField(max_length=7, help_text="YYYY-MM", db_index=True)
     atualizado_em = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "Leaderboard"
         verbose_name_plural = "Leaderboard"
         ordering = ['-pontos_total']
+        constraints = [
+            models.CheckConstraint(
+                check=Q(first_response_rate__gte=0, first_response_rate__lte=100),
+                name='leaderboard_frr_0_100',
+            ),
+        ]
 
     def __str__(self):
         return f"#{self.rank} {self.usuario} - {self.pontos_total}pts"
@@ -1774,4 +1994,9 @@ class AgentLeaderboard(models.Model):
 from .models_chat import (  # noqa: E402, F401
     ChatRoom, ChatParticipant, ChatMessage, ChatMessageReadReceipt,
     ChatReaction, ChatSettings, ChatBot
+)
+
+# ========== IMPORTAR MODELOS LGPD ==========
+from .models_lgpd import (  # noqa: E402, F401
+    LGPDConsent, LGPDDataRequest, LGPDAccessLog
 )

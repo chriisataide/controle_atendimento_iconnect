@@ -30,8 +30,8 @@ class ChatRoom(models.Model):
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, verbose_name="Nome da Sala")
-    room_type = models.CharField(max_length=20, choices=ROOM_TYPES, default='support')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    room_type = models.CharField(max_length=20, choices=ROOM_TYPES, default='support', db_index=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', db_index=True)
     
     # Relacionamentos
     ticket = models.ForeignKey('Ticket', on_delete=models.CASCADE, null=True, blank=True,
@@ -88,9 +88,9 @@ class ChatParticipant(models.Model):
     role = models.CharField(max_length=20, choices=ROLES, default='client')
     
     # Status
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True, db_index=True)
     is_typing = models.BooleanField(default=False)
-    is_online = models.BooleanField(default=False)
+    is_online = models.BooleanField(default=False, db_index=True)
     
     # Timestamps
     joined_at = models.DateTimeField(auto_now_add=True)

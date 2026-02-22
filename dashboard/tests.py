@@ -463,3 +463,366 @@ class RBACTest(BaseTestMixin, TestCase):
         self.assertEqual(get_user_role(user), 'agente')
         self.assertFalse(user_has_role(user, 'admin'))
         self.assertTrue(user_has_role(user, 'agente'))
+
+
+# ===========================================================================
+# P0: Crypto / Encryption Tests
+# ===========================================================================
+
+class CryptoModuleTest(TestCase):
+    """Testes para módulo de criptografia Fernet (P0/PCI-DSS)."""
+
+    def test_encrypt_decrypt_roundtrip(self):
+        from .crypto import encrypt_value, decrypt_value
+        original = 'minha-api-key-super-secreta-123'
+        encrypted = encrypt_value(original)
+        self.assertTrue(encrypted.startswith('enc::'))
+        self.assertNotEqual(encrypted, original)
+        decrypted = decrypt_value(encrypted)
+        self.assertEqual(decrypted, original)
+
+    def test_encrypt_empty_value(self):
+        from .crypto import encrypt_value, decrypt_value
+        self.assertEqual(encrypt_value(''), '')
+        self.assertIsNone(encrypt_value(None))
+        self.assertEqual(decrypt_value(''), '')
+
+    def test_no_double_encrypt(self):
+        from .crypto import encrypt_value
+        encrypted = encrypt_value('secret')
+        double = encrypt_value(encrypted)
+        self.assertEqual(encrypted, double)
+
+    def test_encrypted_model_field_aiconfiguration(self):
+        from .models import AIConfiguration
+        ai = AIConfiguration.objects.create(
+            provider='openai',
+            api_key='sk-test-key-12345',
+            model_name='gpt-4o-mini',
+        )
+        ai.refresh_from_db()
+        # No banco está criptografado
+        from .models import AIConfiguration as AI2
+        raw = AI2.objects.filter(pk=ai.pk).values_list('api_key', flat=True).first()
+        self.assertTrue(raw.startswith('enc::'))
+        # Getter descriptografa
+        self.assertEqual(ai.get_api_key(), 'sk-test-key-12345')
+
+    def test_encrypted_cliente_telefone(self):
+        cliente = Cliente.objects.create(
+            nome='Teste LGPD',
+            email='lgpd@test.com',
+            telefone='(11) 99999-1234',
+        )
+        cliente.refresh_from_db()
+        # Campo raw criptografado
+        from django.db import connection
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT telefone FROM dashboard_cliente WHERE id = %s",
+                [cliente.pk]
+            )
+            raw_tel = cursor.fetchone()[0]
+        self.assertTrue(raw_tel.startswith('enc::'))
+        # Getter descriptografa
+        self.assertEqual(cliente.get_telefone(), '(11) 99999-1234')
+
+    def test_encrypted_webhook_secret(self):
+        from .models import WebhookEndpoint
+        user = User.objects.create_user(username='wh_test', password='p')
+        wh = WebhookEndpoint.objects.create(
+            nome='WH Crypto', url='https://hook.example.com',
+            secret='webhook-secret-abc', events=['ticket.created'],
+            criado_por=user,
+        )
+        wh.refresh_from_db()
+        self.assertEqual(wh.get_secret(), 'webhook-secret-abc')
+
+
+# ===========================================================================
+# P1: Soft Delete Tests
+# ===========================================================================
+
+class SoftDeleteTest(BaseTestMixin, TestCase):
+    """Testes para soft delete em modelos financeiros (P1/BACEN)."""
+
+    def test_contrato_soft_delete(self):
+        from .models import Contrato
+        from decimal import Decimal
+        cliente = self.create_cliente()
+        contrato = Contrato.objects.create(
+            cliente=cliente,
+            numero_contrato='CTR-001',
+            descricao='Contrato teste',
+            valor_mensal=Decimal('1500.00'),
+            data_inicio='2025-01-01',
+        )
+        user = self.create_user()
+        contrato.soft_delete(user=user)
+        # Não aparece na query padrão
+        self.assertFalse(Contrato.objects.filter(pk=contrato.pk).exists())
+        # Mas existe no all_objects
+        self.assertTrue(Contrato.all_objects.filter(pk=contrato.pk).exists())
+        # Pode ser restaurado
+        contrato_del = Contrato.all_objects.get(pk=contrato.pk)
+        contrato_del.restore()
+        self.assertTrue(Contrato.objects.filter(pk=contrato.pk).exists())
+
+    def test_fatura_soft_delete(self):
+        from .models import Contrato, Fatura
+        from decimal import Decimal
+        cliente = self.create_cliente()
+        contrato = Contrato.objects.create(
+            cliente=cliente,
+            numero_contrato='CTR-002',
+            descricao='Contrato',
+            valor_mensal=Decimal('1000.00'),
+            data_inicio='2025-01-01',
+        )
+        fatura = Fatura.objects.create(
+            contrato=contrato,
+            numero_fatura='FAT-001',
+            valor=Decimal('1000.00'),
+            data_vencimento='2025-02-01',
+        )
+        fatura.soft_delete()
+        self.assertEqual(Fatura.objects.count(), 0)
+        self.assertEqual(Fatura.all_objects.count(), 1)
+
+    def test_movimentacao_financeira_soft_delete(self):
+        from .models import MovimentacaoFinanceira, CategoriaFinanceira
+        from decimal import Decimal
+        user = self.create_user()
+        cat = CategoriaFinanceira.objects.create(
+            nome='Receitas', tipo='receita'
+        )
+        mov = MovimentacaoFinanceira.objects.create(
+            categoria=cat,
+            descricao='Venda servicos',
+            tipo='receita',
+            valor=Decimal('5000.00'),
+            data_movimentacao='2025-01-15',
+            usuario=user,
+        )
+        mov.soft_delete(user=user)
+        self.assertFalse(MovimentacaoFinanceira.objects.filter(pk=mov.pk).exists())
+        self.assertTrue(MovimentacaoFinanceira.all_objects.filter(pk=mov.pk).exists())
+
+    def test_soft_delete_preserves_data(self):
+        from .models import CategoriaFinanceira
+        cat = CategoriaFinanceira.objects.create(
+            nome='Despesas TI', tipo='despesa'
+        )
+        cat.soft_delete()
+        cat_del = CategoriaFinanceira.all_objects.get(pk=cat.pk)
+        self.assertEqual(cat_del.nome, 'Despesas TI')
+        self.assertTrue(cat_del.is_deleted)
+        self.assertIsNotNone(cat_del.deleted_at)
+
+
+# ===========================================================================
+# P1: CheckConstraint Tests
+# ===========================================================================
+
+class CheckConstraintTest(BaseTestMixin, TestCase):
+    """Testes para CheckConstraints no banco de dados (P1/integridade)."""
+
+    def test_fatura_valor_positivo(self):
+        from .models import Contrato, Fatura
+        from decimal import Decimal
+        from django.db import IntegrityError
+        cliente = self.create_cliente()
+        contrato = Contrato.objects.create(
+            cliente=cliente,
+            numero_contrato='CTR-CC-01',
+            descricao='CC test',
+            valor_mensal=Decimal('500.00'),
+            data_inicio='2025-01-01',
+        )
+        with self.assertRaises((IntegrityError, Exception)):
+            Fatura.objects.create(
+                contrato=contrato,
+                numero_fatura='FAT-NEG',
+                valor=Decimal('-100.00'),
+                data_vencimento='2025-03-01',
+            )
+
+    def test_centro_custo_alerta_percentual_0_100(self):
+        from .models import CentroCusto
+        from decimal import Decimal
+        from django.core.exceptions import ValidationError
+        cc = CentroCusto(
+            codigo='CC-TST',
+            nome='CC teste',
+            departamento='TI',
+            alerta_percentual=Decimal('150.00'),
+        )
+        with self.assertRaises((Exception,)):
+            cc.full_clean()
+
+
+# ===========================================================================
+# P1: FloatField → DecimalField Tests
+# ===========================================================================
+
+class DecimalFieldTest(TestCase):
+    """Verifica que campos convertidos de FloatField para DecimalField funcionam."""
+
+    def test_system_metrics_decimal(self):
+        from .models import SystemMetrics
+        from decimal import Decimal
+        sm = SystemMetrics.objects.create(
+            date='2025-01-01',
+            total_tickets=100,
+            sla_compliance_rate=Decimal('95.50'),
+            avg_resolution_time=Decimal('4.25'),
+            customer_satisfaction=Decimal('88.75'),
+        )
+        sm.refresh_from_db()
+        self.assertEqual(sm.sla_compliance_rate, Decimal('95.50'))
+        self.assertEqual(sm.avg_resolution_time, Decimal('4.25'))
+
+    def test_customer_health_score_decimal(self):
+        from .models import CustomerHealthScore
+        from decimal import Decimal
+        cliente = Cliente.objects.create(nome='HS', email='hs@t.com')
+        hs = CustomerHealthScore.objects.create(
+            cliente=cliente,
+            score=Decimal('85.50'),
+            ticket_frequency_score=Decimal('90.00'),
+            satisfaction_score=Decimal('80.25'),
+            resolution_time_score=Decimal('75.00'),
+            escalation_score=Decimal('95.00'),
+        )
+        hs.refresh_from_db()
+        self.assertEqual(hs.score, Decimal('85.50'))
+
+
+# ===========================================================================
+# P0+P1: RBAC / IDOR Tests
+# ===========================================================================
+
+class RBACViewTest(BaseTestMixin, TestCase):
+    """Testes para RBAC nas views de ticket (P0/IDOR prevention)."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        # Agente A
+        self.agent_a = self.create_user(username='agent_a')
+        self.agent_a.is_staff = True
+        self.agent_a.save()
+        # Agente B
+        self.agent_b = self.create_user(username='agent_b')
+        self.agent_b.is_staff = True
+        self.agent_b.save()
+        # Clientes
+        self.cliente_a = self.create_cliente(nome='CLI A', email='clia@t.com')
+        self.cliente_b = self.create_cliente(nome='CLI B', email='clib@t.com')
+        # Tickets
+        self.ticket_a = self.create_ticket(
+            cliente=self.cliente_a, agente=self.agent_a, titulo='Ticket A'
+        )
+        self.ticket_b = self.create_ticket(
+            cliente=self.cliente_b, agente=self.agent_b, titulo='Ticket B'
+        )
+
+    def test_rbac_helpers_staff_sees_all(self):
+        from .views_helpers import get_role_filtered_tickets
+        qs = get_role_filtered_tickets(self.agent_a, Ticket.objects.all())
+        # Staff vê todos os tickets
+        self.assertEqual(qs.count(), 2)
+
+    def test_rbac_helpers_user_access(self):
+        from .views_helpers import user_can_access_ticket
+        admin = self.create_admin(username='boss')
+        self.assertTrue(user_can_access_ticket(admin, self.ticket_a))
+        self.assertTrue(user_can_access_ticket(admin, self.ticket_b))
+
+
+# ===========================================================================
+# LGPD Tests
+# ===========================================================================
+
+class LGPDModelTest(BaseTestMixin, TestCase):
+    """Testes para modelos de conformidade LGPD."""
+
+    def test_consent_create_and_revoke(self):
+        from .models_lgpd import LGPDConsent
+        user = self.create_user()
+        consent = LGPDConsent.objects.create(
+            user=user,
+            purpose='communication',
+            granted=True,
+            legal_basis='consent',
+        )
+        self.assertTrue(consent.is_valid)
+        consent.revoke()
+        self.assertFalse(consent.is_valid)
+
+    def test_data_request_lifecycle(self):
+        from .models_lgpd import LGPDDataRequest
+        user = self.create_user()
+        admin = self.create_admin()
+        req = LGPDDataRequest.objects.create(
+            user=user,
+            request_type='access',
+            description='Quero ver meus dados',
+        )
+        self.assertEqual(req.status, 'pending')
+        req.complete(processed_by=admin, response='Dados enviados por email')
+        self.assertEqual(req.status, 'completed')
+        self.assertIsNotNone(req.completed_at)
+
+    def test_access_log(self):
+        from .models_lgpd import LGPDAccessLog
+        user = self.create_user()
+        log = LGPDAccessLog.objects.create(
+            user=user,
+            action='view',
+            resource_type='Cliente',
+            resource_id='42',
+            fields_accessed=['telefone', 'celular'],
+            ip_address='192.168.1.10',
+        )
+        self.assertEqual(log.action, 'view')
+        self.assertIn('telefone', log.fields_accessed)
+
+    def test_pii_encryption_perfil(self):
+        from .models import PerfilUsuario
+        user = self.create_user()
+        perfil = PerfilUsuario.objects.create(
+            user=user,
+            telefone='(11) 98765-4321',
+            endereco='Rua Teste, 123',
+            cep='01234-567',
+        )
+        perfil.refresh_from_db()
+        # Getter descriptografa
+        self.assertEqual(perfil.get_telefone(), '(11) 98765-4321')
+        self.assertEqual(perfil.get_endereco(), 'Rua Teste, 123')
+        self.assertEqual(perfil.get_cep(), '01234-567')
+
+    def test_pii_encryption_ponto_venda(self):
+        from .models import PontoDeVenda
+        pdv = PontoDeVenda.objects.create(
+            razao_social='Empresa Teste LTDA',
+            nome_fantasia='Teste',
+            cnpj='12.345.678/0001-90',
+            cep='01234-567',
+            logradouro='Rua Teste',
+            numero='100',
+            bairro='Centro',
+            cidade='São Paulo',
+            estado='SP',
+            celular='(11) 91234-5678',
+            email_principal='emp@test.com',
+            responsavel_nome='João',
+            responsavel_cpf='123.456.789-00',
+            responsavel_cargo='Diretor',
+            responsavel_telefone='(11) 3456-7890',
+            responsavel_email='joao@test.com',
+        )
+        pdv.refresh_from_db()
+        self.assertEqual(pdv.get_responsavel_cpf(), '123.456.789-00')
+        self.assertEqual(pdv.get_celular(), '(11) 91234-5678')
+        self.assertEqual(pdv.get_responsavel_telefone(), '(11) 3456-7890')

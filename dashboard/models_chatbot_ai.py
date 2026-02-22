@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 from django.contrib.auth.models import User
 from django.utils import timezone
 import uuid
@@ -10,7 +11,7 @@ class ChatbotKnowledgeBase(models.Model):
     pergunta = models.TextField(verbose_name='Pergunta')
     resposta = models.TextField(verbose_name='Resposta')
     tags = models.CharField(max_length=200, blank=True, verbose_name='Tags (separadas por vírgula)')
-    confianca = models.FloatField(default=1.0, verbose_name='Nível de Confiança')
+    confianca = models.DecimalField(max_digits=3, decimal_places=2, default=1.0, verbose_name='Nível de Confiança')
     ativo = models.BooleanField(default=True, verbose_name='Ativo')
     criado_em = models.DateTimeField(auto_now_add=True, verbose_name='Criado em')
     atualizado_em = models.DateTimeField(auto_now=True, verbose_name='Atualizado em')
@@ -63,7 +64,7 @@ class ChatbotMessage(models.Model):
     tipo = models.CharField(max_length=10, choices=TIPOS_MENSAGEM, verbose_name='Tipo')
     conteudo = models.TextField(verbose_name='Conteúdo')
     timestamp = models.DateTimeField(auto_now_add=True, verbose_name='Timestamp')
-    confianca = models.FloatField(null=True, blank=True, verbose_name='Confiança da Resposta')
+    confianca = models.DecimalField(max_digits=3, decimal_places=2, null=True, blank=True, verbose_name='Confiança da Resposta')
     metadados = models.JSONField(default=dict, verbose_name='Metadados')
     
     class Meta:
@@ -86,8 +87,8 @@ class ChatbotAnalytics(models.Model):
     total_mensagens = models.IntegerField(default=0, verbose_name='Total de Mensagens')
     respostas_automaticas = models.IntegerField(default=0, verbose_name='Respostas Automáticas')
     transferencias_humano = models.IntegerField(default=0, verbose_name='Transferências para Humano')
-    satisfacao_media = models.FloatField(null=True, blank=True, verbose_name='Satisfação Média')
-    tempo_resposta_medio = models.FloatField(null=True, blank=True, verbose_name='Tempo Resposta Médio (s)')
+    satisfacao_media = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Satisfação Média')
+    tempo_resposta_medio = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True, verbose_name='Tempo Resposta Médio (s)')
     
     class Meta:
         verbose_name = 'Analytics Chatbot'

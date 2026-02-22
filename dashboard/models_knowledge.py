@@ -5,6 +5,7 @@ ChatbotKnowledgeBase (models_chatbot_ai.py) e usado para FAQ do chatbot.
 KnowledgeBase (models.py) esta DEPRECADO.
 """
 from django.db import models
+from django.db.models import Q
 from django.contrib.auth.models import User
 
 
@@ -54,6 +55,20 @@ class ArtigoConhecimento(models.Model):
         indexes = [
             models.Index(fields=['publico', '-criado_em']),
             models.Index(fields=['categoria', '-visualizacoes']),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=Q(visualizacoes__gte=0),
+                name='artigo_visualizacoes_gte_0',
+            ),
+            models.CheckConstraint(
+                check=Q(util_sim__gte=0),
+                name='artigo_util_sim_gte_0',
+            ),
+            models.CheckConstraint(
+                check=Q(util_nao__gte=0),
+                name='artigo_util_nao_gte_0',
+            ),
         ]
 
     def __str__(self):

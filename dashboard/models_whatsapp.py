@@ -181,7 +181,7 @@ class WhatsAppTemplate(models.Model):
     nome = models.CharField(max_length=100, verbose_name='Nome')
     categoria = models.CharField(max_length=20, choices=CATEGORIAS, verbose_name='Categoria')
     idioma = models.CharField(max_length=10, default='pt_BR', verbose_name='Idioma')
-    status = models.CharField(max_length=20, choices=STATUS_TEMPLATE, default='pending', verbose_name='Status')
+    status = models.CharField(max_length=20, choices=STATUS_TEMPLATE, default='pending', verbose_name='Status', db_index=True)
     conteudo = models.JSONField(verbose_name='Conteúdo do Template')
     descricao = models.TextField(blank=True, verbose_name='Descrição')
     ativo = models.BooleanField(default=True, verbose_name='Ativo')
@@ -237,7 +237,7 @@ class WhatsAppAnalytics(models.Model):
     conversas_iniciadas = models.IntegerField(default=0, verbose_name='Conversas Iniciadas')
     conversas_encerradas = models.IntegerField(default=0, verbose_name='Conversas Encerradas')
     tickets_criados = models.IntegerField(default=0, verbose_name='Tickets Criados')
-    tempo_resposta_medio = models.FloatField(null=True, blank=True, verbose_name='Tempo Resposta Médio (min)')
+    tempo_resposta_medio = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True, verbose_name='Tempo Resposta Médio (min)')
     
     class Meta:
         verbose_name = 'Analytics WhatsApp'

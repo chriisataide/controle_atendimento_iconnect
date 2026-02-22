@@ -3,13 +3,15 @@ Modelos para Sistema de Controle de Estoque
 Integrado ao Sistema iConnect
 """
 from django.db import models, transaction
-from django.db.models import F
+from django.db.models import F, Q
 from django.contrib.auth.models import User
 from django.utils import timezone
 from decimal import Decimal
 from django.core.validators import MinValueValidator
 import uuid
 import logging
+
+from .mixins import SoftDeleteModel
 
 logger = logging.getLogger('dashboard')
 
@@ -64,8 +66,8 @@ class UnidadeMedida(models.Model):
         return f"{self.nome} ({self.sigla})"
 
 
-class Fornecedor(models.Model):
-    """Fornecedores de produtos"""
+class Fornecedor(SoftDeleteModel):
+    """Fornecedores de produtos (soft delete habilitado)"""
     TIPOS_PESSOA = [
         ('fisica', 'Pessoa Física'),
         ('juridica', 'Pessoa Jurídica'),
@@ -76,15 +78,15 @@ class Fornecedor(models.Model):
     nome_fantasia = models.CharField(max_length=200, blank=True)
     tipo_pessoa = models.CharField(max_length=10, choices=TIPOS_PESSOA, default='juridica')
     
-    # Documentos
-    cnpj_cpf = models.CharField(max_length=18, unique=True)
+    # Documentos — PII criptografado (LGPD Art. 46)
+    cnpj_cpf = models.CharField(max_length=500, unique=True, help_text="Criptografado em repouso")
     inscricao_estadual = models.CharField(max_length=30, blank=True)
     inscricao_municipal = models.CharField(max_length=30, blank=True)
     
-    # Contato
+    # Contato — PII criptografado
     email = models.EmailField(blank=True)
-    telefone = models.CharField(max_length=20, blank=True)
-    celular = models.CharField(max_length=20, blank=True)
+    telefone = models.CharField(max_length=500, blank=True, help_text="Criptografado em repouso")
+    celular = models.CharField(max_length=500, blank=True, help_text="Criptografado em repouso")
     
     # Endereço
     cep = models.CharField(max_length=9, blank=True)
@@ -106,13 +108,38 @@ class Fornecedor(models.Model):
         verbose_name = "Fornecedor"
         verbose_name_plural = "Fornecedores"
         ordering = ['nome']
-    
+
     def __str__(self):
         return self.nome
 
+    def save(self, *args, **kwargs):
+        from .crypto import encrypt_value
+        if self.cnpj_cpf and not self.cnpj_cpf.startswith('enc::'):
+            self.cnpj_cpf = encrypt_value(self.cnpj_cpf)
+        if self.telefone and not self.telefone.startswith('enc::'):
+            self.telefone = encrypt_value(self.telefone)
+        if self.celular and not self.celular.startswith('enc::'):
+            self.celular = encrypt_value(self.celular)
+        super().save(*args, **kwargs)
 
-class Produto(models.Model):
-    """Produtos e Serviços"""
+    def get_cnpj_cpf(self):
+        """Retorna CNPJ/CPF descriptografado."""
+        from .crypto import decrypt_value
+        return decrypt_value(self.cnpj_cpf)
+
+    def get_telefone(self):
+        """Retorna telefone descriptografado."""
+        from .crypto import decrypt_value
+        return decrypt_value(self.telefone)
+
+    def get_celular(self):
+        """Retorna celular descriptografado."""
+        from .crypto import decrypt_value
+        return decrypt_value(self.celular)
+
+
+class Produto(SoftDeleteModel):
+    """Produtos e Serviços (soft delete habilitado)"""
     TIPOS_PRODUTO = [
         ('produto', 'Produto Físico'),
         ('servico', 'Serviço'),
@@ -177,6 +204,41 @@ class Produto(models.Model):
             models.Index(fields=['codigo_barras']),
             models.Index(fields=['categoria']),
             models.Index(fields=['status']),
+            models.Index(fields=['tipo']),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=Q(preco_custo__gte=0),
+                name='produto_preco_custo_gte_0',
+            ),
+            models.CheckConstraint(
+                check=Q(preco_venda__gte=0),
+                name='produto_preco_venda_gte_0',
+            ),
+            models.CheckConstraint(
+                check=Q(estoque_minimo__gte=0),
+                name='produto_estoque_minimo_gte_0',
+            ),
+            models.CheckConstraint(
+                check=Q(estoque_maximo__gte=0),
+                name='produto_estoque_maximo_gte_0',
+            ),
+            models.CheckConstraint(
+                check=Q(peso__gte=0),
+                name='produto_peso_gte_0',
+            ),
+            models.CheckConstraint(
+                check=Q(altura__gte=0),
+                name='produto_altura_gte_0',
+            ),
+            models.CheckConstraint(
+                check=Q(largura__gte=0),
+                name='produto_largura_gte_0',
+            ),
+            models.CheckConstraint(
+                check=Q(profundidade__gte=0),
+                name='produto_profundidade_gte_0',
+            ),
         ]
     
     def __str__(self):
@@ -267,8 +329,8 @@ class TipoMovimentacao(models.Model):
         return f"{self.nome} ({self.get_tipo_operacao_display()})"
 
 
-class MovimentacaoEstoque(models.Model):
-    """Movimentações de entrada e saída de estoque"""
+class MovimentacaoEstoque(SoftDeleteModel):
+    """Movimentações de entrada e saída de estoque (soft delete habilitado)"""
     TIPOS_OPERACAO = [
         ('entrada', 'Entrada'),
         ('saida', 'Saída'),
@@ -316,6 +378,20 @@ class MovimentacaoEstoque(models.Model):
             models.Index(fields=['numero']),
             models.Index(fields=['produto', '-data_movimentacao']),
             models.Index(fields=['tipo_operacao', '-data_movimentacao']),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=Q(quantidade__gt=0),
+                name='mov_estoque_quantidade_gt_0',
+            ),
+            models.CheckConstraint(
+                check=Q(valor_unitario__gte=0),
+                name='mov_estoque_valor_unitario_gte_0',
+            ),
+            models.CheckConstraint(
+                check=Q(valor_total__gte=0),
+                name='mov_estoque_valor_total_gte_0',
+            ),
         ]
     
     def __str__(self):
@@ -395,6 +471,9 @@ class EstoqueAlerta(models.Model):
         verbose_name = "Alerta de Estoque"
         verbose_name_plural = "Alertas de Estoque"
         ordering = ['-data_alerta']
+        indexes = [
+            models.Index(fields=['tipo_alerta', 'resolvido']),
+        ]
     
     def __str__(self):
         return f"{self.produto.nome} - {self.get_tipo_alerta_display()}"
