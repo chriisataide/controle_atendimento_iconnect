@@ -6,7 +6,6 @@ import logging
 from datetime import datetime, timedelta
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -105,7 +104,7 @@ def sla_policies(request):
             SLAPolicy.objects.create(**policy_data)
             messages.success(request, 'Política SLA criada com sucesso!')
         except Exception as e:
-            messages.error(request, f'Erro ao criar política: {e}')
+            messages.error(request, 'Erro ao criar política SLA. Verifique os dados.')
         from django.shortcuts import redirect
         return redirect('dashboard:sla_policies')
 
@@ -370,7 +369,6 @@ def api_sla_dashboard_data(request):
 
 @login_required
 @require_http_methods(["POST"])
-@csrf_exempt
 def api_create_sla_policy(request):
     """API para criar política de SLA"""
     try:
@@ -451,7 +449,6 @@ def api_create_sla_policy(request):
 
 @login_required
 @require_http_methods(["POST"])
-@csrf_exempt
 def api_resolve_sla_alert(request, alert_id):
     """API para resolver alerta de SLA"""
     try:
@@ -481,7 +478,6 @@ def api_resolve_sla_alert(request, alert_id):
 
 @login_required
 @require_http_methods(["POST"])
-@csrf_exempt
 def api_run_sla_monitor(request):
     """API para executar monitoramento de SLA manualmente"""
     try:

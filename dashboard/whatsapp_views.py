@@ -162,7 +162,7 @@ def whatsapp_conversation_detail(request, uuid):
                     messages.success(request, 'Mensagem enviada com sucesso!')
                     
                 except Exception as e:
-                    messages.error(request, f'Erro ao enviar mensagem: {e}')
+                    messages.error(request, 'Erro ao enviar mensagem. Tente novamente.')
         
         return redirect('whatsapp_conversation_detail', uuid=uuid)
     
@@ -387,7 +387,7 @@ def whatsapp_api_send_message(request):
         except Exception as e:
             return JsonResponse({
                 'status': 'error',
-                'message': str(e)
+                'message': 'Erro ao enviar mensagem'
             }, status=400)
     
     return JsonResponse({'error': 'Method not allowed'}, status=405)

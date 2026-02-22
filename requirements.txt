@@ -57,6 +57,9 @@ psycopg2-binary==2.9.9
 # RBAC & Security (Phase 2)
 django-axes==6.1.1
 
+# Cryptography - criptografia de campos sensíveis (BACEN/PCI-DSS)
+cryptography>=46.0.0
+
 # API (Phase 4)
 djangorestframework-simplejwt==5.3.1
 django-filter==23.5

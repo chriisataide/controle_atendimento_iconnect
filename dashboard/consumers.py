@@ -542,7 +542,7 @@ class TicketChatConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             await self.send(text_data=json.dumps({
                 'type': 'error',
-                'message': f'Erro ao enviar mensagem: {str(e)}'
+                'message': 'Erro ao enviar mensagem'
             }))
     
     async def handle_typing_start(self, data):
@@ -644,11 +644,8 @@ class DashboardConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             await self.send(text_data=json.dumps({
                 'type': 'error',
-                'message': str(e)
+                'message': 'Erro ao atualizar dashboard'
             }))
-    
-    # Handler for group messages
-    async def dashboard_update(self, event):
         await self.send(text_data=json.dumps({
             'type': 'dashboard_update',
             'data': event['data']
@@ -736,7 +733,7 @@ class AgentStatusConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             await self.send(text_data=json.dumps({
                 'type': 'error',
-                'message': str(e)
+                'message': 'Erro ao atualizar status'
             }))
     
     # Handler for group messages
@@ -840,7 +837,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except json.JSONDecodeError:
             await self.send_error("Invalid JSON format")
         except Exception as e:
-            await self.send_error(f"Error processing message: {str(e)}")
+            await self.send_error("Error processing message")
     
     async def handle_chat_message(self, data):
         """Processa mensagem de chat"""

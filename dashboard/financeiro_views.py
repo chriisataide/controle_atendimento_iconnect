@@ -3,10 +3,13 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.contrib import messages
 from django.shortcuts import redirect, get_object_or_404
-from django.db import models
+from django.db import models, transaction
 from datetime import datetime, timedelta
 from django.db.models import Sum, Count, Q
 from decimal import Decimal
+import logging
+
+logger = logging.getLogger('dashboard')
 
 # Import dos modelos financeiros
 from .models import (
@@ -479,8 +482,9 @@ def api_gerar_relatorio(request):
 
             return JsonResponse(relatorio_data)
 
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
+        except Exception:
+            logger.exception('Erro ao gerar relatório financeiro')
+            return JsonResponse({'error': 'Erro ao gerar relatório'}, status=400)
 
     return JsonResponse({'error': 'Método não permitido'}, status=405)
 
@@ -507,37 +511,39 @@ def centro_custo_create(request):
     """Criar novo centro de custo"""
     if request.method == 'POST':
         try:
-            # Processar dados do formulário
-            centro_custo = CentroCusto.objects.create(
-                codigo=request.POST.get('codigo'),
-                nome=request.POST.get('nome'),
-                descricao=request.POST.get('descricao', ''),
-                departamento=request.POST.get('departamento'),
-                orcamento_mensal=request.POST.get('orcamento_mensal', 0),
-                orcamento_anual=request.POST.get('orcamento_anual', 0),
-                status=request.POST.get('status', 'ativo'),
-                criado_por=request.user
-            )
-            
-            # Campos opcionais
-            if request.POST.get('responsavel_id'):
-                from django.contrib.auth.models import User
-                centro_custo.responsavel = User.objects.get(id=request.POST.get('responsavel_id'))
-            
-            if request.POST.get('gerente_id'):
-                from django.contrib.auth.models import User
-                centro_custo.gerente = User.objects.get(id=request.POST.get('gerente_id'))
+            with transaction.atomic():
+                # Processar dados do formulário
+                centro_custo = CentroCusto.objects.create(
+                    codigo=request.POST.get('codigo'),
+                    nome=request.POST.get('nome'),
+                    descricao=request.POST.get('descricao', ''),
+                    departamento=request.POST.get('departamento'),
+                    orcamento_mensal=request.POST.get('orcamento_mensal', 0),
+                    orcamento_anual=request.POST.get('orcamento_anual', 0),
+                    status=request.POST.get('status', 'ativo'),
+                    criado_por=request.user
+                )
                 
-            if request.POST.get('centro_pai_id'):
-                centro_custo.centro_pai = CentroCusto.objects.get(id=request.POST.get('centro_pai_id'))
-            
-            centro_custo.save()
+                # Campos opcionais
+                if request.POST.get('responsavel_id'):
+                    from django.contrib.auth.models import User
+                    centro_custo.responsavel = User.objects.get(id=request.POST.get('responsavel_id'))
+                
+                if request.POST.get('gerente_id'):
+                    from django.contrib.auth.models import User
+                    centro_custo.gerente = User.objects.get(id=request.POST.get('gerente_id'))
+                    
+                if request.POST.get('centro_pai_id'):
+                    centro_custo.centro_pai = CentroCusto.objects.get(id=request.POST.get('centro_pai_id'))
+                
+                centro_custo.save()
             
             messages.success(request, f'Centro de custo "{centro_custo.nome}" criado com sucesso!')
             return redirect('financeiro:centros_custo_lista')
             
-        except Exception as e:
-            messages.error(request, f'Erro ao criar centro de custo: {str(e)}')
+        except Exception:
+            logger.exception('Erro ao criar centro de custo')
+            messages.error(request, 'Erro ao criar centro de custo. Verifique os dados e tente novamente.')
     
     # Dados para o formulário
     from django.contrib.auth.models import User
@@ -606,40 +612,45 @@ def centro_custo_edit(request, centro_id):
     
     if request.method == 'POST':
         try:
-            # Atualizar dados
-            centro_custo.codigo = request.POST.get('codigo')
-            centro_custo.nome = request.POST.get('nome')
-            centro_custo.descricao = request.POST.get('descricao', '')
-            centro_custo.departamento = request.POST.get('departamento')
-            centro_custo.orcamento_mensal = request.POST.get('orcamento_mensal', 0)
-            centro_custo.orcamento_anual = request.POST.get('orcamento_anual', 0)
-            centro_custo.status = request.POST.get('status')
-            
-            # Campos opcionais
-            if request.POST.get('responsavel_id'):
-                from django.contrib.auth.models import User
-                centro_custo.responsavel = User.objects.get(id=request.POST.get('responsavel_id'))
-            else:
-                centro_custo.responsavel = None
-            
-            if request.POST.get('gerente_id'):
-                from django.contrib.auth.models import User
-                centro_custo.gerente = User.objects.get(id=request.POST.get('gerente_id'))
-            else:
-                centro_custo.gerente = None
+            with transaction.atomic():
+                # Re-fetch com lock dentro da transação
+                centro_custo = CentroCusto.objects.select_for_update().get(id=centro_id)
                 
-            if request.POST.get('centro_pai_id'):
-                centro_custo.centro_pai = CentroCusto.objects.get(id=request.POST.get('centro_pai_id'))
-            else:
-                centro_custo.centro_pai = None
-            
-            centro_custo.save()
+                # Atualizar dados
+                centro_custo.codigo = request.POST.get('codigo')
+                centro_custo.nome = request.POST.get('nome')
+                centro_custo.descricao = request.POST.get('descricao', '')
+                centro_custo.departamento = request.POST.get('departamento')
+                centro_custo.orcamento_mensal = request.POST.get('orcamento_mensal', 0)
+                centro_custo.orcamento_anual = request.POST.get('orcamento_anual', 0)
+                centro_custo.status = request.POST.get('status')
+                
+                # Campos opcionais
+                if request.POST.get('responsavel_id'):
+                    from django.contrib.auth.models import User
+                    centro_custo.responsavel = User.objects.get(id=request.POST.get('responsavel_id'))
+                else:
+                    centro_custo.responsavel = None
+                
+                if request.POST.get('gerente_id'):
+                    from django.contrib.auth.models import User
+                    centro_custo.gerente = User.objects.get(id=request.POST.get('gerente_id'))
+                else:
+                    centro_custo.gerente = None
+                    
+                if request.POST.get('centro_pai_id'):
+                    centro_custo.centro_pai = CentroCusto.objects.get(id=request.POST.get('centro_pai_id'))
+                else:
+                    centro_custo.centro_pai = None
+                
+                centro_custo.save()
             
             messages.success(request, f'Centro de custo "{centro_custo.nome}" atualizado com sucesso!')
             return redirect('financeiro:centro_custo_detail', centro_id=centro_custo.id)
             
-        except Exception as e:
-            messages.error(request, f'Erro ao atualizar centro de custo: {str(e)}')
+        except Exception:
+            logger.exception('Erro ao atualizar centro de custo')
+            messages.error(request, 'Erro ao atualizar centro de custo. Verifique os dados e tente novamente.')
     
     # Dados para o formulário
     from django.contrib.auth.models import User
@@ -790,7 +801,8 @@ def api_centros_custo_stats(request):
                 'status': 'success'
             })
             
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
+        except Exception:
+            logger.exception('Erro ao gerar stats de centros de custo')
+            return JsonResponse({'error': 'Erro ao processar dados'}, status=400)
     
     return JsonResponse({'error': 'Método não permitido'}, status=405)

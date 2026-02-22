@@ -1,5 +1,4 @@
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
@@ -27,7 +26,6 @@ def get_public_key(request):
     })
 
 @login_required  
-@csrf_exempt
 @require_http_methods(["POST"])
 def subscribe_push(request):
     """Inscreve o usuário para notificações push"""
@@ -80,7 +78,6 @@ def subscribe_push(request):
         }, status=500)
 
 @login_required
-@csrf_exempt  
 @require_http_methods(["POST"])
 def unsubscribe_push(request):
     """Remove inscrição do usuário para notificações push - versão mock"""
@@ -105,7 +102,6 @@ def unsubscribe_push(request):
         }, status=500)
 
 @login_required
-@csrf_exempt
 @require_http_methods(["POST"])
 def update_preferences(request):
     """Atualiza preferências de notificação do usuário - versão mock"""
@@ -138,7 +134,6 @@ def update_preferences(request):
         }, status=500)
 
 @login_required
-@csrf_exempt
 @require_http_methods(["POST"])
 def test_notification(request):
     """Envia uma notificação de teste para o usuário - versão mock"""

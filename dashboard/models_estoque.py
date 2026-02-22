@@ -2,12 +2,16 @@
 Modelos para Sistema de Controle de Estoque
 Integrado ao Sistema iConnect
 """
-from django.db import models
+from django.db import models, transaction
+from django.db.models import F
 from django.contrib.auth.models import User
 from django.utils import timezone
 from decimal import Decimal
 from django.core.validators import MinValueValidator
 import uuid
+import logging
+
+logger = logging.getLogger('dashboard')
 
 
 class CategoriaEstoque(models.Model):
@@ -219,15 +223,24 @@ class Produto(models.Model):
             self.margem_lucro = ((self.preco_venda - self.preco_custo) / self.preco_custo) * 100
     
     def save(self, *args, **kwargs):
-        if not self.codigo:
-            # Gerar código automático se não fornecido
-            ultimo_codigo = Produto.objects.filter(categoria=self.categoria).count() + 1
-            self.codigo = f"{self.categoria.nome[:3].upper()}{ultimo_codigo:04d}"
-        
-        # Calcular margem automaticamente
-        self.calcular_margem_automatica()
-        
-        super().save(*args, **kwargs)
+        with transaction.atomic():
+            if not self.codigo:
+                # Gerar código automático com retry para evitar race condition
+                for attempt in range(5):
+                    ultimo_codigo = Produto.objects.filter(
+                        categoria=self.categoria
+                    ).select_for_update().count() + 1
+                    codigo_candidato = f"{self.categoria.nome[:3].upper()}{ultimo_codigo:04d}"
+                    if not Produto.objects.filter(codigo=codigo_candidato).exists():
+                        self.codigo = codigo_candidato
+                        break
+                    ultimo_codigo += 1
+                    self.codigo = f"{self.categoria.nome[:3].upper()}{ultimo_codigo:04d}"
+            
+            # Calcular margem automaticamente
+            self.calcular_margem_automatica()
+            
+            super().save(*args, **kwargs)
 
 
 class TipoMovimentacao(models.Model):
@@ -309,34 +322,56 @@ class MovimentacaoEstoque(models.Model):
         return f"{self.numero} - {self.produto.nome} ({self.quantidade})"
     
     def save(self, *args, **kwargs):
-        # Gerar número automático
-        if not self.numero:
-            from datetime import datetime
-            ano_mes = datetime.now().strftime('%Y%m')
-            ultimo_numero = MovimentacaoEstoque.objects.filter(
-                numero__startswith=f"MOV{ano_mes}"
-            ).count() + 1
-            self.numero = f"MOV{ano_mes}{ultimo_numero:04d}"
-        
-        # Calcular valor total
-        self.valor_total = self.quantidade * self.valor_unitario
-        
-        # Salvar estoque anterior
-        if not self.pk:  # Apenas na criação
-            self.estoque_anterior = self.produto.estoque_atual
-        
-        # Aplicar movimentação no estoque
-        if self.tipo_operacao == 'entrada':
-            self.produto.estoque_atual += self.quantidade
-        elif self.tipo_operacao == 'saida':
-            self.produto.estoque_atual -= self.quantidade
-        elif self.tipo_operacao == 'ajuste':
-            self.produto.estoque_atual = self.quantidade
-        
-        self.estoque_apos_movimentacao = self.produto.estoque_atual
-        self.produto.save()
-        
-        super().save(*args, **kwargs)
+        with transaction.atomic():
+            # Gerar número automático com proteção contra race condition
+            if not self.numero:
+                from datetime import datetime
+                ano_mes = datetime.now().strftime('%Y%m')
+                for attempt in range(10):
+                    ultimo_numero = MovimentacaoEstoque.objects.filter(
+                        numero__startswith=f"MOV{ano_mes}"
+                    ).select_for_update().count() + 1
+                    numero_candidato = f"MOV{ano_mes}{ultimo_numero:04d}"
+                    if not MovimentacaoEstoque.objects.filter(numero=numero_candidato).exists():
+                        self.numero = numero_candidato
+                        break
+                    ultimo_numero += 1
+                    self.numero = f"MOV{ano_mes}{ultimo_numero:04d}"
+            
+            # Calcular valor total
+            self.valor_total = self.quantidade * self.valor_unitario
+            
+            # Lock do produto para evitar race condition no estoque
+            produto = Produto.objects.select_for_update().get(pk=self.produto_id)
+            
+            # Salvar estoque anterior
+            if not self.pk:  # Apenas na criação
+                self.estoque_anterior = produto.estoque_atual
+            
+            # Aplicar movimentação no estoque usando F() para atomicidade
+            if self.tipo_operacao == 'entrada':
+                Produto.objects.filter(pk=produto.pk).update(
+                    estoque_atual=F('estoque_atual') + self.quantidade
+                )
+                self.estoque_apos_movimentacao = produto.estoque_atual + self.quantidade
+            elif self.tipo_operacao == 'saida':
+                # Validar estoque suficiente
+                if produto.estoque_atual < self.quantidade and not produto.categoria.permite_estoque_negativo:
+                    raise ValueError(
+                        f'Estoque insuficiente para {produto.nome}. '
+                        f'Disponível: {produto.estoque_atual}, Solicitado: {self.quantidade}'
+                    )
+                Produto.objects.filter(pk=produto.pk).update(
+                    estoque_atual=F('estoque_atual') - self.quantidade
+                )
+                self.estoque_apos_movimentacao = produto.estoque_atual - self.quantidade
+            elif self.tipo_operacao == 'ajuste':
+                Produto.objects.filter(pk=produto.pk).update(
+                    estoque_atual=self.quantidade
+                )
+                self.estoque_apos_movimentacao = self.quantidade
+            
+            super().save(*args, **kwargs)
 
 
 class EstoqueAlerta(models.Model):

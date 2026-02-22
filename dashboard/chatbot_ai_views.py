@@ -1,6 +1,5 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
@@ -28,7 +27,6 @@ def chatbot_interface(request):
     return render(request, 'dashboard/chatbot_interface.html')
 
 
-@csrf_exempt
 @require_http_methods(["POST"])
 @login_required
 def chatbot_api(request):
@@ -69,7 +67,6 @@ def chatbot_api(request):
         })
 
 
-@csrf_exempt
 @require_http_methods(["POST"])
 @login_required
 def chatbot_feedback(request):
@@ -159,7 +156,6 @@ def chatbot_knowledge_base(request):
     return render(request, 'dashboard/chatbot_knowledge_base.html', context)
 
 
-@csrf_exempt
 @require_http_methods(["POST"])
 @login_required
 def chatbot_add_knowledge(request):
@@ -245,7 +241,6 @@ def chatbot_conversation_detail(request, conversation_id):
     return render(request, 'dashboard/chatbot_conversation_detail.html', context)
 
 
-@csrf_exempt
 @require_http_methods(["POST"])
 @login_required  
 def chatbot_create_ticket_from_conversation(request):

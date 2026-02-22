@@ -1,8 +1,37 @@
-chore: reorganizar estrutura de arquivos do projeto
+fix(security): P0 critical fixes - banking compliance audit
 
-- Mover audit reports para docs/audits/
-- Organizar docs/ em subpastas: guides/ (API, deploy, production), reports/ (relatorios antigos), audits/ (auditorias)
-- Mover docker-entrypoint.sh, docker-entrypoint-dev.sh e nginx.conf para docker/
-- Atualizar referencias no Dockerfile e docker-compose.yml
-- Mover scripts soltos (seed_*.py, test_*.py) para scripts/seeds/ e scripts/testing/
-- Remover .cleanup_backup/ (backups antigos desnecessarios)
+CRITICAL FIXES IMPLEMENTED:
+
+1. transaction.atomic + select_for_update (Race Conditions):
+   - MovimentacaoEstoque.save(): atomic stock updates with F() expressions
+   - Produto.save(): atomic code generation with retry
+   - Ticket.save(): atomic number generation with lock
+   - movimentacao_create view: atomic check-then-act with product lock
+   - centro_custo_create/edit: wrapped in transaction.atomic()
+
+2. RBAC/IDOR Prevention:
+   - Added get_role_filtered_tickets() helper (admin/agent/client roles)
+   - Added user_can_access_ticket() authorization check
+   - TicketDetailView/UpdateView/KanbanBoardView/TicketListView: RBAC filtered
+   - add_interaction: ownership verification before allowing interaction
+
+3. Credential Encryption at Rest (Fernet AES-128-CBC):
+   - Created dashboard/crypto.py encryption module
+   - AIConfiguration.api_key, EmailAccount.password, WebhookEndpoint.secret
+   - WhatsAppBusinessAccount.access_token and webhook_verify_token
+
+4. CSRF Protection Restored:
+   - Removed @csrf_exempt from 14 authenticated views (kept 3 external webhooks)
+   - Cleaned unused csrf_exempt imports from 7 files
+
+5. Financial Validators:
+   - MinValueValidator on all monetary fields
+   - MaxValueValidator(100) on desconto_percentual
+
+6. CASCADE to PROTECT on Financial FKs:
+   - Contrato.cliente, Fatura.contrato, Pagamento.fatura, CentroCusto.centro_pai
+
+7. Open Redirect Fix in login view
+
+8. Information Leak Prevention:
+   - Replaced 38 str(e) exposures across 15 files with generic messages

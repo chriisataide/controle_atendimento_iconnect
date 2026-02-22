@@ -11,16 +11,20 @@ from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.core.paginator import Paginator
 from django.db.models import Q, Sum, Count, F, Avg
+from django.db import transaction
 from django.utils import timezone
 from datetime import datetime, timedelta
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import json
+import logging
 
 from .models_estoque import (
     Produto, CategoriaEstoque, Fornecedor, UnidadeMedida,
     MovimentacaoEstoque, TipoMovimentacao, EstoqueAlerta
 )
 from .models import Ticket
+
+logger = logging.getLogger('dashboard')
 
 
 # ========== DASHBOARD PRINCIPAL DE ESTOQUE ==========
@@ -328,39 +332,57 @@ def movimentacao_create(request):
     if request.method == 'POST':
         produto_id = request.POST.get('produto')
         tipo_movimentacao_id = request.POST.get('tipo_movimentacao')
-        quantidade = Decimal(request.POST.get('quantidade', '0'))
-        valor_unitario = Decimal(request.POST.get('valor_unitario', '0'))
         fornecedor_id = request.POST.get('fornecedor') or None
         observacoes = request.POST.get('observacoes', '')
         numero_documento = request.POST.get('numero_documento', '')
         
         try:
-            produto = Produto.objects.get(id=produto_id)
-            tipo_movimentacao = TipoMovimentacao.objects.get(id=tipo_movimentacao_id)
-            
-            # Validar estoque para saídas
-            if tipo_movimentacao.tipo_operacao == 'saida':
-                if produto.estoque_atual < quantidade:
-                    messages.error(request, 'Estoque insuficiente para esta saída!')
-                    return redirect('estoque:movimentacao_create')
-            
-            movimentacao = MovimentacaoEstoque.objects.create(
-                produto=produto,
-                tipo_movimentacao=tipo_movimentacao,
-                tipo_operacao=tipo_movimentacao.tipo_operacao,
-                quantidade=quantidade,
-                valor_unitario=valor_unitario,
-                fornecedor_id=fornecedor_id,
-                observacoes=observacoes,
-                numero_documento=numero_documento,
-                usuario=request.user
-            )
+            quantidade = Decimal(request.POST.get('quantidade', '0'))
+            valor_unitario = Decimal(request.POST.get('valor_unitario', '0'))
+        except (InvalidOperation, ValueError):
+            messages.error(request, 'Valores numéricos inválidos.')
+            return redirect('estoque:movimentacao_create')
+        
+        if quantidade <= 0:
+            messages.error(request, 'A quantidade deve ser maior que zero.')
+            return redirect('estoque:movimentacao_create')
+        
+        try:
+            with transaction.atomic():
+                # Lock do produto para evitar race condition
+                produto = Produto.objects.select_for_update().get(id=produto_id)
+                tipo_movimentacao = TipoMovimentacao.objects.get(id=tipo_movimentacao_id)
+                
+                # Validar estoque para saídas — DENTRO da transação com lock
+                if tipo_movimentacao.tipo_operacao == 'saida':
+                    if produto.estoque_atual < quantidade and not produto.categoria.permite_estoque_negativo:
+                        messages.error(request, 'Estoque insuficiente para esta saída!')
+                        return redirect('estoque:movimentacao_create')
+                
+                movimentacao = MovimentacaoEstoque.objects.create(
+                    produto=produto,
+                    tipo_movimentacao=tipo_movimentacao,
+                    tipo_operacao=tipo_movimentacao.tipo_operacao,
+                    quantidade=quantidade,
+                    valor_unitario=valor_unitario,
+                    fornecedor_id=fornecedor_id,
+                    observacoes=observacoes,
+                    numero_documento=numero_documento,
+                    usuario=request.user
+                )
             
             messages.success(request, f'Movimentação {movimentacao.numero} criada com sucesso!')
             return redirect('estoque:movimentacao_list')
             
-        except Exception as e:
-            messages.error(request, f'Erro ao criar movimentação: {str(e)}')
+        except Produto.DoesNotExist:
+            messages.error(request, 'Produto não encontrado.')
+        except TipoMovimentacao.DoesNotExist:
+            messages.error(request, 'Tipo de movimentação não encontrado.')
+        except ValueError as e:
+            messages.error(request, str(e))
+        except Exception:
+            logger.exception('Erro ao criar movimentação de estoque')
+            messages.error(request, 'Erro interno ao criar movimentação. Tente novamente.')
     
     context = {
         'title': 'Nova Movimentação',

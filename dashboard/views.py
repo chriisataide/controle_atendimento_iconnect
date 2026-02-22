@@ -9,7 +9,6 @@ from django.http import JsonResponse
 from django.urls import reverse_lazy, reverse
 from django.core.paginator import Paginator
 from django.utils import timezone
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q, Count, Case, When, IntegerField
 from datetime import datetime, timedelta
@@ -20,6 +19,7 @@ from .security import rate_limit, log_suspicious_activity
 from .api_versioning import api_version, APIResponseTransformer
 from .audit_system import audit_action, audit_model_changes, audit_sensitive_data_access
 from .forms import DashboardUserCreationForm, TicketCreateForm
+from .views_helpers import get_role_filtered_tickets, user_can_access_ticket
 
 logger = logging.getLogger('dashboard')
 
@@ -311,9 +311,10 @@ def custom_login(request):
             # Redireciona baseado no tipo de usuário
             next_url = request.GET.get('next')
             if next_url:
-                return redirect(next_url)
-            else:
-                return redirect('dashboard:index')
+                from django.utils.http import url_has_allowed_host_and_scheme
+                if url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+                    return redirect(next_url)
+            return redirect('dashboard:index')
         else:
             messages.error(request, 'Nome de usuário ou senha incorretos.')
     
@@ -686,6 +687,9 @@ class KanbanBoardView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         base_qs = Ticket.objects.select_related('cliente', 'agente', 'categoria').order_by('-prioridade', '-criado_em')
+        
+        # RBAC: filtrar tickets por papel do usuário
+        base_qs = get_role_filtered_tickets(self.request.user, base_qs)
 
         # Filtros opcionais
         agente = self.request.GET.get('agente')
@@ -730,6 +734,9 @@ class TicketListView(ListView):
     
     def get_queryset(self):
         queryset = Ticket.objects.select_related('cliente', 'categoria', 'agente').order_by('-criado_em')
+        
+        # RBAC: filtrar tickets por papel do usuário
+        queryset = get_role_filtered_tickets(self.request.user, queryset)
         
         # Filtros
         status_filter = self.request.GET.get('status')
@@ -824,7 +831,9 @@ class TicketDetailView(DetailView):
     context_object_name = 'ticket'
     
     def get_queryset(self):
-        return Ticket.objects.select_related('cliente', 'categoria', 'agente').prefetch_related('interacoes__usuario')
+        base_qs = Ticket.objects.select_related('cliente', 'categoria', 'agente').prefetch_related('interacoes__usuario')
+        # RBAC: filtrar tickets por papel do usuário (previne IDOR)
+        return get_role_filtered_tickets(self.request.user, base_qs)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -937,7 +946,12 @@ class TicketCreateView(CreateView):
 class TicketUpdateView(UpdateView):
     model = Ticket
     template_name = 'dashboard/tickets/update.html'
-    fields = ['cliente', 'categoria', 'titulo', 'descricao', 'status', 'prioridade', 'agente']
+    fields = ['categoria', 'titulo', 'descricao', 'status', 'prioridade', 'agente']
+    
+    def get_queryset(self):
+        base_qs = Ticket.objects.all()
+        # RBAC: filtrar tickets por papel do usuário (previne IDOR)
+        return get_role_filtered_tickets(self.request.user, base_qs)
     
     def get_success_url(self):
         return reverse('dashboard:ticket_detail', kwargs={'pk': self.object.pk})
@@ -959,6 +973,12 @@ def add_interaction(request, ticket_id):
     """Adiciona uma nova interação ao ticket"""
     if request.method == 'POST':
         ticket = get_object_or_404(Ticket, id=ticket_id)
+        
+        # RBAC: verificar se o usuário tem acesso ao ticket
+        if not user_can_access_ticket(request.user, ticket):
+            messages.error(request, 'Você não tem permissão para interagir com este ticket.')
+            return redirect('dashboard:ticket_list')
+        
         mensagem = request.POST.get('mensagem')
         eh_publico = request.POST.get('eh_publico') == 'on'
         
@@ -1923,8 +1943,9 @@ def automation_dashboard(request):
                         rule.save()
                     return JsonResponse({'success': True, 'created': created})
                 return JsonResponse({'success': False, 'error': 'Template não encontrado'})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
+        except Exception:
+            logger.exception('Erro em automation_dashboard POST')
+            return JsonResponse({'success': False, 'error': 'Erro interno do servidor'})
     
     # GET: dashboard data
     active_workflows = WorkflowRule.objects.filter(is_active=True).count()
@@ -2018,8 +2039,9 @@ def automation_rules(request):
             elif action == 'delete':
                 WorkflowRule.objects.filter(id=data.get('rule_id')).delete()
                 return JsonResponse({'success': True, 'message': 'Regra excluída'})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
+        except Exception:
+            logger.exception('Erro em automation_rules POST')
+            return JsonResponse({'success': False, 'error': 'Erro interno do servidor'})
     
     # GET
     rules = WorkflowRule.objects.all().order_by('-priority', 'name')
@@ -2121,8 +2143,9 @@ def automation_workflows(request):
             elif action == 'delete':
                 WorkflowRule.objects.filter(id=data.get('workflow_id')).delete()
                 return JsonResponse({'success': True, 'message': 'Workflow excluído'})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
+        except Exception:
+            logger.exception('Erro em automation_workflows POST')
+            return JsonResponse({'success': False, 'error': 'Erro interno do servidor'})
     
     # GET
     workflows = WorkflowRule.objects.all().order_by('-priority', 'name')
@@ -2416,10 +2439,11 @@ def api_notifications_recent(request):
             'unread_count': unread_count
         })
         
-    except Exception as e:
+    except Exception:
+        logger.exception('Erro em api_notifications_recent')
         return JsonResponse({
             'success': False,
-            'error': str(e)
+            'error': 'Erro interno do servidor'
         }, status=500)
 
 
@@ -2443,10 +2467,11 @@ def api_notification_mark_read(request, notification_id):
             'message': 'Notificação marcada como lida'
         })
         
-    except Exception as e:
+    except Exception:
+        logger.exception('Erro em api_notification_mark_read')
         return JsonResponse({
             'success': False,
-            'error': str(e)
+            'error': 'Erro interno do servidor'
         }, status=500)
 
 
@@ -2471,10 +2496,11 @@ def api_notifications_mark_all_read(request):
             'updated_count': updated_count
         })
         
-    except Exception as e:
+    except Exception:
+        logger.exception('Erro em api_notifications_mark_all_read')
         return JsonResponse({
             'success': False,
-            'error': str(e)
+            'error': 'Erro interno do servidor'
         }, status=500)
 
 
@@ -2496,10 +2522,11 @@ def api_notification_delete(request, notification_id):
             'success': True,
             'message': 'Notificação removida'
         })
-    except Exception as e:
+    except Exception:
+        logger.exception('Erro em api_notification_delete')
         return JsonResponse({
             'success': False,
-            'error': str(e)
+            'error': 'Erro interno do servidor'
         }, status=500)
 
 
@@ -2805,8 +2832,9 @@ def api_add_item_atendimento(request):
         
         return JsonResponse({'success': True, 'message': 'Item adicionado com sucesso'})
         
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': str(e)})
+    except Exception:
+        logger.exception('Erro em api_add_item_atendimento')
+        return JsonResponse({'success': False, 'message': 'Erro interno do servidor'})
 
 
 @login_required
@@ -2859,8 +2887,9 @@ def api_listar_itens_atendimento(request, ticket_id):
             'resumo': resumo
         })
         
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': str(e)})
+    except Exception:
+        logger.exception('Erro em api_listar_itens_atendimento')
+        return JsonResponse({'success': False, 'message': 'Erro interno do servidor'})
 
 
 @login_required
@@ -2883,8 +2912,9 @@ def api_remover_item_atendimento(request, item_id):
         
         return JsonResponse({'success': True, 'message': 'Item removido com sucesso'})
         
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': str(e)})
+    except Exception:
+        logger.exception('Erro em api_remover_item_atendimento')
+        return JsonResponse({'success': False, 'message': 'Erro interno do servidor'})
 
 
 @login_required
@@ -3007,5 +3037,6 @@ def api_estatisticas_financeiras_ticket(request, ticket_id):
             'tem_itens': itens.exists()
         })
         
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': str(e)})
+    except Exception:
+        logger.exception('Erro em api_estatisticas_itens_atendimento')
+        return JsonResponse({'success': False, 'message': 'Erro interno do servidor'})

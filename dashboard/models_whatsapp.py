@@ -10,8 +10,8 @@ class WhatsAppBusinessAccount(models.Model):
     nome = models.CharField(max_length=100, verbose_name='Nome da Conta')
     phone_number_id = models.CharField(max_length=50, unique=True, verbose_name='Phone Number ID')
     business_account_id = models.CharField(max_length=50, verbose_name='Business Account ID')
-    access_token = models.TextField(verbose_name='Access Token')
-    webhook_verify_token = models.CharField(max_length=255, verbose_name='Webhook Verify Token')
+    access_token = models.TextField(verbose_name='Access Token', help_text='Armazenado criptografado')
+    webhook_verify_token = models.CharField(max_length=500, verbose_name='Webhook Verify Token', help_text='Armazenado criptografado')
     webhook_url = models.URLField(verbose_name='Webhook URL')
     ativo = models.BooleanField(default=True, verbose_name='Ativo')
     criado_em = models.DateTimeField(auto_now_add=True, verbose_name='Criado em')
@@ -22,6 +22,24 @@ class WhatsAppBusinessAccount(models.Model):
         verbose_name_plural = 'Contas WhatsApp Business'
         ordering = ['-criado_em']
     
+    def save(self, *args, **kwargs):
+        from dashboard.crypto import encrypt_value
+        if self.access_token and not self.access_token.startswith('enc::'):
+            self.access_token = encrypt_value(self.access_token)
+        if self.webhook_verify_token and not self.webhook_verify_token.startswith('enc::'):
+            self.webhook_verify_token = encrypt_value(self.webhook_verify_token)
+        super().save(*args, **kwargs)
+
+    def get_access_token(self):
+        """Retorna o access token descriptografado."""
+        from dashboard.crypto import decrypt_value
+        return decrypt_value(self.access_token)
+
+    def get_webhook_verify_token(self):
+        """Retorna o webhook verify token descriptografado."""
+        from dashboard.crypto import decrypt_value
+        return decrypt_value(self.webhook_verify_token)
+
     def __str__(self):
         return f"{self.nome} ({self.phone_number_id})"
 

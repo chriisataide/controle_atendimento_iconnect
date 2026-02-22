@@ -9,7 +9,6 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q, Count, Max, Prefetch, F
 from django.utils import timezone
@@ -288,7 +287,6 @@ def chat_settings_view(request):
 
 @login_required
 @require_http_methods(["POST"])
-@csrf_exempt
 def api_send_message(request):
     """API para enviar mensagem via AJAX"""
     try:
@@ -338,8 +336,8 @@ def api_send_message(request):
             }
         })
         
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+    except Exception:
+        return JsonResponse({'error': 'Erro interno do servidor'}, status=500)
 
 
 @login_required
@@ -451,8 +449,8 @@ def api_create_ticket_from_chat(request, room_id):
             'ticket_url': f'/dashboard/tickets/{ticket.id}/'
         })
         
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+    except Exception:
+        return JsonResponse({'error': 'Erro interno do servidor'}, status=500)
 
 
 @login_required

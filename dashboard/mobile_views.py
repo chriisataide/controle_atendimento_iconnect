@@ -67,7 +67,6 @@ Interface otimizada para dispositivos móveis
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from django.db.models import Q, Count
 from django.contrib import messages
@@ -341,7 +340,6 @@ def mobile_chat(request):
     return render(request, 'mobile/chat.html', {'is_mobile': True})
 
 @login_required
-@csrf_exempt
 def mobile_ticket_status_update(request, ticket_id):
     """Atualizar status do ticket via AJAX"""
     if request.method == 'POST':
@@ -382,13 +380,12 @@ def mobile_ticket_status_update(request, ticket_id):
             else:
                 return JsonResponse({'success': False, 'error': 'Status inválido'})
                 
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
+        except Exception:
+            return JsonResponse({'success': False, 'error': 'Erro interno do servidor'})
     
     return JsonResponse({'success': False, 'error': 'Método não permitido'})
 
 @login_required
-@csrf_exempt
 def mobile_ticket_comment(request, ticket_id):
     """Adicionar comentário ao ticket via AJAX"""
     if request.method == 'POST':
@@ -414,8 +411,8 @@ def mobile_ticket_comment(request, ticket_id):
             else:
                 return JsonResponse({'success': False, 'error': 'Comentário vazio'})
                 
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
+        except Exception:
+            return JsonResponse({'success': False, 'error': 'Erro interno do servidor'})
     
     return JsonResponse({'success': False, 'error': 'Método não permitido'})
 
@@ -460,11 +457,10 @@ def mobile_tickets_check_updates(request):
             'timestamp': timezone.now().timestamp()
         })
         
-    except Exception as e:
-        return JsonResponse({'hasUpdates': False, 'error': str(e)})
+    except Exception:
+        return JsonResponse({'hasUpdates': False, 'error': 'Erro interno'})
 
 @login_required
-@csrf_exempt  
 def mobile_ticket_upload_photo(request, ticket_id):
     """Upload de foto para o ticket"""
     if request.method == 'POST':
@@ -495,8 +491,8 @@ def mobile_ticket_upload_photo(request, ticket_id):
             
             return JsonResponse({'success': True, 'message': 'Foto enviada com sucesso'})
             
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
+        except Exception:
+            return JsonResponse({'success': False, 'error': 'Erro ao processar upload'})
     
     return JsonResponse({'success': False, 'error': 'Método não permitido'})
 

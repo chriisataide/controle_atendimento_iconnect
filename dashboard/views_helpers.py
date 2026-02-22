@@ -4,6 +4,73 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from django.contrib.auth.models import User
 import json
+import logging
+
+logger = logging.getLogger('dashboard')
+
+
+def get_role_filtered_tickets(user, base_queryset=None):
+    """
+    Filtra tickets baseado no papel do usuário (RBAC).
+    
+    - Superuser/Staff: vê todos os tickets
+    - Agente (tem PerfilAgente): vê tickets atribuídos a ele + não atribuídos
+    - Cliente: vê apenas tickets onde cliente.email == user.email
+    
+    Args:
+        user: O usuário autenticado (request.user)
+        base_queryset: QuerySet base opcional. Se None, usa Ticket.objects.all()
+    
+    Returns:
+        QuerySet filtrado por papel do usuário
+    """
+    from .models import Ticket, Cliente
+    
+    if base_queryset is None:
+        base_queryset = Ticket.objects.all()
+    
+    # Admin/Staff: acesso total
+    if user.is_superuser or user.is_staff:
+        return base_queryset
+    
+    # Agente: tickets atribuídos a ele + não atribuídos (para auto-atribuição)
+    if hasattr(user, 'perfilagente'):
+        return base_queryset.filter(
+            Q(agente=user) | Q(agente__isnull=True)
+        )
+    
+    # Cliente: apenas seus próprios tickets
+    try:
+        cliente = Cliente.objects.get(email=user.email)
+        return base_queryset.filter(cliente=cliente)
+    except Cliente.DoesNotExist:
+        # Usuário sem papel definido — sem acesso a tickets
+        return base_queryset.none()
+
+
+def user_can_access_ticket(user, ticket):
+    """
+    Verifica se um usuário específico pode acessar um ticket específico.
+    
+    Returns:
+        bool: True se o usuário tem acesso ao ticket
+    """
+    from .models import Cliente
+    
+    # Admin/Staff: acesso total
+    if user.is_superuser or user.is_staff:
+        return True
+    
+    # Agente: pode acessar tickets atribuídos a ele ou não atribuídos
+    if hasattr(user, 'perfilagente'):
+        return ticket.agente == user or ticket.agente is None
+    
+    # Cliente: apenas seus próprios tickets
+    try:
+        cliente = Cliente.objects.get(email=user.email)
+        return ticket.cliente_id == cliente.id
+    except Cliente.DoesNotExist:
+        return False
 
 
 def get_dashboard_metrics():

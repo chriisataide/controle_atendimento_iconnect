@@ -66,7 +66,7 @@ class HealthCheckView(View):
         except Exception as e:
             health_data['checks']['database'] = {
                 'status': 'unhealthy',
-                'error': str(e)
+                'error': type(e).__name__
             }
             health_data['status'] = 'unhealthy'
         
@@ -83,7 +83,7 @@ class HealthCheckView(View):
         except Exception as e:
             health_data['checks']['cache'] = {
                 'status': 'unhealthy',
-                'error': str(e)
+                'error': type(e).__name__
             }
             health_data['status'] = 'unhealthy'
         
@@ -104,7 +104,7 @@ class HealthCheckView(View):
         except Exception as e:
             health_data['checks']['disk'] = {
                 'status': 'unhealthy',
-                'error': str(e)
+                'error': type(e).__name__
             }
         
         # Determinar status code HTTP

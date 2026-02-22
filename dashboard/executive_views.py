@@ -2,7 +2,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from django.db.models import Count, Avg, Sum, Q, F
 from django.db.models.functions import TruncDate, TruncHour, TruncMonth
@@ -320,7 +319,6 @@ def executive_alerts_api(request):
     return JsonResponse({'alerts': alerts})
 
 @login_required
-@csrf_exempt
 def executive_widget_config(request):
     """Configuração de widgets do dashboard"""
     

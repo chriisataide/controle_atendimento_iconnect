@@ -163,7 +163,7 @@ def _process_whatsapp_message(webhook_data):
         
     except Exception as e:
         logger.error(f"Erro ao processar webhook WhatsApp: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({'error': 'Erro ao processar webhook'}, status=500)
 
 
 def _send_whatsapp_message(to_number, message_text):

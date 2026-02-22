@@ -1,7 +1,9 @@
-from django.db import models
+from django.db import models, transaction
+from django.db.models import F
 from django.contrib.auth.models import User
 from django.utils import timezone
 from decimal import Decimal
+from django.core.validators import MinValueValidator, MaxValueValidator
 import uuid
 import logging
 
@@ -232,21 +234,22 @@ class Ticket(models.Model):
         ordering = ['-criado_em']
     
     def save(self, *args, **kwargs):
-        if not self.numero:
-            # Gerar número do ticket sequencial (formato: TK-00001)
-            from django.db.models import Max
-            ultimo = Ticket.objects.aggregate(
-                max_num=Max('id')
-            )['max_num'] or 0
-            self.numero = f'TK-{ultimo + 1:05d}'
-        
-        # Atualizar timestamps baseado no status
-        if self.status == StatusTicket.RESOLVIDO and not self.resolvido_em:
-            self.resolvido_em = timezone.now()
-        elif self.status == StatusTicket.FECHADO and not self.fechado_em:
-            self.fechado_em = timezone.now()
+        with transaction.atomic():
+            if not self.numero:
+                # Gerar número do ticket sequencial com lock para evitar race condition
+                from django.db.models import Max
+                ultimo = Ticket.objects.select_for_update().aggregate(
+                    max_num=Max('id')
+                )['max_num'] or 0
+                self.numero = f'TK-{ultimo + 1:05d}'
             
-        super().save(*args, **kwargs)
+            # Atualizar timestamps baseado no status
+            if self.status == StatusTicket.RESOLVIDO and not self.resolvido_em:
+                self.resolvido_em = timezone.now()
+            elif self.status == StatusTicket.FECHADO and not self.fechado_em:
+                self.fechado_em = timezone.now()
+                
+            super().save(*args, **kwargs)
     
     def get_tags_list(self):
         """Retorna lista de tags"""
@@ -399,9 +402,9 @@ class ItemAtendimento(models.Model):
     tipo_item = models.CharField(max_length=10, choices=TIPO_ITEM_CHOICES, default='produto')
     
     # Quantidade e valores
-    quantidade = models.DecimalField(max_digits=10, decimal_places=3, default=1)
-    valor_unitario = models.DecimalField(max_digits=10, decimal_places=2, help_text="Valor unitário usado no atendimento")
-    desconto_percentual = models.DecimalField(max_digits=5, decimal_places=2, default=0, help_text="Desconto aplicado (%)")
+    quantidade = models.DecimalField(max_digits=10, decimal_places=3, default=1, validators=[MinValueValidator(Decimal('0.001'))])
+    valor_unitario = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0'))], help_text="Valor unitário usado no atendimento")
+    desconto_percentual = models.DecimalField(max_digits=5, decimal_places=2, default=0, validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))], help_text="Desconto aplicado (%)")
     
     # Observações específicas do uso
     observacoes = models.TextField(blank=True, help_text="Observações sobre o uso do item no atendimento")
@@ -780,10 +783,10 @@ class Contrato(models.Model):
         ('vencido', 'Vencido'),
     ]
     
-    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='contratos')
+    cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name='contratos')
     numero_contrato = models.CharField(max_length=50, unique=True)
     descricao = models.TextField()
-    valor_mensal = models.DecimalField(max_digits=10, decimal_places=2)
+    valor_mensal = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     data_inicio = models.DateField()
     data_fim = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ativo')
@@ -808,9 +811,9 @@ class Fatura(models.Model):
         ('cancelado', 'Cancelado'),
     ]
     
-    contrato = models.ForeignKey(Contrato, on_delete=models.CASCADE, related_name='faturas')
+    contrato = models.ForeignKey(Contrato, on_delete=models.PROTECT, related_name='faturas')
     numero_fatura = models.CharField(max_length=50, unique=True)
-    valor = models.DecimalField(max_digits=10, decimal_places=2)
+    valor = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     data_vencimento = models.DateField()
     data_pagamento = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
@@ -827,9 +830,9 @@ class Fatura(models.Model):
 
 
 class Pagamento(models.Model):
-    fatura = models.ForeignKey(Fatura, on_delete=models.CASCADE, related_name='pagamentos')
+    fatura = models.ForeignKey(Fatura, on_delete=models.PROTECT, related_name='pagamentos')
     forma_pagamento = models.ForeignKey(FormaPagamento, on_delete=models.PROTECT)
-    valor_pago = models.DecimalField(max_digits=10, decimal_places=2)
+    valor_pago = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     data_pagamento = models.DateTimeField()
     numero_transacao = models.CharField(max_length=100, blank=True, null=True)
     observacoes = models.TextField(blank=True, null=True)
@@ -853,7 +856,7 @@ class MovimentacaoFinanceira(models.Model):
     categoria = models.ForeignKey(CategoriaFinanceira, on_delete=models.PROTECT)
     descricao = models.CharField(max_length=200)
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
-    valor = models.DecimalField(max_digits=10, decimal_places=2)
+    valor = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     data_movimentacao = models.DateField()
     observacoes = models.TextField(blank=True, null=True)
     usuario = models.ForeignKey(User, on_delete=models.PROTECT)
@@ -915,7 +918,7 @@ class CentroCusto(models.Model):
     
     # Hierarquia e organização
     departamento = models.CharField(max_length=100, help_text="Departamento responsável")
-    centro_pai = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, 
+    centro_pai = models.ForeignKey('self', on_delete=models.PROTECT, null=True, blank=True, 
                                    related_name='subcentros', help_text="Centro de custo pai (para hierarquia)")
     
     # Responsabilidade
@@ -926,8 +929,10 @@ class CentroCusto(models.Model):
     
     # Orçamento e controle
     orcamento_mensal = models.DecimalField(max_digits=12, decimal_places=2, default=0,
+                                          validators=[MinValueValidator(Decimal('0'))],
                                           help_text="Orçamento mensal planejado")
     orcamento_anual = models.DecimalField(max_digits=12, decimal_places=2, default=0,
+                                         validators=[MinValueValidator(Decimal('0'))],
                                          help_text="Orçamento anual planejado")
     
     # Status e configurações
@@ -1156,7 +1161,7 @@ class WebhookEndpoint(models.Model):
 
     nome = models.CharField(max_length=100)
     url = models.URLField()
-    secret = models.CharField(max_length=255, blank=True, help_text="HMAC secret para assinatura")
+    secret = models.CharField(max_length=500, blank=True, help_text="HMAC secret para assinatura (armazenado criptografado)")
     events = models.JSONField(default=list, help_text="Lista de eventos para notificar")
     headers = models.JSONField(default=dict, blank=True, help_text="Headers customizados")
     is_active = models.BooleanField(default=True)
@@ -1169,6 +1174,17 @@ class WebhookEndpoint(models.Model):
     class Meta:
         verbose_name = "Webhook Endpoint"
         verbose_name_plural = "Webhook Endpoints"
+
+    def save(self, *args, **kwargs):
+        from .crypto import encrypt_value
+        if self.secret and not self.secret.startswith('enc::'):
+            self.secret = encrypt_value(self.secret)
+        super().save(*args, **kwargs)
+
+    def get_secret(self):
+        """Retorna o secret descriptografado."""
+        from .crypto import decrypt_value
+        return decrypt_value(self.secret)
 
     def __str__(self):
         return f"{self.nome} ({self.url})"
@@ -1314,7 +1330,7 @@ class AIConfiguration(models.Model):
         ('google', 'Google AI'),
     ]
     provider = models.CharField(max_length=20, choices=PROVIDERS, unique=True)
-    api_key = models.CharField(max_length=255)
+    api_key = models.CharField(max_length=500, help_text="Chave de API (armazenada criptografada)")
     model_name = models.CharField(max_length=100, default='gpt-4o-mini')
     temperature = models.FloatField(default=0.3)
     max_tokens = models.IntegerField(default=1000)
@@ -1325,6 +1341,17 @@ class AIConfiguration(models.Model):
     class Meta:
         verbose_name = "Configuracao de IA"
         verbose_name_plural = "Configuracoes de IA"
+
+    def save(self, *args, **kwargs):
+        from .crypto import encrypt_value
+        if self.api_key and not self.api_key.startswith('enc::'):
+            self.api_key = encrypt_value(self.api_key)
+        super().save(*args, **kwargs)
+
+    def get_api_key(self):
+        """Retorna a chave de API descriptografada."""
+        from .crypto import decrypt_value
+        return decrypt_value(self.api_key)
 
     def __str__(self):
         return f"{self.get_provider_display()} - {self.model_name}"
@@ -1498,7 +1525,7 @@ class EmailAccount(models.Model):
     server = models.CharField(max_length=255)
     port = models.IntegerField(default=993)
     username = models.CharField(max_length=255)
-    password = models.CharField(max_length=255)
+    password = models.CharField(max_length=500, help_text="Senha (armazenada criptografada)")
     use_ssl = models.BooleanField(default=True)
     folder = models.CharField(max_length=100, default='INBOX')
     is_active = models.BooleanField(default=True)
@@ -1510,6 +1537,17 @@ class EmailAccount(models.Model):
     class Meta:
         verbose_name = "Conta de Email"
         verbose_name_plural = "Contas de Email"
+
+    def save(self, *args, **kwargs):
+        from .crypto import encrypt_value
+        if self.password and not self.password.startswith('enc::'):
+            self.password = encrypt_value(self.password)
+        super().save(*args, **kwargs)
+
+    def get_password(self):
+        """Retorna a senha descriptografada."""
+        from .crypto import decrypt_value
+        return decrypt_value(self.password)
 
     def __str__(self):
         return f"{self.nome} ({self.email})"
