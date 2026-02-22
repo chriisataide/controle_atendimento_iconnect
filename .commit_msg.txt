@@ -1,0 +1,8 @@
+chore: reorganizar estrutura de arquivos do projeto
+
+- Mover audit reports para docs/audits/
+- Organizar docs/ em subpastas: guides/ (API, deploy, production), reports/ (relatorios antigos), audits/ (auditorias)
+- Mover docker-entrypoint.sh, docker-entrypoint-dev.sh e nginx.conf para docker/
+- Atualizar referencias no Dockerfile e docker-compose.yml
+- Mover scripts soltos (seed_*.py, test_*.py) para scripts/seeds/ e scripts/testing/
+- Remover .cleanup_backup/ (backups antigos desnecessarios)

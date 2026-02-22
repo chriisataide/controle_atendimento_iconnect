@@ -49,7 +49,7 @@ COPY . .
 RUN mkdir -p logs/django staticfiles media
 
 # Dar permissao de execucao aos scripts de entrada
-RUN chmod +x docker-entrypoint.sh docker-entrypoint-dev.sh
+RUN chmod +x docker/docker-entrypoint.sh docker/docker-entrypoint-dev.sh
 
 # Verificar instalacao do Django
 RUN python -c "import django; print(f'Django {django.get_version()} instalado com sucesso')"
@@ -65,7 +65,7 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=30s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8000/health/ || exit 1
 
-ENTRYPOINT ["./docker-entrypoint.sh"]
+ENTRYPOINT ["./docker/docker-entrypoint.sh"]
 
 # ASGI com daphne para suporte a WebSocket + HTTP
 CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "--proxy-headers", "controle_atendimento.asgi:application"]

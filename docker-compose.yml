@@ -78,7 +78,7 @@ services:
       redis:
         condition: service_healthy
     command: >
-      sh -c "chmod +x docker-entrypoint-dev.sh && ./docker-entrypoint-dev.sh"
+      sh -c "chmod +x docker/docker-entrypoint-dev.sh && ./docker/docker-entrypoint-dev.sh"
     networks:
       - backend
       - frontend
@@ -136,7 +136,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf
       - static_volume:/app/staticfiles
       - media_volume:/app/media
       - ./ssl:/etc/ssl/certs
