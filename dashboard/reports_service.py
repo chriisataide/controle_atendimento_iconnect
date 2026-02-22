@@ -20,7 +20,11 @@ from django.db.models.functions import TruncDate, TruncHour, TruncWeek, TruncMon
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 
-from .models import Ticket, Agent, Customer
+from .models import Ticket, Cliente
+from django.contrib.auth.models import User as Agent
+
+# Alias para compatibilidade
+Customer = Cliente
 
 logger = logging.getLogger(__name__)
 

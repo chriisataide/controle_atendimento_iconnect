@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # Gerado pelo Django: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-MUDE-ESTA-CHAVE-EM-PRODUCAO')
+SECRET_KEY = config('SECRET_KEY')  # OBRIGATÓRIO — defina no .env ou variável de ambiente
 
 try:
     from config.sentry_settings_example import *  # type: ignore
@@ -172,6 +172,10 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_CACHE_ALIAS = 'default'
 SESSION_COOKIE_AGE = 3600  # 1 hour
 SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
 
 # Cache key prefixes
 CACHE_KEYS = {

@@ -45,10 +45,10 @@ class QuickTicketForm(forms.Form):
     """Formulário rápido para criação de tickets (mobile)"""
     
     PRIORITY_CHOICES = [
-        ('BAIXA', 'Baixa'),
-        ('MEDIA', 'Média'),
-        ('ALTA', 'Alta'),
-        ('CRITICA', 'Crítica'),
+        ('baixa', 'Baixa'),
+        ('media', 'Média'),
+        ('alta', 'Alta'),
+        ('critica', 'Crítica'),
     ]
     
     title = forms.CharField(

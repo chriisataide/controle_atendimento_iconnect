@@ -13,7 +13,11 @@ from datetime import timedelta
 import re
 from typing import List, Dict, Any, Optional
 
-from .models import Ticket, Customer, Agent
+from .models import Ticket, Cliente
+from django.contrib.auth.models import User as Agent
+
+# Alias para compatibilidade
+Customer = Cliente
 
 class AdvancedSearchService:
     """

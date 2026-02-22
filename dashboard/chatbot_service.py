@@ -16,8 +16,12 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from django.db.models import Q
 
-from .models import Ticket, Customer, Agent, Notification
+from .models import Ticket, Notification
 from .notifications import NotificationService
+
+# Aliases para compatibilidade (modelos renomeados)
+Agent = None  # Usar User do django.contrib.auth
+Customer = None  # Usar Cliente de .models
 
 logger = logging.getLogger(__name__)
 

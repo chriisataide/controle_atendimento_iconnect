@@ -1,8 +1,0 @@
-# Chaves VAPID para Push Notifications (Desenvolvimento)
-VAPID_PUBLIC_KEY=BC2pDJ8z6ylnYee0JT_ARw7o3-__lhCm6bnrH-jsaWxJ1SfB0CIgM1gk_aULAUTyf-J8UbruCRhqRXXiGgLtjrs
-VAPID_PRIVATE_KEY=cDwnvkISqlUsY9K9udefIHHexhILAsBod_dyBdreIk4
-VAPID_CLAIMS_EMAIL=admin@seudominio.com
-
-# Para produção, gere chaves reais com:
-# from cryptography.hazmat.primitives.asymmetric import ec
-# from cryptography.hazmat.backends import default_backend

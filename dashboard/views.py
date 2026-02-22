@@ -925,10 +925,11 @@ class TicketCreateView(CreateView):
         
         # Processar anexos
         if 'anexos' in self.request.FILES:
+            from .security import validate_file_upload
             anexos = self.request.FILES.getlist('anexos')
             for anexo in anexos:
-                # Validar tamanho (10MB)
-                if anexo.size <= 10 * 1024 * 1024:
+                is_valid, error_msg = validate_file_upload(anexo)
+                if is_valid:
                     TicketAnexo.objects.create(
                         ticket=self.object,
                         arquivo=anexo,
@@ -937,6 +938,8 @@ class TicketCreateView(CreateView):
                         tipo_mime=anexo.content_type or 'application/octet-stream',
                         criado_por=self.request.user
                     )
+                else:
+                    logger.warning('Upload rejeitado para ticket #%s: %s — %s', self.object.numero, anexo.name, error_msg)
         
         messages.success(self.request, f'Ticket #{self.object.numero} criado com sucesso!')
         return response
@@ -1633,9 +1636,14 @@ class ProfileView(TemplateView):
             perfil.departamento = request.POST.get('departamento', '')
             perfil.bio = request.POST.get('bio', '')
 
-            # Processa upload de avatar
+            # Processa upload de avatar com validação
             if 'avatar' in request.FILES:
-                perfil.avatar = request.FILES['avatar']
+                from .security import validate_file_upload
+                is_valid, error_msg = validate_file_upload(request.FILES['avatar'])
+                if is_valid:
+                    perfil.avatar = request.FILES['avatar']
+                else:
+                    messages.warning(request, f'Avatar rejeitado: {error_msg}')
 
             perfil.save()
 

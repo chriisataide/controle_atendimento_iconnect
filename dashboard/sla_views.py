@@ -23,18 +23,18 @@ from .services.sla_calculator import sla_calculator
 logger = logging.getLogger(__name__)
 
 
-# Função de teste temporária sem autenticação
+# Endpoint de teste SLA — requer autenticação
+@login_required
 def sla_test(request):
-    """Teste SLA sem autenticação"""
+    """Teste SLA com autenticação"""
     return JsonResponse({
         'status': 'success',
         'message': 'SLA sistema funcionando!',
         'timestamp': timezone.now().isoformat(),
-        'sla_policies_count': SLAPolicy.objects.count(),
-        'sla_alerts_count': SLAAlert.objects.count()
     })
 
-# Dashboard SLA sem autenticação (TEMPORÁRIO - apenas para demonstração)
+# Dashboard SLA — requer autenticação
+@login_required
 def sla_dashboard_public(request):
     """Dashboard SLA público temporário para demonstração"""
     try:
@@ -47,7 +47,7 @@ def sla_dashboard_public(request):
             'sla_policies': sla_policies,
             'categorias': CategoriaTicket.objects.all(),
             'prioridades': PrioridadeTicket.choices,
-            'is_demo': True  # Flag para indicar que é demonstração
+            'is_demo': False
         }
         return render(request, 'dashboard/sla/dashboard.html', context)
     except Exception as e:

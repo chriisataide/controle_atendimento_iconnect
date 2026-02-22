@@ -294,7 +294,7 @@ class ClienteAPITest(BaseTestMixin, APITestCase):
 
 class BulkActionAPITest(BaseTestMixin, APITestCase):
     def setUp(self):
-        self.user = self.create_user()
+        self.user = self.create_admin()  # Bulk actions requerem admin/staff
         self.client.force_authenticate(user=self.user)
         self.cliente = self.create_cliente()
 

@@ -17,8 +17,12 @@ from django.db.models import Q, Avg, Count
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 
-from .models import Ticket, Agent, Customer, Notification
+from .models import Ticket, Notification
 from .notifications import NotificationService
+
+# Aliases para compatibilidade (modelos renomeados)
+Agent = None  # Usar User do django.contrib.auth
+Customer = None  # Usar Cliente de .models
 
 logger = logging.getLogger(__name__)
 

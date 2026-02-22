@@ -11,10 +11,13 @@ from .models_push import PushSubscription
 
 logger = logging.getLogger(__name__)
 
-# VAPID keys - configure in settings
-VAPID_PUBLIC_KEY = getattr(settings, 'VAPID_PUBLIC_KEY', 'BEl62iUYgUivxIkv69yViEuiBIa40HI0u2Zd43v_rYgL6-xfEkUNECDqJf0pv8VFJdw4aBQQ1hvGsq-cDdfqjgI')
+# VAPID keys — MUST be configured in settings via env vars (never hardcode)
+VAPID_PUBLIC_KEY = getattr(settings, 'VAPID_PUBLIC_KEY', '')
 VAPID_PRIVATE_KEY = getattr(settings, 'VAPID_PRIVATE_KEY', '')
-VAPID_CLAIMS = getattr(settings, 'VAPID_CLAIMS', {"sub": "mailto:admin@iconnect.com"})
+VAPID_CLAIMS = getattr(settings, 'VAPID_CLAIMS', {'sub': 'mailto:' + getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@iconnect.com')})
+
+if not VAPID_PUBLIC_KEY:
+    logger.warning('VAPID_PUBLIC_KEY nao configurada — push notifications desabilitadas')
 
 @login_required
 @require_http_methods(["GET"])
