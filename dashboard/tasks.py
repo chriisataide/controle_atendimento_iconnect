@@ -484,3 +484,128 @@ def send_sla_breach_notifications(ticket_id: int):
     ]
     if notifications:
         Notification.objects.bulk_create(notifications)
+
+
+# ---------------------------------------------------------------------------
+# Equipment alert checking (runs hourly)
+# ---------------------------------------------------------------------------
+
+@shared_task(ignore_result=True)
+def check_equipment_alerts():
+    """
+    Verifica automaticamente equipamentos que ultrapassaram limiares
+    de chamados, trocas ou garantia prestes a vencer.
+    Roda de hora em hora via Celery Beat ou chamada manual.
+    """
+    from dashboard.models_equipamento import (
+        Equipamento, HistoricoEquipamento,
+        AlertaEquipamento, ConfiguracaoAlertaEquipamento
+    )
+    from datetime import timedelta
+
+    config = ConfiguracaoAlertaEquipamento.get_config()
+    if not config.ativo:
+        logger.info("Verificação de alertas de equipamentos desativada.")
+        return 0
+
+    agora = timezone.now()
+    alertas_criados = 0
+
+    # 1. Excesso de chamados no período
+    limite_chamados = agora - timedelta(days=config.chamados_periodo_dias)
+    equipamentos_ativos = Equipamento.objects.filter(status='ativo')
+
+    for equip in equipamentos_ativos:
+        chamados_periodo = equip.tickets.filter(criado_em__gte=limite_chamados).count()
+
+        if chamados_periodo >= config.chamados_limiar:
+            ja_existe = AlertaEquipamento.objects.filter(
+                equipamento=equip,
+                tipo='excesso_chamados',
+                resolvido=False
+            ).exists()
+            if not ja_existe:
+                AlertaEquipamento.objects.create(
+                    equipamento=equip,
+                    tipo='excesso_chamados',
+                    severidade='critical' if chamados_periodo >= config.chamados_limiar * 2 else 'warning',
+                    titulo=f'Excesso de chamados: {equip.tipo} {equip.modelo}',
+                    descricao=(
+                        f'Equipamento {equip.numero_serie} ({equip.tipo} {equip.marca} {equip.modelo}) '
+                        f'tem {chamados_periodo} chamados nos últimos {config.chamados_periodo_dias} dias '
+                        f'(limiar: {config.chamados_limiar}).'
+                    ),
+                    valor_atual=chamados_periodo,
+                    limiar=config.chamados_limiar,
+                )
+                alertas_criados += 1
+                logger.info(f"Alerta excesso_chamados criado para equipamento {equip.numero_serie}")
+
+    # 2. Troca frequente
+    limite_trocas = agora - timedelta(days=config.trocas_periodo_dias)
+    for equip in equipamentos_ativos:
+        trocas_periodo = equip.historico.filter(
+            tipo_movimentacao='troca',
+            realizado_em__gte=limite_trocas
+        ).count()
+
+        if trocas_periodo >= config.trocas_limiar:
+            ja_existe = AlertaEquipamento.objects.filter(
+                equipamento=equip,
+                tipo='troca_frequente',
+                resolvido=False
+            ).exists()
+            if not ja_existe:
+                AlertaEquipamento.objects.create(
+                    equipamento=equip,
+                    tipo='troca_frequente',
+                    severidade='warning',
+                    titulo=f'Troca frequente: {equip.tipo} {equip.modelo}',
+                    descricao=(
+                        f'Equipamento {equip.numero_serie} foi trocado {trocas_periodo} vezes '
+                        f'nos últimos {config.trocas_periodo_dias} dias '
+                        f'(limiar: {config.trocas_limiar}).'
+                    ),
+                    valor_atual=trocas_periodo,
+                    limiar=config.trocas_limiar,
+                )
+                alertas_criados += 1
+                logger.info(f"Alerta troca_frequente criado para equipamento {equip.numero_serie}")
+
+    # 3. Garantia vencendo
+    limite_garantia = (agora + timedelta(days=config.garantia_dias_aviso)).date()
+    equips_garantia = Equipamento.objects.filter(
+        status='ativo',
+        data_garantia__isnull=False,
+        data_garantia__lte=limite_garantia,
+        data_garantia__gte=agora.date(),
+    )
+    for equip in equips_garantia:
+        ja_existe = AlertaEquipamento.objects.filter(
+            equipamento=equip,
+            tipo='garantia_vencendo',
+            resolvido=False
+        ).exists()
+        if not ja_existe:
+            dias_restantes = (equip.data_garantia - agora.date()).days
+            AlertaEquipamento.objects.create(
+                equipamento=equip,
+                tipo='garantia_vencendo',
+                severidade='info' if dias_restantes > 15 else 'warning',
+                titulo=f'Garantia vencendo: {equip.tipo} {equip.modelo}',
+                descricao=(
+                    f'A garantia do equipamento {equip.numero_serie} '
+                    f'vence em {dias_restantes} dias ({equip.data_garantia:%d/%m/%Y}).'
+                ),
+                valor_atual=dias_restantes,
+                limiar=config.garantia_dias_aviso,
+            )
+            alertas_criados += 1
+            logger.info(f"Alerta garantia_vencendo criado para equipamento {equip.numero_serie}")
+
+    # Atualizar contadores dos equipamentos
+    for equip in Equipamento.objects.filter(status='ativo'):
+        equip.atualizar_contadores()
+
+    logger.info(f"Verificação de alertas concluída: {alertas_criados} alertas criados.")
+    return alertas_criados

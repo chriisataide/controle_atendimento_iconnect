@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Equipamentos — Lista{% endblock %}
+{% block page_title %}Equipamentos{% endblock %}
+{% block breadcrumb_title %}Equipamentos{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Catálogo de Equipamentos</h3>
+            <p class="mb-0 text-sm">Equipamentos instalados, em estoque e em manutenção</p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end">
+        <a href="{% url 'equipamentos:equipamento_create' %}" class="btn btn-sm bg-gradient-info mb-0">
+            <i class="material-symbols-rounded text-sm me-1">add</i> Novo Equipamento
+        </a>
+        {% if alertas_pendentes > 0 %}
+        <a href="{% url 'equipamentos:alerta_list' %}" class="btn btn-sm bg-gradient-danger mb-0 ms-1">
+            <i class="material-symbols-rounded text-sm me-1">warning</i> {{ alertas_pendentes }} Alerta{{ alertas_pendentes|pluralize:"s" }}
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body p-3">
+                <form method="get" class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label text-xs text-uppercase mb-1">Buscar</label>
+                        <div class="input-group input-group-outline">
+                            <input type="text" name="q" class="form-control form-control-sm" placeholder="Série, modelo, marca, tipo..." value="{{ filtros.q }}">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label text-xs text-uppercase mb-1">Status</label>
+                        <select name="status" class="form-select form-select-sm">
+                            <option value="">Todos</option>
+                            {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if filtros.status == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label text-xs text-uppercase mb-1">Tipo</label>
+                        <select name="tipo" class="form-select form-select-sm">
+                            <option value="">Todos</option>
+                            {% for t in tipos %}
+                            <option value="{{ t }}" {% if filtros.tipo == t %}selected{% endif %}>{{ t }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-xs text-uppercase mb-1">Cliente</label>
+                        <select name="cliente" class="form-select form-select-sm">
+                            <option value="">Todos</option>
+                            {% for c in clientes %}
+                            <option value="{{ c.id }}" {% if filtros.cliente == c.id|stringformat:"d" %}selected{% endif %}>{{ c.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2 text-end">
+                        <button type="submit" class="btn btn-sm bg-gradient-primary mb-0 w-100">
+                            <i class="material-symbols-rounded text-sm me-1">search</i> Filtrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabela -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">devices</i>
+                </div>
+                <h6 class="mb-0">Equipamentos</h6>
+                <p class="text-sm mb-0 text-muted">{{ page_obj.paginator.count }} equipamento{{ page_obj.paginator.count|pluralize:"s" }}</p>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Equipamento</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cliente</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Chamados</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Trocas</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Instalação</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for equip in equipamentos %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="icon icon-shape icon-sm {% if equip.total_chamados >= 3 %}bg-gradient-danger{% elif equip.status == 'ativo' %}bg-gradient-success{% elif equip.status == 'em_manutencao' %}bg-gradient-warning{% else %}bg-gradient-secondary{% endif %} shadow text-center border-radius-md me-2">
+                                            <i class="material-symbols-rounded text-white text-xs">
+                                                {% if equip.status == 'ativo' %}router{% elif equip.status == 'em_manutencao' %}build{% elif equip.status == 'em_estoque' %}inventory{% else %}block{% endif %}
+                                            </i>
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ equip.tipo }} — {{ equip.marca }} {{ equip.modelo }}</h6>
+                                            <p class="text-xs text-secondary mb-0">SN: {{ equip.numero_serie }}{% if equip.patrimonio %} | Pat: {{ equip.patrimonio }}{% endif %}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if equip.cliente %}
+                                    <span class="text-sm">{{ equip.cliente.nome }}</span>
+                                    {% else %}
+                                    <span class="text-xs text-muted">Em estoque</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if equip.status == 'ativo' %}
+                                    <span class="badge bg-gradient-success">Ativo</span>
+                                    {% elif equip.status == 'em_manutencao' %}
+                                    <span class="badge bg-gradient-warning">Manutenção</span>
+                                    {% elif equip.status == 'em_estoque' %}
+                                    <span class="badge bg-gradient-info">Estoque</span>
+                                    {% else %}
+                                    <span class="badge bg-gradient-secondary">Desativado</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-sm font-weight-bold {% if equip.total_chamados >= 3 %}text-danger{% endif %}">{{ equip.total_chamados }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-sm">{{ equip.total_trocas }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-xs">{{ equip.data_instalacao|date:"d/m/Y"|default:"—" }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <a href="{% url 'equipamentos:equipamento_detail' equip.pk %}" class="text-info me-2" title="Detalhes">
+                                        <i class="material-symbols-rounded text-sm">visibility</i>
+                                    </a>
+                                    <a href="{% url 'equipamentos:equipamento_update' equip.pk %}" class="text-warning me-2" title="Editar">
+                                        <i class="material-symbols-rounded text-sm">edit</i>
+                                    </a>
+                                    <a href="{% url 'equipamentos:registrar_movimentacao' equip.pk %}" class="text-primary" title="Movimentação">
+                                        <i class="material-symbols-rounded text-sm">swap_horiz</i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-5">
+                                    <i class="material-symbols-rounded text-muted" style="font-size: 3rem">devices</i>
+                                    <p class="text-sm text-muted mt-2 mb-0">Nenhum equipamento encontrado</p>
+                                    <a href="{% url 'equipamentos:equipamento_create' %}" class="btn btn-sm bg-gradient-info mt-2">Cadastrar Equipamento</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% if is_paginated %}
+            <div class="card-footer d-flex justify-content-center">
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page=1{% for k, v in filtros.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}">&laquo;</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for k, v in filtros.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}">&lsaquo;</a></li>
+                        {% endif %}
+                        <li class="page-item active"><a class="page-link bg-gradient-primary border-0" href="#">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</a></li>
+                        {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% for k, v in filtros.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}">&rsaquo;</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for k, v in filtros.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}">&raquo;</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

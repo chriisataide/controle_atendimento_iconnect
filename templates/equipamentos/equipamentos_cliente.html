@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Equipamentos — {{ cliente.nome }}{% endblock %}
+{% block page_title %}Equipamentos do Cliente{% endblock %}
+{% block breadcrumb_title %}Equipamentos por Cliente{% endblock %}
+
+{% block content %}
+<!-- Header do Cliente -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <h5 class="mb-0">
+            <i class="material-symbols-rounded text-primary align-middle">business</i>
+            {{ cliente.nome }}
+        </h5>
+        <p class="text-sm text-muted mb-0">Equipamentos instalados neste cliente</p>
+    </div>
+    <div class="col-lg-4 text-end">
+        <a href="{% url 'equipamentos:equipamento_create' %}" class="btn btn-sm bg-gradient-primary mb-0">
+            <i class="material-symbols-rounded text-sm me-1">add</i> Novo Equipamento
+        </a>
+        <a href="{% url 'equipamentos:equipamento_list' %}" class="btn btn-sm bg-gradient-dark mb-0 ms-1">
+            <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Voltar
+        </a>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row">
+    <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Equipamentos</p>
+                        <h4 class="mb-0">{{ total_equipamentos }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">devices</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Equipamentos instalados</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Chamados (30d)</p>
+                        <h4 class="mb-0 {% if total_chamados_equip >= 3 %}text-danger{% endif %}">{{ total_chamados_equip }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">confirmation_number</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Chamados de equipamento nos últimos 30 dias</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-sm-6">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Total de Trocas</p>
+                        <h4 class="mb-0 {% if total_trocas >= 2 %}text-warning{% endif %}">{{ total_trocas }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">swap_horiz</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Trocas de equipamento realizadas</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabela de Equipamentos -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">devices</i>
+                </div>
+                <h6 class="mb-0">Equipamentos Instalados</h6>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Equipamento</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Tipo</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Chamados</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Trocas</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Instalação</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Garantia</th>
+                                <th class="text-secondary opacity-7"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for equip in equipamentos %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="icon icon-sm icon-shape 
+                                            bg-gradient-{% if equip.status == 'ativo' %}success{% elif equip.status == 'em_manutencao' %}warning{% elif equip.status == 'em_estoque' %}info{% else %}secondary{% endif %} 
+                                            shadow text-center border-radius-md me-2">
+                                            <i class="material-symbols-rounded opacity-10 text-xs">router</i>
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <h6 class="mb-0 text-sm">{{ equip.marca }} {{ equip.modelo }}</h6>
+                                            <p class="text-xs text-secondary mb-0">SN: {{ equip.numero_serie }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="text-xs font-weight-bold">{{ equip.tipo }}</span></td>
+                                <td class="text-center">
+                                    {% if equip.status == 'ativo' %}
+                                    <span class="badge bg-gradient-success">Ativo</span>
+                                    {% elif equip.status == 'em_manutencao' %}
+                                    <span class="badge bg-gradient-warning">Manutenção</span>
+                                    {% elif equip.status == 'em_estoque' %}
+                                    <span class="badge bg-gradient-info">Estoque</span>
+                                    {% else %}
+                                    <span class="badge bg-gradient-secondary">Desativado</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-sm {% if equip.total_chamados >= 3 %}text-danger font-weight-bold{% endif %}">{{ equip.total_chamados }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-sm {% if equip.total_trocas >= 2 %}text-warning font-weight-bold{% endif %}">{{ equip.total_trocas }}</span>
+                                </td>
+                                <td class="text-center"><span class="text-xs">{{ equip.data_instalacao|date:"d/m/Y"|default:"—" }}</span></td>
+                                <td class="text-center">
+                                    {% if equip.garantia_ativa %}
+                                    <span class="text-xs text-success">{{ equip.data_garantia|date:"d/m/Y" }}</span>
+                                    {% elif equip.data_garantia %}
+                                    <span class="text-xs text-danger">Vencida</span>
+                                    {% else %}
+                                    <span class="text-xs text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <a href="{% url 'equipamentos:equipamento_detail' equip.pk %}" class="btn btn-sm bg-gradient-info mb-0" title="Ver detalhes">
+                                        <i class="material-symbols-rounded text-sm">visibility</i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <i class="material-symbols-rounded text-muted" style="font-size: 2.5rem">devices</i>
+                                    <p class="text-sm text-muted mt-2 mb-0">Nenhum equipamento instalado neste cliente</p>
+                                    <a href="{% url 'equipamentos:equipamento_create' %}" class="btn btn-sm bg-gradient-primary mt-2">Cadastrar Equipamento</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

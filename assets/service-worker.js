@@ -1,11 +1,8 @@
 // Service Worker básico para PWA offline e cache de assets
-const CACHE_NAME = 'iconnect-cache-v1';
+const CACHE_NAME = 'iconnect-cache-v2';
 const urlsToCache = [
   '/',
   '/static/css/material-dashboard.css',
-  '/static/css/dashboard-colors.css',
-  '/static/css/mobile.css',
-  '/static/js/main.js',
   '/static/img/icodev-logo.png',
   // Adicione outros assets importantes aqui
 ];
@@ -13,7 +10,11 @@ const urlsToCache = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+      .then(cache => {
+        return Promise.allSettled(
+          urlsToCache.map(url => cache.add(url).catch(() => console.warn('SW: skip', url)))
+        );
+      })
   );
 });
 

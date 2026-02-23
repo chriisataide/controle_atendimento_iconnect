@@ -33,6 +33,7 @@ urlpatterns = [
     path('cliente/', include('dashboard.cliente_urls')),  # Portal Self-Service
     path('financeiro/', include('dashboard.financeiro_urls')),  # Módulo Financeiro
     path('estoque/', include('dashboard.estoque_urls')),  # Módulo de Estoque
+    path('equipamentos/', include('dashboard.equipamento_urls')),  # Gestão de Equipamentos
     
     # APIs REST
     path('api/v1/', include('dashboard.api_urls')),

@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard — Equipamentos{% endblock %}
+{% block page_title %}Equipamentos{% endblock %}
+{% block breadcrumb_title %}Equipamentos{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">Gestão de Equipamentos</h3>
+            <p class="mb-0 text-sm">Controle de ativos instalados, trocas e alertas</p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end">
+        <a href="{% url 'equipamentos:equipamento_create' %}" class="btn btn-sm bg-gradient-info mb-0">
+            <i class="material-symbols-rounded text-sm me-1">add</i> Novo Equipamento
+        </a>
+        <a href="{% url 'equipamentos:equipamento_list' %}" class="btn btn-sm bg-gradient-dark mb-0 ms-1">
+            <i class="material-symbols-rounded text-sm me-1">list</i> Ver Todos
+        </a>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row">
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Total Equipamentos</p>
+                        <h4 class="mb-0">{{ total_equipamentos }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">devices</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-success font-weight-bolder">{{ equipamentos_ativos }}</span> ativos</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Em Manutenção</p>
+                        <h4 class="mb-0">{{ equipamentos_manutencao }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">build</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="text-info font-weight-bolder">{{ equipamentos_estoque }}</span> em estoque</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Trocas (30 dias)</p>
+                        <h4 class="mb-0">{{ trocas_mes }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">swap_horiz</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">Últimos 30 dias</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Alertas Pendentes</p>
+                        <h4 class="mb-0 {% if alertas_pendentes > 0 %}text-danger{% endif %}">{{ alertas_pendentes }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">warning</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <a href="{% url 'equipamentos:alerta_list' %}" class="mb-0 text-sm text-info">Ver alertas →</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos -->
+<div class="row mt-4">
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">donut_large</i>
+                </div>
+                <h6 class="mb-0">Equipamentos por Tipo</h6>
+            </div>
+            <div class="card-body p-3">
+                <canvas id="chartPorTipo" height="260"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">bar_chart</i>
+                </div>
+                <h6 class="mb-0">Trocas por Mês</h6>
+            </div>
+            <div class="card-body p-3">
+                <canvas id="chartTrocasMes" height="260"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Equipamentos Problemáticos + Movimentações Recentes -->
+<div class="row mt-4">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">report_problem</i>
+                </div>
+                <h6 class="mb-0">Equipamentos Problemáticos</h6>
+                <p class="text-xs text-muted mb-0">{{ config.chamados_limiar }}+ chamados em {{ config.chamados_periodo_dias }} dias</p>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Equipamento</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Chamados</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Cliente</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for equip in equipamentos_problematicos %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="icon icon-shape icon-sm bg-gradient-danger shadow text-center border-radius-md me-2">
+                                            <i class="material-symbols-rounded text-white text-xs">error</i>
+                                        </div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <a href="{% url 'equipamentos:equipamento_detail' equip.pk %}" class="h6 mb-0 text-sm">{{ equip.tipo }} {{ equip.modelo }}</a>
+                                            <p class="text-xs text-secondary mb-0">{{ equip.numero_serie }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-gradient-danger">{{ equip.chamados_recentes }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-xs">{{ equip.cliente.nome|default:"—" }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center py-4">
+                                    <i class="material-symbols-rounded text-success" style="font-size: 2rem">check_circle</i>
+                                    <p class="text-sm text-muted mt-1 mb-0">Nenhum equipamento problemático</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">history</i>
+                </div>
+                <h6 class="mb-0">Movimentações Recentes</h6>
+            </div>
+            <div class="card-body p-3">
+                <div class="timeline timeline-one-side">
+                    {% for mov in movimentacoes_recentes %}
+                    <div class="timeline-block mb-3">
+                        <span class="timeline-step">
+                            {% if mov.tipo_movimentacao == 'instalacao' %}
+                            <i class="material-symbols-rounded text-success text-lg">download</i>
+                            {% elif mov.tipo_movimentacao == 'troca' %}
+                            <i class="material-symbols-rounded text-warning text-lg">swap_horiz</i>
+                            {% elif mov.tipo_movimentacao == 'retirada' %}
+                            <i class="material-symbols-rounded text-danger text-lg">upload</i>
+                            {% elif mov.tipo_movimentacao == 'manutencao' %}
+                            <i class="material-symbols-rounded text-info text-lg">build</i>
+                            {% else %}
+                            <i class="material-symbols-rounded text-secondary text-lg">undo</i>
+                            {% endif %}
+                        </span>
+                        <div class="timeline-content">
+                            <h6 class="text-sm font-weight-bold mb-0">{{ mov.get_tipo_movimentacao_display }}</h6>
+                            <p class="text-xs text-secondary mb-0">
+                                {{ mov.equipamento.tipo }} {{ mov.equipamento.modelo }}
+                                {% if mov.cliente_novo %}→ {{ mov.cliente_novo.nome }}{% endif %}
+                                {% if mov.ticket %}| <a href="{% url 'dashboard:ticket_detail' mov.ticket.pk %}">{{ mov.ticket.numero }}</a>{% endif %}
+                            </p>
+                            <span class="text-xxs text-muted">{{ mov.realizado_em|timesince }} atrás</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-muted text-center">Nenhuma movimentação registrada</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(function() {
+    // Equipamentos por Tipo (Doughnut)
+    var dataTipo = JSON.parse('{{ equipamentos_por_tipo|safe }}');
+    if (dataTipo.length > 0) {
+        new Chart(document.getElementById('chartPorTipo'), {
+            type: 'doughnut',
+            data: {
+                labels: dataTipo.map(function(d) { return d.tipo; }),
+                datasets: [{
+                    data: dataTipo.map(function(d) { return d.total; }),
+                    backgroundColor: ['#334155','#06b6d4','#22c55e','#f59e0b','#ef4444','#8b5cf6','#ec4899','#64748b'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }
+            }
+        });
+    }
+
+    // Trocas por Mês (Bar)
+    var dataTrocas = JSON.parse('{{ trocas_por_mes|safe }}');
+    if (dataTrocas.length > 0) {
+        new Chart(document.getElementById('chartTrocasMes'), {
+            type: 'bar',
+            data: {
+                labels: dataTrocas.map(function(d) { return d.mes; }),
+                datasets: [{
+                    label: 'Trocas',
+                    data: dataTrocas.map(function(d) { return d.total; }),
+                    backgroundColor: '#f59e0b',
+                    borderRadius: 6,
+                    maxBarThickness: 40
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+    }
+})();
+</script>
+{% endblock %}

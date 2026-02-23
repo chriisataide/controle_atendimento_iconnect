@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if modo == 'editar' %}Editar{% else %}Novo{% endif %} Equipamento{% endblock %}
+{% block page_title %}{% if modo == 'editar' %}Editar Equipamento{% else %}Novo Equipamento{% endif %}{% endblock %}
+{% block breadcrumb_title %}{% if modo == 'editar' %}Editar{% else %}Novo{% endif %} Equipamento{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card mt-4">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">{% if modo == 'editar' %}edit{% else %}add_circle{% endif %}</i>
+                </div>
+                <h6 class="mb-0">{% if modo == 'editar' %}Editar Equipamento — {{ equipamento.numero_serie }}{% else %}Cadastrar Novo Equipamento{% endif %}</h6>
+            </div>
+            <div class="card-body p-3">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <!-- Identificação -->
+                    <h6 class="text-uppercase text-body text-xs font-weight-bolder mt-2 mb-3">Identificação</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group input-group-outline {% if equipamento.numero_serie %}is-filled{% endif %}">
+                                <label class="form-label">Nº de Série *</label>
+                                <input type="text" name="numero_serie" class="form-control"
+                                       value="{{ equipamento.numero_serie|default:'' }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group input-group-outline {% if equipamento.patrimonio %}is-filled{% endif %}">
+                                <label class="form-label">Nº Patrimônio</label>
+                                <input type="text" name="patrimonio" class="form-control"
+                                       value="{{ equipamento.patrimonio|default:'' }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="input-group input-group-outline {% if equipamento.tipo %}is-filled{% endif %}">
+                                <label class="form-label">Tipo *</label>
+                                <input type="text" name="tipo" class="form-control" list="lista-tipos"
+                                       value="{{ equipamento.tipo|default:'' }}" required
+                                       placeholder="Ex: Roteador, Switch, ONT...">
+                                <datalist id="lista-tipos">
+                                    {% for t in tipos_existentes %}
+                                    <option value="{{ t }}">
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="input-group input-group-outline {% if equipamento.marca %}is-filled{% endif %}">
+                                <label class="form-label">Marca</label>
+                                <input type="text" name="marca" class="form-control"
+                                       value="{{ equipamento.marca|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="input-group input-group-outline {% if equipamento.modelo %}is-filled{% endif %}">
+                                <label class="form-label">Modelo *</label>
+                                <input type="text" name="modelo" class="form-control"
+                                       value="{{ equipamento.modelo|default:'' }}" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Localização -->
+                    <h6 class="text-uppercase text-body text-xs font-weight-bolder mt-4 mb-3">Localização</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group input-group-outline">
+                                <select name="cliente" class="form-control">
+                                    <option value="">— Em estoque (sem cliente) —</option>
+                                    {% for c in clientes %}
+                                    <option value="{{ c.pk }}" {% if equipamento.cliente_id == c.pk %}selected{% endif %}>{{ c.nome }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <small class="text-muted ms-1">Cliente</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group input-group-outline {% if equipamento.local_instalacao %}is-filled{% endif %}">
+                                <label class="form-label">Local de Instalação</label>
+                                <input type="text" name="local_instalacao" class="form-control"
+                                       value="{{ equipamento.local_instalacao|default:'' }}"
+                                       placeholder="Sala, rack, posição...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status e Datas -->
+                    <h6 class="text-uppercase text-body text-xs font-weight-bolder mt-4 mb-3">Status e Datas</h6>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="input-group input-group-outline">
+                                <select name="status" class="form-control">
+                                    {% for val, label in status_choices %}
+                                    <option value="{{ val }}" {% if equipamento.status == val %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <small class="text-muted ms-1">Status</small>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="input-group input-group-outline is-filled">
+                                <label class="form-label">Data de Instalação</label>
+                                <input type="date" name="data_instalacao" class="form-control"
+                                       value="{{ equipamento.data_instalacao|date:'Y-m-d'|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="input-group input-group-outline is-filled">
+                                <label class="form-label">Garantia até</label>
+                                <input type="date" name="data_garantia" class="form-control"
+                                       value="{{ equipamento.data_garantia|date:'Y-m-d'|default:'' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Observações -->
+                    <h6 class="text-uppercase text-body text-xs font-weight-bolder mt-4 mb-3">Detalhes Adicionais</h6>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <div class="input-group input-group-outline {% if equipamento.descricao %}is-filled{% endif %}">
+                                <label class="form-label">Descrição</label>
+                                <textarea name="descricao" class="form-control" rows="2">{{ equipamento.descricao|default:'' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <div class="input-group input-group-outline {% if equipamento.observacoes %}is-filled{% endif %}">
+                                <label class="form-label">Observações</label>
+                                <textarea name="observacoes" class="form-control" rows="2">{{ equipamento.observacoes|default:'' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botões -->
+                    <div class="d-flex justify-content-end mt-4">
+                        {% if modo == 'editar' %}
+                        <a href="{% url 'equipamentos:equipamento_detail' equipamento.pk %}" class="btn btn-outline-secondary me-2">Cancelar</a>
+                        {% else %}
+                        <a href="{% url 'equipamentos:equipamento_list' %}" class="btn btn-outline-secondary me-2">Cancelar</a>
+                        {% endif %}
+                        <button type="submit" class="btn bg-gradient-primary">
+                            <i class="material-symbols-rounded text-sm me-1">save</i>
+                            {% if modo == 'editar' %}Salvar Alterações{% else %}Cadastrar Equipamento{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

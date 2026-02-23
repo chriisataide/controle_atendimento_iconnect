@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Registrar Movimentação — {{ equipamento.numero_serie }}{% endblock %}
+{% block page_title %}Movimentação de Equipamento{% endblock %}
+{% block breadcrumb_title %}Movimentação{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <!-- Card Info do Equipamento -->
+        <div class="card mb-3">
+            <div class="card-body p-3 d-flex align-items-center">
+                <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg me-3">
+                    <i class="material-symbols-rounded opacity-10">router</i>
+                </div>
+                <div>
+                    <h6 class="mb-0">{{ equipamento.tipo }} — {{ equipamento.marca }} {{ equipamento.modelo }}</h6>
+                    <p class="text-xs text-muted mb-0">
+                        SN: {{ equipamento.numero_serie }}
+                        {% if equipamento.cliente %}| Cliente: {{ equipamento.cliente.nome }}{% else %}| Em estoque{% endif %}
+                        | Status: {{ equipamento.get_status_display }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulário -->
+        <div class="card mt-2">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">swap_horiz</i>
+                </div>
+                <h6 class="mb-0">Registrar Movimentação</h6>
+                <p class="text-xs text-muted mb-0">Instalação, troca, retirada, manutenção ou devolução</p>
+            </div>
+            <div class="card-body p-3">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group input-group-outline">
+                                <select name="tipo_movimentacao" id="tipo_movimentacao" class="form-control" required>
+                                    <option value="">— Selecione o tipo —</option>
+                                    {% for val, label in tipo_choices %}
+                                    <option value="{{ val }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <small class="text-muted ms-1">Tipo de Movimentação *</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group input-group-outline is-filled">
+                                <label class="form-label">Data de Realização</label>
+                                <input type="datetime-local" name="data_realizacao" class="form-control">
+                            </div>
+                            <small class="text-muted ms-1">Deixe vazio para data/hora atual</small>
+                        </div>
+                    </div>
+
+                    <!-- Novo Cliente (instalação/troca) -->
+                    <div class="row" id="section-novo-cliente" style="display: none;">
+                        <div class="col-md-12 mb-3">
+                            <div class="input-group input-group-outline">
+                                <select name="novo_cliente" id="novo_cliente" class="form-control">
+                                    <option value="">— Selecione o cliente destino —</option>
+                                    {% for c in clientes %}
+                                    <option value="{{ c.pk }}">{{ c.nome }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <small class="text-muted ms-1">Cliente onde será instalado</small>
+                        </div>
+                    </div>
+
+                    <!-- Equipamento substituído (troca) -->
+                    <div class="row" id="section-substituido" style="display: none;">
+                        <div class="col-md-12 mb-3">
+                            <div class="input-group input-group-outline">
+                                <select name="equipamento_substituido" id="equipamento_substituido" class="form-control">
+                                    <option value="">— Equipamento que será substituído —</option>
+                                    {% for eq in equipamentos_cliente %}
+                                    <option value="{{ eq.pk }}">{{ eq.tipo }} {{ eq.marca }} {{ eq.modelo }} (SN: {{ eq.numero_serie }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <small class="text-muted ms-1">Equipamento antigo que será desativado</small>
+                        </div>
+                    </div>
+
+                    <!-- Ticket vinculado -->
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <div class="input-group input-group-outline">
+                                <select name="ticket" class="form-control">
+                                    <option value="">— Nenhum chamado vinculado —</option>
+                                    {% for t in tickets_cliente %}
+                                    <option value="{{ t.pk }}">{{ t.numero }} — {{ t.titulo|truncatewords:8 }} ({{ t.get_status_display }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <small class="text-muted ms-1">Chamado que motivou esta movimentação (opcional)</small>
+                        </div>
+                    </div>
+
+                    <!-- Motivo / Observações -->
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <div class="input-group input-group-outline">
+                                <label class="form-label">Motivo</label>
+                                <textarea name="motivo" class="form-control" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <div class="input-group input-group-outline">
+                                <label class="form-label">Observações</label>
+                                <textarea name="observacoes" class="form-control" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botões -->
+                    <div class="d-flex justify-content-end mt-3">
+                        <a href="{% url 'equipamentos:equipamento_detail' equipamento.pk %}" class="btn btn-outline-secondary me-2">Cancelar</a>
+                        <button type="submit" class="btn bg-gradient-warning">
+                            <i class="material-symbols-rounded text-sm me-1">swap_horiz</i>
+                            Registrar Movimentação
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoSelect = document.getElementById('tipo_movimentacao');
+    const sectionCliente = document.getElementById('section-novo-cliente');
+    const sectionSubstituido = document.getElementById('section-substituido');
+
+    tipoSelect.addEventListener('change', function() {
+        const val = this.value;
+        // Mostrar novo cliente para instalação e troca
+        sectionCliente.style.display = ['instalacao', 'troca'].includes(val) ? '' : 'none';
+        // Mostrar equipamento substituído apenas para troca
+        sectionSubstituido.style.display = val === 'troca' ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

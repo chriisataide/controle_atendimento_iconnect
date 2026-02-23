@@ -1,0 +1,344 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ equipamento.tipo }} {{ equipamento.modelo }} — Detalhe{% endblock %}
+{% block page_title %}Detalhes do Equipamento{% endblock %}
+{% block breadcrumb_title %}Detalhes do Equipamento{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder">{{ equipamento.tipo }} — {{ equipamento.marca }} {{ equipamento.modelo }}</h3>
+            <p class="mb-0 text-sm">SN: {{ equipamento.numero_serie }}{% if equipamento.patrimonio %} | Patrimônio: {{ equipamento.patrimonio }}{% endif %}</p>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end">
+        <a href="{% url 'equipamentos:registrar_movimentacao' equipamento.pk %}" class="btn btn-sm bg-gradient-info mb-0">
+            <i class="material-symbols-rounded text-sm me-1">swap_horiz</i> Movimentação
+        </a>
+        <a href="{% url 'equipamentos:equipamento_update' equipamento.pk %}" class="btn btn-sm bg-gradient-warning mb-0 ms-1">
+            <i class="material-symbols-rounded text-sm me-1">edit</i> Editar
+        </a>
+        <a href="{% url 'equipamentos:equipamento_list' %}" class="btn btn-sm bg-gradient-dark mb-0 ms-1">
+            <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Voltar
+        </a>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row">
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Status</p>
+                        <h5 class="mb-0">
+                            {% if equipamento.status == 'ativo' %}
+                            <span class="text-success">Ativo</span>
+                            {% elif equipamento.status == 'em_manutencao' %}
+                            <span class="text-warning">Manutenção</span>
+                            {% elif equipamento.status == 'em_estoque' %}
+                            <span class="text-info">Estoque</span>
+                            {% else %}
+                            <span class="text-secondary">Desativado</span>
+                            {% endif %}
+                        </h5>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">router</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">
+                    {% if equipamento.garantia_ativa %}
+                    <span class="text-success"><i class="material-symbols-rounded text-xs">verified</i> Garantia até {{ equipamento.data_garantia|date:"d/m/Y" }}</span>
+                    {% elif equipamento.data_garantia %}
+                    <span class="text-danger"><i class="material-symbols-rounded text-xs">warning</i> Garantia vencida</span>
+                    {% else %}
+                    <span class="text-muted">Sem garantia cadastrada</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Total Chamados</p>
+                        <h4 class="mb-0 {% if total_chamados >= 3 %}text-danger{% endif %}">{{ total_chamados }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">confirmation_number</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm"><span class="font-weight-bolder {% if chamados_30d >= 3 %}text-danger{% else %}text-info{% endif %}">{{ chamados_30d }}</span> nos últimos 30 dias</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Total Trocas</p>
+                        <h4 class="mb-0 {% if total_trocas >= 2 %}text-warning{% endif %}">{{ total_trocas }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">swap_horiz</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-sm">{{ total_manutencoes }} manutenção{{ total_manutencoes|pluralize:"ões" }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-sm mb-0 text-capitalize">Alertas</p>
+                        <h4 class="mb-0 {% if alertas %}text-danger{% endif %}">{{ alertas|length }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
+                        <i class="material-symbols-rounded opacity-10">warning</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                {% if alertas %}
+                <span class="text-danger text-sm font-weight-bolder">Ação necessária</span>
+                {% else %}
+                <span class="text-success text-sm">Sem alertas</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Info + Histórico -->
+<div class="row mt-4">
+    <!-- Info do Equipamento -->
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">info</i>
+                </div>
+                <h6 class="mb-0">Informações</h6>
+            </div>
+            <div class="card-body p-3">
+                <ul class="list-group">
+                    <li class="list-group-item border-0 ps-0 text-sm"><strong class="text-dark">Tipo:</strong> {{ equipamento.tipo }}</li>
+                    <li class="list-group-item border-0 ps-0 text-sm"><strong class="text-dark">Marca:</strong> {{ equipamento.marca|default:"—" }}</li>
+                    <li class="list-group-item border-0 ps-0 text-sm"><strong class="text-dark">Modelo:</strong> {{ equipamento.modelo }}</li>
+                    <li class="list-group-item border-0 ps-0 text-sm"><strong class="text-dark">Nº Série:</strong> {{ equipamento.numero_serie }}</li>
+                    {% if equipamento.patrimonio %}
+                    <li class="list-group-item border-0 ps-0 text-sm"><strong class="text-dark">Patrimônio:</strong> {{ equipamento.patrimonio }}</li>
+                    {% endif %}
+                    <li class="list-group-item border-0 ps-0 text-sm"><strong class="text-dark">Cliente:</strong>
+                        {% if equipamento.cliente %}
+                        <a href="{% url 'equipamentos:equipamentos_cliente' equipamento.cliente.pk %}">{{ equipamento.cliente.nome }}</a>
+                        {% else %}
+                        <span class="text-muted">Em estoque</span>
+                        {% endif %}
+                    </li>
+                    {% if equipamento.local_instalacao %}
+                    <li class="list-group-item border-0 ps-0 text-sm"><strong class="text-dark">Local:</strong> {{ equipamento.local_instalacao }}</li>
+                    {% endif %}
+                    <li class="list-group-item border-0 ps-0 text-sm"><strong class="text-dark">Instalação:</strong> {{ equipamento.data_instalacao|date:"d/m/Y"|default:"—" }}</li>
+                    <li class="list-group-item border-0 ps-0 text-sm"><strong class="text-dark">Garantia:</strong> {{ equipamento.data_garantia|date:"d/m/Y"|default:"Não informada" }}</li>
+                    <li class="list-group-item border-0 ps-0 text-sm"><strong class="text-dark">Cadastrado em:</strong> {{ equipamento.criado_em|date:"d/m/Y H:i" }}</li>
+                    {% if equipamento.criado_por %}
+                    <li class="list-group-item border-0 ps-0 text-sm"><strong class="text-dark">Cadastrado por:</strong> {{ equipamento.criado_por.get_full_name|default:equipamento.criado_por.username }}</li>
+                    {% endif %}
+                </ul>
+                {% if equipamento.descricao %}
+                <hr class="dark horizontal">
+                <p class="text-sm mb-0"><strong class="text-dark">Descrição:</strong><br>{{ equipamento.descricao }}</p>
+                {% endif %}
+                {% if equipamento.observacoes %}
+                <hr class="dark horizontal">
+                <p class="text-sm mb-0"><strong class="text-dark">Observações:</strong><br>{{ equipamento.observacoes }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline de Histórico -->
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">history</i>
+                </div>
+                <h6 class="mb-0">Histórico de Movimentações</h6>
+                <p class="text-xs text-muted mb-0">Instalações, trocas, manutenções</p>
+            </div>
+            <div class="card-body p-3">
+                {% if historico %}
+                <div class="timeline timeline-one-side">
+                    {% for mov in historico %}
+                    <div class="timeline-block mb-3">
+                        <span class="timeline-step">
+                            {% if mov.tipo_movimentacao == 'instalacao' %}
+                            <i class="material-symbols-rounded text-success text-lg">download</i>
+                            {% elif mov.tipo_movimentacao == 'troca' %}
+                            <i class="material-symbols-rounded text-warning text-lg">swap_horiz</i>
+                            {% elif mov.tipo_movimentacao == 'retirada' %}
+                            <i class="material-symbols-rounded text-danger text-lg">upload</i>
+                            {% elif mov.tipo_movimentacao == 'manutencao' %}
+                            <i class="material-symbols-rounded text-info text-lg">build</i>
+                            {% else %}
+                            <i class="material-symbols-rounded text-secondary text-lg">undo</i>
+                            {% endif %}
+                        </span>
+                        <div class="timeline-content">
+                            <h6 class="text-sm font-weight-bold mb-0">{{ mov.get_tipo_movimentacao_display }}</h6>
+                            <p class="text-xs mb-1">
+                                {% if mov.cliente_anterior %}De: {{ mov.cliente_anterior.nome }}{% endif %}
+                                {% if mov.cliente_novo %}→ {{ mov.cliente_novo.nome }}{% endif %}
+                                {% if mov.equipamento_substituido %}<br>Substituiu: {{ mov.equipamento_substituido.numero_serie }}{% endif %}
+                            </p>
+                            {% if mov.motivo %}
+                            <p class="text-xs text-muted mb-1">{{ mov.motivo }}</p>
+                            {% endif %}
+                            <div class="d-flex align-items-center">
+                                <span class="text-xxs text-muted">{{ mov.realizado_em|date:"d/m/Y H:i" }}</span>
+                                {% if mov.realizado_por %}
+                                <span class="text-xxs text-muted ms-2">por {{ mov.realizado_por.get_full_name|default:mov.realizado_por.username }}</span>
+                                {% endif %}
+                                {% if mov.ticket %}
+                                <a href="{% url 'dashboard:ticket_detail' mov.ticket.pk %}" class="badge bg-gradient-info ms-2">{{ mov.ticket.numero }}</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="material-symbols-rounded text-muted" style="font-size: 2.5rem">history</i>
+                    <p class="text-sm text-muted mt-2 mb-0">Nenhuma movimentação registrada</p>
+                    <a href="{% url 'equipamentos:registrar_movimentacao' equipamento.pk %}" class="btn btn-sm bg-gradient-info mt-2">Registrar Movimentação</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chamados Vinculados + Alertas -->
+<div class="row mt-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">confirmation_number</i>
+                </div>
+                <h6 class="mb-0">Chamados Vinculados</h6>
+                <p class="text-xs text-muted mb-0">{{ total_chamados }} chamado{{ total_chamados|pluralize:"s" }} total</p>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Chamado</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cliente</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Prioridade</th>
+                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Data</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in tickets %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex px-2 py-1">
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <a href="{% url 'dashboard:ticket_detail' ticket.pk %}" class="h6 mb-0 text-sm">{{ ticket.numero }}</a>
+                                            <p class="text-xs text-secondary mb-0">{{ ticket.titulo|truncatewords:8 }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="text-xs">{{ ticket.cliente.nome }}</span></td>
+                                <td class="text-center">
+                                    {% if ticket.status == 'aberto' %}
+                                    <span class="badge bg-gradient-info">Aberto</span>
+                                    {% elif ticket.status == 'em_andamento' %}
+                                    <span class="badge bg-gradient-primary">Em Andamento</span>
+                                    {% elif ticket.status == 'resolvido' %}
+                                    <span class="badge bg-gradient-success">Resolvido</span>
+                                    {% elif ticket.status == 'fechado' %}
+                                    <span class="badge bg-gradient-secondary">Fechado</span>
+                                    {% else %}
+                                    <span class="badge bg-gradient-warning">{{ ticket.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if ticket.prioridade == 'critica' %}
+                                    <span class="badge bg-gradient-danger">Crítica</span>
+                                    {% elif ticket.prioridade == 'alta' %}
+                                    <span class="badge bg-gradient-warning">Alta</span>
+                                    {% elif ticket.prioridade == 'media' %}
+                                    <span class="badge bg-gradient-info">Média</span>
+                                    {% else %}
+                                    <span class="badge bg-gradient-secondary">Baixa</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center"><span class="text-xs">{{ ticket.criado_em|date:"d/m/Y" }}</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    <p class="text-sm text-muted mb-0">Nenhum chamado vinculado</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-xl mt-n4 me-3 float-start">
+                    <i class="material-symbols-rounded opacity-10">warning</i>
+                </div>
+                <h6 class="mb-0">Alertas</h6>
+            </div>
+            <div class="card-body p-3">
+                {% for alerta in alertas %}
+                <div class="alert alert-{% if alerta.severidade == 'critical' %}danger{% elif alerta.severidade == 'warning' %}warning{% else %}info{% endif %} alert-dismissible text-white font-weight-bold text-xs mb-2" role="alert">
+                    <strong>{{ alerta.get_tipo_display }}</strong><br>
+                    {{ alerta.descricao|truncatewords:15 }}
+                    <br><small>{{ alerta.criado_em|date:"d/m/Y H:i" }}</small>
+                    <a href="{% url 'equipamentos:alerta_resolver' alerta.pk %}" class="btn btn-outline-white btn-sm mt-1">Resolver</a>
+                </div>
+                {% empty %}
+                <div class="text-center py-4">
+                    <i class="material-symbols-rounded text-success" style="font-size: 2rem">check_circle</i>
+                    <p class="text-sm text-muted mt-2 mb-0">Sem alertas</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

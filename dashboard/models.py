@@ -266,6 +266,13 @@ class Ticket(models.Model):
     prioridade = models.CharField(max_length=10, choices=PrioridadeTicket.choices, default=PrioridadeTicket.MEDIA, db_index=True)
     origem = models.CharField(max_length=20, default='web', help_text="web, email, whatsapp, slack")
     
+    # --- Equipamento vinculado (opcional) ---
+    equipamento = models.ForeignKey(
+        'Equipamento', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='tickets',
+        help_text="Equipamento relacionado a este chamado"
+    )
+
     # --- Hierarquia e vinculacao ---
     parent_ticket = models.ForeignKey(
         'self', on_delete=models.SET_NULL, null=True, blank=True,
@@ -2037,4 +2044,10 @@ from .models_knowledge import (  # noqa: E402, F401
 # ========== IMPORTAR MODELOS AUTO-ATRIBUIÇÃO ==========
 from .auto_assignment import (  # noqa: E402, F401
     SkillAgent, RegraAtribuicao, CargoTrabalho
+)
+
+# ========== IMPORTAR MODELOS EQUIPAMENTOS ==========
+from .models_equipamento import (  # noqa: E402, F401
+    Equipamento, HistoricoEquipamento, AlertaEquipamento,
+    ConfiguracaoAlertaEquipamento
 )

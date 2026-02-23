@@ -3,6 +3,10 @@
 .gitignore
 .gitattributes
 
+# Segurança: nunca copiar secrets para a imagem
+.env
+.env.*
+
 # Arquivos Python
 __pycache__/
 *.py[cod]

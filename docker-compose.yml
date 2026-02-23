@@ -94,7 +94,7 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
       - DEBUG=False
       - SECRET_KEY=${SECRET_KEY}
       - DATABASE_URL=postgresql://${POSTGRES_USER:-iconnect_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-iconnect_db}
@@ -108,6 +108,12 @@ services:
       redis:
         condition: service_healthy
     command: celery -A controle_atendimento worker --loglevel=info
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A controle_atendimento inspect ping --timeout 10 || exit 1"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 30s
     networks:
       - backend
 
@@ -118,13 +124,24 @@ services:
       dockerfile: Dockerfile
     container_name: iconnect_flower
     restart: unless-stopped
+    env_file: .env
     environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-iconnect_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-iconnect_db}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - FLOWER_BASIC_AUTH=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:?Defina FLOWER_PASSWORD no .env}
     depends_on:
       - redis
       - celery
     command: celery -A controle_atendimento flower --port=5555 --basic-auth=${FLOWER_USER:-admin}:${FLOWER_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf -o /dev/null -w '%{http_code}' http://localhost:5555/ | grep -qE '200|401' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     networks:
       - backend
       - frontend

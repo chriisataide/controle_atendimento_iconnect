@@ -12,13 +12,13 @@ const STATIC_URLS = [
   '/dashboard/tickets/novo/',
   '/dashboard/profile/',
   '/static/css/material-dashboard.min.css',
-  '/static/js/material-dashboard.min.js',
-  '/static/img/logo-ct-dark.png',
-  '/static/img/favicon.png',
+  '/static/js/core/bootstrap.bundle.min.js',
+  '/static/img/icodev-logo.png',
+  '/static/img/icodev-favicon.ico',
   'https://fonts.googleapis.com/css2?family=Inter:300,400,500,600,700,900',
   'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0',
   'https://cdn.jsdelivr.net/npm/chart.js',
-  'https://kit.fontawesome.com/42d5adcbca.js'
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css'
 ];
 
 // Páginas offline fallback
