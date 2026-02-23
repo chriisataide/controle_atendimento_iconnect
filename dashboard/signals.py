@@ -1,6 +1,11 @@
 """
 Signals para Sistema de Notificações Automáticas
 iConnect - Automatização de Eventos
+
+As operações pesadas (bulk_create de notificações, envio de
+email/Slack/WhatsApp) são delegadas para Celery tasks sempre que o
+broker estiver disponível.  Se o Celery não estiver configurado, os
+signals executam a lógica de maneira síncrona como fallback.
 """
 
 from django.db.models.signals import post_save, pre_save, pre_delete
@@ -16,6 +21,10 @@ from .services.sla_calculator import sla_calculator
 import logging
 logger = logging.getLogger('dashboard')
 
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 def _get_channel_layer():
     """Lazy-load channel layer para evitar falha se Redis não estiver disponível no import."""
@@ -37,13 +46,23 @@ def _safe_group_send(group, message):
             logger.debug("Channel layer send failed (no backend?)")
 
 
+def _dispatch_task(task_func, *args, **kwargs):
+    """Tenta enviar para o Celery; se falhar, executa síncrono como fallback."""
+    try:
+        task_func.delay(*args, **kwargs)
+    except Exception:
+        # Celery indisponível — executar síncronamente
+        logger.debug("Celery indisponível; executando %s síncronamente", task_func.name)
+        task_func(*args, **kwargs)
+
+
 @receiver(post_save, sender=Ticket)
 def ticket_created_or_updated(sender, instance, created, **kwargs):
     """Notificações automáticas para tickets"""
     
     if created:
         # 🎫 NOVO TICKET CRIADO
-        # Notificar todos os agentes disponíveis
+        # WebSocket: notificar todos os agentes disponíveis (leve, fica no signal)
         _safe_group_send(
             "agents",
             {
@@ -61,20 +80,9 @@ def ticket_created_or_updated(sender, instance, created, **kwargs):
             }
         )
         
-        # Criar notificações no banco para agentes (bulk_create para performance)
-        agents = User.objects.filter(perfilagente__isnull=False, is_active=True)
-        notifications = [
-            Notification(
-                user=agent,
-                title='Novo Ticket Criado',
-                message=f'Ticket #{instance.numero}: {instance.titulo}',
-                type='new_ticket',
-                ticket=instance
-            )
-            for agent in agents
-        ]
-        if notifications:
-            Notification.objects.bulk_create(notifications)
+        # Criar notificações no banco via Celery (pesado: bulk_create para N agentes)
+        from .tasks import notify_agents_new_ticket
+        _dispatch_task(notify_agents_new_ticket, instance.id)
     
     else:
         # 🔄 TICKET ATUALIZADO
@@ -92,21 +100,14 @@ def ticket_created_or_updated(sender, instance, created, **kwargs):
             }
         )
         
-        # Notificar cliente sobre mudanças de status
+        # Notificar cliente sobre mudanças de status via Celery
         if instance.cliente:
+            from .tasks import notify_client_ticket_updated
+            _dispatch_task(notify_client_ticket_updated, instance.id)
+
+            # WebSocket imediato para o cliente (leve)
             try:
                 client_user = User.objects.get(email=instance.cliente.email)
-                
-                # Criar notificação
-                Notification.objects.create(
-                    user=client_user,
-                    title='Ticket Atualizado',
-                    message=f'Seu ticket #{instance.numero} foi atualizado: {instance.get_status_display()}',
-                    type='ticket_status_change',
-                    ticket=instance
-                )
-                
-                # Enviar via WebSocket
                 _safe_group_send(
                     f"user_{client_user.id}",
                     {
@@ -150,20 +151,15 @@ def interaction_created(sender, instance, created, **kwargs):
         }
     )
     
-    # Notificar cliente se for mensagem pública de agente
+    # Notificações DB para cliente e agente via Celery (pesado)
+    from .tasks import notify_interaction
+    _dispatch_task(notify_interaction, ticket.id, instance.id, instance.usuario.id)
+
+    # WebSocket imediato para usuários conectados (leve)
     if instance.eh_publico and ticket.cliente:
         try:
             client_user = User.objects.get(email=ticket.cliente.email)
-            if client_user != instance.usuario:  # Não notificar o próprio autor
-                
-                Notification.objects.create(
-                    user=client_user,
-                    title='Nova Resposta no seu Ticket',
-                    message=f'Ticket #{ticket.numero}: Nova resposta disponível',
-                    type='new_interaction',
-                    ticket=ticket
-                )
-                
+            if client_user != instance.usuario:
                 _safe_group_send(
                     f"user_{client_user.id}",
                     {
@@ -179,17 +175,8 @@ def interaction_created(sender, instance, created, **kwargs):
                 )
         except User.DoesNotExist:
             pass
-    
-    # Notificar agente atribuído se não for o autor
+
     if ticket.agente and ticket.agente != instance.usuario:
-        Notification.objects.create(
-            user=ticket.agente,
-            title='Nova Mensagem no Ticket',
-            message=f'Ticket #{ticket.numero}: Nova mensagem adicionada',
-            type='new_interaction',
-            ticket=ticket
-        )
-        
         _safe_group_send(
             f"user_{ticket.agente.id}",
             {
@@ -240,6 +227,7 @@ def send_sla_warning(ticket):
 def send_sla_breach(ticket):
     """🚨 Alerta de violação de SLA"""
     
+    # WebSocket imediato (leve)
     _safe_group_send(
         "agents",
         {
@@ -255,31 +243,9 @@ def send_sla_breach(ticket):
         }
     )
     
-    # Notificar supervisores
-    supervisors = User.objects.filter(is_staff=True, is_active=True)
-    for supervisor in supervisors:
-        Notification.objects.create(
-            user=supervisor,
-            title='SLA VIOLADO',
-            message=f'Ticket #{ticket.numero} excedeu o prazo de atendimento!',
-            type='sla_breach',
-            ticket=ticket
-        )
-        
-        # Notificação WebSocket individual
-        _safe_group_send(
-            f"user_{supervisor.id}",
-            {
-                'type': 'sla_alert',
-                'data': {
-                    'title': '🚨 SLA VIOLADO',
-                    'message': f'Ticket #{ticket.numero} excedeu o prazo!',
-                    'type': 'sla_breach',
-                    'ticket_id': ticket.id,
-                    'priority': 'critical'
-                }
-            }
-        )
+    # Notificações DB para supervisores via Celery (pesado: N supervisores)
+    from .tasks import send_sla_breach_notifications
+    _dispatch_task(send_sla_breach_notifications, ticket.id)
 
 
 @receiver(post_save, sender=PerfilAgente)

@@ -2000,3 +2000,36 @@ from .models_chat import (  # noqa: E402, F401
 from .models_lgpd import (  # noqa: E402, F401
     LGPDConsent, LGPDDataRequest, LGPDAccessLog
 )
+
+# ========== IMPORTAR MODELOS CHATBOT AI ==========
+from .models_chatbot_ai import (  # noqa: E402, F401
+    ChatbotKnowledgeBase, ChatbotConversation, ChatbotMessage,
+    ChatbotAnalytics, ChatbotTraining, ChatbotConfiguration
+)
+
+# ========== IMPORTAR MODELOS EXECUTIVE ==========
+from .models_executive import (  # noqa: E402, F401
+    ExecutiveDashboardKPI, DashboardWidget, MetricaTempoReal, AlertaKPI
+)
+
+# ========== IMPORTAR MODELOS PUSH ==========
+from .models_push import (  # noqa: E402, F401
+    PushSubscription, NotificationPreference, PushNotificationLog
+)
+
+# ========== IMPORTAR MODELOS SATISFAÇÃO ==========
+from .models_satisfacao import (  # noqa: E402, F401
+    AvaliacaoSatisfacao, PesquisaSatisfacao, PerguntaPesquisa
+)
+
+# ========== IMPORTAR MODELOS WHATSAPP ==========
+from .models_whatsapp import (  # noqa: E402, F401
+    WhatsAppBusinessAccount, WhatsAppContact, WhatsAppConversation,
+    WhatsAppMessage, WhatsAppTemplate, WhatsAppAutoResponse,
+    WhatsAppAnalytics, WhatsAppWebhookLog
+)
+
+# ========== IMPORTAR MODELOS KNOWLEDGE BASE ==========
+from .models_knowledge import (  # noqa: E402, F401
+    CategoriaConhecimento, ArtigoConhecimento
+)

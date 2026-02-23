@@ -48,6 +48,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'dashboard.middleware.CSPNonceMiddleware',  # Gera nonce CSP por request
     'dashboard.security.SecurityHeadersMiddleware',  # Headers de seguranca
     'dashboard.audit_system.AuditMiddleware',  # Audit trail de requests
     'dashboard.monitoring.MonitoringMiddleware',  # Monitoramento customizado

@@ -162,7 +162,14 @@ def alert_administrators(log_data):
 # ========== MIDDLEWARE DE SEGURANÇA ==========
 
 class SecurityHeadersMiddleware:
-    """Middleware para adicionar headers de segurança"""
+    """Middleware para adicionar headers de segurança.
+
+    Quando o ``CSPNonceMiddleware`` está ativo, o header CSP usa
+    ``'nonce-<value>'`` em vez de  ``'unsafe-inline'``.  Browsers modernos
+    ignoram ``'unsafe-inline'`` quando um nonce está presente, oferecendo
+    proteção real contra XSS.  O ``'unsafe-inline'`` é mantido como
+    fallback para browsers legados que não suportam nonces.
+    """
     
     def __init__(self, get_response):
         self.get_response = get_response
@@ -176,13 +183,16 @@ class SecurityHeadersMiddleware:
         response['X-XSS-Protection'] = '1; mode=block'
         response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
         
-        # CSP (Content Security Policy)
+        # CSP (Content Security Policy) com suporte a nonce
         if not settings.DEBUG:
+            nonce = getattr(request, 'csp_nonce', '')
+            nonce_directive = f"'nonce-{nonce}' " if nonce else ''
+
             response['Content-Security-Policy'] = (
                 "default-src 'self'; "
-                "script-src 'self' 'unsafe-inline' "
+                f"script-src 'self' {nonce_directive}'unsafe-inline' "
                 "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-                "style-src 'self' 'unsafe-inline' "
+                f"style-src 'self' {nonce_directive}'unsafe-inline' "
                 "https://fonts.googleapis.com https://cdn.jsdelivr.net; "
                 "font-src 'self' https://fonts.gstatic.com; "
                 "img-src 'self' data: https:; "

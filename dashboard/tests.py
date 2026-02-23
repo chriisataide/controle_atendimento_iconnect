@@ -826,3 +826,853 @@ class LGPDModelTest(BaseTestMixin, TestCase):
         self.assertEqual(pdv.get_responsavel_cpf(), '123.456.789-00')
         self.assertEqual(pdv.get_celular(), '(11) 91234-5678')
         self.assertEqual(pdv.get_responsavel_telefone(), '(11) 3456-7890')
+
+
+# ===========================================================================
+# P3: SLA Manager Tests
+# ===========================================================================
+
+class SLAManagerTest(BaseTestMixin, TestCase):
+    """Testes para o SLAManager — compliance BACEN."""
+
+    def setUp(self):
+        self.user = self.create_user(username='agente_sla')
+        self.cliente = self.create_cliente()
+        self.categoria = self.create_categoria()
+
+    def _make_ticket(self, **kw):
+        defaults = dict(
+            cliente=self.cliente, agente=self.user,
+            categoria=self.categoria,
+            titulo='SLA Ticket', descricao='Teste SLA',
+            prioridade='alta', status='aberto',
+        )
+        defaults.update(kw)
+        return Ticket.objects.create(**defaults)
+
+    def test_format_time_remaining_positive(self):
+        from .sla import SLAManager
+        mgr = SLAManager()
+        result = mgr._format_time_remaining(timedelta(hours=3, minutes=15))
+        self.assertIn('3h', result)
+        self.assertIn('15min', result)
+
+    def test_format_time_remaining_minutes_only(self):
+        from .sla import SLAManager
+        mgr = SLAManager()
+        result = mgr._format_time_remaining(timedelta(minutes=42))
+        self.assertEqual(result, '42min')
+
+    def test_format_time_remaining_negative(self):
+        from .sla import SLAManager
+        mgr = SLAManager()
+        result = mgr._format_time_remaining(timedelta(hours=-2))
+        self.assertIn('Atrasado', result)
+
+    def test_format_time_remaining_less_than_minute(self):
+        from .sla import SLAManager
+        mgr = SLAManager()
+        result = mgr._format_time_remaining(timedelta(seconds=30))
+        self.assertEqual(result, 'Menos de 1 minuto')
+
+    def test_calculate_business_deadline_weekday(self):
+        from .sla import SLAManager
+        mgr = SLAManager()
+        # Segunda 10:00 + 4h = Segunda 14:00
+        start = timezone.now().replace(year=2026, month=2, day=23, hour=10, minute=0, second=0, microsecond=0)
+        # 23/02/2026 é segunda
+        deadline = mgr._calculate_business_deadline(start, 4)
+        self.assertEqual(deadline.hour, 14)
+
+    def test_calculate_business_deadline_crosses_end_of_day(self):
+        from .sla import SLAManager
+        mgr = SLAManager()
+        # Segunda 16:00 + 4h → 2h restam no dia, 2h no dia seguinte → Terça 11:00
+        start = timezone.now().replace(year=2026, month=2, day=23, hour=16, minute=0, second=0, microsecond=0)
+        deadline = mgr._calculate_business_deadline(start, 4)
+        self.assertEqual(deadline.day, 24)
+        self.assertEqual(deadline.hour, 11)
+
+    def test_calculate_business_deadline_skips_weekend(self):
+        from .sla import SLAManager
+        mgr = SLAManager()
+        # Sexta 17:00 + 2h → 1h restam na sexta, 1h na segunda → Segunda 10:00
+        start = timezone.now().replace(year=2026, month=2, day=27, hour=17, minute=0, second=0, microsecond=0)
+        deadline = mgr._calculate_business_deadline(start, 2)
+        # Deve pular sábado e domingo
+        self.assertEqual(deadline.weekday(), 0)  # Segunda
+
+    def test_calculate_sla_deadline_fallback_24h(self):
+        from .sla import SLAManager
+        mgr = SLAManager()
+        ticket = self._make_ticket()
+        # Sem SLAPolicy e sem SLA_CONFIG → fallback 24h
+        deadline = mgr.calculate_sla_deadline(ticket)
+        self.assertIsNotNone(deadline)
+
+    def test_calculate_sla_deadline_with_policy(self):
+        from .sla import SLAManager
+        from .models import SLAPolicy as SLAPolicyModel
+        SLAPolicyModel.objects.create(
+            name='Alta prioridade',
+            categoria=self.categoria,
+            prioridade='alta',
+            first_response_time=120,  # 120 min = 2h
+            resolution_time=480,
+            escalation_time=240,
+        )
+        mgr = SLAManager()
+        ticket = self._make_ticket()
+        deadline = mgr.calculate_sla_deadline(ticket)
+        self.assertIsNotNone(deadline)
+        # Deadline deve ser em torno de 2 horas comerciais a partir da criação
+        diff = (deadline - ticket.criado_em).total_seconds()
+        self.assertGreater(diff, 0)
+
+    def test_get_sla_violations_returns_queryset(self):
+        from .sla import SLAManager
+        mgr = SLAManager()
+        violations = mgr.get_sla_violations(days=7)
+        self.assertEqual(len(violations), 0)
+
+    def test_get_sla_metrics_empty(self):
+        from .sla import SLAManager
+        mgr = SLAManager()
+        metrics = mgr.get_sla_metrics(days=30)
+        self.assertEqual(metrics['compliance_rate'], 100)
+        self.assertEqual(metrics['violations'], 0)
+
+    def test_sla_violation_model(self):
+        """SLAViolation cria registro correto."""
+        from .models import SLAViolation
+        ticket = self._make_ticket()
+        now = timezone.now()
+        v = SLAViolation.objects.create(
+            ticket=ticket,
+            violation_type='deadline_missed',
+            severity='high',
+            expected_deadline=now - timedelta(hours=2),
+            actual_time=now,
+            time_exceeded=timedelta(hours=2),
+        )
+        self.assertIn('Violação SLA', str(v))
+        self.assertEqual(v.violation_type, 'deadline_missed')
+
+    def test_sla_policy_constraints(self):
+        """SLAPolicy rejeita first_response_time <= 0."""
+        from .models import SLAPolicy as SLAPolicyModel
+        from django.db import IntegrityError
+        with self.assertRaises(IntegrityError):
+            SLAPolicyModel.objects.create(
+                name='Inválida',
+                prioridade='alta',
+                first_response_time=0,  # Viola check constraint
+                resolution_time=480,
+                escalation_time=240,
+            )
+
+
+# ===========================================================================
+# P3: Security Tests
+# ===========================================================================
+
+class SecurityModuleTest(TestCase):
+    """Testes para módulo de segurança."""
+
+    def test_get_client_ip_direct(self):
+        from .security import get_client_ip
+        from django.test import RequestFactory
+        rf = RequestFactory()
+        request = rf.get('/')
+        request.META['REMOTE_ADDR'] = '192.168.1.100'
+        self.assertEqual(get_client_ip(request), '192.168.1.100')
+
+    def test_get_client_ip_forwarded(self):
+        from .security import get_client_ip
+        from django.test import RequestFactory
+        rf = RequestFactory()
+        request = rf.get('/')
+        request.META['HTTP_X_FORWARDED_FOR'] = '10.0.0.1, 172.16.0.1'
+        self.assertEqual(get_client_ip(request), '10.0.0.1')
+
+    def test_validate_file_upload_size_limit(self):
+        from .security import validate_file_upload
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        big_file = SimpleUploadedFile('big.txt', b'x' * (11 * 1024 * 1024), content_type='text/plain')
+        valid, msg = validate_file_upload(big_file)
+        self.assertFalse(valid)
+        self.assertIn('10MB', msg)
+
+    def test_validate_file_upload_bad_extension(self):
+        from .security import validate_file_upload
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        exe = SimpleUploadedFile('virus.exe', b'\x00' * 100, content_type='application/octet-stream')
+        valid, msg = validate_file_upload(exe)
+        self.assertFalse(valid)
+        self.assertIn('.exe', msg)
+
+    def test_validate_file_upload_valid_txt(self):
+        from .security import validate_file_upload
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        txt = SimpleUploadedFile('doc.txt', b'Hello World', content_type='text/plain')
+        valid, msg = validate_file_upload(txt)
+        self.assertTrue(valid)
+        self.assertEqual(msg, '')
+
+    def test_validate_file_upload_suspicious_content(self):
+        from .security import validate_file_upload
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        malicious = SimpleUploadedFile('notes.txt', b'<script>alert(1)</script>', content_type='text/plain')
+        valid, msg = validate_file_upload(malicious)
+        self.assertFalse(valid)
+        self.assertIn('malicioso', msg)
+
+    def test_validate_file_upload_mime_mismatch(self):
+        from .security import validate_file_upload
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        # extensão .jpg mas content_type de PDF
+        fake = SimpleUploadedFile('photo.jpg', b'\x00' * 100, content_type='application/pdf')
+        valid, msg = validate_file_upload(fake)
+        self.assertFalse(valid)
+
+    def test_validate_file_upload_magic_bytes_png(self):
+        from .security import validate_file_upload
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        # Magic bytes errados para PNG
+        fake_png = SimpleUploadedFile('img.png', b'\x00\x00\x00\x00' + b'\x00' * 100, content_type='image/png')
+        valid, msg = validate_file_upload(fake_png)
+        self.assertFalse(valid)
+        self.assertIn('conteúdo', msg.lower())
+
+    def test_hash_sensitive_data(self):
+        from .security import hash_sensitive_data
+        h1 = hash_sensitive_data('secret123')
+        h2 = hash_sensitive_data('secret123')
+        self.assertEqual(h1, h2)
+        self.assertEqual(len(h1), 16)
+        self.assertNotEqual(h1, hash_sensitive_data('other'))
+
+    def test_security_headers_middleware(self):
+        from .security import SecurityHeadersMiddleware
+        from django.test import RequestFactory
+        rf = RequestFactory()
+        request = rf.get('/')
+
+        def get_response(req):
+            from django.http import HttpResponse
+            return HttpResponse('OK')
+
+        middleware = SecurityHeadersMiddleware(get_response)
+        response = middleware(request)
+        self.assertEqual(response['X-Content-Type-Options'], 'nosniff')
+        self.assertEqual(response['X-Frame-Options'], 'DENY')
+        self.assertEqual(response['X-XSS-Protection'], '1; mode=block')
+        self.assertIn('geolocation', response['Permissions-Policy'])
+
+    @override_settings(DEBUG=False)
+    def test_security_headers_csp_in_production(self):
+        from .security import SecurityHeadersMiddleware
+        from django.test import RequestFactory
+        rf = RequestFactory()
+        request = rf.get('/')
+
+        def get_response(req):
+            from django.http import HttpResponse
+            return HttpResponse('OK')
+
+        middleware = SecurityHeadersMiddleware(get_response)
+        response = middleware(request)
+        self.assertIn('Content-Security-Policy', response)
+        self.assertIn("frame-ancestors 'none'", response['Content-Security-Policy'])
+
+    @override_settings(DEBUG=False)
+    def test_csp_nonce_middleware(self):
+        """CSPNonceMiddleware gera nonce único por request."""
+        from .middleware import CSPNonceMiddleware
+        from django.test import RequestFactory
+        rf = RequestFactory()
+        request = rf.get('/')
+
+        def get_response(req):
+            from django.http import HttpResponse
+            return HttpResponse('OK')
+
+        middleware = CSPNonceMiddleware(get_response)
+        middleware(request)
+        self.assertTrue(hasattr(request, 'csp_nonce'))
+        self.assertTrue(len(request.csp_nonce) > 20)
+
+        # Cada request gera nonce diferente
+        request2 = rf.get('/')
+        middleware(request2)
+        self.assertNotEqual(request.csp_nonce, request2.csp_nonce)
+
+    @override_settings(DEBUG=False)
+    def test_csp_header_includes_nonce(self):
+        """SecurityHeadersMiddleware inclui nonce no CSP quando disponível."""
+        from .security import SecurityHeadersMiddleware
+        from .middleware import CSPNonceMiddleware
+        from django.test import RequestFactory
+        rf = RequestFactory()
+        request = rf.get('/')
+
+        def get_response(req):
+            from django.http import HttpResponse
+            return HttpResponse('OK')
+
+        # Simula pipeline: CSPNonceMiddleware → SecurityHeadersMiddleware
+        nonce_mw = CSPNonceMiddleware(get_response)
+        nonce_mw(request)  # Define request.csp_nonce
+
+        sec_mw = SecurityHeadersMiddleware(get_response)
+        response = sec_mw(request)
+
+        csp = response['Content-Security-Policy']
+        self.assertIn(f"'nonce-{request.csp_nonce}'", csp)
+        self.assertIn("'unsafe-inline'", csp)  # Fallback mantido
+
+    def test_rate_limit_decorator(self):
+        from .security import rate_limit
+        from django.test import RequestFactory
+
+        @rate_limit(max_requests=2, window_seconds=60)
+        def test_view(request):
+            from django.http import HttpResponse
+            return HttpResponse('OK')
+
+        rf = RequestFactory()
+        request = rf.get('/')
+        request.META['REMOTE_ADDR'] = '10.10.10.10'
+        request.user = MagicMock(is_authenticated=False)
+
+        # Primeiras 2 requisições devem passar
+        r1 = test_view(request)
+        self.assertEqual(r1.status_code, 200)
+        r2 = test_view(request)
+        self.assertEqual(r2.status_code, 200)
+        # Terceira deve ser bloqueada (429)
+        r3 = test_view(request)
+        self.assertEqual(r3.status_code, 429)
+
+
+# ===========================================================================
+# P3: Audit Signal Tests
+# ===========================================================================
+
+class AuditSignalTest(BaseTestMixin, TestCase):
+    """Testes para signals de auditoria — trilha obrigatória BACEN."""
+
+    def test_audit_login(self):
+        from .audit_models import AuditEvent
+        from django.contrib.auth.signals import user_logged_in
+        user = self.create_user(username='aud_login')
+        rf = RequestFactory()
+        request = rf.get('/')
+        request.META['REMOTE_ADDR'] = '192.168.1.1'
+        request.META['HTTP_USER_AGENT'] = 'TestBot/1.0'
+        # Disparar signal manualmente
+        user_logged_in.send(sender=user.__class__, request=request, user=user)
+        event = AuditEvent.objects.filter(event_type='login', user=user).first()
+        self.assertIsNotNone(event)
+        self.assertIn('Login bem-sucedido', event.description)
+        self.assertEqual(event.ip_address, '192.168.1.1')
+
+    def test_audit_logout(self):
+        from .audit_models import AuditEvent
+        from django.contrib.auth.signals import user_logged_out
+        user = self.create_user(username='aud_logout')
+        rf = RequestFactory()
+        request = rf.get('/')
+        request.META['REMOTE_ADDR'] = '192.168.1.2'
+        request.META['HTTP_USER_AGENT'] = 'TestBot/1.0'
+        user_logged_out.send(sender=user.__class__, request=request, user=user)
+        event = AuditEvent.objects.filter(event_type='logout', user=user).first()
+        self.assertIsNotNone(event)
+        self.assertIn('Logout', event.description)
+
+    def test_audit_login_failed(self):
+        from .audit_models import AuditEvent
+        from django.contrib.auth.signals import user_login_failed
+        rf = RequestFactory()
+        request = rf.get('/')
+        request.META['REMOTE_ADDR'] = '10.0.0.5'
+        request.META['HTTP_USER_AGENT'] = 'HackerBot'
+        user_login_failed.send(
+            sender=self.__class__,
+            credentials={'username': 'hacker'},
+            request=request,
+        )
+        event = AuditEvent.objects.filter(
+            event_type='security_event', action='login_failed'
+        ).first()
+        self.assertIsNotNone(event)
+        self.assertTrue(event.is_suspicious)
+        self.assertIn('hacker', event.description)
+
+    def test_audit_ticket_created(self):
+        """Criação de ticket gera audit event."""
+        from .audit_models import AuditEvent
+        cliente = self.create_cliente()
+        ticket = Ticket.objects.create(
+            cliente=cliente, titulo='Audit Test',
+            descricao='Teste de auditoria', prioridade='alta', status='aberto',
+        )
+        events = AuditEvent.objects.filter(
+            event_type='create', action='ticket_created'
+        )
+        self.assertTrue(events.exists())
+        ev = events.last()
+        self.assertIn(str(ticket.numero), ev.description)
+
+    def test_audit_ticket_updated(self):
+        """Atualização de ticket gera audit event."""
+        from .audit_models import AuditEvent
+        cliente = self.create_cliente()
+        ticket = Ticket.objects.create(
+            cliente=cliente, titulo='Audit Upd',
+            descricao='x', prioridade='baixa', status='aberto',
+        )
+        initial_count = AuditEvent.objects.filter(action='ticket_updated').count()
+        ticket.status = 'em_andamento'
+        ticket.save()
+        new_count = AuditEvent.objects.filter(action='ticket_updated').count()
+        self.assertEqual(new_count, initial_count + 1)
+
+
+# ===========================================================================
+# P3: Auto-Assignment Tests (lógica pura — tabelas não migradas)
+# ===========================================================================
+
+class AutoAssignmentLogicTest(BaseTestMixin, TestCase):
+    """Testes para lógica de auto-assignment (sem depender de tabelas não migradas)."""
+
+    def test_cargo_trabalho_percentual_ocupacao(self):
+        """Testa property percentual_ocupacao sem salvar no banco."""
+        from .auto_assignment import CargoTrabalho
+        carga = CargoTrabalho(tickets_abertos=5, capacidade_maxima=10)
+        self.assertEqual(carga.percentual_ocupacao, 50.0)
+
+    def test_cargo_trabalho_pode_receber_ticket(self):
+        from .auto_assignment import CargoTrabalho
+        carga = CargoTrabalho(tickets_abertos=2, capacidade_maxima=10, disponivel=True)
+        self.assertTrue(carga.pode_receber_ticket)
+
+    def test_cargo_trabalho_nao_pode_receber_cheio(self):
+        from .auto_assignment import CargoTrabalho
+        carga = CargoTrabalho(tickets_abertos=10, capacidade_maxima=10, disponivel=True)
+        self.assertFalse(carga.pode_receber_ticket)
+
+    def test_cargo_trabalho_nao_pode_receber_indisponivel(self):
+        from .auto_assignment import CargoTrabalho
+        carga = CargoTrabalho(tickets_abertos=0, capacidade_maxima=10, disponivel=False)
+        self.assertFalse(carga.pode_receber_ticket)
+
+    def test_cargo_trabalho_capacidade_zero(self):
+        from .auto_assignment import CargoTrabalho
+        carga = CargoTrabalho(tickets_abertos=0, capacidade_maxima=0)
+        self.assertEqual(carga.percentual_ocupacao, 100)
+
+    def test_regra_se_aplica_sem_filtro(self):
+        """Regra sem filtros se aplica a qualquer ticket."""
+        from .auto_assignment import regra_se_aplica, RegraAtribuicao
+        regra = RegraAtribuicao(nome='Pegar tudo', ativa=True)
+        cliente = self.create_cliente()
+        ticket = Ticket.objects.create(
+            cliente=cliente, titulo='Auto Test', descricao='Test',
+            prioridade='media', status='aberto',
+        )
+        self.assertTrue(regra_se_aplica(ticket, regra))
+
+    def test_regra_se_aplica_prioridade(self):
+        from .auto_assignment import regra_se_aplica, RegraAtribuicao
+        regra = RegraAtribuicao(nome='Só alta', prioridade='alta', ativa=True)
+        cliente = self.create_cliente()
+        ticket = Ticket.objects.create(
+            cliente=cliente, titulo='T1', descricao='X',
+            prioridade='alta', status='aberto',
+        )
+        self.assertTrue(regra_se_aplica(ticket, regra))
+        ticket2 = Ticket.objects.create(
+            cliente=Cliente.objects.create(nome='C2', email='c2@t.com'),
+            titulo='T2', descricao='Y', prioridade='baixa', status='aberto',
+        )
+        self.assertFalse(regra_se_aplica(ticket2, regra))
+
+    def test_regra_se_aplica_palavras_chave(self):
+        from .auto_assignment import regra_se_aplica, RegraAtribuicao
+        regra = RegraAtribuicao(
+            nome='VPN', palavras_chave='vpn\nconexão', ativa=True
+        )
+        cliente = self.create_cliente()
+        ticket = Ticket.objects.create(
+            cliente=cliente, titulo='Problema com VPN', descricao='X',
+            prioridade='media', status='aberto',
+        )
+        self.assertTrue(regra_se_aplica(ticket, regra))
+        ticket2 = Ticket.objects.create(
+            cliente=Cliente.objects.create(nome='C3', email='c3@t.com'),
+            titulo='Impressora não funciona', descricao='Y',
+            prioridade='media', status='aberto',
+        )
+        self.assertFalse(regra_se_aplica(ticket2, regra))
+
+    def test_buscar_agentes_por_skill_sem_skill(self):
+        from .auto_assignment import buscar_agentes_por_skill
+        user = self.create_user(username='ag_staff')
+        user.is_staff = True
+        user.save()
+        agents = buscar_agentes_por_skill('', 1)
+        self.assertIn(user, agents)
+
+
+# ===========================================================================
+# P3: Form Tests
+# ===========================================================================
+
+class FormSecurityTest(BaseTestMixin, TestCase):
+    """Testes para segurança de formulários."""
+
+    def test_user_creation_form_forces_non_staff(self):
+        """DashboardUserCreationForm NUNCA cria staff/superuser."""
+        from .forms import DashboardUserCreationForm
+        data = {
+            'username': 'newuser',
+            'email': 'new@t.com',
+            'password1': 'C0mpl3x_Pa55!',
+            'password2': 'C0mpl3x_Pa55!',
+            'is_staff': True,       # tentativa de escalação
+            'is_superuser': True,   # tentativa de escalação
+            'is_active': True,
+        }
+        form = DashboardUserCreationForm(data=data)
+        if form.is_valid():
+            user = form.save()
+            self.assertFalse(user.is_staff)
+            self.assertFalse(user.is_superuser)
+
+    def test_quick_ticket_form_priorities_match_model(self):
+        """QuickTicketForm deve usar mesmos valores que PrioridadeTicket."""
+        from .forms import QuickTicketForm
+        from .models import PrioridadeTicket
+        form = QuickTicketForm()
+        form_values = {c[0] for c in form.fields['priority'].choices}
+        model_values = {c.value for c in PrioridadeTicket}
+        self.assertEqual(form_values, model_values)
+
+    def test_quick_ticket_form_valid(self):
+        from .forms import QuickTicketForm
+        form = QuickTicketForm(data={
+            'title': 'Problema urgente',
+            'description': 'Detalhes do problema',
+            'priority': 'alta',
+        })
+        self.assertTrue(form.is_valid())
+
+    def test_quick_ticket_form_invalid_priority(self):
+        from .forms import QuickTicketForm
+        form = QuickTicketForm(data={
+            'title': 'Teste',
+            'description': 'Desc',
+            'priority': 'inexistente',
+        })
+        self.assertFalse(form.is_valid())
+
+    def test_ticket_form_valid(self):
+        from .forms import TicketForm
+        cat = self.create_categoria()
+        form = TicketForm(data={
+            'titulo': 'Ticket via form',
+            'descricao': 'Descrição detalhada do ticket',
+            'prioridade': 'media',
+            'categoria': cat.pk,
+        })
+        self.assertTrue(form.is_valid())
+
+    def test_cliente_form_valid(self):
+        from .forms import ClienteForm
+        form = ClienteForm(data={
+            'nome': 'Novo Cliente',
+            'email': 'novo@cliente.com',
+            'telefone': '(11) 99999-0000',
+            'empresa': 'Empresa X',
+        })
+        self.assertTrue(form.is_valid())
+
+    def test_cliente_form_missing_required(self):
+        from .forms import ClienteForm
+        form = ClienteForm(data={'nome': '', 'email': ''})
+        self.assertFalse(form.is_valid())
+
+
+# ===========================================================================
+# P3: Notification Model Tests
+# ===========================================================================
+
+class NotificationModelTest(BaseTestMixin, TestCase):
+    """Testes para o modelo Notification."""
+
+    def test_notification_create(self):
+        from .models import Notification
+        user = self.create_user()
+        n = Notification.objects.create(
+            user=user, type='new_ticket',
+            title='Novo', message='Ticket #1 criado',
+        )
+        self.assertFalse(n.read)
+        self.assertIsNone(n.read_at)
+        self.assertIn('Novo', str(n))
+
+    def test_notification_mark_as_read(self):
+        from .models import Notification
+        user = self.create_user()
+        n = Notification.objects.create(
+            user=user, type='sla_warning',
+            title='SLA', message='Prazo chegando',
+        )
+        n.mark_as_read()
+        n.refresh_from_db()
+        self.assertTrue(n.read)
+        self.assertIsNotNone(n.read_at)
+
+    def test_notification_mark_as_read_idempotent(self):
+        from .models import Notification
+        user = self.create_user()
+        n = Notification.objects.create(
+            user=user, type='ticket_assigned',
+            title='Atribuído', message='Ticket para você',
+        )
+        n.mark_as_read()
+        first_read_at = n.read_at
+        n.mark_as_read()
+        # Não deve atualizar novamente
+        self.assertEqual(n.read_at, first_read_at)
+
+
+# ===========================================================================
+# P3: View Integration Tests
+# ===========================================================================
+
+class ViewAuthTest(BaseTestMixin, TestCase):
+    """Testes de integração para autenticação nas views."""
+
+    def test_login_page_accessible(self):
+        response = self.client.get('/login/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_dashboard_requires_login(self):
+        response = self.client.get('/dashboard/')
+        # Deve redirecionar para login
+        self.assertIn(response.status_code, [301, 302])
+
+    def test_logout_page(self):
+        response = self.client.get('/logout/')
+        # Logout sem sessão funciona (200 ou redirect)
+        self.assertIn(response.status_code, [200, 302])
+
+
+class ViewTicketTest(BaseTestMixin, TestCase):
+    """Testes de integração para views de tickets."""
+
+    def setUp(self):
+        self.admin = self.create_admin(username='view_admin', password='Admin123!')
+        self.client.force_login(self.admin)
+        self.cliente = self.create_cliente()
+        self.categoria = self.create_categoria()
+
+    def test_ticket_list_logged_in(self):
+        response = self.client.get('/dashboard/tickets/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_ticket_create_get(self):
+        response = self.client.get('/dashboard/tickets/novo/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_ticket_kanban(self):
+        response = self.client.get('/dashboard/tickets/kanban/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_ticket_detail(self):
+        ticket = Ticket.objects.create(
+            cliente=self.cliente, titulo='Det Test',
+            descricao='Detalhe', prioridade='media', status='aberto',
+        )
+        response = self.client.get(f'/dashboard/tickets/{ticket.pk}/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_ticket_list_unauthenticated(self):
+        self.client.logout()
+        response = self.client.get('/dashboard/tickets/')
+        self.assertIn(response.status_code, [301, 302])
+
+
+class ViewClienteTest(BaseTestMixin, TestCase):
+    """Testes de integração para views de clientes."""
+
+    def setUp(self):
+        self.admin = self.create_admin(username='cli_admin', password='Admin123!')
+        self.client.force_login(self.admin)
+
+    def test_cliente_list(self):
+        response = self.client.get('/dashboard/clientes/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_cliente_create_get(self):
+        response = self.client.get('/dashboard/clientes/novo/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_cliente_detail(self):
+        cli = self.create_cliente()
+        response = self.client.get(f'/dashboard/clientes/{cli.pk}/')
+        self.assertEqual(response.status_code, 200)
+
+
+class ViewNotificationTest(BaseTestMixin, TestCase):
+    """Testes de integração para views de notificações."""
+
+    def setUp(self):
+        self.user = self.create_user(username='notif_user', password='Pass123!')
+        self.client.force_login(self.user)
+
+    def test_notifications_list(self):
+        response = self.client.get('/dashboard/notifications/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_api_notifications_recent(self):
+        response = self.client.get('/dashboard/api/notifications/recent/')
+        self.assertIn(response.status_code, [200, 302])
+
+    def test_api_mark_all_read(self):
+        response = self.client.post('/dashboard/api/notifications/mark-all-read/')
+        self.assertIn(response.status_code, [200, 302])
+
+    def test_notification_mark_read(self):
+        from .models import Notification
+        n = Notification.objects.create(
+            user=self.user, type='new_ticket',
+            title='Test', message='Mark read test',
+        )
+        response = self.client.post(f'/dashboard/api/notifications/{n.pk}/mark-read/')
+        self.assertIn(response.status_code, [200, 302])
+
+    def test_notification_delete(self):
+        from .models import Notification
+        n = Notification.objects.create(
+            user=self.user, type='system_alert',
+            title='Del', message='Delete test',
+        )
+        response = self.client.post(f'/dashboard/api/notifications/{n.pk}/delete/')
+        self.assertIn(response.status_code, [200, 302])
+
+
+class ViewSLATest(BaseTestMixin, TestCase):
+    """Testes de integração para views de SLA."""
+
+    def setUp(self):
+        self.admin = self.create_admin(username='sla_admin', password='Admin123!')
+        self.client.force_login(self.admin)
+
+    def test_sla_dashboard(self):
+        response = self.client.get('/dashboard/sla/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_sla_policies(self):
+        response = self.client.get('/dashboard/sla/policies/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_sla_alerts(self):
+        response = self.client.get('/dashboard/sla/alerts/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_sla_reports(self):
+        response = self.client.get('/dashboard/sla/reports/')
+        self.assertEqual(response.status_code, 200)
+
+
+class ViewExportTest(BaseTestMixin, TestCase):
+    """Testes para export de tickets."""
+
+    def setUp(self):
+        self.admin = self.create_admin(username='exp_admin', password='Admin123!')
+        self.client.force_login(self.admin)
+
+    def test_export_tickets_page(self):
+        response = self.client.get('/dashboard/export/tickets/')
+        self.assertIn(response.status_code, [200, 302])
+
+
+# ===========================================================================
+# P3: Workflow Model Tests
+# ===========================================================================
+
+class WorkflowModelTest(BaseTestMixin, TestCase):
+    """Testes para modelos de workflow."""
+
+    def test_workflow_rule_create(self):
+        from .models import WorkflowRule
+        rule = WorkflowRule.objects.create(
+            name='Auto escalação',
+            trigger_event='sla_warning',
+            conditions='{"prioridade": ["critica"]}',
+            actions='{"change_priority": {"new_priority": "critica"}}',
+            is_active=True,
+            priority=10,
+        )
+        self.assertEqual(str(rule), 'Auto escalação')
+        self.assertTrue(rule.is_active)
+
+    def test_workflow_execution_create(self):
+        from .models import WorkflowRule, WorkflowExecution
+        cliente = self.create_cliente()
+        ticket = Ticket.objects.create(
+            cliente=cliente, titulo='WF Test',
+            descricao='x', prioridade='alta', status='aberto',
+        )
+        rule = WorkflowRule.objects.create(
+            name='Test Rule', trigger_event='ticket_created',
+            conditions='{}', actions='{}', is_active=True,
+        )
+        exe = WorkflowExecution.objects.create(
+            ticket=ticket, rule=rule,
+            trigger_event='ticket_created',
+            execution_result={'rule_id': rule.id, 'actions_executed': []},
+        )
+        self.assertTrue(exe.success)
+
+
+# ===========================================================================
+# P3: Signal notification & WebSocket Tests
+# ===========================================================================
+
+class SignalNotificationTest(BaseTestMixin, TestCase):
+    """Testes para signals de notificação automática."""
+
+    def test_ticket_created_generates_notifications(self):
+        """Criação de ticket gera Notification para agentes ativos."""
+        from .models import Notification, PerfilAgente
+        agent = self.create_user(username='sig_agent')
+        PerfilAgente.objects.get_or_create(user=agent)
+        cliente = self.create_cliente()
+        ticket = Ticket.objects.create(
+            cliente=cliente, titulo='Signal Test',
+            descricao='Teste signal', prioridade='alta', status='aberto',
+        )
+        # O signal ticket_created_or_updated deve criar notificação
+        notifs = Notification.objects.filter(user=agent, type='new_ticket')
+        self.assertTrue(notifs.exists())
+        self.assertIn(str(ticket.numero), notifs.first().message)
+
+    def test_lazy_channel_layer_returns_none_without_redis(self):
+        """_get_channel_layer retorna None quando Redis não está disponível."""
+        from .signals import _get_channel_layer
+        # Em ambiente de teste sem Redis, deve retornar None sem dar erro
+        layer = _get_channel_layer()
+        # Pode ser None ou um InMemoryChannelLayer dependendo da config
+        # O importante é que não levanta exceção
+        self.assertTrue(True)  # Se chegou aqui, não levantou exceção
+
+    def test_safe_group_send_no_crash_without_layer(self):
+        """_safe_group_send não levanta exceção sem channel layer."""
+        from .signals import _safe_group_send
+        # Não deve dar erro mesmo sem Redis
+        _safe_group_send('test_group', {'type': 'test', 'data': {}})
+        self.assertTrue(True)

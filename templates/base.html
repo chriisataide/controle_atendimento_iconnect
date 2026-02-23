@@ -1,6 +1,7 @@
 <!-- CSS corrigido para sidebar dentro da tag <style> -->
 <!DOCTYPE html>
 {% load static %}
+{% load csp_tags %}
 <html lang="pt-br">
 <head>
     <meta charset="utf-8" />
@@ -44,22 +45,28 @@
     <link href="{% static 'css/nucleo-icons.css' %}" rel="stylesheet" />
     <link href="{% static 'css/nucleo-svg.css' %}" rel="stylesheet" />
     
-    <!-- Font Awesome e Material Icons - lazy load -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <!-- Font Awesome e Material Icons - lazy load (CSP-compliant, sem onload inline) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" class="lazy-style">
     <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
     
-    <link rel="preload" href="https://fonts.googleapis.com/icon?family=Material+Icons" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" media="print" class="lazy-style">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"></noscript>
     
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" media="print" class="lazy-style">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0"></noscript>
+    <script nonce="{% csp_nonce %}">
+        // CSP-compliant lazy loading: ativa stylesheets "print" para "all"
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('link.lazy-style').forEach(function(l) { l.media = 'all'; });
+        });
+    </script>
     
     <!-- CSS Files -->
     <link href="{% static 'css/material-dashboard.css' %}" rel="stylesheet" />
     <link href="{% static 'css/dashboard-colors.css' %}" rel="stylesheet" />
     <link href="{% static 'css/mobile.css' %}" rel="stylesheet" />
         <!-- Service Worker para PWA -->
-        <script>
+        <script nonce="{% csp_nonce %}">
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
                       navigator.serviceWorker.register("{% static 'service-worker.js' %}")
@@ -78,7 +85,7 @@
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js" defer></script>
     
     <!-- Fix para Dropdowns -->
-    <style>
+    <style nonce="{% csp_nonce %}">
         .dropdown {
             position: relative;
         }
@@ -1855,7 +1862,7 @@
 
         <!-- Messages (renderizadas como toasts via JS) -->
         {% if messages %}
-        <script>
+        <script nonce="{% csp_nonce %}">
             document.addEventListener('DOMContentLoaded', function() {
                 {% for message in messages %}
                 showToastMessage("{{ message|escapejs }}", "{{ message.tags|default:'info' }}");
@@ -1871,7 +1878,7 @@
 
     <!-- Bootstrap Bundle - Local e CDN como fallback -->
     <script src="{% static 'js/core/bootstrap.bundle.min.js' %}"></script>
-    <script>
+    <script nonce="{% csp_nonce %}">
         // Verificar se Bootstrap carregou, se não, usar CDN
         if (typeof bootstrap === 'undefined') {
             console.warn('Bootstrap local não carregou, carregando CDN...');
@@ -1902,7 +1909,7 @@
     <script src="{% static 'js/performance-optimizer.js' %}" async></script>
     
     <!-- Configurações personalizadas -->
-    <script>
+    <script nonce="{% csp_nonce %}">
         // ===== TOAST NOTIFICATION SYSTEM =====
         function showToastMessage(message, type) {
             type = type || 'info';
@@ -2263,7 +2270,7 @@
     </script>
     
     <!-- CSS adicional para tema escuro Slate+Cyan e sidebar colapsado -->
-    <style>
+    <style nonce="{% csp_nonce %}">
         /* ====== DARK THEME — Slate + Cyan ====== */
         .dark-version {
             --bg-primary: #0f172a;
@@ -2954,7 +2961,7 @@
     </style>
     
     <!-- PWA Service Worker Registration -->
-    <script>
+    <script nonce="{% csp_nonce %}">
         // Registro do Service Worker para PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', async () => {
@@ -3192,7 +3199,7 @@
     <script src="{% static 'js/cache.js' %}" defer></script>
     
     <!-- Service Worker Registration -->
-    <script>
+    <script nonce="{% csp_nonce %}">
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('{% static "js/sw.js" %}')
@@ -3283,7 +3290,7 @@
     </script>
     
     <!-- PWA Banner Styles -->
-    <style>
+    <style nonce="{% csp_nonce %}">
         .update-banner-content {
             display: flex;
             align-items: center;
@@ -3340,7 +3347,7 @@
     </style>
 
     <!-- Funcionalidade dos Dropdowns da Sidebar -->
-    <script>
+    <script nonce="{% csp_nonce %}">
         // Função para alternar dropdowns da sidebar
         function toggleSidebarDropdown(e, el, dropdownId) {
             // e: event, el: the clicked header element, dropdownId: id string
@@ -3500,7 +3507,7 @@
     </script>
 
     <!-- Inicialização dos Dropdowns Bootstrap -->
-    <script>
+    <script nonce="{% csp_nonce %}">
         document.addEventListener('DOMContentLoaded', function() {
             // Inicializar dropdowns do Bootstrap
             var dropdownElementList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'));

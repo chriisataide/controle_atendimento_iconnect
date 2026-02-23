@@ -30,7 +30,8 @@ class SLAManager:
             ).first()
             
             if sla_policy:
-                response_time_hours = sla_policy.response_time_hours
+                # first_response_time está em minutos no modelo → converter para horas
+                response_time_hours = sla_policy.first_response_time / 60
             else:
                 # Usar configuração padrão
                 response_times = self.sla_config.get('RESPONSE_TIMES', {})

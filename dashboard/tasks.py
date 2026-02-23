@@ -356,3 +356,131 @@ def monitor_sla_breaches():
         })
 
     return at_risk.count()
+
+
+# ---------------------------------------------------------------------------
+# Signal-offloaded tasks (pesados demais para execução síncrona)
+# ---------------------------------------------------------------------------
+
+@shared_task(ignore_result=True)
+def notify_agents_new_ticket(ticket_id: int):
+    """Cria notificações em banco para todos os agentes ativos (bulk_create).
+
+    Chamada a partir do signal ``ticket_created_or_updated`` para não
+    bloquear o request que criou o ticket.
+    """
+    from dashboard.models import Ticket, Notification, PerfilAgente
+    from django.contrib.auth.models import User
+
+    try:
+        ticket = Ticket.objects.select_related('categoria').get(pk=ticket_id)
+    except Ticket.DoesNotExist:
+        return
+
+    agents = User.objects.filter(perfilagente__isnull=False, is_active=True)
+    notifications = [
+        Notification(
+            user=agent,
+            title='Novo Ticket Criado',
+            message=f'Ticket #{ticket.numero}: {ticket.titulo}',
+            type='new_ticket',
+            ticket=ticket,
+        )
+        for agent in agents
+    ]
+    if notifications:
+        Notification.objects.bulk_create(notifications)
+    logger.info("notify_agents_new_ticket: %d notificações criadas para ticket #%s",
+                len(notifications), ticket.numero)
+
+
+@shared_task(ignore_result=True)
+def notify_client_ticket_updated(ticket_id: int):
+    """Notifica o cliente sobre atualização de status do ticket."""
+    from dashboard.models import Ticket, Notification
+    from django.contrib.auth.models import User
+
+    try:
+        ticket = Ticket.objects.get(pk=ticket_id)
+    except Ticket.DoesNotExist:
+        return
+
+    if not ticket.cliente:
+        return
+
+    try:
+        client_user = User.objects.get(email=ticket.cliente.email)
+        Notification.objects.create(
+            user=client_user,
+            title='Ticket Atualizado',
+            message=f'Seu ticket #{ticket.numero} foi atualizado: {ticket.get_status_display()}',
+            type='ticket_status_change',
+            ticket=ticket,
+        )
+    except User.DoesNotExist:
+        pass
+
+
+@shared_task(ignore_result=True)
+def notify_interaction(ticket_id: int, interaction_id: int, author_id: int):
+    """Notifica agente e/ou cliente sobre nova interação."""
+    from dashboard.models import Ticket, InteracaoTicket, Notification
+    from django.contrib.auth.models import User
+
+    try:
+        ticket = Ticket.objects.get(pk=ticket_id)
+        interaction = InteracaoTicket.objects.get(pk=interaction_id)
+        author = User.objects.get(pk=author_id)
+    except (Ticket.DoesNotExist, InteracaoTicket.DoesNotExist, User.DoesNotExist):
+        return
+
+    # Notificar cliente se mensagem pública de agente
+    if interaction.eh_publico and ticket.cliente:
+        try:
+            client_user = User.objects.get(email=ticket.cliente.email)
+            if client_user != author:
+                Notification.objects.create(
+                    user=client_user,
+                    title='Nova Resposta no seu Ticket',
+                    message=f'Ticket #{ticket.numero}: Nova resposta disponível',
+                    type='new_interaction',
+                    ticket=ticket,
+                )
+        except User.DoesNotExist:
+            pass
+
+    # Notificar agente atribuído se não for o autor
+    if ticket.agente and ticket.agente != author:
+        Notification.objects.create(
+            user=ticket.agente,
+            title='Nova Mensagem no Ticket',
+            message=f'Ticket #{ticket.numero}: Nova mensagem adicionada',
+            type='new_interaction',
+            ticket=ticket,
+        )
+
+
+@shared_task(ignore_result=True)
+def send_sla_breach_notifications(ticket_id: int):
+    """Notifica supervisores sobre violação de SLA."""
+    from dashboard.models import Ticket, Notification
+    from django.contrib.auth.models import User
+
+    try:
+        ticket = Ticket.objects.get(pk=ticket_id)
+    except Ticket.DoesNotExist:
+        return
+
+    supervisors = User.objects.filter(is_staff=True, is_active=True)
+    notifications = [
+        Notification(
+            user=sup,
+            title='SLA VIOLADO',
+            message=f'Ticket #{ticket.numero} excedeu o prazo de atendimento!',
+            type='sla_breach',
+            ticket=ticket,
+        )
+        for sup in supervisors
+    ]
+    if notifications:
+        Notification.objects.bulk_create(notifications)
