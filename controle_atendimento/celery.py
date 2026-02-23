@@ -13,6 +13,10 @@ app = Celery('controle_atendimento')
 # Configurar usando Django settings com prefixo CELERY_
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
+# Garantir que broker_connection_retry_on_startup está definido
+# (silencia CPendingDeprecationWarning em Celery 5.x)
+app.conf.broker_connection_retry_on_startup = True
+
 # Descobrir automaticamente tarefas em todos os apps registrados
 app.autodiscover_tasks()
 
