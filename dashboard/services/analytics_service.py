@@ -2,9 +2,10 @@
 Analytics Service - Advanced analytics and reporting
 """
 from django.db.models import Q, Count, Avg, Sum, F, Value
-from django.db.models.functions import TruncDate, TruncMonth, TruncWeek
+from django.db.models.functions import TruncDate, TruncMonth, TruncWeek, ExtractHour
 from django.utils import timezone
-from datetime import timedelta, datetime
+from datetime import timedelta
+
 from typing import Dict, List, Optional
 import logging
 
@@ -207,8 +208,11 @@ class AnalyticsService:
     
     def _calculate_satisfaction_score(self, tickets) -> Optional[float]:
         """Calcular score médio de satisfação"""
-        # TODO: Implementar quando modelo de satisfação estiver pronto
-        return None
+        from .models import AvaliacaoSatisfacao
+        avg = AvaliacaoSatisfacao.objects.filter(
+            ticket__in=tickets
+        ).aggregate(avg=Avg('nota'))['avg']
+        return float(avg) if avg is not None else None
     
     def _calculate_agent_utilization(self, start_date, end_date) -> Dict:
         """Calcular utilização dos agentes"""
@@ -255,8 +259,17 @@ class AnalyticsService:
     
     def _get_satisfaction_trends(self, start_date, end_date, truncate_func) -> List:
         """Obter tendências de satisfação"""
-        # TODO: Implementar quando modelo de satisfação estiver pronto
-        return []
+        from .models import AvaliacaoSatisfacao
+        return list(
+            AvaliacaoSatisfacao.objects.filter(
+                criado_em__range=[start_date, end_date]
+            ).annotate(
+                period=truncate_func('criado_em')
+            ).values('period').annotate(
+                avg_score=Avg('nota'),
+                count=Count('id')
+            ).order_by('period')
+        )
     
     def _calculate_team_averages(self, agent_stats: List[Dict]) -> Dict:
         """Calcular médias da equipe"""
@@ -291,9 +304,9 @@ class AnalyticsService:
     
     def _analyze_contact_patterns(self, tickets) -> Dict:
         """Analisar padrões de contato"""
-        # Análise por hora do dia
-        hour_patterns = tickets.extra(
-            select={'hour': "EXTRACT(hour FROM criado_em)"}
+        # Análise por hora do dia (ORM puro, sem .extra())
+        hour_patterns = tickets.annotate(
+            hour=ExtractHour('criado_em')
         ).values('hour').annotate(
             count=Count('id')
         ).order_by('-count')

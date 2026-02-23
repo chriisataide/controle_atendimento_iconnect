@@ -401,8 +401,8 @@ class MovimentacaoEstoque(SoftDeleteModel):
         with transaction.atomic():
             # Gerar número automático com proteção contra race condition
             if not self.numero:
-                from datetime import datetime
-                ano_mes = datetime.now().strftime('%Y%m')
+                from django.utils import timezone as tz
+                ano_mes = tz.now().strftime('%Y%m')
                 for attempt in range(10):
                     ultimo_numero = MovimentacaoEstoque.objects.filter(
                         numero__startswith=f"MOV{ano_mes}"

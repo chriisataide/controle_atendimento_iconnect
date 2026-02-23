@@ -4,7 +4,8 @@ from django.http import JsonResponse
 from django.contrib import messages
 from django.shortcuts import redirect, get_object_or_404
 from django.db import models, transaction
-from datetime import datetime, timedelta
+from datetime import timedelta
+from django.utils import timezone
 from django.db.models import Sum, Count, Q
 from decimal import Decimal
 import logging
@@ -569,8 +570,9 @@ def centro_custo_detail(request, centro_id):
     centro_custo = get_object_or_404(CentroCusto, id=centro_id)
     
     # Estatísticas do mês atual
-    mes_atual = datetime.now().month
-    ano_atual = datetime.now().year
+    _now = timezone.now()
+    mes_atual = _now.month
+    ano_atual = _now.year
     
     movimentacoes_mes = centro_custo.movimentacoes.filter(
         data_movimentacao__month=mes_atual,
@@ -681,14 +683,15 @@ def centros_custo_dashboard(request):
     ).annotate(
         percentual_usado=Sum('movimentacoes__valor', filter=Q(
             movimentacoes__tipo='despesa',
-            movimentacoes__data_movimentacao__month=datetime.now().month,
-            movimentacoes__data_movimentacao__year=datetime.now().year
+            movimentacoes__data_movimentacao__month=timezone.now().month,
+            movimentacoes__data_movimentacao__year=timezone.now().year
         )) * 100 / models.F('orcamento_mensal')
     ).filter(percentual_usado__gte=models.F('alerta_percentual')).count()
     
     # Top 5 centros por gasto no mês
-    mes_atual = datetime.now().month
-    ano_atual = datetime.now().year
+    _now2 = timezone.now()
+    mes_atual = _now2.month
+    ano_atual = _now2.year
     
     top_gastos = CentroCusto.objects.filter(
         status='ativo'
@@ -759,12 +762,12 @@ def centros_custo_dashboard(request):
 def api_centros_custo_stats(request):
     """API para estatísticas dos centros de custo"""
     from django.db.models import Sum, Count, Q
-    from datetime import datetime
     
     if request.method == 'GET':
         try:
-            mes_atual = datetime.now().month
-            ano_atual = datetime.now().year
+            _now = timezone.now()
+            mes_atual = _now.month
+            ano_atual = _now.year
             
             # Dados por departamento
             stats_departamentos = []

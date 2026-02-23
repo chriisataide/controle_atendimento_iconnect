@@ -1727,10 +1727,10 @@ def export_tickets(request):
         return HttpResponseForbidden('Sem permissão para exportar dados.')
     from django.http import HttpResponse
     import csv
-    from datetime import datetime
+    from django.utils import timezone as tz
     
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = f'attachment; filename="tickets_{datetime.now().strftime("%Y%m%d")}.csv"'
+    response['Content-Disposition'] = f'attachment; filename="tickets_{tz.now().strftime("%Y%m%d")}.csv"'
     
     writer = csv.writer(response)
     writer.writerow(['ID', 'Número', 'Cliente', 'Status', 'Data Criação', 'Categoria'])

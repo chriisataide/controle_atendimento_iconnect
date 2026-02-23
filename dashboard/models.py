@@ -2033,3 +2033,8 @@ from .models_whatsapp import (  # noqa: E402, F401
 from .models_knowledge import (  # noqa: E402, F401
     CategoriaConhecimento, ArtigoConhecimento
 )
+
+# ========== IMPORTAR MODELOS AUTO-ATRIBUIÇÃO ==========
+from .auto_assignment import (  # noqa: E402, F401
+    SkillAgent, RegraAtribuicao, CargoTrabalho
+)

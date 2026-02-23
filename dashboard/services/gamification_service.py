@@ -85,13 +85,19 @@ class GamificationService:
                     earned = days >= threshold
 
             elif metric == 'quick_resolutions':
+                from django.db.models import ExpressionWrapper, DurationField
                 count = Ticket.objects.filter(
                     agente=user,
                     status__in=['resolvido', 'fechado'],
                     resolvido_em__isnull=False,
-                ).extra(
-                    where=["resolvido_em - criado_em < interval '1 hour'"]
-                ).count() if 'postgresql' in str(type(Ticket.objects.db)) else 0
+                ).annotate(
+                    resolution_time=ExpressionWrapper(
+                        F('resolvido_em') - F('criado_em'),
+                        output_field=DurationField()
+                    )
+                ).filter(
+                    resolution_time__lt=timedelta(hours=1)
+                ).count()
                 earned = count >= threshold
 
             if earned:

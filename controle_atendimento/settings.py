@@ -27,7 +27,7 @@ logger.info(f"Django rodando em modo: {ENVIRONMENT.upper()}")
 # ========== CONFIGURAÇÕES WHATSAPP BUSINESS ==========
 WHATSAPP_WEBHOOK_VERIFY_TOKEN = config(
     'WHATSAPP_WEBHOOK_VERIFY_TOKEN',
-    default='controle_atendimento_webhook_2024'
+    default='',
 )
 WHATSAPP_API_BASE_URL = 'https://graph.facebook.com/v18.0'
 WHATSAPP_REQUEST_TIMEOUT = 30  # segundos

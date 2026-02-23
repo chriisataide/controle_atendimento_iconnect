@@ -1,6 +1,7 @@
 # Sistema de Auto-atribuição Inteligente
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 class SkillAgent(models.Model):
     """Skills/Competências dos Agentes"""
@@ -45,7 +46,6 @@ class CargoTrabalho(models.Model):
 
 def auto_assign_ticket(ticket):
     """Função para auto-atribuir tickets"""
-    from datetime import datetime
     
     # 1. Buscar regras aplicáveis
     regras = RegraAtribuicao.objects.filter(ativa=True)
@@ -76,7 +76,7 @@ def auto_assign_ticket(ticket):
                 # 6. Atualizar carga de trabalho
                 carga = CargoTrabalho.objects.get(agente=agente_escolhido)
                 carga.tickets_abertos += 1
-                carga.ultima_atribuicao = datetime.now()
+                carga.ultima_atribuicao = timezone.now()
                 carga.save()
                 
                 return agente_escolhido

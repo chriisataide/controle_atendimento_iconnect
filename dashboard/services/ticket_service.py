@@ -199,8 +199,13 @@ class TicketService:
             
             # Notificar cliente via email
             if ticket.cliente and ticket.cliente.email:
-                # TODO: Implementar notificação por email
-                pass
+                self.notification_service.send_notification(
+                    user=None,
+                    title="Ticket Criado",
+                    message=f"Seu ticket #{ticket.id} ({ticket.titulo}) foi registrado com sucesso.",
+                    notification_type="ticket_created",
+                    email=ticket.cliente.email,
+                )
                 
         except Exception as e:
             logger.error(f"Erro ao enviar notificações: {str(e)}")
@@ -219,13 +224,25 @@ class TicketService:
                 }
                 
                 if new_status in status_messages:
-                    # TODO: Implementar notificação para cliente
-                    pass
+                    self.notification_service.send_notification(
+                        user=None,
+                        title="Atualização de Ticket",
+                        message=status_messages[new_status],
+                        notification_type="status_change",
+                        email=ticket.cliente.email if ticket.cliente and ticket.cliente.email else None,
+                    )
             
             # Notificar supervisores em casos específicos
             if new_status == 'resolvido' and ticket.prioridade == 'alta':
-                # TODO: Notificar supervisores
-                pass
+                from django.contrib.auth.models import User
+                supervisors = User.objects.filter(is_staff=True, is_superuser=True, is_active=True)
+                for sup in supervisors:
+                    self.notification_service.send_notification(
+                        user=sup,
+                        title="Ticket Alta Prioridade Resolvido",
+                        message=f"Ticket #{ticket.id} (prioridade alta) foi resolvido.",
+                        notification_type="supervisor_alert",
+                    )
                 
         except Exception as e:
             logger.error(f"Erro ao enviar notificações de status: {str(e)}")
