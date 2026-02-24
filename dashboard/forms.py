@@ -239,26 +239,82 @@ class TicketCreateForm(forms.ModelForm):
         self.fields['prioridade'].empty_label = "Selecione a prioridade..."
 
 class ClienteForm(forms.ModelForm):
-    """Formulário para cadastro de clientes"""
+    """Formulário para cadastro de clientes (empresas)"""
     
     class Meta:
         model = Cliente
-        fields = ['nome', 'email', 'telefone', 'empresa']
+        fields = [
+            'nome', 'nome_fantasia', 'cnpj', 'inscricao_estadual', 'segmento',
+            'email', 'telefone', 'celular', 'website',
+            'cep', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'estado',
+            'responsavel_nome', 'responsavel_cargo', 'responsavel_telefone', 'responsavel_email',
+            'observacoes', 'ativo',
+        ]
         widgets = {
             'nome': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Nome completo'
+                'class': 'form-control', 'placeholder': ' '
+            }),
+            'nome_fantasia': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': ' '
+            }),
+            'cnpj': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': ' ', 'id': 'id_cnpj'
+            }),
+            'inscricao_estadual': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': ' '
+            }),
+            'segmento': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': ' '
             }),
             'email': forms.EmailInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'email@exemplo.com'
+                'class': 'form-control', 'placeholder': ' '
             }),
             'telefone': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': '(11) 99999-9999'
+                'class': 'form-control', 'placeholder': ' '
             }),
-            'empresa': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Nome da empresa'
-            })
+            'celular': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': ' '
+            }),
+            'website': forms.URLInput(attrs={
+                'class': 'form-control', 'placeholder': ' '
+            }),
+            'cep': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': ' ', 'id': 'id_cep'
+            }),
+            'logradouro': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': ' ', 'id': 'id_logradouro'
+            }),
+            'numero': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': ' ', 'id': 'id_numero'
+            }),
+            'complemento': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': ' ', 'id': 'id_complemento'
+            }),
+            'bairro': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': ' ', 'id': 'id_bairro'
+            }),
+            'cidade': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': ' ', 'id': 'id_cidade'
+            }),
+            'estado': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': ' ', 'id': 'id_estado', 'maxlength': '2'
+            }),
+            'responsavel_nome': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': ' '
+            }),
+            'responsavel_cargo': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': ' '
+            }),
+            'responsavel_telefone': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': ' '
+            }),
+            'responsavel_email': forms.EmailInput(attrs={
+                'class': 'form-control', 'placeholder': ' '
+            }),
+            'observacoes': forms.Textarea(attrs={
+                'class': 'form-control', 'placeholder': ' ', 'rows': 3
+            }),
+            'ativo': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
         }

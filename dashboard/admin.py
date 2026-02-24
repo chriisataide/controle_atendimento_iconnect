@@ -11,10 +11,28 @@ from .whatsapp_admin import *
 
 @admin.register(Cliente)
 class ClienteAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'email', 'telefone', 'empresa', 'criado_em')
-    list_filter = ('criado_em', 'empresa')
-    search_fields = ('nome', 'email', 'telefone', 'empresa')
-    readonly_fields = ('criado_em',)
+    list_display = ('nome', 'nome_fantasia', 'cnpj', 'segmento', 'email', 'telefone', 'cidade', 'estado', 'ativo', 'criado_em')
+    list_filter = ('ativo', 'segmento', 'estado', 'criado_em')
+    search_fields = ('nome', 'nome_fantasia', 'cnpj', 'email', 'telefone', 'cidade')
+    readonly_fields = ('criado_em', 'atualizado_em')
+    list_editable = ('ativo',)
+    fieldsets = (
+        ('Dados da Empresa', {
+            'fields': ('nome', 'nome_fantasia', 'empresa', 'cnpj', 'inscricao_estadual', 'segmento')
+        }),
+        ('Contato', {
+            'fields': ('email', 'telefone', 'celular', 'website')
+        }),
+        ('Endereço', {
+            'fields': ('cep', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'estado')
+        }),
+        ('Responsável', {
+            'fields': ('responsavel_nome', 'responsavel_cargo', 'responsavel_telefone', 'responsavel_email')
+        }),
+        ('Outros', {
+            'fields': ('observacoes', 'ativo', 'criado_em', 'atualizado_em')
+        }),
+    )
 
 
 @admin.register(CategoriaTicket)

@@ -19,7 +19,9 @@
     position: relative;
     margin-bottom: 1.5rem;
   }
-  .input-group-outline .form-control {
+  .input-group-outline .form-control,
+  .input-group-outline .form-select,
+  .input-group-outline select {
     background-color: #f8fafc;
     border: 2px solid #e2e8f0;
     border-radius: 12px;
@@ -27,8 +29,12 @@
     font-size: 0.95rem;
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    width: 100%;
+    appearance: auto;
   }
-  .input-group-outline .form-control:focus {
+  .input-group-outline .form-control:focus,
+  .input-group-outline .form-select:focus,
+  .input-group-outline select:focus {
     background-color: white;
     border-color: #06b6d4;
     box-shadow: 0 4px 20px rgba(6, 182, 212, 0.15);
@@ -466,6 +472,35 @@ document.addEventListener('DOMContentLoaded', function() {
     if (cpf) maskInput(cpf, '###.###.###-##');
     const tel = document.getElementById('id_celular');
     if (tel) maskInput(tel, '(##) #####-####');
+
+    // ViaCEP - Busca endereço pelo CEP
+    if (cep) {
+      cep.addEventListener('blur', function() {
+        const val = cep.value.replace(/\D/g, '');
+        if (val.length !== 8) return;
+        fetch('https://viacep.com.br/ws/' + val + '/json/')
+          .then(r => r.json())
+          .then(data => {
+            if (data.erro) return;
+            const fill = {
+              'id_logradouro': data.logradouro,
+              'id_bairro': data.bairro,
+              'id_cidade': data.localidade,
+              'id_estado': data.uf
+            };
+            Object.entries(fill).forEach(([id, v]) => {
+              const el = document.getElementById(id);
+              if (el && v) {
+                el.value = v;
+                el.dispatchEvent(new Event('input'));
+              }
+            });
+            const num = document.getElementById('id_numero');
+            if (num) num.focus();
+          })
+          .catch(() => {});
+      });
+    }
 
     // Tooltips
     initTooltips();

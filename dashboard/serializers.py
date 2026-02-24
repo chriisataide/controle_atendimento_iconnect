@@ -6,8 +6,14 @@ from .models import Ticket, Cliente
 class ClienteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cliente
-        fields = ['id', 'nome', 'email', 'telefone', 'empresa', 'criado_em']
-        read_only_fields = ['id', 'criado_em']
+        fields = [
+            'id', 'nome', 'nome_fantasia', 'cnpj', 'inscricao_estadual',
+            'segmento', 'empresa', 'email', 'telefone', 'celular', 'website',
+            'cep', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'estado',
+            'responsavel_nome', 'responsavel_cargo', 'responsavel_telefone', 'responsavel_email',
+            'observacoes', 'ativo', 'criado_em', 'atualizado_em'
+        ]
+        read_only_fields = ['id', 'criado_em', 'atualizado_em']
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

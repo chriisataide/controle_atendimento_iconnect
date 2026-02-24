@@ -96,15 +96,39 @@ class PontoDeVenda(models.Model):
 
 
 class Cliente(models.Model):
-    """Cliente com campos PII protegidos por criptografia (LGPD)."""
+    """Cliente (empresa/marca) com dados corporativos. Ex: Santander, Bradesco."""
     user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='cliente_profile', help_text="Conta de usuario vinculada")
-    nome = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
+    # Dados da empresa
+    nome = models.CharField(max_length=200, verbose_name="Nome / Razão Social")
+    nome_fantasia = models.CharField(max_length=200, blank=True, verbose_name="Nome Fantasia")
+    cnpj = models.CharField(max_length=20, blank=True, verbose_name="CNPJ")
+    inscricao_estadual = models.CharField(max_length=30, blank=True, verbose_name="Inscrição Estadual")
+    segmento = models.CharField(max_length=100, blank=True, verbose_name="Segmento / Ramo de Atividade",
+        help_text="Ex: Financeiro, Varejo, Saúde, Tecnologia")
+    email = models.EmailField(unique=True, verbose_name="E-mail Principal")
     # Campos PII criptografados em repouso (LGPD Art. 46)
-    telefone = models.CharField(max_length=500, blank=True, help_text="Criptografado em repouso")
-    celular = models.CharField(max_length=500, blank=True, help_text="Criptografado em repouso")
-    empresa = models.CharField(max_length=100, blank=True)
+    telefone = models.CharField(max_length=500, blank=True, help_text="Criptografado em repouso", verbose_name="Telefone")
+    celular = models.CharField(max_length=500, blank=True, help_text="Criptografado em repouso", verbose_name="Celular / WhatsApp")
+    empresa = models.CharField(max_length=100, blank=True, verbose_name="Empresa (legado)")
+    website = models.URLField(blank=True, verbose_name="Website")
+    # Endereço
+    cep = models.CharField(max_length=10, blank=True, verbose_name="CEP")
+    logradouro = models.CharField(max_length=200, blank=True, verbose_name="Logradouro")
+    numero = models.CharField(max_length=20, blank=True, verbose_name="Número")
+    complemento = models.CharField(max_length=100, blank=True, verbose_name="Complemento")
+    bairro = models.CharField(max_length=100, blank=True, verbose_name="Bairro")
+    cidade = models.CharField(max_length=100, blank=True, verbose_name="Cidade")
+    estado = models.CharField(max_length=2, blank=True, verbose_name="UF")
+    # Contato do responsável
+    responsavel_nome = models.CharField(max_length=200, blank=True, verbose_name="Responsável - Nome")
+    responsavel_cargo = models.CharField(max_length=100, blank=True, verbose_name="Responsável - Cargo")
+    responsavel_telefone = models.CharField(max_length=500, blank=True, verbose_name="Responsável - Telefone")
+    responsavel_email = models.EmailField(blank=True, verbose_name="Responsável - E-mail")
+    # Observações
+    observacoes = models.TextField(blank=True, verbose_name="Observações")
+    ativo = models.BooleanField(default=True, verbose_name="Ativo")
     criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
     
     class Meta:
         verbose_name = "Cliente"

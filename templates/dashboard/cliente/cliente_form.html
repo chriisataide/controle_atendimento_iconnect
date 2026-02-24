@@ -5,96 +5,489 @@
 {% block page_title %}{{ titulo }}{% endblock %}
 {% block breadcrumb_title %}{{ titulo }}{% endblock %}
 
+{% block extra_css %}
+<style>
+  .form-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid rgba(0,0,0,0.06);
+    animation: slideInUp 0.6s ease-out;
+  }
+  .input-group-outline {
+    position: relative;
+    margin-bottom: 1.5rem;
+  }
+  .input-group-outline .form-control,
+  .input-group-outline .form-select,
+  .input-group-outline select,
+  .input-group-outline textarea {
+    background-color: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    width: 100%;
+  }
+  .input-group-outline .form-control:focus,
+  .input-group-outline .form-select:focus,
+  .input-group-outline select:focus,
+  .input-group-outline textarea:focus {
+    background-color: white;
+    border-color: #06b6d4;
+    box-shadow: 0 4px 20px rgba(6, 182, 212, 0.15);
+    outline: none;
+  }
+  .input-group-outline .form-label {
+    position: absolute;
+    top: 1rem;
+    left: 1.25rem;
+    background: transparent;
+    color: #64748b;
+    font-weight: 400;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .input-group-outline.is-focused .form-label,
+  .input-group-outline.is-filled .form-label {
+    transform: translateY(-2.2rem) scale(0.85);
+    color: #06b6d4;
+    font-weight: 500;
+    background: white;
+    padding: 0 0.5rem;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .input-group-outline .form-control.is-invalid,
+  .input-group-outline .form-select.is-invalid {
+    border-color: #ef4444;
+    box-shadow: 0 2px 8px rgba(239,68,68,0.15);
+  }
+  .form-check-label { font-size: 0.95rem; color: #475569; }
+  .btn-form {
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .btn-form-primary {
+    background: linear-gradient(135deg, #334155, #1e293b);
+    color: white;
+  }
+  .btn-form-primary:hover {
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(51, 65, 85, 0.3);
+  }
+  .btn-form-light {
+    background: #f8fafc;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+  }
+  .btn-form-light:hover {
+    background: #e2e8f0;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .section-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #06b6d4, #0891b2);
+    color: white;
+    font-size: 1.1rem;
+    margin-right: 0.75rem;
+    box-shadow: 0 4px 12px rgba(6,182,212,0.3);
+  }
+  @keyframes slideInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (max-width: 768px) {
+    .form-section { padding: 1.5rem; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<!-- Header -->
-<div class="row mb-4">
-    <div class="col-lg-8 col-md-7">
-        <div class="ms-3">
-            <h3 class="mb-0 h4 font-weight-bolder">{{ titulo }}</h3>
-            <p class="mb-0 text-sm">Preencha as informações do cliente</p>
-        </div>
-    </div>
-    <div class="col-lg-4 col-md-5 text-end">
-        <a href="{% url 'dashboard:cliente_list' %}" class="btn btn-sm bg-gradient-dark mb-0">
-            <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Voltar
-        </a>
-    </div>
-</div>
+<div class="container-fluid py-2">
+  <!-- Page Header -->
+  <div class="ms-3">
+    <h3 class="mb-0 h4 font-weight-bolder">{{ titulo }}</h3>
+    <p class="mb-4">{% if object %}Atualize os dados do cliente{% else %}Cadastre um novo cliente (empresa) no sistema{% endif %}</p>
+  </div>
 
-<div class="row">
-    <div class="col-lg-8 mx-auto">
-        <div class="card">
-            <div class="card-header p-3 pt-2">
-                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info shadow text-center border-radius-xl mt-n4 me-3 float-start">
-                    <i class="material-symbols-rounded opacity-10">{% if object %}edit{% else %}person_add{% endif %}</i>
+  <div class="row">
+    <div class="col-12 col-lg-12 mx-auto">
+      <div class="card my-4">
+        <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+          <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+            <h6 class="text-white text-capitalize ps-3 mb-0">
+              <i class="material-icons me-2">{% if object %}edit{% else %}business{% endif %}</i>
+              {{ titulo }}
+            </h6>
+          </div>
+        </div>
+        <div class="card-body">
+          {% if form.errors %}
+          <div class="alert alert-danger alert-dismissible fade show text-white" role="alert">
+            <i class="material-symbols-rounded me-2">error</i>
+            <strong>Corrija os erros abaixo:</strong>
+            {% for field, errors in form.errors.items %}
+              {% for error in errors %}<br>• {{ error }}{% endfor %}
+            {% endfor %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          {% endif %}
+
+          <form method="post" autocomplete="off" id="clienteForm">
+            {% csrf_token %}
+
+            <!-- Seção: Dados da Empresa -->
+            <div class="form-section">
+              <h6 class="mb-4 d-flex align-items-center">
+                <span class="section-icon"><i class="material-icons" style="font-size:1.1rem;">business</i></span>
+                Dados da Empresa
+              </h6>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_nome">Razão Social / Nome <span class="text-danger">*</span></label>
+                    {{ form.nome }}
+                  </div>
                 </div>
-                <h6 class="mb-0">{{ titulo }}</h6>
-                <p class="text-sm mb-0 text-muted">{% if object %}Atualize os dados do cliente{% else %}Cadastre um novo cliente no sistema{% endif %}</p>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_nome_fantasia">Nome Fantasia</label>
+                    {{ form.nome_fantasia }}
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_cnpj">CNPJ</label>
+                    {{ form.cnpj }}
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_inscricao_estadual">Inscrição Estadual</label>
+                    {{ form.inscricao_estadual }}
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_segmento">Segmento / Ramo</label>
+                    {{ form.segmento }}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="card-body p-4">
-                <form method="post" novalidate>
-                    {% csrf_token %}
-                    
-                    {% if form.errors %}
-                    <div class="alert alert-danger alert-dismissible fade show text-white" role="alert">
-                        <i class="material-symbols-rounded me-2">error</i>
-                        <strong>Corrija os erros abaixo:</strong>
-                        {% for field, errors in form.errors.items %}
-                            {% for error in errors %}
-                            <br>{{ error }}
-                            {% endfor %}
-                        {% endfor %}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                    {% endif %}
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-xs text-uppercase font-weight-bold">Nome Completo *</label>
-                            <div class="input-group input-group-outline {% if form.nome.value %}is-filled{% endif %}">
-                                <input type="text" name="nome" class="form-control {% if form.nome.errors %}is-invalid{% endif %}" 
-                                       placeholder="Nome completo" value="{{ form.nome.value|default:'' }}" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-xs text-uppercase font-weight-bold">Email *</label>
-                            <div class="input-group input-group-outline {% if form.email.value %}is-filled{% endif %}">
-                                <input type="email" name="email" class="form-control {% if form.email.errors %}is-invalid{% endif %}" 
-                                       placeholder="email@exemplo.com" value="{{ form.email.value|default:'' }}" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-xs text-uppercase font-weight-bold">Telefone</label>
-                            <div class="input-group input-group-outline {% if form.telefone.value %}is-filled{% endif %}">
-                                <input type="text" name="telefone" class="form-control" 
-                                       placeholder="(11) 99999-9999" value="{{ form.telefone.value|default:'' }}">
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-xs text-uppercase font-weight-bold">Empresa</label>
-                            <div class="input-group input-group-outline {% if form.empresa.value %}is-filled{% endif %}">
-                                <input type="text" name="empresa" class="form-control" 
-                                       placeholder="Nome da empresa" value="{{ form.empresa.value|default:'' }}">
-                            </div>
-                        </div>
-                    </div>
-
-                    <hr class="horizontal dark mt-2 mb-4">
-
-                    <div class="d-flex justify-content-between">
-                        <a href="{% url 'dashboard:cliente_list' %}" class="btn btn-outline-dark btn-sm">
-                            <i class="material-symbols-rounded text-sm me-1">close</i> Cancelar
-                        </a>
-                        <button type="submit" class="btn bg-gradient-info btn-sm">
-                            <i class="material-symbols-rounded text-sm me-1">{% if object %}save{% else %}person_add{% endif %}</i> {{ btn_text }}
-                        </button>
-                    </div>
-                </form>
+            <!-- Seção: Contato -->
+            <div class="form-section">
+              <h6 class="mb-4 d-flex align-items-center">
+                <span class="section-icon"><i class="material-icons" style="font-size:1.1rem;">contact_phone</i></span>
+                Contato
+              </h6>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_email">E-mail Principal <span class="text-danger">*</span></label>
+                    {{ form.email }}
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_telefone">Telefone</label>
+                    {{ form.telefone }}
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_celular">Celular / WhatsApp</label>
+                    {{ form.celular }}
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_website">Website</label>
+                    {{ form.website }}
+                  </div>
+                </div>
+              </div>
             </div>
+
+            <!-- Seção: Endereço -->
+            <div class="form-section">
+              <h6 class="mb-4 d-flex align-items-center">
+                <span class="section-icon"><i class="material-icons" style="font-size:1.1rem;">location_on</i></span>
+                Endereço
+              </h6>
+              <div class="row">
+                <div class="col-md-3">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_cep">CEP</label>
+                    {{ form.cep }}
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_logradouro">Logradouro</label>
+                    {{ form.logradouro }}
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_numero">Número</label>
+                    {{ form.numero }}
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_complemento">Complemento</label>
+                    {{ form.complemento }}
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_bairro">Bairro</label>
+                    {{ form.bairro }}
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_cidade">Cidade</label>
+                    {{ form.cidade }}
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_estado">UF</label>
+                    {{ form.estado }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Seção: Responsável -->
+            <div class="form-section">
+              <h6 class="mb-4 d-flex align-items-center">
+                <span class="section-icon"><i class="material-icons" style="font-size:1.1rem;">person</i></span>
+                Responsável pelo Contrato
+              </h6>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_responsavel_nome">Nome do Responsável</label>
+                    {{ form.responsavel_nome }}
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_responsavel_cargo">Cargo / Função</label>
+                    {{ form.responsavel_cargo }}
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_responsavel_telefone">Telefone do Responsável</label>
+                    {{ form.responsavel_telefone }}
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_responsavel_email">E-mail do Responsável</label>
+                    {{ form.responsavel_email }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Seção: Observações -->
+            <div class="form-section">
+              <h6 class="mb-4 d-flex align-items-center">
+                <span class="section-icon"><i class="material-icons" style="font-size:1.1rem;">notes</i></span>
+                Observações
+              </h6>
+              <div class="row">
+                <div class="col-12">
+                  <div class="input-group-outline">
+                    <label class="form-label" for="id_observacoes">Observações Gerais</label>
+                    {{ form.observacoes }}
+                  </div>
+                </div>
+                <div class="col-12 mt-2">
+                  <div class="form-check form-switch ps-0">
+                    {{ form.ativo }}
+                    <label class="form-check-label ms-2" for="id_ativo">Cliente ativo</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botões -->
+            <div class="form-section">
+              <div class="row align-items-center">
+                <div class="col-md-6">
+                  <small class="text-muted">
+                    <i class="material-icons me-1" style="font-size: 16px;">keyboard</i>
+                    <strong>Atalhos:</strong> Ctrl+S (Salvar) &bull; ESC (Cancelar)
+                  </small>
+                </div>
+                <div class="col-md-6 text-end">
+                  <a href="{% url 'dashboard:cliente_list' %}" class="btn btn-form btn-form-light me-2">
+                    <i class="material-icons me-1">cancel</i>
+                    Cancelar
+                  </a>
+                  <button type="submit" class="btn btn-form btn-form-primary" id="submitBtn">
+                    <i class="material-icons me-1">save</i>
+                    {{ btn_text }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
         </div>
+      </div>
     </div>
+  </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Floating labels
+function initFloatingLabels() {
+    document.querySelectorAll('.input-group-outline').forEach(group => {
+        const input = group.querySelector('input, select, textarea');
+        const label = group.querySelector('.form-label');
+        if (!input || !label) return;
+        function updateState() {
+            const hasValue = input.value && input.value.trim() !== '';
+            const isFocused = document.activeElement === input;
+            group.classList.remove('is-focused', 'is-filled');
+            if (isFocused) group.classList.add('is-focused');
+            if (hasValue) group.classList.add('is-filled');
+        }
+        input.addEventListener('focus', () => { group.classList.add('is-focused'); });
+        input.addEventListener('blur', () => { group.classList.remove('is-focused'); updateState(); });
+        input.addEventListener('input', updateState);
+        input.addEventListener('change', updateState);
+        updateState();
+    });
+}
+
+// Máscaras
+function maskInput(input, mask) {
+    input.addEventListener('input', function() {
+        let value = input.value.replace(/\D/g, '');
+        let newValue = '', mi = 0, vi = 0;
+        while (mi < mask.length && vi < value.length) {
+            if (mask[mi] === '#') { newValue += value[vi++]; } else { newValue += mask[mi]; }
+            mi++;
+        }
+        input.value = newValue;
+    });
+}
+
+// ViaCEP - Busca endereço pelo CEP
+function initViaCEP() {
+    const cep = document.getElementById('id_cep');
+    if (!cep) return;
+    cep.addEventListener('blur', function() {
+        const val = cep.value.replace(/\D/g, '');
+        if (val.length !== 8) return;
+        fetch('https://viacep.com.br/ws/' + val + '/json/')
+            .then(r => r.json())
+            .then(data => {
+                if (data.erro) return;
+                const fill = {
+                    'id_logradouro': data.logradouro,
+                    'id_bairro': data.bairro,
+                    'id_cidade': data.localidade,
+                    'id_estado': data.uf,
+                    'id_complemento': data.complemento
+                };
+                Object.entries(fill).forEach(([id, val]) => {
+                    const el = document.getElementById(id);
+                    if (el && val) {
+                        el.value = val;
+                        el.dispatchEvent(new Event('input'));
+                    }
+                });
+                const num = document.getElementById('id_numero');
+                if (num) num.focus();
+            })
+            .catch(() => {});
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    initFloatingLabels();
+    initViaCEP();
+
+    // Máscaras
+    const cnpj = document.getElementById('id_cnpj');
+    if (cnpj) maskInput(cnpj, '##.###.###/####-##');
+    const cep = document.getElementById('id_cep');
+    if (cep) maskInput(cep, '#####-###');
+    const tel = document.getElementById('id_telefone');
+    if (tel) maskInput(tel, '(##) ####-####');
+    const cel = document.getElementById('id_celular');
+    if (cel) maskInput(cel, '(##) #####-####');
+    const rtel = document.getElementById('id_responsavel_telefone');
+    if (rtel) maskInput(rtel, '(##) #####-####');
+
+    // Atalhos de teclado
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            document.getElementById('submitBtn').click();
+        }
+        if (e.key === 'Escape') {
+            if (confirm('Deseja cancelar e voltar à lista?')) {
+                window.location.href = "{% url 'dashboard:cliente_list' %}";
+            }
+        }
+    });
+
+    // Validação inline
+    const form = document.getElementById('clienteForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            let valid = true;
+            ['id_nome', 'id_email'].forEach(id => {
+                const input = document.getElementById(id);
+                if (input && !input.value.trim()) {
+                    valid = false;
+                    input.classList.add('is-invalid');
+                } else if (input) {
+                    input.classList.remove('is-invalid');
+                }
+            });
+            if (!valid) { e.preventDefault(); return false; }
+            const btn = document.getElementById('submitBtn');
+            if (btn) {
+                const spinner = document.createElement('span');
+                spinner.className = 'spinner-border spinner-border-sm ms-2';
+                btn.appendChild(spinner);
+                btn.setAttribute('disabled', 'disabled');
+            }
+        });
+    }
+
+    // Foco no primeiro campo
+    const firstInput = document.querySelector('.input-group-outline input');
+    if (firstInput) firstInput.focus();
+});
+</script>
 {% endblock %}
