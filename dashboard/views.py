@@ -1265,9 +1265,11 @@ class ClienteListView(ListView):
     
     def get_queryset(self):
         queryset = Cliente.objects.annotate(
-            num_tickets=Count('tickets'),
-            tickets_abertos=Count('tickets', filter=Q(tickets__status='aberto')),
-            tickets_andamento=Count('tickets', filter=Q(tickets__status='em_andamento')),
+            num_pdvs=Count('pontos_de_venda', distinct=True),
+            num_tickets=Count('tickets', distinct=True),
+            tickets_abertos=Count('tickets', filter=Q(tickets__status='aberto'), distinct=True),
+            tickets_andamento=Count('tickets', filter=Q(tickets__status='em_andamento'), distinct=True),
+            tickets_resolvidos=Count('tickets', filter=Q(tickets__status__in=['resolvido', 'fechado']), distinct=True),
         ).order_by('-criado_em')
         
         search = self.request.GET.get('search')
@@ -1275,23 +1277,38 @@ class ClienteListView(ListView):
             queryset = queryset.filter(
                 Q(nome__icontains=search) |
                 Q(email__icontains=search) |
-                Q(empresa__icontains=search) |
+                Q(segmento__icontains=search) |
                 Q(telefone__icontains=search)
             )
         
-        empresa = self.request.GET.get('empresa')
-        if empresa:
-            queryset = queryset.filter(empresa__icontains=empresa)
+        segmento = self.request.GET.get('segmento')
+        if segmento:
+            queryset = queryset.filter(segmento__iexact=segmento)
+        
+        status = self.request.GET.get('status')
+        if status == 'ativo':
+            queryset = queryset.filter(ativo=True)
+        elif status == 'inativo':
+            queryset = queryset.filter(ativo=False)
         
         return queryset
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['total_clientes'] = Cliente.objects.count()
-        context['clientes_com_tickets'] = Cliente.objects.filter(tickets__isnull=False).distinct().count()
-        context['empresas'] = Cliente.objects.exclude(empresa='').values_list('empresa', flat=True).distinct().order_by('empresa')
+        from .models import PontoDeVenda
+        all_clients = Cliente.objects.all()
+        context['total_clientes'] = all_clients.count()
+        context['clientes_ativos'] = all_clients.filter(ativo=True).count()
+        context['clientes_inativos'] = all_clients.filter(ativo=False).count()
+        context['total_pdvs'] = PontoDeVenda.objects.count()
+        context['clientes_com_tickets'] = all_clients.filter(tickets__isnull=False).distinct().count()
+        context['total_tickets_clientes'] = Ticket.objects.filter(cliente__isnull=False).count()
+        context['segmentos'] = all_clients.exclude(
+            Q(segmento='') | Q(segmento__isnull=True)
+        ).values_list('segmento', flat=True).distinct().order_by('segmento')
         context['search'] = self.request.GET.get('search', '')
-        context['empresa_selected'] = self.request.GET.get('empresa', '')
+        context['segmento_selected'] = self.request.GET.get('segmento', '')
+        context['status_selected'] = self.request.GET.get('status', '')
         return context
 
 
