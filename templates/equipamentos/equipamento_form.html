@@ -1,159 +1,578 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{% if modo == 'editar' %}Editar{% else %}Novo{% endif %} Equipamento{% endblock %}
+{% block title %}{% if modo == 'editar' %}Editar{% else %}Novo{% endif %} Equipamento - iConnect{% endblock %}
 {% block page_title %}{% if modo == 'editar' %}Editar Equipamento{% else %}Novo Equipamento{% endif %}{% endblock %}
 {% block breadcrumb_title %}{% if modo == 'editar' %}Editar{% else %}Novo{% endif %} Equipamento{% endblock %}
 
+{% block extra_css %}
+<style>
+    .eq-card {
+        border-radius: 16px;
+        border: none;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 6px 16px rgba(0,0,0,.04);
+    }
+    .eq-header {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        padding: 1.75rem 2rem 2.75rem;
+        position: relative;
+    }
+    .eq-header::after {
+        content: '';
+        position: absolute;
+        bottom: -1px; left: 0; right: 0;
+        height: 24px;
+        background: #fff;
+        border-radius: 24px 24px 0 0;
+    }
+    .eq-header-icon {
+        width: 56px; height: 56px;
+        border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(6,182,212,.15);
+        border: 2px solid rgba(6,182,212,.25);
+    }
+    .eq-header-icon i { font-size: 26px; color: #06b6d4; }
+    .eq-section { padding: 0 1.75rem; }
+    .eq-section-title {
+        font-size: .68rem;
+        text-transform: uppercase;
+        letter-spacing: .9px;
+        font-weight: 700;
+        color: #06b6d4;
+        margin-bottom: .85rem;
+        display: flex; align-items: center; gap: 7px;
+        padding-bottom: .5rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .eq-section-title i { font-size: 17px; }
+    .eq-divider { border: none; border-top: 1px solid #f1f5f9; margin: .25rem 0 1rem; }
+    .eq-card .form-label {
+        font-size: .78rem; font-weight: 600;
+        color: #334155; margin-bottom: .3rem;
+    }
+    .eq-card .form-control,
+    .eq-card .form-select {
+        border-radius: 10px;
+        border: 1.5px solid #e2e8f0;
+        padding: .55rem .9rem;
+        font-size: .84rem;
+        transition: border-color .2s, box-shadow .2s;
+        background-color: #fff;
+    }
+    .eq-card .form-control:focus,
+    .eq-card .form-select:focus {
+        border-color: #06b6d4;
+        box-shadow: 0 0 0 3px rgba(6,182,212,.1);
+    }
+    .eq-card textarea.form-control { min-height: 60px; resize: vertical; }
+    .eq-status-preview {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: .35rem .85rem;
+        border-radius: 20px;
+        font-size: .74rem; font-weight: 600;
+        transition: all .25s;
+    }
+    .eq-status-dot {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+    }
+    .btn-eq-primary {
+        background: linear-gradient(135deg, #06b6d4, #0891b2);
+        border: none; color: #fff;
+        padding: .6rem 1.75rem;
+        border-radius: 10px;
+        font-weight: 600; font-size: .84rem;
+        transition: all .2s;
+    }
+    .btn-eq-primary:hover {
+        background: linear-gradient(135deg, #0891b2, #0e7490);
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(6,182,212,.3);
+    }
+    .btn-eq-secondary {
+        border: 1.5px solid #e2e8f0;
+        color: #64748b;
+        padding: .6rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600; font-size: .84rem;
+        background: #fff;
+        transition: all .2s;
+    }
+    .btn-eq-secondary:hover {
+        background: #f8fafc; color: #334155;
+        border-color: #cbd5e1;
+    }
+    .eq-errors {
+        background: #fef2f2;
+        border: 1.5px solid #fecaca;
+        border-radius: 10px;
+        padding: .85rem 1.1rem;
+    }
+    .eq-sidebar-card {
+        background: #fff;
+        border-radius: 14px;
+        border: 1.5px solid #e2e8f0;
+        box-shadow: 0 1px 2px rgba(0,0,0,.04);
+        overflow: hidden;
+    }
+    .eq-sidebar-header {
+        padding: .9rem 1.15rem;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .eq-sidebar-header h6 {
+        font-size: .78rem; font-weight: 700;
+        color: #334155; margin: 0;
+    }
+    .eq-sidebar-body { padding: .75rem 1rem; }
+    .eq-tip-item {
+        display: flex; align-items: flex-start; gap: 8px;
+        margin-bottom: .6rem;
+    }
+    .eq-tip-item:last-child { margin-bottom: 0; }
+    .eq-tip-icon { flex-shrink: 0; margin-top: 1px; font-size: 15px; }
+    .eq-tip-text { font-size: .74rem; color: #64748b; line-height: 1.45; }
+    .eq-tipo-tag {
+        display: inline-block;
+        padding: .2rem .6rem;
+        border-radius: 6px;
+        font-size: .68rem; font-weight: 600;
+        background: #f0fdfa;
+        color: #0d9488;
+        border: 1px solid #99f6e4;
+        margin: 2px;
+    }
+    .eq-steps {
+        display: flex; gap: 0; justify-content: center;
+        margin-bottom: .25rem;
+    }
+    .eq-step {
+        display: flex; align-items: center; gap: 6px;
+        padding: .4rem .8rem;
+        font-size: .68rem; font-weight: 600;
+        color: #94a3b8;
+    }
+    .eq-step.active { color: #06b6d4; }
+    .eq-step.active .eq-step-num {
+        background: #06b6d4; color: #fff;
+    }
+    .eq-step-num {
+        width: 20px; height: 20px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: .65rem; font-weight: 700;
+        background: #e2e8f0; color: #94a3b8;
+        transition: all .25s;
+    }
+    .eq-step-line {
+        width: 28px; height: 2px;
+        background: #e2e8f0;
+        align-self: center;
+    }
+    @media (max-width: 991px) {
+        .eq-section { padding: 0 1.25rem; }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row">
-    <div class="col-lg-8 mx-auto">
-        <div class="card mt-4">
-            <div class="card-header p-3 pt-2">
-                <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-xl mt-n4 me-3 float-start">
-                    <i class="material-symbols-rounded opacity-10">{% if modo == 'editar' %}edit{% else %}add_circle{% endif %}</i>
+<div class="container-fluid py-2">
+    <div class="d-flex align-items-center justify-content-between mb-4 px-2">
+        <div>
+            <h4 class="mb-0 fw-bold" style="color: #1e293b;">
+                {% if modo == 'editar' %}Editar Equipamento{% else %}Novo Equipamento{% endif %}
+            </h4>
+            <p class="mb-0 text-sm" style="color: #94a3b8;">
+                {% if modo == 'editar' %}Atualize os dados do equipamento {{ equipamento.numero_serie }}
+                {% else %}Cadastre um novo equipamento para controle de ativos{% endif %}
+            </p>
+        </div>
+        <a href="{% url 'equipamentos:equipamento_list' %}" class="btn btn-eq-secondary btn-sm">
+            <i class="material-symbols-rounded text-sm me-1" style="font-size: 16px;">arrow_back</i> Voltar
+        </a>
+    </div>
+
+    <div class="row g-4 px-1">
+        <div class="col-lg-8 col-12">
+            <div class="card eq-card">
+                <div class="eq-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="eq-header-icon">
+                            <i class="material-symbols-rounded">{% if modo == 'editar' %}edit_square{% else %}add_circle{% endif %}</i>
+                        </div>
+                        <div>
+                            <h5 class="text-white mb-0" style="font-size: 1rem;">
+                                {% if modo == 'editar' %}{{ equipamento.tipo }} — {{ equipamento.numero_serie }}
+                                {% else %}Cadastrar Equipamento{% endif %}
+                            </h5>
+                            <p class="text-white-50 mb-0" style="font-size: .72rem;">
+                                {% if modo == 'editar' %}Editando registro existente
+                                {% else %}Preencha os campos obrigatórios (*){% endif %}
+                            </p>
+                        </div>
+                    </div>
                 </div>
-                <h6 class="mb-0">{% if modo == 'editar' %}Editar Equipamento — {{ equipamento.numero_serie }}{% else %}Cadastrar Novo Equipamento{% endif %}</h6>
-            </div>
-            <div class="card-body p-3">
-                <form method="post">
-                    {% csrf_token %}
 
-                    <!-- Identificação -->
-                    <h6 class="text-uppercase text-body text-xs font-weight-bolder mt-2 mb-3">Identificação</h6>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="input-group input-group-outline {% if equipamento.numero_serie %}is-filled{% endif %}">
-                                <label class="form-label">Nº de Série *</label>
-                                <input type="text" name="numero_serie" class="form-control"
-                                       value="{{ equipamento.numero_serie|default:'' }}" required>
-                            </div>
+                <div class="card-body pt-1 pb-4">
+                    <div class="eq-steps mb-3">
+                        <div class="eq-step active" data-step="1">
+                            <span class="eq-step-num">1</span> Identificação
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="input-group input-group-outline {% if equipamento.patrimonio %}is-filled{% endif %}">
-                                <label class="form-label">Nº Patrimônio</label>
-                                <input type="text" name="patrimonio" class="form-control"
-                                       value="{{ equipamento.patrimonio|default:'' }}">
-                            </div>
+                        <div class="eq-step-line"></div>
+                        <div class="eq-step" data-step="2">
+                            <span class="eq-step-num">2</span> Localização
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <div class="input-group input-group-outline {% if equipamento.tipo %}is-filled{% endif %}">
-                                <label class="form-label">Tipo *</label>
-                                <input type="text" name="tipo" class="form-control" list="lista-tipos"
-                                       value="{{ equipamento.tipo|default:'' }}" required
-                                       placeholder="Ex: Roteador, Switch, ONT...">
-                                <datalist id="lista-tipos">
-                                    {% for t in tipos_existentes %}
-                                    <option value="{{ t }}">
-                                    {% endfor %}
-                                </datalist>
-                            </div>
+                        <div class="eq-step-line"></div>
+                        <div class="eq-step" data-step="3">
+                            <span class="eq-step-num">3</span> Status
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="input-group input-group-outline {% if equipamento.marca %}is-filled{% endif %}">
-                                <label class="form-label">Marca</label>
-                                <input type="text" name="marca" class="form-control"
-                                       value="{{ equipamento.marca|default:'' }}">
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="input-group input-group-outline {% if equipamento.modelo %}is-filled{% endif %}">
-                                <label class="form-label">Modelo *</label>
-                                <input type="text" name="modelo" class="form-control"
-                                       value="{{ equipamento.modelo|default:'' }}" required>
-                            </div>
+                        <div class="eq-step-line"></div>
+                        <div class="eq-step" data-step="4">
+                            <span class="eq-step-num">4</span> Detalhes
                         </div>
                     </div>
 
-                    <!-- Localização -->
-                    <h6 class="text-uppercase text-body text-xs font-weight-bolder mt-4 mb-3">Localização</h6>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="input-group input-group-outline">
-                                <select name="cliente" class="form-control">
-                                    <option value="">— Em estoque (sem cliente) —</option>
-                                    {% for c in clientes %}
-                                    <option value="{{ c.pk }}" {% if equipamento.cliente_id == c.pk %}selected{% endif %}>{{ c.nome }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <small class="text-muted ms-1">Cliente</small>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="input-group input-group-outline {% if equipamento.local_instalacao %}is-filled{% endif %}">
-                                <label class="form-label">Local de Instalação</label>
-                                <input type="text" name="local_instalacao" class="form-control"
-                                       value="{{ equipamento.local_instalacao|default:'' }}"
-                                       placeholder="Sala, rack, posição...">
-                            </div>
-                        </div>
-                    </div>
+                    <form method="post" id="equipamentoForm">
+                        {% csrf_token %}
 
-                    <!-- Status e Datas -->
-                    <h6 class="text-uppercase text-body text-xs font-weight-bolder mt-4 mb-3">Status e Datas</h6>
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <div class="input-group input-group-outline">
-                                <select name="status" class="form-control">
-                                    {% for val, label in status_choices %}
-                                    <option value="{{ val }}" {% if equipamento.status == val %}selected{% endif %}>{{ label }}</option>
-                                    {% endfor %}
-                                </select>
+                        {% if messages %}
+                        <div class="eq-section mb-3">
+                            {% for message in messages %}
+                            {% if message.tags == 'error' %}
+                            <div class="eq-errors">
+                                <div class="d-flex align-items-center">
+                                    <i class="material-symbols-rounded me-2" style="color: #dc2626; font-size: 17px;">error</i>
+                                    <span style="color: #dc2626; font-size: .82rem;">{{ message }}</span>
+                                </div>
                             </div>
-                            <small class="text-muted ms-1">Status</small>
+                            {% endif %}
+                            {% endfor %}
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="input-group input-group-outline is-filled">
-                                <label class="form-label">Data de Instalação</label>
-                                <input type="date" name="data_instalacao" class="form-control"
-                                       value="{{ equipamento.data_instalacao|date:'Y-m-d'|default:'' }}">
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="input-group input-group-outline is-filled">
-                                <label class="form-label">Garantia até</label>
-                                <input type="date" name="data_garantia" class="form-control"
-                                       value="{{ equipamento.data_garantia|date:'Y-m-d'|default:'' }}">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Observações -->
-                    <h6 class="text-uppercase text-body text-xs font-weight-bolder mt-4 mb-3">Detalhes Adicionais</h6>
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <div class="input-group input-group-outline {% if equipamento.descricao %}is-filled{% endif %}">
-                                <label class="form-label">Descrição</label>
-                                <textarea name="descricao" class="form-control" rows="2">{{ equipamento.descricao|default:'' }}</textarea>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <div class="input-group input-group-outline {% if equipamento.observacoes %}is-filled{% endif %}">
-                                <label class="form-label">Observações</label>
-                                <textarea name="observacoes" class="form-control" rows="2">{{ equipamento.observacoes|default:'' }}</textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Botões -->
-                    <div class="d-flex justify-content-end mt-4">
-                        {% if modo == 'editar' %}
-                        <a href="{% url 'equipamentos:equipamento_detail' equipamento.pk %}" class="btn btn-outline-secondary me-2">Cancelar</a>
-                        {% else %}
-                        <a href="{% url 'equipamentos:equipamento_list' %}" class="btn btn-outline-secondary me-2">Cancelar</a>
                         {% endif %}
-                        <button type="submit" class="btn bg-gradient-primary">
-                            <i class="material-symbols-rounded text-sm me-1">save</i>
-                            {% if modo == 'editar' %}Salvar Alterações{% else %}Cadastrar Equipamento{% endif %}
-                        </button>
+
+                        <!-- 1. Identificação -->
+                        <div class="eq-section mb-4" data-section="1">
+                            <div class="eq-section-title">
+                                <i class="material-symbols-rounded">qr_code_2</i>
+                                Identificação do Equipamento
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Nº de Série <span class="text-danger">*</span></label>
+                                    <input type="text" name="numero_serie" class="form-control"
+                                           value="{{ equipamento.numero_serie|default:'' }}" required
+                                           placeholder="Ex: SN-2024-001234">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Nº Patrimônio</label>
+                                    <input type="text" name="patrimonio" class="form-control"
+                                           value="{{ equipamento.patrimonio|default:'' }}"
+                                           placeholder="Código interno (opcional)">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Tipo <span class="text-danger">*</span></label>
+                                    <input type="text" name="tipo" class="form-control" list="lista-tipos"
+                                           value="{{ equipamento.tipo|default:'' }}" required
+                                           placeholder="Ex: Roteador, Switch, ONT...">
+                                    <datalist id="lista-tipos">
+                                        {% for t in tipos_existentes %}
+                                        <option value="{{ t }}">
+                                        {% endfor %}
+                                    </datalist>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Marca</label>
+                                    <input type="text" name="marca" class="form-control"
+                                           value="{{ equipamento.marca|default:'' }}"
+                                           placeholder="Ex: TP-Link, Intelbras...">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Modelo <span class="text-danger">*</span></label>
+                                    <input type="text" name="modelo" class="form-control"
+                                           value="{{ equipamento.modelo|default:'' }}" required
+                                           placeholder="Ex: Archer C80">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Localização / Cliente -->
+                        <div class="eq-section mb-4" data-section="2">
+                            <div class="eq-section-title">
+                                <i class="material-symbols-rounded">location_on</i>
+                                Localização & Ponto de Venda
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Cliente / Ponto de Venda</label>
+                                    <select name="cliente" class="form-select" id="clienteSelect">
+                                        <option value="">— Em estoque (sem cliente) —</option>
+                                        {% for c in clientes %}
+                                        <option value="{{ c.pk }}" {% if equipamento.cliente_id == c.pk %}selected{% endif %}>
+                                            {{ c.nome }}{% if c.empresa %} — {{ c.empresa }}{% endif %}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="mt-1" style="font-size: .7rem; color: #94a3b8;">
+                                        <i class="material-symbols-rounded align-middle" style="font-size: 13px;">info</i>
+                                        Deixe vazio para equipamentos em estoque
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Local de Instalação</label>
+                                    <input type="text" name="local_instalacao" class="form-control"
+                                           value="{{ equipamento.local_instalacao|default:'' }}"
+                                           placeholder="Sala, rack, posição...">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. Status e Datas -->
+                        <div class="eq-section mb-4" data-section="3">
+                            <div class="eq-section-title">
+                                <i class="material-symbols-rounded">toggle_on</i>
+                                Status & Datas
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Status <span class="text-danger">*</span></label>
+                                    <select name="status" class="form-select" id="statusSelect">
+                                        {% for val, label in status_choices %}
+                                        <option value="{{ val }}" {% if equipamento.status == val %}selected{% endif %}>
+                                            {{ label }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="mt-2" id="statusBadge"></div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Data de Instalação</label>
+                                    <input type="date" name="data_instalacao" class="form-control"
+                                           value="{{ equipamento.data_instalacao|date:'Y-m-d'|default:'' }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Garantia até</label>
+                                    <input type="date" name="data_garantia" class="form-control"
+                                           value="{{ equipamento.data_garantia|date:'Y-m-d'|default:'' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. Detalhes Adicionais -->
+                        <div class="eq-section mb-4" data-section="4">
+                            <div class="eq-section-title">
+                                <i class="material-symbols-rounded">description</i>
+                                Detalhes Adicionais
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label">Descrição</label>
+                                    <textarea name="descricao" class="form-control" rows="2"
+                                              placeholder="Descrição técnica, configurações especiais...">{{ equipamento.descricao|default:'' }}</textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Observações</label>
+                                    <textarea name="observacoes" class="form-control" rows="2"
+                                              placeholder="Notas internas, particularidades do equipamento...">{{ equipamento.observacoes|default:'' }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ações -->
+                        <div class="eq-section">
+                            <hr class="eq-divider">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span style="font-size: .72rem; color: #94a3b8;">
+                                    <i class="material-symbols-rounded align-middle" style="font-size: 14px;">info</i>
+                                    {% if modo == 'editar' %}Alterações são registradas no histórico
+                                    {% else %}O equipamento será vinculado ao seu usuário como criador{% endif %}
+                                </span>
+                                <div class="d-flex gap-2">
+                                    {% if modo == 'editar' %}
+                                    <a href="{% url 'equipamentos:equipamento_detail' equipamento.pk %}" class="btn btn-eq-secondary">
+                                        <i class="material-symbols-rounded text-sm me-1" style="font-size: 16px;">close</i> Cancelar
+                                    </a>
+                                    {% else %}
+                                    <a href="{% url 'equipamentos:equipamento_list' %}" class="btn btn-eq-secondary">
+                                        <i class="material-symbols-rounded text-sm me-1" style="font-size: 16px;">close</i> Cancelar
+                                    </a>
+                                    {% endif %}
+                                    <button type="submit" class="btn btn-eq-primary">
+                                        <i class="material-symbols-rounded text-sm me-1" style="font-size: 16px;">
+                                            {% if modo == 'editar' %}save{% else %}add_circle{% endif %}
+                                        </i>
+                                        {% if modo == 'editar' %}Salvar Alterações{% else %}Cadastrar Equipamento{% endif %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4 col-12">
+            {% if tipos_existentes %}
+            <div class="eq-sidebar-card mb-3">
+                <div class="eq-sidebar-header">
+                    <i class="material-symbols-rounded" style="font-size: 18px; color: #8b5cf6;">devices</i>
+                    <h6>Tipos Cadastrados</h6>
+                </div>
+                <div class="eq-sidebar-body">
+                    <div class="d-flex flex-wrap">
+                        {% for t in tipos_existentes %}
+                        <span class="eq-tipo-tag">{{ t }}</span>
+                        {% endfor %}
                     </div>
-                </form>
+                    <div class="mt-2" style="font-size: .7rem; color: #94a3b8;">
+                        Você pode digitar um tipo existente ou criar um novo
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="eq-sidebar-card mb-3">
+                <div class="eq-sidebar-header">
+                    <i class="material-symbols-rounded" style="font-size: 18px; color: #06b6d4;">toggle_on</i>
+                    <h6>Status Disponíveis</h6>
+                </div>
+                <div class="eq-sidebar-body">
+                    <div class="d-flex align-items-center gap-2 mb-2 p-2 rounded-2" style="background: #ecfdf5;">
+                        <span class="eq-status-dot" style="background: #10b981;"></span>
+                        <div>
+                            <div style="font-size: .75rem; font-weight: 600; color: #047857;">Ativo</div>
+                            <div style="font-size: .68rem; color: #94a3b8;">Instalado e operacional</div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mb-2 p-2 rounded-2" style="background: #fffbeb;">
+                        <span class="eq-status-dot" style="background: #f59e0b;"></span>
+                        <div>
+                            <div style="font-size: .75rem; font-weight: 600; color: #b45309;">Em Manutenção</div>
+                            <div style="font-size: .68rem; color: #94a3b8;">Em reparo ou verificação</div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mb-2 p-2 rounded-2" style="background: #eff6ff;">
+                        <span class="eq-status-dot" style="background: #3b82f6;"></span>
+                        <div>
+                            <div style="font-size: .75rem; font-weight: 600; color: #1d4ed8;">Em Estoque</div>
+                            <div style="font-size: .68rem; color: #94a3b8;">Disponível para instalação</div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 p-2 rounded-2" style="background: #f8fafc;">
+                        <span class="eq-status-dot" style="background: #94a3b8;"></span>
+                        <div>
+                            <div style="font-size: .75rem; font-weight: 600; color: #475569;">Desativado</div>
+                            <div style="font-size: .68rem; color: #94a3b8;">Fora de uso ou descartado</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="eq-sidebar-card mb-3">
+                <div class="eq-sidebar-header">
+                    <i class="material-symbols-rounded" style="font-size: 18px; color: #f59e0b;">lightbulb</i>
+                    <h6>Dicas</h6>
+                </div>
+                <div class="eq-sidebar-body">
+                    <div class="eq-tip-item">
+                        <i class="material-symbols-rounded eq-tip-icon" style="color: #22c55e;">check_circle</i>
+                        <span class="eq-tip-text">O nº de série deve ser único por equipamento</span>
+                    </div>
+                    <div class="eq-tip-item">
+                        <i class="material-symbols-rounded eq-tip-icon" style="color: #22c55e;">check_circle</i>
+                        <span class="eq-tip-text">Equipamentos sem cliente ficam como "Em Estoque"</span>
+                    </div>
+                    <div class="eq-tip-item">
+                        <i class="material-symbols-rounded eq-tip-icon" style="color: #22c55e;">check_circle</i>
+                        <span class="eq-tip-text">A data de garantia gera alertas antes do vencimento</span>
+                    </div>
+                    <div class="eq-tip-item">
+                        <i class="material-symbols-rounded eq-tip-icon" style="color: #3b82f6;">info</i>
+                        <span class="eq-tip-text">Após cadastrar, registre movimentações na página de detalhe</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="eq-sidebar-card">
+                <div class="eq-sidebar-header">
+                    <i class="material-symbols-rounded" style="font-size: 18px; color: #334155;">analytics</i>
+                    <h6>Controle de Ativos</h6>
+                </div>
+                <div class="eq-sidebar-body">
+                    <div class="eq-tip-item">
+                        <i class="material-symbols-rounded eq-tip-icon" style="color: #8b5cf6;">monitoring</i>
+                        <span class="eq-tip-text">Equipamentos com muitos chamados geram alertas de recorrência</span>
+                    </div>
+                    <div class="eq-tip-item">
+                        <i class="material-symbols-rounded eq-tip-icon" style="color: #ef4444;">swap_horiz</i>
+                        <span class="eq-tip-text">Trocas frequentes indicam necessidade de substituição</span>
+                    </div>
+                    <div class="eq-tip-item">
+                        <i class="material-symbols-rounded eq-tip-icon" style="color: #06b6d4;">history</i>
+                        <span class="eq-tip-text">Todo histórico de movimentações fica registrado para auditoria</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var sections = document.querySelectorAll('[data-section]');
+    var steps = document.querySelectorAll('.eq-step');
+    function highlightStep(num) {
+        steps.forEach(function(s) {
+            var n = parseInt(s.dataset.step);
+            s.classList.toggle('active', n <= num);
+        });
+    }
+    sections.forEach(function(sec) {
+        sec.querySelectorAll('input, select, textarea').forEach(function(input) {
+            input.addEventListener('focus', function() {
+                highlightStep(parseInt(sec.dataset.section));
+            });
+        });
+    });
+
+    var statusMap = {
+        'ativo': { label: 'Ativo', color: '#10b981', bg: '#ecfdf5' },
+        'em_manutencao': { label: 'Em Manutenção', color: '#f59e0b', bg: '#fffbeb' },
+        'em_estoque': { label: 'Em Estoque', color: '#3b82f6', bg: '#eff6ff' },
+        'desativado': { label: 'Desativado', color: '#94a3b8', bg: '#f8fafc' }
+    };
+    var statusSelect = document.getElementById('statusSelect');
+    var statusBadge = document.getElementById('statusBadge');
+    function updateStatusBadge() {
+        if (!statusSelect || !statusBadge) return;
+        var info = statusMap[statusSelect.value];
+        if (info) {
+            statusBadge.innerHTML = '<span class="eq-status-preview" style="background:' + info.bg + '; color:' + info.color + ';">' +
+                '<span class="eq-status-dot" style="background:' + info.color + ';"></span>' + info.label + '</span>';
+        }
+    }
+    if (statusSelect) {
+        statusSelect.addEventListener('change', updateStatusBadge);
+        updateStatusBadge();
+    }
+
+    var clienteSelect = document.getElementById('clienteSelect');
+    if (clienteSelect && statusSelect) {
+        clienteSelect.addEventListener('change', function() {
+            if (this.value && statusSelect.value === 'em_estoque') {
+                statusSelect.value = 'ativo';
+                updateStatusBadge();
+            } else if (!this.value && statusSelect.value === 'ativo') {
+                statusSelect.value = 'em_estoque';
+                updateStatusBadge();
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
