@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (ctxDist) {
         const labels = {{ dist_labels_json|safe }};
         const values = {{ dist_values_json|safe }};
-        const palette = [CYAN, SLATE, '#f59e0b', '#10b981', '#8b5cf6'];
+        const palette = [CYAN, SLATE, '#f59e0b', '#22c55e', '#0891b2'];
         new Chart(ctxDist.getContext('2d'), {
             type: 'doughnut',
             data: {

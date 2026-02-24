@@ -155,7 +155,7 @@
         .dropdown-item:hover,
         .dropdown-item:focus {
             color: #1e2125 !important;
-            background-color: #e9ecef !important;
+            background-color: #e2e8f0 !important;
         }
         
         #configDropdownButton,
@@ -166,7 +166,7 @@
         
         #configDropdownButton:hover,
         #dropdownMenuButton:hover {
-            color: #0d6efd !important;
+            color: #06b6d4 !important;
         }
 
         /* ===== SETTINGS MEGA DROPDOWN ===== */
@@ -239,12 +239,12 @@
             font-size: 20px;
             color: #fff;
         }
-        .settings-dropdown .settings-item .item-icon.icon-admin { background: linear-gradient(135deg, #6366f1, #4f46e5); }
-        .settings-dropdown .settings-item .item-icon.icon-django { background: linear-gradient(135deg, #10b981, #059669); }
+        .settings-dropdown .settings-item .item-icon.icon-admin { background: linear-gradient(135deg, #334155, #1e293b); }
+        .settings-dropdown .settings-item .item-icon.icon-django { background: linear-gradient(135deg, #22c55e, #16a34a); }
         .settings-dropdown .settings-item .item-icon.icon-theme { background: linear-gradient(135deg, #f59e0b, #d97706); }
-        .settings-dropdown .settings-item .item-icon.icon-sidebar { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .settings-dropdown .settings-item .item-icon.icon-sidebar { background: linear-gradient(135deg, #06b6d4, #0891b2); }
         .settings-dropdown .settings-item .item-icon.icon-keyboard { background: linear-gradient(135deg, #06b6d4, #0891b2); }
-        .settings-dropdown .settings-item .item-icon.icon-export { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+        .settings-dropdown .settings-item .item-icon.icon-export { background: linear-gradient(135deg, #ef4444, #dc2626); }
         .settings-dropdown .settings-item .item-icon.icon-system { background: linear-gradient(135deg, #64748b, #475569); }
         .settings-dropdown .settings-item .item-info {
             flex: 1;
@@ -1059,7 +1059,7 @@
         .sb-badge-green { background: rgba(34,197,94,0.12); color: #22c55e; }
         .sb-badge-amber { background: rgba(245,158,11,0.12); color: #d97706; }
         .sb-badge-slate { background: rgba(51,65,85,0.12); color: #334155; }
-        .sb-badge-purple { background: rgba(139,92,246,0.12); color: #8b5cf6; }
+        .sb-badge-purple { background: rgba(6,182,212,0.12); color: #06b6d4; }
         
         /* Sidebar footer */
         .sidebar-footer {
@@ -1089,6 +1089,123 @@
         #sidenav-collapse-main::-webkit-scrollbar-track { background: transparent; }
         #sidenav-collapse-main::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
         #sidenav-collapse-main::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+        
+        /* ===== NAVBAR LIVE SEARCH ===== */
+        .navbar-search-wrapper {
+            position: relative;
+            max-width: 380px;
+            width: 100%;
+        }
+        .navbar-search-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f1f5f9;
+            border: 1.5px solid transparent;
+            border-radius: 10px;
+            padding: 7px 12px;
+            transition: all 0.2s ease;
+            cursor: text;
+        }
+        .navbar-search-box:hover {
+            background: #e8ecf1;
+        }
+        .navbar-search-box:focus-within {
+            background: #fff;
+            border-color: #06b6d4;
+            box-shadow: 0 0 0 3px rgba(6,182,212,0.1);
+        }
+        .navbar-search-box .search-icon {
+            font-size: 18px;
+            color: #94a3b8;
+            flex-shrink: 0;
+            transition: color 0.2s;
+        }
+        .navbar-search-box:focus-within .search-icon {
+            color: #06b6d4;
+        }
+        .navbar-search-box input {
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 13px;
+            color: #334155;
+            flex: 1;
+            min-width: 0;
+            padding: 0;
+            line-height: 1.4;
+        }
+        .navbar-search-box input::placeholder {
+            color: #94a3b8;
+            font-weight: 400;
+        }
+        .navbar-search-kbd {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            font-size: 10px;
+            color: #94a3b8;
+            padding: 2px 6px;
+            background: #fff;
+            border-radius: 5px;
+            border: 1px solid #e2e8f0;
+            font-family: -apple-system, system-ui, sans-serif;
+            flex-shrink: 0;
+            line-height: 1;
+            letter-spacing: 0.3px;
+        }
+        .navbar-search-box:focus-within .navbar-search-kbd {
+            display: none;
+        }
+        .navbar-search-dropdown {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0; right: 0;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+            border: 1px solid #e2e8f0;
+            z-index: 9999;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 6px 0;
+        }
+        .navbar-search-dropdown::-webkit-scrollbar { width: 4px; }
+        .navbar-search-dropdown::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 14px;
+            gap: 10px;
+            text-decoration: none;
+            color: #334155;
+            transition: background 0.15s;
+            cursor: pointer;
+        }
+        .search-result-item:hover, .search-result-item.active { background: #f1f5f9; color: #334155; text-decoration: none; }
+        .search-result-icon {
+            width: 34px; height: 34px;
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .search-result-icon i { font-size: 17px; color: #fff; }
+        .search-result-info { flex: 1; min-width: 0; }
+        .search-result-title { font-size: 12.5px; font-weight: 600; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #1e293b; }
+        .search-result-subtitle { font-size: 11px; color: #94a3b8; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .search-result-badge { font-size: 9.5px; padding: 2px 7px; border-radius: 5px; font-weight: 600; letter-spacing: 0.3px; flex-shrink: 0; }
+        .search-loading { display: flex; align-items: center; justify-content: center; padding: 20px; gap: 8px; }
+        .search-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 16px; }
+        .search-view-all {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 10px 14px;
+            font-size: 12px; font-weight: 600; color: #06b6d4;
+            text-decoration: none;
+            border-top: 1px solid #f1f5f9;
+            margin-top: 4px;
+            transition: background 0.15s;
+        }
+        .search-view-all:hover { background: #f8fafc; color: #0891b2; text-decoration: none; }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -1124,6 +1241,7 @@
                         Novo Ticket
                     </a>
                 </li>
+
 
                 <!-- ======================================== -->
                 <!--           ATENDIMENTO                    -->
@@ -1164,12 +1282,6 @@
                                 <a class="nav-link {% if request.resolver_match.url_name == 'cliente_tickets' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:cliente_tickets' %}" onclick="event.stopPropagation()">
                                     <i class="material-icons">person_pin</i>
                                     <span class="nav-link-text ms-1">Meus Tickets (Cliente)</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {% if request.resolver_match.url_name == 'export_tickets' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:export_tickets' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">file_download</i>
-                                    <span class="nav-link-text ms-1">Exportar Tickets</span>
                                 </a>
                             </li>
                         </ul>
@@ -1334,7 +1446,7 @@
                         <div class="d-flex align-items-center justify-content-between w-100">
                             <span class="d-flex align-items-center">
                                 <i class="material-icons opacity-5 me-2">inventory_2</i>
-                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Estoque</h6>
+                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Estoque & Equipamentos</h6>
                             </span>
                             <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
                         </div>
@@ -1372,38 +1484,16 @@
                                     <span class="nav-link-text ms-1">Relatórios</span>
                                 </a>
                             </li>
-                        </ul>
-                    </div>
-                </li>
-
-                <li class="nav-item sidebar-dropdown">
-                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="equipamentos" onclick="toggleSidebarDropdown(event,this,'equipamentos')">
-                        <div class="d-flex align-items-center justify-content-between w-100">
-                            <span class="d-flex align-items-center">
-                                <i class="material-icons opacity-5 me-2">devices</i>
-                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Equipamentos</h6>
-                            </span>
-                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
-                        </div>
-                    </div>
-                    <div class="sidebar-dropdown-menu" id="dropdown-equipamentos">
-                        <ul class="navbar-nav">
-                            <li class="nav-item">
-                                <a class="nav-link {% if request.resolver_match.app_name == 'equipamentos' and 'dashboard' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'equipamentos:dashboard' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">monitoring</i>
-                                    <span class="nav-link-text ms-1">Dashboard</span>
-                                </a>
-                            </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.app_name == 'equipamentos' and 'equipamento_list' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'equipamentos:equipamento_list' %}" onclick="event.stopPropagation()">
                                     <i class="material-icons">router</i>
-                                    <span class="nav-link-text ms-1">Lista</span>
+                                    <span class="nav-link-text ms-1">Equipamentos</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.app_name == 'equipamentos' and 'alerta_list' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'equipamentos:alerta_list' %}" onclick="event.stopPropagation()">
                                     <i class="material-icons">warning_amber</i>
-                                    <span class="nav-link-text ms-1">Alertas</span>
+                                    <span class="nav-link-text ms-1">Alertas Equip.</span>
                                     <span class="sb-badge sb-badge-red ms-auto">!</span>
                                 </a>
                             </li>
@@ -1414,7 +1504,7 @@
                 <!-- ======================================== -->
                 <!--           COMUNICAÇÃO                    -->
                 <!-- ======================================== -->
-                <li class="nav-item"><p class="sidebar-section-label"><span class="section-dot" style="background:#8b5cf6;"></span>Comunicação</p></li>
+                <li class="nav-item"><p class="sidebar-section-label"><span class="section-dot" style="background:#06b6d4;"></span>Comunicação</p></li>
                 
                 <li class="nav-item sidebar-dropdown">
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="comunicacao" onclick="toggleSidebarDropdown(event,this,'comunicacao')">
@@ -1501,18 +1591,7 @@
                                     <span class="nav-link-text ms-1">Relatórios Avançados</span>
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link {% if 'relatorio_itens_atendimento' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:relatorio_itens_atendimento' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">inventory_2</i>
-                                    <span class="nav-link-text ms-1">Itens de Atendimento</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {% if 'search' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:search' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">search</i>
-                                    <span class="nav-link-text ms-1">Busca Avançada</span>
-                                </a>
-                            </li>
+
                         </ul>
                     </div>
                 </li>
@@ -1535,22 +1614,15 @@
                     <div class="sidebar-dropdown-menu" id="dropdown-automacao">
                         <ul class="navbar-nav">
                             <li class="nav-item">
-                                <a class="nav-link {% if request.resolver_match.url_name == 'automation' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:automation' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">smart_toy</i>
-                                    <span class="nav-link-text ms-1">Motor de Automação</span>
-                                    <span class="sb-badge sb-badge-amber ms-auto">Pro</span>
+                                <a class="nav-link {% if request.resolver_match.url_name == 'workflow_builder' or request.resolver_match.url_name == 'automation_workflows' or request.resolver_match.url_name == 'automation' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:workflow_builder' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">account_tree</i>
+                                    <span class="nav-link-text ms-1">Workflows</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.url_name == 'automation_rules' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:automation_rules' %}" onclick="event.stopPropagation()">
                                     <i class="material-icons">rule</i>
                                     <span class="nav-link-text ms-1">Regras</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {% if request.resolver_match.url_name == 'automation_workflows' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:automation_workflows' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">account_tree</i>
-                                    <span class="nav-link-text ms-1">Workflows</span>
                                 </a>
                             </li>
                         </ul>
@@ -1636,9 +1708,32 @@
                 </nav>
                 <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
                     <div class="ms-md-auto pe-md-3 d-flex align-items-center">
-                        <div class="input-group input-group-outline">
-                            <label class="form-label">Digite aqui...</label>
-                            <input type="text" class="form-control">
+                        <div class="navbar-search-wrapper">
+                            <form action="{% url 'dashboard:search' %}" method="GET" id="navbarSearchForm" autocomplete="off">
+                                <div class="navbar-search-box" onclick="this.querySelector('input').focus()">
+                                    <i class="material-icons search-icon">search</i>
+                                    <input type="text" name="q" id="navbarSearchInput" 
+                                           placeholder="Buscar tickets, clientes..." 
+                                           value="{{ request.GET.q|default:'' }}" autocomplete="off">
+                                    <span class="navbar-search-kbd">⌘K</span>
+                                </div>
+                            </form>
+                            <!-- Live search dropdown -->
+                            <div class="navbar-search-dropdown" id="searchDropdown" style="display:none;">
+                                <div class="search-loading" id="searchLoading" style="display:none;">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                    <span class="ms-2 text-xs text-muted">Buscando...</span>
+                                </div>
+                                <div id="searchResults"></div>
+                                <div class="search-empty" id="searchEmpty" style="display:none;">
+                                    <i class="material-icons text-muted" style="font-size:28px;">search_off</i>
+                                    <p class="text-xs text-muted mb-0 mt-1">Nenhum resultado encontrado</p>
+                                </div>
+                                <a href="#" class="search-view-all" id="searchViewAll" style="display:none;">
+                                    <i class="material-icons" style="font-size:14px;">open_in_new</i>
+                                    Ver todos os resultados
+                                </a>
+                            </div>
                         </div>
                     </div>
                     <ul class="navbar-nav justify-content-end">
@@ -2477,6 +2572,23 @@
         .dark-version #sidenav-collapse-main::-webkit-scrollbar-thumb:hover {
             background: var(--text-secondary);
         }
+        /* Dark mode: live search */
+        .dark-version .navbar-search-box { background: var(--bg-secondary, #1e293b); border-color: transparent; }
+        .dark-version .navbar-search-box:hover { background: var(--bg-tertiary, #334155); }
+        .dark-version .navbar-search-box:focus-within { background: var(--card-bg, #0f172a); border-color: #06b6d4; box-shadow: 0 0 0 3px rgba(6,182,212,0.15); }
+        .dark-version .navbar-search-box input { color: var(--text-primary, #e2e8f0); }
+        .dark-version .navbar-search-box input::placeholder { color: var(--text-secondary, #64748b); }
+        .dark-version .navbar-search-box .search-icon { color: var(--text-secondary, #64748b); }
+        .dark-version .navbar-search-box:focus-within .search-icon { color: #06b6d4; }
+        .dark-version .navbar-search-kbd { background: var(--bg-tertiary, #334155); border-color: var(--border-color, #475569); color: var(--text-secondary, #64748b); }
+        .dark-version .navbar-search-dropdown { background: var(--card-bg); border-color: var(--border-color); box-shadow: 0 12px 40px rgba(0,0,0,0.5); }
+        .dark-version .search-result-item { color: var(--text-primary); }
+        .dark-version .search-result-item:hover, .dark-version .search-result-item.active { background: var(--accent-glow); color: var(--text-primary); }
+        .dark-version .search-result-title { color: var(--text-primary); }
+        .dark-version .search-result-subtitle { color: var(--text-secondary); }
+        .dark-version .search-empty .text-muted { color: var(--text-secondary) !important; }
+        .dark-version .search-view-all { border-top-color: var(--border-color); }
+        .dark-version .search-view-all:hover { background: var(--accent-glow); }
         .dark-version .input-group.input-group-outline .form-control {
             border-color: var(--border-color) !important;
         }
@@ -2649,7 +2761,7 @@
         .dark-version .badge-priority[style*="#f8fafc"] { background: rgba(100,116,139,0.15) !important; }
         .dark-version .badge-status[style*="#f0fdf4"] { background: rgba(22,163,74,0.15) !important; }
         .dark-version .badge-status[style*="#fffbeb"] { background: rgba(217,119,6,0.15) !important; }
-        .dark-version .badge-status[style*="#faf5ff"] { background: rgba(124,58,237,0.15) !important; }
+        .dark-version .badge-status[style*="#f8fafc"] { background: rgba(6,182,212,0.15) !important; }
         .dark-version .badge-status[style*="#f0fdfa"] { background: rgba(8,145,178,0.15) !important; }
         .dark-version .badge-status[style*="#f8fafc"] { background: rgba(100,116,139,0.15) !important; }
         /* Equipe status badges */
@@ -2909,7 +3021,7 @@
         }
         
         #notificationButton:hover {
-            color: #667eea !important;
+            color: #06b6d4 !important;
         }
         
         #notificationBadge {
@@ -2981,8 +3093,8 @@
         }
         
         kbd {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
+            background-color: #f8fafc;
+            border: 1px solid #cbd5e1;
             border-radius: 3px;
             box-shadow: 0 1px 0 rgba(0,0,0,0.2), inset 0 0 0 2px #fff;
             color: #333;
@@ -3031,7 +3143,7 @@
                     position: fixed;
                     top: 20px;
                     right: 20px;
-                    background: #28a745;
+                    background: #22c55e;
                     color: white;
                     padding: 15px 20px;
                     border-radius: 10px;
@@ -3109,7 +3221,7 @@
                         top: 20px;
                         left: 50%;
                         transform: translateX(-50%);
-                        background: ${online ? '#28a745' : '#dc3545'};
+                        background: ${online ? '#22c55e' : '#ef4444'};
                         color: white;
                         padding: 10px 20px;
                         border-radius: 25px;
@@ -3566,5 +3678,144 @@
             });
         });
     </script>
+    <!-- Live Search (Navbar) -->
+    <script nonce="{% csp_nonce %}">
+    (function() {
+        const input = document.getElementById('navbarSearchInput');
+        const dropdown = document.getElementById('searchDropdown');
+        const results = document.getElementById('searchResults');
+        const loading = document.getElementById('searchLoading');
+        const empty = document.getElementById('searchEmpty');
+        const viewAll = document.getElementById('searchViewAll');
+        const form = document.getElementById('navbarSearchForm');
+        
+        if (!input || !dropdown) return;
+
+        let debounceTimer = null;
+        let activeIndex = -1;
+
+        function doSearch(query) {
+            if (query.length < 2) {
+                dropdown.style.display = 'none';
+                return;
+            }
+            dropdown.style.display = 'block';
+            loading.style.display = 'flex';
+            results.innerHTML = '';
+            empty.style.display = 'none';
+            viewAll.style.display = 'none';
+            activeIndex = -1;
+
+            fetch(`{% url 'dashboard:search_suggestions' %}?q=${encodeURIComponent(query)}`, {
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+                .then(r => {
+                    if (!r.ok || r.redirected) throw new Error('not-ok');
+                    return r.json();
+                })
+                .then(data => {
+                    loading.style.display = 'none';
+                    results.innerHTML = '';
+
+                    if (data.results && data.results.length > 0) {
+                        data.results.forEach((item, idx) => {
+                            const a = document.createElement('a');
+                            a.href = item.url;
+                            a.className = 'search-result-item';
+                            a.dataset.index = idx;
+                            a.innerHTML = `
+                                <div class="search-result-icon" style="background:${item.color}">
+                                    <i class="material-icons">${item.icon}</i>
+                                </div>
+                                <div class="search-result-info">
+                                    <p class="search-result-title">${escHtml(item.title)}</p>
+                                    <p class="search-result-subtitle">${escHtml(item.subtitle)}</p>
+                                </div>
+                                <span class="search-result-badge" style="background:${item.color}15;color:${item.color}">
+                                    ${item.type === 'ticket' ? 'Ticket' : 'Cliente'}
+                                </span>
+                            `;
+                            results.appendChild(a);
+                        });
+                        viewAll.href = `{% url 'dashboard:search' %}?q=${encodeURIComponent(query)}`;
+                        viewAll.style.display = 'flex';
+                        empty.style.display = 'none';
+                    } else {
+                        empty.style.display = 'flex';
+                        viewAll.href = `{% url 'dashboard:search' %}?q=${encodeURIComponent(query)}`;
+                        viewAll.style.display = 'flex';
+                    }
+                })
+                .catch(() => {
+                    loading.style.display = 'none';
+                    empty.style.display = 'flex';
+                });
+        }
+
+        function escHtml(str) {
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        // Debounce ao digitar
+        input.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => doSearch(this.value.trim()), 300);
+        });
+
+        // Ao focar, se já tem texto, buscar
+        input.addEventListener('focus', function() {
+            if (this.value.trim().length >= 2) doSearch(this.value.trim());
+        });
+
+        // Navegação por teclado
+        input.addEventListener('keydown', function(e) {
+            const items = results.querySelectorAll('.search-result-item');
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIndex = Math.min(activeIndex + 1, items.length - 1);
+                items.forEach((it, i) => it.style.background = i === activeIndex ? '#f1f5f9' : '');
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIndex = Math.max(activeIndex - 1, 0);
+                items.forEach((it, i) => it.style.background = i === activeIndex ? '#f1f5f9' : '');
+            } else if (e.key === 'Enter' && activeIndex >= 0 && items[activeIndex]) {
+                e.preventDefault();
+                window.location.href = items[activeIndex].href;
+            } else if (e.key === 'Escape') {
+                dropdown.style.display = 'none';
+                input.blur();
+            }
+        });
+
+        // Fechar ao clicar fora
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.navbar-search-wrapper')) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        // Impedir submit do form se há um item selecionado
+        form.addEventListener('submit', function(e) {
+            const items = results.querySelectorAll('.search-result-item');
+            if (activeIndex >= 0 && items[activeIndex]) {
+                e.preventDefault();
+                window.location.href = items[activeIndex].href;
+            }
+        });
+
+        // Atalho global: Ctrl+K ou Cmd+K para focar na busca
+        document.addEventListener('keydown', function(e) {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                input.focus();
+                input.select();
+            }
+        });
+    })();
+    </script>
+
 </body>
 </html>

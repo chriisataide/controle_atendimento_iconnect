@@ -52,6 +52,7 @@ MIDDLEWARE = [
     'dashboard.security.SecurityHeadersMiddleware',  # Headers de seguranca
     'dashboard.audit_system.AuditMiddleware',  # Audit trail de requests
     'dashboard.monitoring.MonitoringMiddleware',  # Monitoramento customizado
+    'dashboard.tenants.TenantMiddleware',  # Multi-tenancy — injeta tenant no request
     'axes.middleware.AxesMiddleware',  # Brute-force protection (deve ser ultimo)
 ]
 
@@ -72,6 +73,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'dashboard.rbac.rbac_context',
+                'dashboard.sso.sso_context',
+                'dashboard.tenants.tenant_context',
             ],
         },
     },
@@ -118,7 +121,7 @@ LOCALE_PATHS = [
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'assets']
+STATICFILES_DIRS = [BASE_DIR / 'assets', BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',

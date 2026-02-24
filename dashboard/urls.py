@@ -1,6 +1,9 @@
 from django.urls import path, include
 from . import views, integrations, sla_views, chat_views, push_views, executive_views, chatbot_ai_views, analytics_views
 from .monitoring import HealthCheckView, MetricsView
+from . import ticket_operations_views
+from . import tenants as tenant_views
+from . import workflow_builder_views
 
 app_name = 'dashboard'
 
@@ -117,6 +120,34 @@ urlpatterns = [
     path('automation/', views.automation_dashboard, name='automation'),
     path('automation/rules/', views.automation_rules, name='automation_rules'),
     path('automation/workflows/', views.automation_workflows, name='automation_workflows'),
+
+    # Visual Workflow Builder
+    path('workflows/builder/', workflow_builder_views.workflow_builder_view, name='workflow_builder'),
+    path('api/workflows/catalog/', workflow_builder_views.api_workflow_catalog, name='api_workflow_catalog'),
+    path('api/workflows/', workflow_builder_views.api_workflow_list, name='api_workflow_list'),
+    path('api/workflows/create/', workflow_builder_views.api_workflow_create, name='api_workflow_create'),
+    path('api/workflows/<int:pk>/update/', workflow_builder_views.api_workflow_update, name='api_workflow_update'),
+    path('api/workflows/<int:pk>/delete/', workflow_builder_views.api_workflow_delete, name='api_workflow_delete'),
+    path('api/workflows/<int:pk>/toggle/', workflow_builder_views.api_workflow_toggle, name='api_workflow_toggle'),
+    path('api/workflows/<int:pk>/duplicate/', workflow_builder_views.api_workflow_duplicate, name='api_workflow_duplicate'),
+    path('api/workflows/from-template/', workflow_builder_views.api_workflow_from_template, name='api_workflow_from_template'),
+    path('api/workflows/validate/', workflow_builder_views.api_workflow_validate, name='api_workflow_validate'),
+    path('api/workflows/metrics/', workflow_builder_views.api_workflow_metrics, name='api_workflow_metrics'),
+
+    # Ticket Operations — Merge / Split / Parent-Child
+    path('api/tickets/merge/', ticket_operations_views.api_merge_tickets, name='api_merge_tickets'),
+    path('api/tickets/split/', ticket_operations_views.api_split_ticket, name='api_split_ticket'),
+    path('api/tickets/<int:pk>/sub-tickets/', ticket_operations_views.api_add_sub_ticket, name='api_add_sub_ticket'),
+    path('api/tickets/<int:pk>/sub-tickets/remove/', ticket_operations_views.api_remove_sub_ticket, name='api_remove_sub_ticket'),
+    path('api/tickets/<int:pk>/hierarchy/', ticket_operations_views.api_ticket_hierarchy, name='api_ticket_hierarchy'),
+    path('api/tickets/<int:pk>/link/', ticket_operations_views.api_link_tickets, name='api_link_tickets'),
+
+    # Multi-tenancy
+    path('api/tenant/', tenant_views.api_tenant_info, name='api_tenant_info'),
+    path('api/tenant/members/', tenant_views.api_tenant_members, name='api_tenant_members'),
+    path('api/tenant/invite/', tenant_views.api_tenant_invite, name='api_tenant_invite'),
+    path('api/tenant/switch/', tenant_views.api_switch_tenant, name='api_switch_tenant'),
+    path('api/tenants/', tenant_views.api_user_tenants, name='api_user_tenants'),
 
     # User management (admin/staff)
     path('users/', views.UserListView.as_view(), name='user_list'),

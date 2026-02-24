@@ -11,7 +11,7 @@ from datetime import timedelta
 import json
 import logging
 
-from ..models import Ticket
+from ..models import Ticket, Cliente, StatusTicket, PrioridadeTicket
 from ..chatbot_service import ChatbotService
 
 logger = logging.getLogger('dashboard')
@@ -115,47 +115,101 @@ def custom_reports(request):
 
 @login_required
 def advanced_search(request):
-    """Busca Avançada"""
+    """Busca Avançada com filtros"""
     query = request.GET.get('q', '')
-    results = []
+    filter_type = request.GET.get('type', 'all')  # all, tickets, clientes
+    filter_status = request.GET.get('status', '')
+    filter_priority = request.GET.get('priority', '')
+    tickets = []
+    clientes = []
 
     if query:
-        tickets = Ticket.objects.select_related(
-            'cliente', 'agente', 'categoria'
-        ).filter(
-            Q(titulo__icontains=query) |
-            Q(descricao__icontains=query) |
-            Q(numero__icontains=query)
-        )[:20]
+        # Buscar tickets
+        if filter_type in ('all', 'tickets'):
+            qs = Ticket.objects.select_related(
+                'cliente', 'agente', 'categoria'
+            ).filter(
+                Q(titulo__icontains=query) |
+                Q(descricao__icontains=query) |
+                Q(numero__icontains=query) |
+                Q(tags__icontains=query)
+            )
+            if filter_status:
+                qs = qs.filter(status=filter_status)
+            if filter_priority:
+                qs = qs.filter(prioridade=filter_priority)
+            tickets = qs.order_by('-criado_em')[:30]
 
-        results = [
-            {
-                'id': t.id,
-                'title': t.titulo,
-                'number': t.numero,
-                'type': 'ticket'
-            } for t in tickets
-        ]
+        # Buscar clientes
+        if filter_type in ('all', 'clientes'):
+            clientes = Cliente.objects.filter(
+                Q(nome__icontains=query) |
+                Q(email__icontains=query) |
+                Q(empresa__icontains=query)
+            ).order_by('nome')[:20]
+
+    total = len(tickets) + len(clientes)
 
     return render(request, 'dashboard/search/advanced.html', {
         'title': 'Busca Avançada',
         'query': query,
-        'results': results,
+        'tickets': tickets,
+        'clientes': clientes,
+        'total': total,
+        'filter_type': filter_type,
+        'filter_status': filter_status,
+        'filter_priority': filter_priority,
+        'status_choices': StatusTicket.choices,
+        'priority_choices': PrioridadeTicket.choices,
         'current_page': 'search'
     })
 
 
-@login_required
 def search_suggestions(request):
-    """Sugestões de Busca"""
-    query = request.GET.get('q', '')
-    suggestions = []
+    """Sugestões de Busca — retorna tickets + clientes para live search (sem @login_required para evitar 302 no fetch)"""
+    query = request.GET.get('q', '').strip()
+    results = []
+
+    # Checar auth manualmente (retorna JSON vazio em vez de redirect)
+    if not request.user.is_authenticated:
+        return JsonResponse({'results': [], 'query': query})
 
     if len(query) >= 2:
-        tickets = Ticket.objects.filter(titulo__icontains=query)[:5]
-        suggestions = [t.titulo for t in tickets]
+        # Buscar tickets por numero, titulo
+        tickets = Ticket.objects.filter(
+            Q(titulo__icontains=query) | Q(numero__icontains=query)
+        ).select_related('cliente').order_by('-criado_em')[:5]
 
-    return JsonResponse({'suggestions': suggestions})
+        status_colors = {
+            'aberto': '#06b6d4', 'em_andamento': '#f59e0b',
+            'aguardando_cliente': '#8b5cf6', 'resolvido': '#22c55e', 'fechado': '#94a3b8'
+        }
+        for t in tickets:
+            results.append({
+                'type': 'ticket',
+                'icon': 'confirmation_number',
+                'title': f'#{t.numero} — {t.titulo[:60]}',
+                'subtitle': f'{t.get_status_display()} · {t.cliente.nome}',
+                'url': f'/dashboard/tickets/{t.id}/',
+                'color': status_colors.get(t.status, '#64748b'),
+            })
+
+        # Buscar clientes por nome ou empresa
+        clientes = Cliente.objects.filter(
+            Q(nome__icontains=query) | Q(empresa__icontains=query)
+        ).order_by('nome')[:3]
+
+        for c in clientes:
+            results.append({
+                'type': 'cliente',
+                'icon': 'person',
+                'title': c.nome,
+                'subtitle': c.empresa or c.email,
+                'url': f'/dashboard/clientes/{c.id}/',
+                'color': '#22c55e',
+            })
+
+    return JsonResponse({'results': results, 'query': query})
 
 
 # ========== PWA ==========

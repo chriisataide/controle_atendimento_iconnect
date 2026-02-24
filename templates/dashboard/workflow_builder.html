@@ -1,0 +1,483 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Workflow Builder — iConnect{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+      <div>
+        <h4 class="mb-1"><i class="fas fa-project-diagram me-2"></i>Visual Workflow Builder</h4>
+        <p class="text-sm text-muted mb-0">Arraste e solte para criar fluxos de automação</p>
+      </div>
+      <div>
+        <button class="btn btn-sm btn-outline-info me-2" id="btnTemplates">
+          <i class="fas fa-magic me-1"></i> Templates
+        </button>
+        <button class="btn btn-sm btn-primary" id="btnNewWorkflow">
+          <i class="fas fa-plus me-1"></i> Novo Workflow
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Layout: Sidebar + Canvas -->
+  <div class="row">
+    <!-- Sidebar: Componentes -->
+    <div class="col-lg-3 col-md-4">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-gradient-dark text-white p-3">
+          <h6 class="mb-0"><i class="fas fa-toolbox me-2"></i>Componentes</h6>
+        </div>
+        <div class="card-body p-2">
+          <!-- Triggers -->
+          <p class="text-xs text-uppercase text-muted fw-bold px-2 mt-2 mb-1">Gatilhos</p>
+          <div id="triggerPalette" class="palette-section">
+            {% for t in triggers %}
+            <div class="palette-item draggable" draggable="true"
+                 data-type="trigger" data-id="{{ t.id }}" data-label="{{ t.label }}">
+              <i class="{{ t.icon }} me-2" style="color:{{ t.color }}"></i>
+              <span class="text-sm">{{ t.label }}</span>
+            </div>
+            {% endfor %}
+          </div>
+
+          <!-- Conditions -->
+          <p class="text-xs text-uppercase text-muted fw-bold px-2 mt-3 mb-1">Condições</p>
+          <div id="conditionPalette" class="palette-section">
+            {% for c in conditions %}
+            <div class="palette-item draggable" draggable="true"
+                 data-type="condition" data-id="{{ c.id }}" data-label="{{ c.label }}">
+              <i class="{{ c.icon }} me-2" style="color:{{ c.color }}"></i>
+              <span class="text-sm">{{ c.label }}</span>
+            </div>
+            {% endfor %}
+          </div>
+
+          <!-- Actions -->
+          <p class="text-xs text-uppercase text-muted fw-bold px-2 mt-3 mb-1">Ações</p>
+          <div id="actionPalette" class="palette-section">
+            {% for a in actions %}
+            <div class="palette-item draggable" draggable="true"
+                 data-type="action" data-id="{{ a.id }}" data-label="{{ a.label }}">
+              <i class="{{ a.icon }} me-2" style="color:{{ a.color }}"></i>
+              <span class="text-sm">{{ a.label }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Canvas -->
+    <div class="col-lg-6 col-md-4">
+      <div class="card shadow-sm" style="min-height:600px">
+        <div class="card-header p-3 d-flex justify-content-between align-items-center">
+          <input type="text" id="workflowName" class="form-control form-control-sm w-50"
+                 placeholder="Nome do workflow..." value="">
+          <div>
+            <button class="btn btn-sm btn-outline-success me-1" id="btnValidate" title="Validar">
+              <i class="fas fa-check-circle"></i>
+            </button>
+            <button class="btn btn-sm btn-success" id="btnSave" title="Salvar">
+              <i class="fas fa-save me-1"></i>Salvar
+            </button>
+          </div>
+        </div>
+        <div class="card-body p-0 position-relative" id="builderCanvas"
+             style="min-height:550px; background: repeating-linear-gradient(
+               0deg, transparent, transparent 19px, #f1f5f9 20px),
+               repeating-linear-gradient(90deg, transparent, transparent 19px, #f1f5f9 20px);">
+          <!-- Drop zone -->
+          <div id="dropZone" class="d-flex flex-column align-items-center pt-5" style="min-height:500px">
+            <div id="emptyState" class="text-center text-muted mt-5">
+              <i class="fas fa-project-diagram fa-3x mb-3 opacity-25"></i>
+              <p>Arraste componentes da barra lateral para cá</p>
+            </div>
+            <!-- Flow nodes are appended here -->
+            <div id="flowNodes" class="w-100 px-4 pt-3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Existing Rules -->
+    <div class="col-lg-3 col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-gradient-dark text-white p-3">
+          <h6 class="mb-0"><i class="fas fa-list me-2"></i>Workflows Salvos</h6>
+        </div>
+        <div class="card-body p-2" id="rulesList">
+          {% for r in rules %}
+          <div class="rule-card p-2 mb-2 border rounded cursor-pointer" data-rule-id="{{ r.id }}">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-sm fw-bold">{{ r.name }}</span>
+              <div>
+                <span class="badge {% if r.is_active %}bg-success{% else %}bg-secondary{% endif %} text-xs">
+                  {% if r.is_active %}Ativo{% else %}Inativo{% endif %}
+                </span>
+              </div>
+            </div>
+            <small class="text-muted">{{ r.get_trigger_event_display }}</small>
+            <div class="mt-1">
+              <button class="btn btn-xs btn-outline-primary btn-edit-rule" data-id="{{ r.id }}" title="Editar">
+                <i class="fas fa-pen"></i>
+              </button>
+              <button class="btn btn-xs btn-outline-warning btn-toggle-rule" data-id="{{ r.id }}" title="Ativar/Desativar">
+                <i class="fas fa-power-off"></i>
+              </button>
+              <button class="btn btn-xs btn-outline-info btn-duplicate-rule" data-id="{{ r.id }}" title="Duplicar">
+                <i class="fas fa-copy"></i>
+              </button>
+              <button class="btn btn-xs btn-outline-danger btn-delete-rule" data-id="{{ r.id }}" title="Excluir">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          {% empty %}
+          <p class="text-sm text-muted text-center py-3">Nenhum workflow criado</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Metrics Card -->
+      <div class="card shadow-sm mt-3">
+        <div class="card-header bg-gradient-info text-white p-3">
+          <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Métricas</h6>
+        </div>
+        <div class="card-body pt-3" id="metricsCard">
+          <p class="text-sm text-muted">Carregando...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Templates Modal -->
+  <div class="modal fade" id="templatesModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-magic me-2"></i>Templates de Workflow</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          {% for tmpl in templates %}
+          <div class="d-flex align-items-center p-3 border rounded mb-2 template-option"
+               data-template="{{ tmpl.id }}" style="cursor:pointer">
+            <i class="{{ tmpl.icon }} fa-2x me-3 text-primary"></i>
+            <div>
+              <strong>{{ tmpl.label }}</strong>
+              <p class="text-sm text-muted mb-0">{{ tmpl.description }}</p>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.palette-item {
+  padding: 8px 12px;
+  margin: 2px 0;
+  border-radius: 6px;
+  cursor: grab;
+  transition: all .15s;
+  border: 1px solid transparent;
+}
+.palette-item:hover {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+}
+.palette-item:active { cursor: grabbing; }
+.flow-node {
+  background: #fff;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin: 8px auto;
+  max-width: 340px;
+  position: relative;
+  transition: all .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+.flow-node:hover { border-color: #06b6d4; box-shadow: 0 4px 12px rgba(6,182,212,.15); }
+.flow-node .node-delete {
+  position: absolute; top: -8px; right: -8px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #ef4444; color: #fff; border: none;
+  font-size: 10px; display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity .15s;
+}
+.flow-node:hover .node-delete { opacity: 1; }
+.flow-connector {
+  text-align: center; color: #cbd5e1; font-size: 20px;
+}
+.rule-card:hover { background: #f8fafc; }
+.btn-xs { padding: 2px 6px; font-size: 11px; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const csrfToken = '{{ csrf_token }}';
+  const flowNodes = document.getElementById('flowNodes');
+  const emptyState = document.getElementById('emptyState');
+  let currentEditId = null;
+  let workflowData = { trigger: null, conditions: {}, actions: {} };
+
+  // ====== DRAG & DROP ======
+  document.querySelectorAll('.draggable').forEach(el => {
+    el.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', JSON.stringify({
+        type: el.dataset.type,
+        id: el.dataset.id,
+        label: el.dataset.label,
+      }));
+    });
+  });
+
+  const dropZone = document.getElementById('dropZone');
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.background = '#f0fdf4'; });
+  dropZone.addEventListener('dragleave', () => { dropZone.style.background = ''; });
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.style.background = '';
+    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+    addFlowNode(data);
+  });
+
+  function addFlowNode(data) {
+    emptyState.style.display = 'none';
+
+    // Prevent duplicate triggers
+    if (data.type === 'trigger' && workflowData.trigger) {
+      alert('Apenas um gatilho por workflow!');
+      return;
+    }
+
+    const id = data.type + '_' + data.id + '_' + Date.now();
+    const colors = { trigger: '#22c55e', condition: '#06b6d4', action: '#0891b2' };
+    const labels = { trigger: 'Gatilho', condition: 'Condição', action: 'Ação' };
+
+    // Add connector if not first
+    if (flowNodes.children.length > 0) {
+      const conn = document.createElement('div');
+      conn.className = 'flow-connector';
+      conn.innerHTML = '<i class="fas fa-arrow-down"></i>';
+      conn.dataset.connectorFor = id;
+      flowNodes.appendChild(conn);
+    }
+
+    const node = document.createElement('div');
+    node.className = 'flow-node';
+    node.id = id;
+    node.style.borderLeftColor = colors[data.type];
+    node.style.borderLeftWidth = '4px';
+    node.innerHTML = `
+      <button class="node-delete" onclick="removeNode('${id}')">&times;</button>
+      <div class="d-flex align-items-center mb-1">
+        <span class="badge text-white me-2" style="background:${colors[data.type]};font-size:10px">${labels[data.type]}</span>
+        <strong class="text-sm">${data.label}</strong>
+      </div>
+      <div class="node-config text-xs text-muted" id="cfg_${id}">
+        ${getConfigHtml(data)}
+      </div>
+    `;
+    flowNodes.appendChild(node);
+
+    // Store in workflow data
+    if (data.type === 'trigger') workflowData.trigger = data.id;
+    else if (data.type === 'condition') workflowData.conditions[data.id] = {};
+    else if (data.type === 'action') workflowData.actions[data.id] = {};
+  }
+
+  function getConfigHtml(data) {
+    if (data.type === 'trigger') return '<em>Dispara quando: ' + data.label + '</em>';
+    if (data.type === 'condition') return `<input class="form-control form-control-sm mt-1" placeholder="Valor da condição..." data-cond-id="${data.id}">`;
+    if (data.type === 'action') return `<input class="form-control form-control-sm mt-1" placeholder="Config da ação..." data-action-id="${data.id}">`;
+    return '';
+  }
+
+  window.removeNode = function(id) {
+    const node = document.getElementById(id);
+    const conn = document.querySelector(`[data-connector-for="${id}"]`);
+    if (conn) conn.remove();
+    if (node) node.remove();
+
+    // Update workflowData
+    const parts = id.split('_');
+    const type = parts[0];
+    const dataId = parts[1];
+    if (type === 'trigger') workflowData.trigger = null;
+    else if (type === 'condition') delete workflowData.conditions[dataId];
+    else if (type === 'action') delete workflowData.actions[dataId];
+
+    if (flowNodes.children.length === 0) emptyState.style.display = '';
+  };
+
+  // ====== SAVE ======
+  document.getElementById('btnSave').addEventListener('click', async () => {
+    const name = document.getElementById('workflowName').value.trim();
+    if (!name) { alert('Dê um nome ao workflow'); return; }
+    if (!workflowData.trigger) { alert('Adicione um gatilho'); return; }
+    if (Object.keys(workflowData.actions).length === 0) { alert('Adicione pelo menos uma ação'); return; }
+
+    // Collect config values from inputs
+    document.querySelectorAll('[data-cond-id]').forEach(el => {
+      try { workflowData.conditions[el.dataset.condId] = JSON.parse(el.value); } catch { workflowData.conditions[el.dataset.condId] = el.value; }
+    });
+    document.querySelectorAll('[data-action-id]').forEach(el => {
+      try { workflowData.actions[el.dataset.actionId] = JSON.parse(el.value); } catch { workflowData.actions[el.dataset.actionId] = el.value; }
+    });
+
+    const payload = {
+      name: name,
+      trigger_event: workflowData.trigger,
+      conditions: workflowData.conditions,
+      actions: workflowData.actions,
+      priority: 5,
+    };
+
+    const url = currentEditId
+      ? `/dashboard/api/workflows/${currentEditId}/update/`
+      : '/dashboard/api/workflows/create/';
+    const method = currentEditId ? 'PUT' : 'POST';
+
+    const resp = await fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+      body: JSON.stringify(payload),
+    });
+
+    if (resp.ok) {
+      alert('Workflow salvo com sucesso!');
+      location.reload();
+    } else {
+      const err = await resp.json();
+      alert('Erro: ' + (err.error || JSON.stringify(err)));
+    }
+  });
+
+  // ====== VALIDATE ======
+  document.getElementById('btnValidate').addEventListener('click', async () => {
+    const resp = await fetch('/dashboard/api/workflows/validate/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+      body: JSON.stringify({
+        trigger_event: workflowData.trigger,
+        conditions: workflowData.conditions,
+        actions: workflowData.actions,
+      }),
+    });
+    const data = await resp.json();
+    if (data.valid) alert('✅ Workflow válido!');
+    else alert('❌ Erros: ' + data.errors.join(', '));
+  });
+
+  // ====== NEW ======
+  document.getElementById('btnNewWorkflow').addEventListener('click', () => {
+    currentEditId = null;
+    document.getElementById('workflowName').value = '';
+    flowNodes.innerHTML = '';
+    emptyState.style.display = '';
+    workflowData = { trigger: null, conditions: {}, actions: {} };
+  });
+
+  // ====== TEMPLATES ======
+  document.getElementById('btnTemplates').addEventListener('click', () => {
+    new bootstrap.Modal(document.getElementById('templatesModal')).show();
+  });
+
+  document.querySelectorAll('.template-option').forEach(el => {
+    el.addEventListener('click', async () => {
+      const resp = await fetch('/dashboard/api/workflows/from-template/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+        body: JSON.stringify({ template_name: el.dataset.template }),
+      });
+      if (resp.ok) { alert('Template aplicado!'); location.reload(); }
+      else { const err = await resp.json(); alert('Erro: ' + err.error); }
+    });
+  });
+
+  // ====== RULE ACTIONS ======
+  document.querySelectorAll('.btn-toggle-rule').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      await fetch(`/dashboard/api/workflows/${btn.dataset.id}/toggle/`, {
+        method: 'POST', headers: { 'X-CSRFToken': csrfToken },
+      });
+      location.reload();
+    });
+  });
+
+  document.querySelectorAll('.btn-delete-rule').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!confirm('Excluir este workflow?')) return;
+      await fetch(`/dashboard/api/workflows/${btn.dataset.id}/delete/`, {
+        method: 'DELETE', headers: { 'X-CSRFToken': csrfToken },
+      });
+      location.reload();
+    });
+  });
+
+  document.querySelectorAll('.btn-duplicate-rule').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      await fetch(`/dashboard/api/workflows/${btn.dataset.id}/duplicate/`, {
+        method: 'POST', headers: { 'X-CSRFToken': csrfToken },
+      });
+      location.reload();
+    });
+  });
+
+  document.querySelectorAll('.btn-edit-rule').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const resp = await fetch('/dashboard/api/workflows/');
+      const data = await resp.json();
+      const rule = data.rules.find(r => r.id == btn.dataset.id);
+      if (!rule) return;
+
+      currentEditId = rule.id;
+      document.getElementById('workflowName').value = rule.name;
+      flowNodes.innerHTML = '';
+      emptyState.style.display = 'none';
+      workflowData = { trigger: rule.trigger_event, conditions: rule.conditions || {}, actions: rule.actions || {} };
+
+      // Render trigger
+      addFlowNode({ type: 'trigger', id: rule.trigger_event, label: rule.trigger_event });
+      // Render conditions
+      Object.keys(rule.conditions || {}).forEach(k => addFlowNode({ type: 'condition', id: k, label: k }));
+      // Render actions
+      Object.keys(rule.actions || {}).forEach(k => addFlowNode({ type: 'action', id: k, label: k }));
+    });
+  });
+
+  // ====== METRICS ======
+  (async () => {
+    try {
+      const resp = await fetch('/dashboard/api/workflows/metrics/');
+      const m = await resp.json();
+      document.getElementById('metricsCard').innerHTML = `
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-sm">Execuções (30d)</span>
+          <strong>${m.total_executions}</strong>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-sm">Taxa de sucesso</span>
+          <strong>${m.success_rate.toFixed(1)}%</strong>
+        </div>
+      `;
+    } catch(e) {
+      document.getElementById('metricsCard').innerHTML = '<p class="text-sm text-muted">Sem dados</p>';
+    }
+  })();
+});
+</script>
+{% endblock %}

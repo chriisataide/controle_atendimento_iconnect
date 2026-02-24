@@ -1,136 +1,419 @@
 {% extends "base.html" %}
 
-{% block title %}Busca Avançada - iConnect{% endblock %}
-{% block page_title %}Busca Avançada{% endblock %}
-{% block breadcrumb_title %}Busca Avançada{% endblock %}
+{% block title %}Busca — iConnect{% endblock %}
+{% block page_title %}Busca{% endblock %}
+{% block breadcrumb_title %}Busca{% endblock %}
 
 {% block extra_css %}
 <style>
-.search-card {
-    border-radius: 15px;
-    transition: transform 0.2s;
-    border: 2px solid transparent;
-}
-.search-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--bs-primary);
-}
-.result-item {
-    border-radius: 10px;
-    border: 1px solid #e0e0e0;
-    transition: all 0.2s;
-}
-.result-item:hover {
-    border-color: var(--bs-primary);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
+    /* ===== SEARCH PAGE ===== */
+    .search-hero {
+        background: linear-gradient(135deg, #334155 0%, #475569 50%, #64748b 100%);
+        border-radius: 16px;
+        padding: 32px 36px;
+        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
+    }
+    .search-hero::before {
+        content: '';
+        position: absolute;
+        top: -30%; right: -10%;
+        width: 260px; height: 260px;
+        background: rgba(255,255,255,0.06);
+        border-radius: 50%;
+    }
+    .search-hero h2 {
+        color: #fff;
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+    .search-hero p {
+        color: rgba(255,255,255,0.7);
+        font-size: 13px;
+        margin-bottom: 16px;
+    }
+    .search-input-wrapper {
+        display: flex;
+        gap: 10px;
+        align-items: stretch;
+    }
+    .search-input-box {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255,255,255,0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        padding: 0 16px;
+        border: 2px solid transparent;
+        transition: all 0.2s;
+    }
+    .search-input-box:focus-within {
+        background: #fff;
+        border-color: rgba(255,255,255,0.4);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .search-input-box i { color: #06b6d4; font-size: 22px; flex-shrink: 0; }
+    .search-input-box input {
+        border: none; outline: none; background: none;
+        font-size: 14px; color: #1e293b;
+        padding: 12px 0; flex: 1; min-width: 0;
+    }
+    .search-input-box input::placeholder { color: #94a3b8; }
+    .search-btn {
+        background: #fff;
+        color: #06b6d4;
+        border: none;
+        border-radius: 12px;
+        padding: 0 24px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+    .search-btn:hover { background: #f8fafc; transform: translateY(-1px); }
+
+    /* Filtros */
+    .filter-bar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+        align-items: center;
+    }
+    .filter-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 14px;
+        background: #fff;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.15s;
+        text-decoration: none;
+    }
+    .filter-chip:hover { border-color: #06b6d4; color: #06b6d4; text-decoration: none; }
+    .filter-chip.active {
+        background: #06b6d4;
+        border-color: #06b6d4;
+        color: #fff;
+    }
+    .filter-chip i { font-size: 15px; }
+
+    /* Stats */
+    .search-stats {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+        padding: 0 2px;
+    }
+    .search-stats .stat-count {
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+    }
+    .search-stats .stat-label {
+        font-size: 12px;
+        color: #94a3b8;
+    }
+
+    /* Result cards */
+    .result-card {
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        padding: 16px 18px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        transition: all 0.15s;
+        text-decoration: none;
+        color: inherit;
+    }
+    .result-card:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 16px rgba(6,182,212,0.08);
+        transform: translateY(-1px);
+        text-decoration: none;
+        color: inherit;
+    }
+    .result-icon {
+        width: 42px; height: 42px;
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+    .result-icon i { color: #fff; font-size: 20px; }
+    .result-info { flex: 1; min-width: 0; }
+    .result-title {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0 0 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .result-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .result-meta span {
+        font-size: 11.5px;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+    }
+    .result-meta span i { font-size: 13px; }
+    .result-badges {
+        display: flex;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+    .r-badge {
+        font-size: 10px;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 6px;
+        letter-spacing: 0.3px;
+    }
+
+    /* Status colors */
+    .status-aberto { background: #ecfeff; color: #0891b2; }
+    .status-em_andamento { background: #fef3c7; color: #d97706; }
+    .status-aguardando_cliente { background: #ecfeff; color: #0891b2; }
+    .status-resolvido { background: #dcfce7; color: #16a34a; }
+    .status-fechado { background: #f1f5f9; color: #64748b; }
+    .priority-critica { background: #fef2f2; color: #dc2626; }
+    .priority-alta { background: #fff7ed; color: #ea580c; }
+    .priority-media { background: #fefce8; color: #ca8a04; }
+    .priority-baixa { background: #f0fdf4; color: #16a34a; }
+    .result-arrow { color: #cbd5e1; font-size: 18px; flex-shrink: 0; }
+
+    /* Section label */
+    .section-title {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #94a3b8;
+        padding: 8px 4px 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .section-title::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #e2e8f0;
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+    }
+    .empty-state i { font-size: 56px; color: #cbd5e1; margin-bottom: 12px; }
+    .empty-state h5 { font-size: 16px; font-weight: 600; color: #334155; margin-bottom: 6px; }
+    .empty-state p { font-size: 13px; color: #94a3b8; margin: 0; }
+    .empty-tips {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+    .empty-tip {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-size: 12px;
+        color: #64748b;
+    }
+    .empty-tip code { background: #e2e8f0; padding: 1px 5px; border-radius: 4px; font-size: 11px; color: #06b6d4; }
+
+    /* Dark mode */
+    .dark-version .search-input-box { background: rgba(30,41,59,0.9); }
+    .dark-version .search-input-box:focus-within { background: #1e293b; }
+    .dark-version .search-input-box input { color: #e2e8f0; }
+    .dark-version .filter-chip { background: var(--card-bg); border-color: var(--border-color); color: var(--text-secondary); }
+    .dark-version .filter-chip.active { background: #06b6d4; border-color: #06b6d4; color: #fff; }
+    .dark-version .result-card { background: var(--card-bg); border-color: var(--border-color); }
+    .dark-version .result-card:hover { border-color: #06b6d4; }
+    .dark-version .result-title { color: var(--text-primary); }
+    .dark-version .empty-state { background: var(--card-bg); border-color: var(--border-color); }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="ms-3">
-        <h3 class="mb-0 h4 font-weight-bolder">Busca Avançada</h3>
-        <p class="mb-4">Pesquise tickets, clientes e dados do sistema</p>
+
+    <!-- Search Hero -->
+    <div class="search-hero">
+        <h2><i class="material-icons" style="vertical-align:-3px; margin-right:6px;">search</i> Busca Avançada</h2>
+        <p>Pesquise tickets, clientes e dados do sistema</p>
+        <form method="GET" action="" id="searchForm">
+            <div class="search-input-wrapper">
+                <div class="search-input-box">
+                    <i class="material-icons">search</i>
+                    <input type="text" name="q" value="{{ query }}"
+                           placeholder="Digite número do ticket, nome do cliente, título..."
+                           autofocus autocomplete="off">
+                    {% if query %}
+                    <a href="{% url 'dashboard:search' %}" style="color:#94a3b8; text-decoration:none;">
+                        <i class="material-icons" style="font-size:18px;">close</i>
+                    </a>
+                    {% endif %}
+                </div>
+                <button type="submit" class="search-btn">
+                    <i class="material-icons" style="font-size:18px;">search</i> Buscar
+                </button>
+            </div>
+            <!-- Filtros hidden -->
+            <input type="hidden" name="type" id="filterType" value="{{ filter_type }}">
+            <input type="hidden" name="status" id="filterStatus" value="{{ filter_status }}">
+            <input type="hidden" name="priority" id="filterPriority" value="{{ filter_priority }}">
+        </form>
     </div>
 
-    <!-- Search Bar -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <form method="GET" action="" class="d-flex gap-2">
-                        <div class="input-group input-group-outline flex-grow-1">
-                            <label class="form-label">Buscar tickets por título, descrição ou número...</label>
-                            <input type="text" class="form-control" name="q" value="{{ query }}" autofocus>
-                        </div>
-                        <button type="submit" class="btn btn-primary mb-0">
-                            <i class="material-icons">search</i> Buscar
-                        </button>
-                    </form>
-                </div>
+    {% if query %}
+    <!-- Filter chips -->
+    <div class="filter-bar">
+        <span style="font-size:11px; color:#94a3b8; font-weight:600; display:flex; align-items:center; gap:4px; margin-right:4px;">
+            <i class="material-icons" style="font-size:14px;">filter_list</i> Tipo:
+        </span>
+        <a href="?q={{ query }}&type=all" class="filter-chip {% if filter_type == 'all' %}active{% endif %}">
+            <i class="material-icons">select_all</i> Todos
+        </a>
+        <a href="?q={{ query }}&type=tickets" class="filter-chip {% if filter_type == 'tickets' %}active{% endif %}">
+            <i class="material-icons">confirmation_number</i> Tickets
+        </a>
+        <a href="?q={{ query }}&type=clientes" class="filter-chip {% if filter_type == 'clientes' %}active{% endif %}">
+            <i class="material-icons">people</i> Clientes
+        </a>
+
+        {% if filter_type != 'clientes' %}
+        <span style="font-size:11px; color:#94a3b8; font-weight:600; display:flex; align-items:center; gap:4px; margin-left:12px; margin-right:4px;">
+            Status:
+        </span>
+        {% for value, label in status_choices %}
+        <a href="?q={{ query }}&type={{ filter_type }}&status={% if filter_status == value %}{% else %}{{ value }}{% endif %}"
+           class="filter-chip {% if filter_status == value %}active{% endif %}">
+            {{ label }}
+        </a>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Stats -->
+    <div class="search-stats">
+        <span class="stat-count">{{ total }} resultado{{ total|pluralize:"s" }}</span>
+        <span class="stat-label">para "{{ query }}"</span>
+    </div>
+    {% endif %}
+
+    <!-- TICKET RESULTS -->
+    {% if tickets %}
+    <div class="section-title">
+        <i class="material-icons" style="font-size:14px;">confirmation_number</i>
+        Tickets ({{ tickets|length }})
+    </div>
+    {% for t in tickets %}
+    <a href="{% url 'dashboard:ticket_detail' t.id %}" class="result-card">
+        <div class="result-icon" style="background: {% if t.prioridade == 'critica' %}#ef4444{% elif t.prioridade == 'alta' %}#f97316{% elif t.prioridade == 'media' %}#eab308{% else %}#22c55e{% endif %}">
+            <i class="material-icons">confirmation_number</i>
+        </div>
+        <div class="result-info">
+            <p class="result-title">#{{ t.numero }} — {{ t.titulo }}</p>
+            <div class="result-meta">
+                <span><i class="material-icons">person</i> {{ t.cliente.nome }}</span>
+                {% if t.agente %}<span><i class="material-icons">support_agent</i> {{ t.agente.get_full_name|default:t.agente.username }}</span>{% endif %}
+                {% if t.categoria %}<span><i class="material-icons">label</i> {{ t.categoria.nome }}</span>{% endif %}
+                <span><i class="material-icons">schedule</i> {{ t.criado_em|timesince }} atrás</span>
             </div>
         </div>
+        <div class="result-badges">
+            <span class="r-badge status-{{ t.status }}">{{ t.get_status_display }}</span>
+            <span class="r-badge priority-{{ t.prioridade }}">{{ t.get_prioridade_display }}</span>
+        </div>
+        <i class="material-icons result-arrow">chevron_right</i>
+    </a>
+    {% endfor %}
+    {% endif %}
+
+    <!-- CLIENT RESULTS -->
+    {% if clientes %}
+    <div class="section-title" {% if tickets %}style="margin-top:20px;"{% endif %}>
+        <i class="material-icons" style="font-size:14px;">people</i>
+        Clientes ({{ clientes|length }})
     </div>
+    {% for c in clientes %}
+    <a href="{% url 'dashboard:cliente_detail' c.id %}" class="result-card">
+        <div class="result-icon" style="background: #22c55e">
+            <i class="material-icons">person</i>
+        </div>
+        <div class="result-info">
+            <p class="result-title">{{ c.nome }}</p>
+            <div class="result-meta">
+                {% if c.empresa %}<span><i class="material-icons">business</i> {{ c.empresa }}</span>{% endif %}
+                <span><i class="material-icons">email</i> {{ c.email }}</span>
+                <span><i class="material-icons">calendar_today</i> Cliente desde {{ c.criado_em|date:"d/m/Y" }}</span>
+            </div>
+        </div>
+        <div class="result-badges">
+            <span class="r-badge" style="background:#dcfce7; color:#16a34a;">Cliente</span>
+        </div>
+        <i class="material-icons result-arrow">chevron_right</i>
+    </a>
+    {% endfor %}
+    {% endif %}
 
-    <!-- Results -->
-    <div class="row">
-        <div class="col-12">
-            {% if query %}
-            <div class="card mb-3">
-                <div class="card-body py-2">
-                    <span class="text-sm text-secondary">
-                        {{ results|length }} resultado{{ results|length|pluralize:"s" }} encontrado{{ results|length|pluralize:"s" }} para "<strong>{{ query }}</strong>"
-                    </span>
-                </div>
-            </div>
-            {% endif %}
-
-            {% if results %}
-            <div class="card">
-                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-                    <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
-                        <h6 class="text-white text-capitalize ps-3">Resultados da Busca</h6>
-                    </div>
-                </div>
-                <div class="card-body px-0 pb-2">
-                    <div class="table-responsive p-0">
-                        <table class="table align-items-center mb-0">
-                            <thead>
-                                <tr>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ticket</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Título</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tipo</th>
-                                    <th class="text-secondary opacity-7">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for result in results %}
-                                <tr>
-                                    <td>
-                                        <div class="d-flex px-2 py-1">
-                                            <div class="d-flex flex-column justify-content-center">
-                                                <h6 class="mb-0 text-sm">#{{ result.number }}</h6>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <p class="text-sm font-weight-bold mb-0">{{ result.title }}</p>
-                                    </td>
-                                    <td class="align-middle text-center text-sm">
-                                        <span class="badge badge-sm bg-gradient-info">{{ result.type|title }}</span>
-                                    </td>
-                                    <td class="align-middle">
-                                        <a href="{% url 'dashboard:ticket_detail' result.id %}" class="btn btn-link text-info px-2 mb-0">
-                                            <i class="material-icons text-sm">visibility</i> Ver
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            {% elif query %}
-            <div class="card">
-                <div class="card-body text-center py-5">
-                    <i class="material-icons opacity-5" style="font-size: 48px;">search_off</i>
-                    <p class="text-secondary mt-2 mb-0">Nenhum resultado encontrado para "<strong>{{ query }}</strong>"</p>
-                    <p class="text-xs text-secondary">Tente usar termos diferentes ou mais genéricos</p>
-                </div>
-            </div>
-            {% else %}
-            <div class="card">
-                <div class="card-body text-center py-5">
-                    <i class="material-icons opacity-5" style="font-size: 48px;">search</i>
-                    <p class="text-secondary mt-2 mb-0">Digite um termo para iniciar a busca</p>
-                    <p class="text-xs text-secondary">Você pode buscar por número do ticket, título ou descrição</p>
-                </div>
-            </div>
-            {% endif %}
+    <!-- Empty states -->
+    {% if query and not tickets and not clientes %}
+    <div class="empty-state">
+        <i class="material-icons">search_off</i>
+        <h5>Nenhum resultado para "{{ query }}"</h5>
+        <p>Tente palavras diferentes ou remova os filtros aplicados</p>
+        <div class="empty-tips">
+            <div class="empty-tip">Busque por número: <code>TK-00001</code></div>
+            <div class="empty-tip">Por nome: <code>João Silva</code></div>
+            <div class="empty-tip">Por empresa: <code>Tech Solutions</code></div>
         </div>
     </div>
+    {% elif not query %}
+    <div class="empty-state">
+        <i class="material-icons">manage_search</i>
+        <h5>O que você está procurando?</h5>
+        <p>Digite um termo acima para buscar tickets, clientes e dados do sistema</p>
+        <div class="empty-tips">
+            <div class="empty-tip"><i class="material-icons" style="font-size:14px; vertical-align:-2px;">confirmation_number</i> Nº do ticket</div>
+            <div class="empty-tip"><i class="material-icons" style="font-size:14px; vertical-align:-2px;">person</i> Nome do cliente</div>
+            <div class="empty-tip"><i class="material-icons" style="font-size:14px; vertical-align:-2px;">business</i> Nome da empresa</div>
+            <div class="empty-tip"><i class="material-icons" style="font-size:14px; vertical-align:-2px;">description</i> Título ou descrição</div>
+        </div>
+    </div>
+    {% endif %}
+
 </div>
 {% endblock %}

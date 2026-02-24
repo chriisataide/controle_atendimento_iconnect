@@ -12,7 +12,7 @@
     display: inline-block;
     width: 8px;
     height: 8px;
-    background-color: #10b981;
+    background-color: #22c55e;
     border-radius: 50%;
     margin-right: 8px;
     animation: pulse 2s infinite;
@@ -20,18 +20,18 @@
 
 @keyframes pulse {
     0% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
     }
     70% {
-        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+        box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
     }
     100% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
     }
 }
 
 .chatbot-stats-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
     border-radius: 15px;
     padding: 1.5rem;
     color: white;
@@ -39,7 +39,7 @@
 }
 
 .conversation-card {
-    border: 1px solid #e3e6f0;
+    border: 1px solid #e2e8f0;
     border-radius: 10px;
     padding: 1rem;
     margin-bottom: 1rem;
@@ -61,23 +61,23 @@
 }
 
 .confidence-high {
-    background-color: #d1fae5;
-    color: #065f46;
+    background-color: #dcfce7;
+    color: #16a34a;
 }
 
 .confidence-medium {
     background-color: #fef3c7;
-    color: #92400e;
+    color: #d97706;
 }
 
 .confidence-low {
-    background-color: #fee2e2;
-    color: #991b1b;
+    background-color: #fef2f2;
+    color: #dc2626;
 }
 
 .message-preview {
     font-size: 0.9rem;
-    color: #6b7280;
+    color: #64748b;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -95,13 +95,13 @@
 .analytics-number {
     font-size: 2.5rem;
     font-weight: 700;
-    color: #1f2937;
+    color: #1e293b;
     display: block;
 }
 
 .analytics-label {
     font-size: 0.9rem;
-    color: #6b7280;
+    color: #64748b;
     margin-top: 0.5rem;
 }
 
@@ -136,7 +136,7 @@
 .nav-tabs .nav-link {
     border: none;
     border-bottom: 2px solid transparent;
-    color: #6b7280;
+    color: #64748b;
     font-weight: 500;
 }
 
@@ -149,13 +149,13 @@
 .empty-state {
     text-align: center;
     padding: 3rem;
-    color: #6b7280;
+    color: #64748b;
 }
 
 .empty-state i {
     font-size: 3rem;
     margin-bottom: 1rem;
-    color: #d1d5db;
+    color: #cbd5e1;
 }
 
 /* Estilos para os gráficos */
@@ -187,7 +187,7 @@
         <div class="ms-3">
             <h3 class="mb-0 h4 font-weight-bolder">Dashboard Chatbot IA</h3>
             <p class="mb-4">
-                <span class="real-time-indicator" style="display: inline-block; width: 8px; height: 8px; background-color: rgb(16, 185, 129); border-radius: 50%; margin-right: 8px; animation: 2s ease 0s infinite normal none running pulse;"></span>
+                <span class="real-time-indicator" style="display: inline-block; width: 8px; height: 8px; background-color: rgb(34, 197, 94); border-radius: 50%; margin-right: 8px; animation: 2s ease 0s infinite normal none running pulse;"></span>
                 Monitore e gerencie as interações do seu assistente virtual inteligente.
             </p>
         </div>
@@ -531,7 +531,7 @@ function initializeCharts() {
                     datasets: [{
                         data: [highConf, mediumConf, lowConf],
                         backgroundColor: [
-                            '#10b981',
+                            '#22c55e',
                             '#f59e0b',
                             '#ef4444'
                         ],
@@ -589,7 +589,7 @@ function initializeCharts() {
                         label: 'Mensagens por Hora',
                         data: hourlyData,
                         borderColor: '#334155',
-                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
                         borderWidth: 3,
                         fill: true,
                         tension: 0.4,
@@ -613,7 +613,7 @@ function initializeCharts() {
                             title: {
                                 display: true,
                                 text: 'Hora do Dia',
-                                color: '#6b7280',
+                                color: '#64748b',
                                 font: {
                                     size: 12,
                                     weight: 'bold'
@@ -628,7 +628,7 @@ function initializeCharts() {
                             title: {
                                 display: true,
                                 text: 'Número de Mensagens',
-                                color: '#6b7280',
+                                color: '#64748b',
                                 font: {
                                     size: 12,
                                     weight: 'bold'

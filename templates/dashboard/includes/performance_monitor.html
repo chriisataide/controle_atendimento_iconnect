@@ -109,11 +109,11 @@
                 if (elementId.includes('load') || elementId.includes('fcp') || elementId.includes('lcp')) {
                     const numValue = parseInt(value);
                     if (numValue < 1000) {
-                        element.style.color = '#28a745'; // Green - Good
+                        element.style.color = '#22c55e'; // Green - Good
                     } else if (numValue < 2500) {
                         element.style.color = '#ffc107'; // Yellow - Needs improvement
                     } else {
-                        element.style.color = '#dc3545'; // Red - Poor
+                        element.style.color = '#ef4444'; // Red - Poor
                     }
                 }
             }

@@ -21,6 +21,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from dashboard import views
 from dashboard.monitoring import HealthCheckView
+from dashboard.sso import SSOProviderListView, SSOLoginView, SSOCallbackView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -34,6 +35,11 @@ urlpatterns = [
     path('financeiro/', include('dashboard.financeiro_urls')),  # Módulo Financeiro
     path('estoque/', include('dashboard.estoque_urls')),  # Módulo de Estoque
     path('equipamentos/', include('dashboard.equipamento_urls')),  # Gestão de Equipamentos
+    
+    # SSO — Single Sign-On (SAML 2.0 + OIDC)
+    path('sso/providers/', SSOProviderListView.as_view(), name='sso_providers'),
+    path('sso/login/<slug:slug>/', SSOLoginView.as_view(), name='sso_login'),
+    path('sso/callback/<slug:slug>/', SSOCallbackView.as_view(), name='sso_callback'),
     
     # APIs REST
     path('api/v1/', include('dashboard.api_urls')),
