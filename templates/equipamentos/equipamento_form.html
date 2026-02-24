@@ -298,7 +298,7 @@
                             </div>
                         </div>
 
-                        <!-- 2. Localização / Cliente -->
+                        <!-- 2. Localização / Ponto de Venda -->
                         <div class="eq-section mb-4" data-section="2">
                             <div class="eq-section-title">
                                 <i class="material-symbols-rounded">location_on</i>
@@ -306,12 +306,12 @@
                             </div>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">Cliente / Ponto de Venda</label>
-                                    <select name="cliente" class="form-select" id="clienteSelect">
-                                        <option value="">— Em estoque (sem cliente) —</option>
-                                        {% for c in clientes %}
-                                        <option value="{{ c.pk }}" {% if equipamento.cliente_id == c.pk %}selected{% endif %}>
-                                            {{ c.nome }}{% if c.empresa %} — {{ c.empresa }}{% endif %}
+                                    <label class="form-label">Ponto de Venda</label>
+                                    <select name="ponto_de_venda" class="form-select" id="pdvSelect">
+                                        <option value="">— Em estoque (sem PdV) —</option>
+                                        {% for pdv in pontos_de_venda %}
+                                        <option value="{{ pdv.pk }}" {% if equipamento.ponto_de_venda_id == pdv.pk %}selected{% endif %}>
+                                            {{ pdv.nome_fantasia }} — {{ pdv.cliente.nome }}
                                         </option>
                                         {% endfor %}
                                     </select>
@@ -483,7 +483,7 @@
                     </div>
                     <div class="eq-tip-item">
                         <i class="material-symbols-rounded eq-tip-icon" style="color: #22c55e;">check_circle</i>
-                        <span class="eq-tip-text">Equipamentos sem cliente ficam como "Em Estoque"</span>
+                        <span class="eq-tip-text">Equipamentos sem PdV ficam como "Em Estoque"</span>
                     </div>
                     <div class="eq-tip-item">
                         <i class="material-symbols-rounded eq-tip-icon" style="color: #22c55e;">check_circle</i>
@@ -561,9 +561,9 @@ document.addEventListener('DOMContentLoaded', function() {
         updateStatusBadge();
     }
 
-    var clienteSelect = document.getElementById('clienteSelect');
-    if (clienteSelect && statusSelect) {
-        clienteSelect.addEventListener('change', function() {
+    var pdvSelect = document.getElementById('pdvSelect');
+    if (pdvSelect && statusSelect) {
+        pdvSelect.addEventListener('change', function() {
             if (this.value && statusSelect.value === 'em_estoque') {
                 statusSelect.value = 'ativo';
                 updateStatusBadge();

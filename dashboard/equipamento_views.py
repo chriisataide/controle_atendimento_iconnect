@@ -20,7 +20,7 @@ from .models_equipamento import (
     Equipamento, HistoricoEquipamento, AlertaEquipamento,
     ConfiguracaoAlertaEquipamento
 )
-from .models import Cliente, Ticket
+from .models import Cliente, PontoDeVenda, Ticket
 
 logger = logging.getLogger('dashboard')
 
@@ -69,7 +69,7 @@ def equipamento_dashboard(request):
 
     # Movimentações recentes
     movimentacoes_recentes = HistoricoEquipamento.objects.select_related(
-        'equipamento', 'cliente_novo', 'realizado_por', 'ticket'
+        'equipamento', 'pdv_novo', 'realizado_por', 'ticket'
     )[:10]
 
     # Equipamentos por tipo (para gráfico)
@@ -133,7 +133,7 @@ class EquipamentoListView(ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        qs = Equipamento.objects.select_related('cliente', 'criado_por')
+        qs = Equipamento.objects.select_related('ponto_de_venda', 'ponto_de_venda__cliente', 'criado_por')
 
         # Filtros
         search = self.request.GET.get('q', '').strip()
@@ -144,7 +144,8 @@ class EquipamentoListView(ListView):
                 Q(marca__icontains=search) |
                 Q(tipo__icontains=search) |
                 Q(patrimonio__icontains=search) |
-                Q(cliente__nome__icontains=search)
+                Q(ponto_de_venda__nome_fantasia__icontains=search) |
+                Q(ponto_de_venda__cliente__nome__icontains=search)
             )
 
         status = self.request.GET.get('status')
@@ -155,9 +156,13 @@ class EquipamentoListView(ListView):
         if tipo:
             qs = qs.filter(tipo=tipo)
 
+        pdv_id = self.request.GET.get('pdv')
+        if pdv_id:
+            qs = qs.filter(ponto_de_venda_id=pdv_id)
+
         cliente_id = self.request.GET.get('cliente')
         if cliente_id:
-            qs = qs.filter(cliente_id=cliente_id)
+            qs = qs.filter(ponto_de_venda__cliente_id=cliente_id)
 
         return qs
 
@@ -169,10 +174,12 @@ class EquipamentoListView(ListView):
             .distinct().order_by('tipo')
         )
         ctx['clientes'] = Cliente.objects.all().order_by('nome')
+        ctx['pontos_de_venda'] = PontoDeVenda.objects.select_related('cliente').all().order_by('nome_fantasia')
         ctx['filtros'] = {
             'q': self.request.GET.get('q', ''),
             'status': self.request.GET.get('status', ''),
             'tipo': self.request.GET.get('tipo', ''),
+            'pdv': self.request.GET.get('pdv', ''),
             'cliente': self.request.GET.get('cliente', ''),
         }
         ctx['alertas_pendentes'] = AlertaEquipamento.objects.filter(resolvido=False).count()
@@ -187,7 +194,7 @@ class EquipamentoDetailView(DetailView):
     context_object_name = 'equipamento'
 
     def get_queryset(self):
-        return Equipamento.objects.select_related('cliente', 'criado_por')
+        return Equipamento.objects.select_related('ponto_de_venda', 'ponto_de_venda__cliente', 'criado_por')
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -197,7 +204,7 @@ class EquipamentoDetailView(DetailView):
 
         # Histórico de movimentações
         ctx['historico'] = equip.historico.select_related(
-            'cliente_anterior', 'cliente_novo', 'equipamento_substituido',
+            'pdv_anterior', 'pdv_novo', 'equipamento_substituido',
             'ticket', 'realizado_por'
         )[:20]
 
@@ -245,9 +252,9 @@ def equipamento_create(request):
                     criado_por=request.user,
                 )
 
-                cliente_id = request.POST.get('cliente')
-                if cliente_id:
-                    equip.cliente_id = int(cliente_id)
+                pdv_id = request.POST.get('ponto_de_venda')
+                if pdv_id:
+                    equip.ponto_de_venda_id = int(pdv_id)
 
                 data_instalacao = request.POST.get('data_instalacao')
                 if data_instalacao:
@@ -259,12 +266,12 @@ def equipamento_create(request):
 
                 equip.save()
 
-                # Se está instalado em cliente, registrar no histórico
-                if equip.cliente and equip.status == 'ativo':
+                # Se está instalado em PdV, registrar no histórico
+                if equip.ponto_de_venda and equip.status == 'ativo':
                     HistoricoEquipamento.objects.create(
                         equipamento=equip,
                         tipo_movimentacao='instalacao',
-                        cliente_novo=equip.cliente,
+                        pdv_novo=equip.ponto_de_venda,
                         motivo='Cadastro inicial — equipamento já instalado',
                         realizado_por=request.user,
                     )
@@ -277,6 +284,7 @@ def equipamento_create(request):
             messages.error(request, f'Erro ao cadastrar equipamento: {e}')
 
     clientes = Cliente.objects.all().order_by('nome')
+    pontos_de_venda = PontoDeVenda.objects.select_related('cliente').all().order_by('nome_fantasia')
     status_choices = Equipamento.StatusEquipamento.choices
     # Sugerir tipos já existentes
     tipos_existentes = list(
@@ -285,6 +293,7 @@ def equipamento_create(request):
 
     return render(request, 'equipamentos/equipamento_form.html', {
         'clientes': clientes,
+        'pontos_de_venda': pontos_de_venda,
         'status_choices': status_choices,
         'tipos_existentes': tipos_existentes,
         'modo': 'criar',
@@ -309,8 +318,8 @@ def equipamento_update(request, pk):
                 equip.status = request.POST.get('status', equip.status)
                 equip.observacoes = request.POST.get('observacoes', '').strip()
 
-                cliente_id = request.POST.get('cliente')
-                equip.cliente_id = int(cliente_id) if cliente_id else None
+                pdv_id = request.POST.get('ponto_de_venda')
+                equip.ponto_de_venda_id = int(pdv_id) if pdv_id else None
 
                 data_instalacao = request.POST.get('data_instalacao')
                 equip.data_instalacao = data_instalacao if data_instalacao else None
@@ -327,6 +336,7 @@ def equipamento_update(request, pk):
             messages.error(request, f'Erro ao atualizar: {e}')
 
     clientes = Cliente.objects.all().order_by('nome')
+    pontos_de_venda = PontoDeVenda.objects.select_related('cliente').all().order_by('nome_fantasia')
     status_choices = Equipamento.StatusEquipamento.choices
     tipos_existentes = list(
         Equipamento.objects.values_list('tipo', flat=True).distinct().order_by('tipo')
@@ -335,6 +345,7 @@ def equipamento_update(request, pk):
     return render(request, 'equipamentos/equipamento_form.html', {
         'equipamento': equip,
         'clientes': clientes,
+        'pontos_de_venda': pontos_de_venda,
         'status_choices': status_choices,
         'tipos_existentes': tipos_existentes,
         'modo': 'editar',
@@ -352,12 +363,12 @@ def registrar_movimentacao(request, pk):
         try:
             with transaction.atomic():
                 tipo_mov = request.POST['tipo_movimentacao']
-                cliente_anterior = equip.cliente
+                pdv_anterior = equip.ponto_de_venda
 
                 mov = HistoricoEquipamento(
                     equipamento=equip,
                     tipo_movimentacao=tipo_mov,
-                    cliente_anterior=cliente_anterior,
+                    pdv_anterior=pdv_anterior,
                     motivo=request.POST.get('motivo', '').strip(),
                     observacoes=request.POST.get('observacoes', '').strip(),
                     realizado_por=request.user,
@@ -373,10 +384,10 @@ def registrar_movimentacao(request, pk):
                 if ticket_id:
                     mov.ticket_id = int(ticket_id)
 
-                # Novo cliente (para instalação/troca)
-                novo_cliente_id = request.POST.get('novo_cliente')
-                if novo_cliente_id:
-                    mov.cliente_novo_id = int(novo_cliente_id)
+                # Novo PdV (para instalação/troca)
+                novo_pdv_id = request.POST.get('novo_pdv')
+                if novo_pdv_id:
+                    mov.pdv_novo_id = int(novo_pdv_id)
 
                 # Equipamento substituído (para troca)
                 substituido_id = request.POST.get('equipamento_substituido')
@@ -393,16 +404,16 @@ def registrar_movimentacao(request, pk):
                 # Atualizar o equipamento com base no tipo de movimentação
                 if tipo_mov == 'instalacao':
                     equip.status = 'ativo'
-                    if novo_cliente_id:
-                        equip.cliente_id = int(novo_cliente_id)
+                    if novo_pdv_id:
+                        equip.ponto_de_venda_id = int(novo_pdv_id)
                     equip.data_instalacao = timezone.now().date()
                 elif tipo_mov == 'troca':
                     equip.status = 'ativo'
-                    if novo_cliente_id:
-                        equip.cliente_id = int(novo_cliente_id)
+                    if novo_pdv_id:
+                        equip.ponto_de_venda_id = int(novo_pdv_id)
                 elif tipo_mov == 'retirada' or tipo_mov == 'devolucao':
                     equip.status = 'em_estoque'
-                    equip.cliente = None
+                    equip.ponto_de_venda = None
                 elif tipo_mov == 'manutencao':
                     equip.status = 'em_manutencao'
 
@@ -419,29 +430,29 @@ def registrar_movimentacao(request, pk):
             logger.error(f'Erro ao registrar movimentação: {e}')
             messages.error(request, f'Erro: {e}')
 
-    # Buscar tickets do cliente para vincular
-    tickets_cliente = []
-    if equip.cliente:
-        tickets_cliente = Ticket.objects.filter(
-            cliente=equip.cliente
+    # Buscar tickets do PdV para vincular
+    tickets_pdv = []
+    if equip.ponto_de_venda:
+        tickets_pdv = Ticket.objects.filter(
+            ponto_de_venda=equip.ponto_de_venda
         ).order_by('-criado_em')[:20]
 
-    # Equipamentos do mesmo cliente (para troca)
-    equipamentos_cliente = []
-    if equip.cliente:
-        equipamentos_cliente = Equipamento.objects.filter(
-            cliente=equip.cliente, status='ativo'
+    # Equipamentos do mesmo PdV (para troca)
+    equipamentos_pdv = []
+    if equip.ponto_de_venda:
+        equipamentos_pdv = Equipamento.objects.filter(
+            ponto_de_venda=equip.ponto_de_venda, status='ativo'
         ).exclude(pk=equip.pk)
 
-    clientes = Cliente.objects.all().order_by('nome')
+    pontos_de_venda = PontoDeVenda.objects.select_related('cliente').all().order_by('nome_fantasia')
     tipo_choices = HistoricoEquipamento.TipoMovimentacao.choices
 
     return render(request, 'equipamentos/registrar_movimentacao.html', {
         'equipamento': equip,
         'tipo_choices': tipo_choices,
-        'clientes': clientes,
-        'tickets_cliente': tickets_cliente,
-        'equipamentos_cliente': equipamentos_cliente,
+        'pontos_de_venda': pontos_de_venda,
+        'tickets_pdv': tickets_pdv,
+        'equipamentos_pdv': equipamentos_pdv,
     })
 
 
@@ -460,7 +471,7 @@ def alerta_list(request):
         alertas = AlertaEquipamento.objects.filter(resolvido=False)
 
     alertas = alertas.select_related(
-        'equipamento', 'equipamento__cliente', 'resolvido_por'
+        'equipamento', 'equipamento__ponto_de_venda', 'equipamento__ponto_de_venda__cliente', 'resolvido_por'
     ).order_by('-criado_em')
 
     # Paginação
@@ -492,19 +503,19 @@ def alerta_resolver(request, pk):
     })
 
 
-# ========== RELATÓRIO POR CLIENTE ==========
+# ========== RELATÓRIO POR PONTO DE VENDA ==========
 
 @login_required
 def equipamentos_por_cliente(request, cliente_id):
-    """Equipamentos instalados em um cliente específico."""
+    """Equipamentos instalados nos PdVs de um cliente específico."""
     cliente = get_object_or_404(Cliente, pk=cliente_id)
+    pdvs = PontoDeVenda.objects.filter(cliente=cliente)
     equipamentos = Equipamento.objects.filter(
-        cliente=cliente
-    ).order_by('tipo', 'modelo')
+        ponto_de_venda__cliente=cliente
+    ).select_related('ponto_de_venda').order_by('ponto_de_venda__nome_fantasia', 'tipo', 'modelo')
 
     limite_30d = timezone.now() - timedelta(days=30)
 
-    # Métricas do cliente
     total_equipamentos = equipamentos.count()
     total_chamados_equip = 0
     total_trocas = 0
@@ -515,6 +526,7 @@ def equipamentos_por_cliente(request, cliente_id):
 
     return render(request, 'equipamentos/equipamentos_cliente.html', {
         'cliente': cliente,
+        'pontos_de_venda': pdvs,
         'equipamentos': equipamentos,
         'total_equipamentos': total_equipamentos,
         'total_chamados_equip': total_chamados_equip,
@@ -526,9 +538,9 @@ def equipamentos_por_cliente(request, cliente_id):
 
 @login_required
 def api_equipamentos_cliente(request, cliente_id):
-    """API ajax: retorna equipamentos de um cliente (para selects dinâmicos)."""
+    """API ajax: retorna equipamentos dos PdVs de um cliente."""
     equipamentos = Equipamento.objects.filter(
-        cliente_id=cliente_id, status='ativo'
+        ponto_de_venda__cliente_id=cliente_id, status='ativo'
     ).values('id', 'numero_serie', 'tipo', 'modelo', 'marca')
 
     return JsonResponse({'equipamentos': list(equipamentos)})

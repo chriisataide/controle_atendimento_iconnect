@@ -15,7 +15,7 @@ logger = logging.getLogger('dashboard')
 
 
 class Equipamento(models.Model):
-    """Equipamento/ativo instalado em um cliente."""
+    """Equipamento/ativo instalado em um ponto de venda."""
 
     class StatusEquipamento(models.TextChoices):
         ATIVO = 'ativo', 'Ativo'
@@ -41,10 +41,10 @@ class Equipamento(models.Model):
     )
 
     # Localização
-    cliente = models.ForeignKey(
-        'Cliente', on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='equipamentos',
-        help_text="Cliente onde o equipamento está instalado (vazio = em estoque)"
+    ponto_de_venda = models.ForeignKey(
+        'PontoDeVenda', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='equipamentos', verbose_name="Ponto de Venda",
+        help_text="Ponto de venda onde o equipamento está instalado (vazio = em estoque)"
     )
     local_instalacao = models.CharField(
         "Local de Instalação", max_length=200, blank=True,
@@ -80,13 +80,13 @@ class Equipamento(models.Model):
         verbose_name_plural = "Equipamentos"
         ordering = ['-criado_em']
         indexes = [
-            models.Index(fields=['cliente', 'status'], name='idx_equip_cliente_status'),
+            models.Index(fields=['ponto_de_venda', 'status'], name='idx_equip_pdv_status'),
             models.Index(fields=['tipo', 'status'], name='idx_equip_tipo_status'),
         ]
 
     def __str__(self):
-        cliente_label = self.cliente.nome if self.cliente else "Em estoque"
-        return f"{self.tipo} {self.marca} {self.modelo} — {cliente_label}"
+        pdv_label = self.ponto_de_venda.nome_fantasia if self.ponto_de_venda else "Em estoque"
+        return f"{self.tipo} {self.marca} {self.modelo} — {pdv_label}"
 
     @property
     def garantia_ativa(self):
@@ -127,16 +127,18 @@ class HistoricoEquipamento(models.Model):
         "Tipo", max_length=20, choices=TipoMovimentacao.choices, db_index=True
     )
 
-    # Cliente (de/para)
-    cliente_anterior = models.ForeignKey(
-        'Cliente', on_delete=models.SET_NULL, null=True, blank=True,
+    # Ponto de venda (de/para)
+    pdv_anterior = models.ForeignKey(
+        'PontoDeVenda', on_delete=models.SET_NULL, null=True, blank=True,
         related_name='historico_equipamento_saida',
-        help_text="Cliente de onde o equipamento saiu"
+        verbose_name="PdV Anterior",
+        help_text="Ponto de venda de onde o equipamento saiu"
     )
-    cliente_novo = models.ForeignKey(
-        'Cliente', on_delete=models.SET_NULL, null=True, blank=True,
+    pdv_novo = models.ForeignKey(
+        'PontoDeVenda', on_delete=models.SET_NULL, null=True, blank=True,
         related_name='historico_equipamento_entrada',
-        help_text="Cliente para onde o equipamento foi"
+        verbose_name="PdV Novo",
+        help_text="Ponto de venda para onde o equipamento foi"
     )
 
     # Troca: equipamento substituído

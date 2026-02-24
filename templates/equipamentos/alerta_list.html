@@ -238,8 +238,9 @@
                                 </a>
                                 <div class="al-equip-meta">
                                     SN: {{ alerta.equipamento.numero_serie }}
-                                    {% if alerta.equipamento.cliente %}
-                                    <br>{{ alerta.equipamento.cliente.nome }}
+                                    {% if alerta.equipamento.ponto_de_venda %}
+                                    <br>{{ alerta.equipamento.ponto_de_venda.nome_fantasia }}
+                                    <br><small>{{ alerta.equipamento.ponto_de_venda.cliente.nome }}</small>
                                     {% endif %}
                                 </div>
                             </td>

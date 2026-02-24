@@ -100,7 +100,7 @@ class HistoricoEquipamentoInline(admin.TabularInline):
     extra = 0
     readonly_fields = ('realizado_em', 'realizado_por')
     fields = (
-        'tipo_movimentacao', 'cliente_anterior', 'cliente_novo',
+        'tipo_movimentacao', 'pdv_anterior', 'pdv_novo',
         'equipamento_substituido', 'ticket', 'motivo', 'realizado_em', 'realizado_por'
     )
 
@@ -115,13 +115,13 @@ class AlertaEquipamentoInline(admin.TabularInline):
 @admin.register(Equipamento)
 class EquipamentoAdmin(admin.ModelAdmin):
     list_display = (
-        'numero_serie', 'tipo', 'marca', 'modelo', 'cliente',
+        'numero_serie', 'tipo', 'marca', 'modelo', 'ponto_de_venda',
         'status', 'total_chamados', 'total_trocas', 'data_instalacao'
     )
     list_filter = ('status', 'tipo', 'criado_em')
-    search_fields = ('numero_serie', 'modelo', 'marca', 'tipo', 'patrimonio', 'cliente__nome')
+    search_fields = ('numero_serie', 'modelo', 'marca', 'tipo', 'patrimonio', 'ponto_de_venda__nome_fantasia')
     readonly_fields = ('criado_em', 'atualizado_em', 'total_chamados', 'total_trocas')
-    list_select_related = ('cliente',)
+    list_select_related = ('ponto_de_venda', 'ponto_de_venda__cliente')
     inlines = [HistoricoEquipamentoInline, AlertaEquipamentoInline]
 
     fieldsets = (
@@ -129,7 +129,7 @@ class EquipamentoAdmin(admin.ModelAdmin):
             'fields': ('numero_serie', 'tipo', 'marca', 'modelo', 'patrimonio', 'descricao')
         }),
         ('Localização', {
-            'fields': ('cliente', 'local_instalacao')
+            'fields': ('ponto_de_venda', 'local_instalacao')
         }),
         ('Status e Datas', {
             'fields': ('status', 'data_instalacao', 'data_garantia', 'data_desativacao')
@@ -150,11 +150,11 @@ class EquipamentoAdmin(admin.ModelAdmin):
 
 @admin.register(HistoricoEquipamento)
 class HistoricoEquipamentoAdmin(admin.ModelAdmin):
-    list_display = ('equipamento', 'tipo_movimentacao', 'cliente_anterior', 'cliente_novo', 'realizado_em', 'realizado_por')
+    list_display = ('equipamento', 'tipo_movimentacao', 'pdv_anterior', 'pdv_novo', 'realizado_em', 'realizado_por')
     list_filter = ('tipo_movimentacao', 'realizado_em')
     search_fields = ('equipamento__numero_serie', 'equipamento__modelo', 'motivo')
     readonly_fields = ('realizado_em',)
-    list_select_related = ('equipamento', 'cliente_anterior', 'cliente_novo', 'realizado_por')
+    list_select_related = ('equipamento', 'pdv_anterior', 'pdv_novo', 'realizado_por')
 
 
 @admin.register(AlertaEquipamento)

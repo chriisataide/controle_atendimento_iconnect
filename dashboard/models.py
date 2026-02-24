@@ -19,8 +19,16 @@ logger = logging.getLogger('dashboard')
 # Modelo de Ponto de Venda
 # ----------------------
 class PontoDeVenda(models.Model):
-    """Ponto de venda com campos PII protegidos por criptografia (LGPD)."""
-    # Dados da Empresa
+    """Ponto de venda (unidade/filial) vinculado a um Cliente (empresa)."""
+    # Vínculo com Cliente (empresa)
+    cliente = models.ForeignKey(
+        'Cliente', on_delete=models.CASCADE, null=True, blank=True,
+        related_name='pontos_de_venda',
+        verbose_name="Cliente",
+        help_text="Empresa proprietária deste ponto de venda"
+    )
+
+    # Dados da Unidade
     razao_social = models.CharField("Razão Social", max_length=150)
     nome_fantasia = models.CharField("Nome Fantasia", max_length=150)
     cnpj = models.CharField("CNPJ", max_length=18, unique=True)
@@ -255,6 +263,11 @@ class Ticket(models.Model):
 
     numero = models.CharField(max_length=10, unique=True, blank=True, db_index=True)
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='tickets')
+    ponto_de_venda = models.ForeignKey(
+        PontoDeVenda, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='tickets', verbose_name="Ponto de Venda",
+        help_text="Unidade/filial onde o atendimento ocorre"
+    )
     agente = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='tickets_agente')
     categoria = models.ForeignKey(CategoriaTicket, on_delete=models.SET_NULL, null=True, blank=True)
     
