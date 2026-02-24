@@ -124,37 +124,15 @@ class TicketForm(forms.ModelForm):
         }
 
 class ClienteForm(forms.ModelForm):
-    """Formulário para cadastro de clientes (empresa)"""
-    
+    """Formulário simples para cadastro de clientes (instituições)"""
+
     class Meta:
         model = Cliente
-        fields = [
-            'nome', 'nome_fantasia', 'cnpj', 'inscricao_estadual', 'segmento',
-            'email', 'telefone', 'celular', 'website',
-            'cep', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'estado',
-            'responsavel_nome', 'responsavel_cargo', 'responsavel_telefone', 'responsavel_email',
-            'observacoes', 'ativo'
-        ]
+        fields = ['nome', 'segmento', 'email', 'telefone', 'observacoes', 'ativo']
         widgets = {
-            'nome': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Razão Social'}),
-            'nome_fantasia': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome Fantasia'}),
-            'cnpj': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '00.000.000/0000-00'}),
-            'inscricao_estadual': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Inscrição Estadual'}),
+            'nome': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome da instituição'}),
             'segmento': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Bancário, Varejo...'}),
             'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'email@empresa.com'}),
             'telefone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '(11) 1234-5678'}),
-            'celular': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '(11) 91234-5678'}),
-            'website': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://...'}),
-            'cep': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '00000-000'}),
-            'logradouro': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Rua, Avenida...'}),
-            'numero': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nº'}),
-            'complemento': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Sala, Andar...'}),
-            'bairro': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Bairro'}),
-            'cidade': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cidade'}),
-            'estado': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'UF'}),
-            'responsavel_nome': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome do responsável'}),
-            'responsavel_cargo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cargo / Função'}),
-            'responsavel_telefone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '(11) 91234-5678'}),
-            'responsavel_email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'email@empresa.com'}),
             'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Observações...'}),
         }

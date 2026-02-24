@@ -4,15 +4,18 @@ from django.contrib.auth.models import User
 from .models import Ticket, Cliente
 
 class ClienteSerializer(serializers.ModelSerializer):
+    total_pdvs = serializers.SerializerMethodField()
+
     class Meta:
         model = Cliente
         fields = [
-            'id', 'nome', 'nome_fantasia', 'cnpj', 'inscricao_estadual',
-            'segmento', 'empresa', 'email', 'telefone', 'celular', 'website',
-            'cep', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'estado',
-            'responsavel_nome', 'responsavel_cargo', 'responsavel_telefone', 'responsavel_email',
-            'observacoes', 'ativo', 'criado_em', 'atualizado_em'
+            'id', 'nome', 'segmento', 'email', 'telefone',
+            'observacoes', 'ativo', 'criado_em', 'atualizado_em', 'total_pdvs'
         ]
+        read_only_fields = ['id', 'criado_em', 'atualizado_em', 'total_pdvs']
+
+    def get_total_pdvs(self, obj):
+        return obj.pontos_de_venda.count() if hasattr(obj, 'pontos_de_venda') else 0
         read_only_fields = ['id', 'criado_em', 'atualizado_em']
 
 class UserSerializer(serializers.ModelSerializer):

@@ -96,44 +96,25 @@ class PontoDeVenda(models.Model):
 
 
 class Cliente(models.Model):
-    """Cliente (empresa/marca) com dados corporativos. Ex: Santander, Bradesco."""
+    """Cliente (empresa/marca). Ex: Santander, Bradesco.
+    Dados simples da instituição. Endereços e responsáveis ficam no PontoDeVenda."""
     user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='cliente_profile', help_text="Conta de usuario vinculada")
-    # Dados da empresa
-    nome = models.CharField(max_length=200, verbose_name="Nome / Razão Social")
-    nome_fantasia = models.CharField(max_length=200, blank=True, verbose_name="Nome Fantasia")
-    cnpj = models.CharField(max_length=20, blank=True, verbose_name="CNPJ")
-    inscricao_estadual = models.CharField(max_length=30, blank=True, verbose_name="Inscrição Estadual")
-    segmento = models.CharField(max_length=100, blank=True, verbose_name="Segmento / Ramo de Atividade",
+    nome = models.CharField(max_length=200, verbose_name="Nome da Instituição")
+    segmento = models.CharField(max_length=100, blank=True, verbose_name="Segmento / Ramo",
         help_text="Ex: Financeiro, Varejo, Saúde, Tecnologia")
-    email = models.EmailField(unique=True, verbose_name="E-mail Principal")
-    # Campos PII criptografados em repouso (LGPD Art. 46)
+    email = models.EmailField(unique=True, verbose_name="E-mail de Contato")
     telefone = models.CharField(max_length=500, blank=True, help_text="Criptografado em repouso", verbose_name="Telefone")
-    celular = models.CharField(max_length=500, blank=True, help_text="Criptografado em repouso", verbose_name="Celular / WhatsApp")
+    # Campo legado mantido por compatibilidade
     empresa = models.CharField(max_length=100, blank=True, verbose_name="Empresa (legado)")
-    website = models.URLField(blank=True, verbose_name="Website")
-    # Endereço
-    cep = models.CharField(max_length=10, blank=True, verbose_name="CEP")
-    logradouro = models.CharField(max_length=200, blank=True, verbose_name="Logradouro")
-    numero = models.CharField(max_length=20, blank=True, verbose_name="Número")
-    complemento = models.CharField(max_length=100, blank=True, verbose_name="Complemento")
-    bairro = models.CharField(max_length=100, blank=True, verbose_name="Bairro")
-    cidade = models.CharField(max_length=100, blank=True, verbose_name="Cidade")
-    estado = models.CharField(max_length=2, blank=True, verbose_name="UF")
-    # Contato do responsável
-    responsavel_nome = models.CharField(max_length=200, blank=True, verbose_name="Responsável - Nome")
-    responsavel_cargo = models.CharField(max_length=100, blank=True, verbose_name="Responsável - Cargo")
-    responsavel_telefone = models.CharField(max_length=500, blank=True, verbose_name="Responsável - Telefone")
-    responsavel_email = models.EmailField(blank=True, verbose_name="Responsável - E-mail")
-    # Observações
     observacoes = models.TextField(blank=True, verbose_name="Observações")
     ativo = models.BooleanField(default=True, verbose_name="Ativo")
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         verbose_name = "Cliente"
         verbose_name_plural = "Clientes"
-        
+
     def __str__(self):
         return self.nome
 
@@ -141,19 +122,12 @@ class Cliente(models.Model):
         from .crypto import encrypt_value
         if self.telefone and not self.telefone.startswith('enc::'):
             self.telefone = encrypt_value(self.telefone)
-        if self.celular and not self.celular.startswith('enc::'):
-            self.celular = encrypt_value(self.celular)
         super().save(*args, **kwargs)
 
     def get_telefone(self):
         """Retorna telefone descriptografado."""
         from .crypto import decrypt_value
         return decrypt_value(self.telefone)
-
-    def get_celular(self):
-        """Retorna celular descriptografado."""
-        from .crypto import decrypt_value
-        return decrypt_value(self.celular)
 
 
 class StatusTicket(models.TextChoices):

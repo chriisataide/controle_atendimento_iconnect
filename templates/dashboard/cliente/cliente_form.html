@@ -21,8 +21,6 @@
     margin-bottom: 1.5rem;
   }
   .input-group-outline .form-control,
-  .input-group-outline .form-select,
-  .input-group-outline select,
   .input-group-outline textarea {
     background-color: #f8fafc;
     border: 2px solid #e2e8f0;
@@ -34,8 +32,6 @@
     width: 100%;
   }
   .input-group-outline .form-control:focus,
-  .input-group-outline .form-select:focus,
-  .input-group-outline select:focus,
   .input-group-outline textarea:focus {
     background-color: white;
     border-color: #06b6d4;
@@ -63,8 +59,7 @@
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
-  .input-group-outline .form-control.is-invalid,
-  .input-group-outline .form-select.is-invalid {
+  .input-group-outline .form-control.is-invalid {
     border-color: #ef4444;
     box-shadow: 0 2px 8px rgba(239,68,68,0.15);
   }
@@ -108,6 +103,14 @@
     margin-right: 0.75rem;
     box-shadow: 0 4px 12px rgba(6,182,212,0.3);
   }
+  .info-note {
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    color: #0369a1;
+    font-size: 0.9rem;
+  }
   @keyframes slideInUp {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -120,14 +123,13 @@
 
 {% block content %}
 <div class="container-fluid py-2">
-  <!-- Page Header -->
   <div class="ms-3">
     <h3 class="mb-0 h4 font-weight-bolder">{{ titulo }}</h3>
-    <p class="mb-4">{% if object %}Atualize os dados do cliente{% else %}Cadastre um novo cliente (empresa) no sistema{% endif %}</p>
+    <p class="mb-4">{% if object %}Atualize os dados do cliente{% else %}Cadastre um novo cliente (instituição) no sistema{% endif %}</p>
   </div>
 
   <div class="row">
-    <div class="col-12 col-lg-12 mx-auto">
+    <div class="col-12 col-lg-8 mx-auto">
       <div class="card my-4">
         <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
           <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
@@ -152,180 +154,49 @@
           <form method="post" autocomplete="off" id="clienteForm">
             {% csrf_token %}
 
-            <!-- Seção: Dados da Empresa -->
+            <!-- Dados da Instituição -->
             <div class="form-section">
               <h6 class="mb-4 d-flex align-items-center">
                 <span class="section-icon"><i class="material-icons" style="font-size:1.1rem;">business</i></span>
-                Dados da Empresa
+                Dados da Instituição
               </h6>
+              <div class="info-note mb-4">
+                <i class="material-icons me-1" style="font-size:16px; vertical-align:middle;">info</i>
+                O cliente representa a <strong>marca / instituição</strong> (ex: Santander).
+                Endereço, CNPJ e responsável são cadastrados em cada <strong>Ponto de Venda</strong>.
+              </div>
               <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-8">
                   <div class="input-group-outline">
-                    <label class="form-label" for="id_nome">Razão Social / Nome <span class="text-danger">*</span></label>
+                    <label class="form-label" for="id_nome">Nome da Instituição <span class="text-danger">*</span></label>
                     {{ form.nome }}
                   </div>
                 </div>
-                <div class="col-md-6">
-                  <div class="input-group-outline">
-                    <label class="form-label" for="id_nome_fantasia">Nome Fantasia</label>
-                    {{ form.nome_fantasia }}
-                  </div>
-                </div>
                 <div class="col-md-4">
                   <div class="input-group-outline">
-                    <label class="form-label" for="id_cnpj">CNPJ</label>
-                    {{ form.cnpj }}
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="input-group-outline">
-                    <label class="form-label" for="id_inscricao_estadual">Inscrição Estadual</label>
-                    {{ form.inscricao_estadual }}
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="input-group-outline">
-                    <label class="form-label" for="id_segmento">Segmento / Ramo</label>
+                    <label class="form-label" for="id_segmento">Segmento</label>
                     {{ form.segmento }}
                   </div>
                 </div>
-              </div>
-            </div>
-
-            <!-- Seção: Contato -->
-            <div class="form-section">
-              <h6 class="mb-4 d-flex align-items-center">
-                <span class="section-icon"><i class="material-icons" style="font-size:1.1rem;">contact_phone</i></span>
-                Contato
-              </h6>
-              <div class="row">
                 <div class="col-md-6">
                   <div class="input-group-outline">
-                    <label class="form-label" for="id_email">E-mail Principal <span class="text-danger">*</span></label>
+                    <label class="form-label" for="id_email">E-mail de Contato <span class="text-danger">*</span></label>
                     {{ form.email }}
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-6">
                   <div class="input-group-outline">
                     <label class="form-label" for="id_telefone">Telefone</label>
                     {{ form.telefone }}
                   </div>
                 </div>
-                <div class="col-md-3">
-                  <div class="input-group-outline">
-                    <label class="form-label" for="id_celular">Celular / WhatsApp</label>
-                    {{ form.celular }}
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="input-group-outline">
-                    <label class="form-label" for="id_website">Website</label>
-                    {{ form.website }}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Seção: Endereço -->
-            <div class="form-section">
-              <h6 class="mb-4 d-flex align-items-center">
-                <span class="section-icon"><i class="material-icons" style="font-size:1.1rem;">location_on</i></span>
-                Endereço
-              </h6>
-              <div class="row">
-                <div class="col-md-3">
-                  <div class="input-group-outline">
-                    <label class="form-label" for="id_cep">CEP</label>
-                    {{ form.cep }}
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="input-group-outline">
-                    <label class="form-label" for="id_logradouro">Logradouro</label>
-                    {{ form.logradouro }}
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="input-group-outline">
-                    <label class="form-label" for="id_numero">Número</label>
-                    {{ form.numero }}
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="input-group-outline">
-                    <label class="form-label" for="id_complemento">Complemento</label>
-                    {{ form.complemento }}
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="input-group-outline">
-                    <label class="form-label" for="id_bairro">Bairro</label>
-                    {{ form.bairro }}
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="input-group-outline">
-                    <label class="form-label" for="id_cidade">Cidade</label>
-                    {{ form.cidade }}
-                  </div>
-                </div>
-                <div class="col-md-2">
-                  <div class="input-group-outline">
-                    <label class="form-label" for="id_estado">UF</label>
-                    {{ form.estado }}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Seção: Responsável -->
-            <div class="form-section">
-              <h6 class="mb-4 d-flex align-items-center">
-                <span class="section-icon"><i class="material-icons" style="font-size:1.1rem;">person</i></span>
-                Responsável pelo Contrato
-              </h6>
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="input-group-outline">
-                    <label class="form-label" for="id_responsavel_nome">Nome do Responsável</label>
-                    {{ form.responsavel_nome }}
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="input-group-outline">
-                    <label class="form-label" for="id_responsavel_cargo">Cargo / Função</label>
-                    {{ form.responsavel_cargo }}
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="input-group-outline">
-                    <label class="form-label" for="id_responsavel_telefone">Telefone do Responsável</label>
-                    {{ form.responsavel_telefone }}
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="input-group-outline">
-                    <label class="form-label" for="id_responsavel_email">E-mail do Responsável</label>
-                    {{ form.responsavel_email }}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Seção: Observações -->
-            <div class="form-section">
-              <h6 class="mb-4 d-flex align-items-center">
-                <span class="section-icon"><i class="material-icons" style="font-size:1.1rem;">notes</i></span>
-                Observações
-              </h6>
-              <div class="row">
                 <div class="col-12">
                   <div class="input-group-outline">
-                    <label class="form-label" for="id_observacoes">Observações Gerais</label>
+                    <label class="form-label" for="id_observacoes">Observações</label>
                     {{ form.observacoes }}
                   </div>
                 </div>
-                <div class="col-12 mt-2">
+                <div class="col-12">
                   <div class="form-check form-switch ps-0">
                     {{ form.ativo }}
                     <label class="form-check-label ms-2" for="id_ativo">Cliente ativo</label>
@@ -365,10 +236,9 @@
 
 {% block extra_js %}
 <script>
-// Floating labels
 function initFloatingLabels() {
     document.querySelectorAll('.input-group-outline').forEach(group => {
-        const input = group.querySelector('input, select, textarea');
+        const input = group.querySelector('input, textarea');
         const label = group.querySelector('.form-label');
         if (!input || !label) return;
         function updateState() {
@@ -386,7 +256,6 @@ function initFloatingLabels() {
     });
 }
 
-// Máscaras
 function maskInput(input, mask) {
     input.addEventListener('input', function() {
         let value = input.value.replace(/\D/g, '');
@@ -399,55 +268,14 @@ function maskInput(input, mask) {
     });
 }
 
-// ViaCEP - Busca endereço pelo CEP
-function initViaCEP() {
-    const cep = document.getElementById('id_cep');
-    if (!cep) return;
-    cep.addEventListener('blur', function() {
-        const val = cep.value.replace(/\D/g, '');
-        if (val.length !== 8) return;
-        fetch('https://viacep.com.br/ws/' + val + '/json/')
-            .then(r => r.json())
-            .then(data => {
-                if (data.erro) return;
-                const fill = {
-                    'id_logradouro': data.logradouro,
-                    'id_bairro': data.bairro,
-                    'id_cidade': data.localidade,
-                    'id_estado': data.uf,
-                    'id_complemento': data.complemento
-                };
-                Object.entries(fill).forEach(([id, val]) => {
-                    const el = document.getElementById(id);
-                    if (el && val) {
-                        el.value = val;
-                        el.dispatchEvent(new Event('input'));
-                    }
-                });
-                const num = document.getElementById('id_numero');
-                if (num) num.focus();
-            })
-            .catch(() => {});
-    });
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     initFloatingLabels();
-    initViaCEP();
 
-    // Máscaras
-    const cnpj = document.getElementById('id_cnpj');
-    if (cnpj) maskInput(cnpj, '##.###.###/####-##');
-    const cep = document.getElementById('id_cep');
-    if (cep) maskInput(cep, '#####-###');
+    // Máscara telefone
     const tel = document.getElementById('id_telefone');
-    if (tel) maskInput(tel, '(##) ####-####');
-    const cel = document.getElementById('id_celular');
-    if (cel) maskInput(cel, '(##) #####-####');
-    const rtel = document.getElementById('id_responsavel_telefone');
-    if (rtel) maskInput(rtel, '(##) #####-####');
+    if (tel) maskInput(tel, '(##) #####-####');
 
-    // Atalhos de teclado
+    // Atalhos
     document.addEventListener('keydown', function(e) {
         if (e.ctrlKey && e.key === 's') {
             e.preventDefault();
@@ -460,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Validação inline
+    // Validação
     const form = document.getElementById('clienteForm');
     if (form) {
         form.addEventListener('submit', function(e) {
