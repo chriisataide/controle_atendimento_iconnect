@@ -73,7 +73,12 @@ CACHES = {
 # ARQUIVOS ESTÁTICOS
 # ==========================================================================
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Django 5.x: STATICFILES_STORAGE migrado para STORAGES
+STORAGES = {
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 
 # ==========================================================================
 # CORS
@@ -98,15 +103,33 @@ CELERY_TIMEZONE = TIME_ZONE
 
 LOGGING['handlers']['file']['level'] = 'WARNING'
 LOGGING['handlers']['file']['filename'] = BASE_DIR / 'logs' / 'iconnect_prod.log'
+LOGGING['handlers']['file']['class'] = 'logging.handlers.RotatingFileHandler'
+LOGGING['handlers']['file']['maxBytes'] = 10 * 1024 * 1024  # 10 MB
+LOGGING['handlers']['file']['backupCount'] = 5
 LOGGING['loggers']['django']['level'] = 'WARNING'
 LOGGING['loggers']['dashboard']['level'] = 'WARNING'
 
 # Handler de erros críticos
 LOGGING['handlers']['error_file'] = {
     'level': 'ERROR',
-    'class': 'logging.FileHandler',
+    'class': 'logging.handlers.RotatingFileHandler',
     'filename': BASE_DIR / 'logs' / 'iconnect_errors.log',
     'formatter': 'verbose',
+    'maxBytes': 10 * 1024 * 1024,  # 10 MB
+    'backupCount': 5,
 }
 LOGGING['loggers']['django']['handlers'].append('error_file')
 LOGGING['loggers']['dashboard']['handlers'].append('error_file')
+
+# ==========================================================================
+# CHANNEL LAYERS (WebSocket em produção via Redis)
+# ==========================================================================
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [config('REDIS_URL', default='redis://redis:6379/0')],
+        },
+    },
+}

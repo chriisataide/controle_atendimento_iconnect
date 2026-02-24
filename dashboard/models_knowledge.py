@@ -58,15 +58,15 @@ class ArtigoConhecimento(models.Model):
         ]
         constraints = [
             models.CheckConstraint(
-                check=Q(visualizacoes__gte=0),
+                condition=Q(visualizacoes__gte=0),
                 name='artigo_visualizacoes_gte_0',
             ),
             models.CheckConstraint(
-                check=Q(util_sim__gte=0),
+                condition=Q(util_sim__gte=0),
                 name='artigo_util_sim_gte_0',
             ),
             models.CheckConstraint(
-                check=Q(util_nao__gte=0),
+                condition=Q(util_nao__gte=0),
                 name='artigo_util_nao_gte_0',
             ),
         ]

@@ -16,15 +16,15 @@ class AvaliacaoSatisfacao(models.Model):
     class Meta:
         constraints = [
             models.CheckConstraint(
-                check=Q(nota_atendimento__gte=1, nota_atendimento__lte=5),
+                condition=Q(nota_atendimento__gte=1, nota_atendimento__lte=5),
                 name='avaliacao_nota_atend_1_5',
             ),
             models.CheckConstraint(
-                check=Q(nota_resolucao__gte=1, nota_resolucao__lte=5),
+                condition=Q(nota_resolucao__gte=1, nota_resolucao__lte=5),
                 name='avaliacao_nota_resolucao_1_5',
             ),
             models.CheckConstraint(
-                check=Q(nota_tempo__gte=1, nota_tempo__lte=5),
+                condition=Q(nota_tempo__gte=1, nota_tempo__lte=5),
                 name='avaliacao_nota_tempo_1_5',
             ),
         ]

@@ -20,6 +20,7 @@ except ImportError:
 
 # Application definition
 INSTALLED_APPS = [
+    'daphne',  # ASGI server — deve vir antes de staticfiles
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -33,6 +34,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'corsheaders',
+    'channels',  # WebSocket & real-time
     'axes',
 ]
 
@@ -171,8 +173,8 @@ CACHES = {
     }
 }
 
-# Session configuration
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+# Session configuration — cached_db garante que sessões sobrevivem a restarts do cache
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 SESSION_CACHE_ALIAS = 'default'
 SESSION_COOKIE_AGE = 3600  # 1 hour
 SESSION_SAVE_EVERY_REQUEST = True
@@ -206,9 +208,11 @@ LOGGING = {
     'handlers': {
         'file': {
             'level': 'INFO',
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': BASE_DIR / 'logs' / 'django.log',
             'formatter': 'verbose',
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 5,
         },
         'console': {
             'level': 'INFO',
@@ -291,19 +295,60 @@ except ImportError:
 
 # AI/Chatbot Configuration
 AI_CONFIG = {
-    'OPENAI_API_KEY': os.environ.get('OPENAI_API_KEY', ''),
-    'ENABLE_CHATBOT': os.environ.get('ENABLE_CHATBOT', 'False').lower() == 'true',
-    'AUTO_ASSIGNMENT': os.environ.get('ENABLE_AUTO_ASSIGNMENT', 'True').lower() == 'true',
-    'SENTIMENT_ANALYSIS': os.environ.get('ENABLE_SENTIMENT_ANALYSIS', 'False').lower() == 'true',
+    'OPENAI_API_KEY': config('OPENAI_API_KEY', default=''),
+    'ENABLE_CHATBOT': config('ENABLE_CHATBOT', default=False, cast=bool),
+    'AUTO_ASSIGNMENT': config('ENABLE_AUTO_ASSIGNMENT', default=True, cast=bool),
+    'SENTIMENT_ANALYSIS': config('ENABLE_SENTIMENT_ANALYSIS', default=False, cast=bool),
 }
 
 # Celery Configuration
-CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://redis:6379/0')
-CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://redis:6379/0')
+CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://redis:6379/0')
+CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='redis://redis:6379/0')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+# Celery Beat — agendamento de tarefas periódicas
+from datetime import timedelta as _td  # noqa: E402
+CELERY_BEAT_SCHEDULE = {
+    'execute-scheduled-rules': {
+        'task': 'dashboard.tasks.execute_scheduled_rules',
+        'schedule': _td(minutes=5),
+    },
+    'send-scheduled-reports': {
+        'task': 'dashboard.tasks.send_scheduled_reports',
+        'schedule': _td(hours=1),
+    },
+    'monitor-sla-breaches': {
+        'task': 'dashboard.tasks.monitor_sla_breaches',
+        'schedule': _td(minutes=5),
+    },
+    'check-equipment-alerts': {
+        'task': 'dashboard.tasks.check_equipment_alerts',
+        'schedule': _td(hours=1),
+    },
+    'check-kpi-alerts': {
+        'task': 'dashboard.tasks.check_kpi_alerts',
+        'schedule': _td(minutes=15),
+    },
+    'recalculate-customer-health': {
+        'task': 'dashboard.tasks.recalculate_customer_health',
+        'schedule': _td(hours=6),
+    },
+    'update-agent-leaderboard': {
+        'task': 'dashboard.tasks.update_agent_leaderboard',
+        'schedule': _td(hours=1),
+    },
+    'check-inbound-emails': {
+        'task': 'dashboard.tasks.check_inbound_emails',
+        'schedule': _td(minutes=5),
+    },
+    'lgpd-data-retention': {
+        'task': 'dashboard.tasks.lgpd_data_retention',
+        'schedule': _td(hours=24),
+    },
+}
 
 
 # ==================== REST Framework ====================

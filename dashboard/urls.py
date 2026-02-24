@@ -74,8 +74,6 @@ urlpatterns = [
     # ========== FUNCIONALIDADES AVANÇADAS ==========
     
     # SLA Management System
-    path('sla/test/', sla_views.sla_test, name='sla_test'),  # URL de teste temporária
-    path('sla/demo/', sla_views.sla_dashboard_public, name='sla_dashboard_public'),  # Dashboard público temporário
     path('sla/', sla_views.sla_dashboard, name='sla_dashboard'),
     path('sla/policies/', sla_views.sla_policies, name='sla_policies'),
     path('sla/alerts/', sla_views.sla_alerts, name='sla_alerts'),

@@ -609,3 +609,63 @@ def check_equipment_alerts():
 
     logger.info(f"Verificação de alertas concluída: {alertas_criados} alertas criados.")
     return alertas_criados
+
+
+# ---------------------------------------------------------------------------
+# LGPD Data Retention — exclusão automática de dados expirados
+# ---------------------------------------------------------------------------
+
+@shared_task
+def lgpd_data_retention():
+    """
+    Verifica consentimentos expirados e solicitações de exclusão pendentes.
+    Remove dados pessoais conforme LGPD Art. 15 e Art. 16.
+    Roda diariamente via Celery Beat.
+    """
+    from dashboard.models_lgpd import LGPDConsent, LGPDDataRequest
+
+    now = timezone.now()
+    processed = 0
+
+    # 1. Revocar consentimentos expirados automaticamente
+    expired_consents = LGPDConsent.objects.filter(
+        is_active=True,
+        expires_at__isnull=False,
+        expires_at__lt=now,
+    )
+    count = expired_consents.update(is_active=False, revoked_at=now)
+    if count:
+        logger.info(f"LGPD: {count} consentimentos expirados revogados automaticamente.")
+        processed += count
+
+    # 2. Processar solicitações de exclusão pendentes com prazo expirado (15 dias - Art. 18 §5)
+    from datetime import timedelta
+    overdue_requests = LGPDDataRequest.objects.filter(
+        request_type='exclusao',
+        status='pendente',
+        created_at__lt=now - timedelta(days=15),
+    )
+    for req in overdue_requests:
+        logger.warning(
+            f"LGPD: Solicitação de exclusão #{req.id} do titular "
+            f"{req.titular_email} está em atraso (>15 dias). Requer ação imediata."
+        )
+        # Escalar para administradores
+        from django.core.mail import mail_admins
+        try:
+            mail_admins(
+                f"[LGPD URGENTE] Solicitação de exclusão em atraso #{req.id}",
+                f"A solicitação de exclusão de dados #{req.id} ultrapassou o prazo legal de 15 dias.\n"
+                f"Titular: {req.titular_email}\n"
+                f"Data da solicitação: {req.created_at:%d/%m/%Y}\n"
+                f"Dias em atraso: {(now - req.created_at).days}\n\n"
+                f"Ação imediata é necessária para conformidade LGPD.",
+                fail_silently=True,
+            )
+        except Exception:
+            pass
+        processed += 1
+
+    logger.info(f"LGPD data retention: {processed} itens processados.")
+    return processed
+

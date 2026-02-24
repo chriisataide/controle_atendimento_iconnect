@@ -145,16 +145,32 @@ def log_suspicious_activity(description="Suspicious activity detected"):
     return decorator
 
 def alert_administrators(log_data):
-    """Alerta administradores sobre atividade crítica"""
+    """Alerta administradores sobre atividade crítica via email e log"""
     try:
-        # Aqui você pode implementar notificações por email, Slack, etc.
+        from django.core.mail import mail_admins
+        
         logger.critical(f"SECURITY ALERT: {log_data['description']}", extra=log_data)
         
         # Cache para evitar spam de alertas
         alert_key = f"alert_sent:{log_data['ip']}:{log_data['activity_type']}"
         if not cache.get(alert_key):
-            cache.set(alert_key, True, 300)  # 5 minutos
-            # Aqui você enviaria notificação real
+            cache.set(alert_key, True, 300)  # 5 minutos de cooldown
+            
+            # Enviar email para administradores (ADMINS no settings)
+            subject = f"[iConnect Security] {log_data['activity_type']}: {log_data.get('description', 'Atividade suspeita')}"
+            message = (
+                f"Descri\u00e7\u00e3o: {log_data.get('description', 'N/A')}\n"
+                f"IP: {log_data.get('ip', 'N/A')}\n"
+                f"Usu\u00e1rio: {log_data.get('username', 'An\u00f4nimo')}\n"
+                f"Path: {log_data.get('path', 'N/A')}\n"
+                f"M\u00e9todo: {log_data.get('method', 'N/A')}\n"
+                f"User-Agent: {log_data.get('user_agent', 'N/A')}\n"
+                f"Hor\u00e1rio: {log_data.get('timestamp', 'N/A')}\n"
+            )
+            try:
+                mail_admins(subject, message, fail_silently=True)
+            except Exception:
+                pass  # Se email falhar, n\u00e3o impedir o fluxo
             
     except Exception as e:
         logger.error(f"Error alerting administrators: {e}")
@@ -237,6 +253,9 @@ def validate_file_upload(uploaded_file):
         '.pdf':  ['application/pdf'],
         '.doc':  ['application/msword'],
         '.docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+        '.xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        '.xls':  ['application/vnd.ms-excel'],
+        '.csv':  ['text/csv', 'application/csv'],
         '.txt':  ['text/plain'],
     }
 

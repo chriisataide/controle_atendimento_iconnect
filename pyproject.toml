@@ -8,3 +8,14 @@ exclude = '''
 profile = "black"
 line_length = 88
 skip = [".venv", "venv", "migrations", "static", "media", "node_modules"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "controle_atendimento.settings"
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --strict-markers"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks integration tests",
+]

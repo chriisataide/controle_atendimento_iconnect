@@ -3,287 +3,265 @@
 [![Django](https://img.shields.io/badge/Django-5.2.6-green.svg)](https://www.djangoproject.com/)
 [![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/chriisataide/controle_atendimento_iconnect/actions/workflows/ci.yml/badge.svg)](https://github.com/chriisataide/controle_atendimento_iconnect/actions)
 
 ![Sistema de Tickets](https://img.shields.io/badge/Sistema-Tickets-success.svg)
 ![Dashboard](https://img.shields.io/badge/Dashboard-Agente-orange.svg)
 ![Portal](https://img.shields.io/badge/Portal-Cliente-blue.svg)
+![SLA](https://img.shields.io/badge/SLA-Monitoring-red.svg)
+![WhatsApp](https://img.shields.io/badge/WhatsApp-Integrado-brightgreen.svg)
 
-Um sistema completo de gestão de atendimento e tickets desenvolvido em **Django** com interface moderna baseada em **Material Design**. O sistema oferece funcionalidades avançadas para controle de chamados, gestão de agentes e portal do cliente.
+Um sistema completo de gestão de atendimento e tickets desenvolvido em **Django** com interface moderna baseada em **Material Design**. O sistema oferece funcionalidades avançadas para controle de chamados, gestão de agentes, portal do cliente, SLA, chat em tempo real, chatbot IA e integrações com WhatsApp.
 
-## ✨ Principais Funcionalidades
+## 🏗️ Arquitetura
 
-### 🎫 **Sistema de Tickets Completo**
-- **Lista de Tickets**: Visualização com filtros avançados (status, categoria, prioridade, busca)
-- **Detalhes do Ticket**: Interface completa com histórico de interações
-- **Criação/Edição**: Formulários intuitivos para gestão de chamados
-- **Sistema de Chat**: Interações públicas e privadas nos tickets
-- **Status Dinâmicos**: Controle completo do fluxo de atendimento
-
-### 👨‍💼 **Dashboard do Agente**
-- **Painel Personalizado**: Métricas específicas do agente
-- **Status em Tempo Real**: Online, Ocupado, Ausente, Offline
-- **Tickets Atribuídos**: Gestão completa dos tickets do agente
-- **Ações Rápidas**: Atualizações de status via AJAX
-- **Distribuição Automática**: Sistema inteligente de atribuição
-
-### 👤 **Portal do Cliente**
-- **Interface Dedicada**: Área específica para clientes
-- **Meus Tickets**: Visualização apenas dos próprios tickets
-- **Estatísticas Pessoais**: Métricas individuais de atendimento
-- **Histórico Completo**: Acompanhamento de todos os chamados
-
-### 🎨 **Interface Moderna**
-- **Material Dashboard 3.2.0**: Design profissional e responsivo
-- **Navegação Intuitiva**: Menu organizado por seções
-- **Componentes Avançados**: Filtros, paginação, modais, badges
-- **Tema Escuro/Claro**: Suporte a múltiplos temas
-- **Mobile First**: Interface adaptável para dispositivos móveis
-
-## 🚀 Tecnologias Utilizadas
-
-- **Backend**: Django 5.2.6, Python 3.13+
-- **Frontend**: Material Dashboard 3.2.0, Bootstrap 5, JavaScript
-- **Banco de Dados**: SQLite (desenvolvimento) / PostgreSQL (produção)
-- **Estilização**: Material Design, CSS3, SCSS
-- **Autenticação**: Django Auth System
-- **Upload de Arquivos**: Pillow para processamento de imagens
-
-## 📋 Modelos de Dados
-
-### 🧑‍💼 **Perfis de Usuário**
-- **PerfilUsuario**: Informações estendidas dos usuários
-- **PerfilAgente**: Configurações específicas de agentes
-- **Cliente**: Dados dos clientes do sistema
-
-### 🎟️ **Sistema de Tickets**
-- **Ticket**: Chamados com status, prioridade e categoria
-- **CategoriaTicket**: Organização por tipo de atendimento
-- **InteracaoTicket**: Histórico de conversas e atualizações
-- **StatusTicket**: Controle de fluxo (Aberto, Em Andamento, Resolvido, Fechado)
-
-## 🌐 Páginas e Funcionalidades
-
-### **🏠 Dashboard Principal**
-- Visão geral do sistema
-- Métricas gerais de tickets
-- Gráficos e estatísticas
-- Timeline de atividades recentes
-
-### **🎫 Gestão de Tickets**
-- Lista completa com filtros avançados
-- Criação de novos tickets
-- Detalhes com sistema de chat
-- Edição e atualização de status
-
-### **👨‍💼 Área do Agente**
-- Dashboard personalizado
-- Tickets atribuídos
-- Controle de status de presença
-- Métricas de performance
-
-### **👤 Portal do Cliente**
-- Interface simplificada
-- Visualização de tickets próprios
-- Criação de novos chamados
-- Acompanhamento de status
-
-### **⚙️ Perfil e Configurações**
-- Gerenciamento de perfil completo
-- Upload de avatar
-- Informações pessoais e profissionais
-- Configurações de conta
-
-## 🛠️ Instalação e Configuração
-
-### **Pré-requisitos**
-- Python 3.13+
-- Node.js 16+ (opcional, para desenvolvimento frontend)
-- Git
-
-### **1. Clone o Repositório**
-```bash
-git clone https://github.com/chriisataide/controle_atendimento_iconnect.git
-cd controle_atendimento_iconnect
+```
+┌─────────────┐    ┌──────────┐    ┌────────────────┐
+│   Nginx     │───▶│ Daphne   │───▶│  Django ASGI   │
+│  (Reverse   │    │ (ASGI)   │    │  + Channels    │
+│   Proxy)    │    └──────────┘    └───────┬────────┘
+└─────────────┘                            │
+                                ┌──────────┼──────────┐
+                                │          │          │
+                          ┌─────▼──┐  ┌────▼───┐ ┌───▼────┐
+                          │Postgres│  │ Redis  │ │ Celery │
+                          │  15    │  │  7     │ │Workers │
+                          └────────┘  └────────┘ │+ Beat  │
+                                                 └────────┘
 ```
 
-### **2. Configurar Ambiente Python**
-```bash
-# Criar ambiente virtual
-python -m venv .venv
+- **Backend**: Django 5.2.6 + Django REST Framework + Channels (WebSocket)
+- **ASGI Server**: Daphne (HTTP + WebSocket)
+- **Banco de Dados**: PostgreSQL 15 (produção) / SQLite (desenvolvimento)
+- **Cache & Mensageria**: Redis 7 (cache, sessions, Celery broker, channel layers)
+- **Tarefas Assíncronas**: Celery + Celery Beat (agendamento periódico)
+- **Monitoramento Celery**: Flower (protegido por autenticação)
+- **Reverse Proxy**: Nginx com SSL
+- **Frontend**: Material Dashboard 3.2.0, Bootstrap 5, JavaScript
+- **CI/CD**: GitHub Actions (lint, test, security scan, Docker build, deploy)
 
-# Ativar ambiente virtual
-# Windows
-.venv\Scripts\activate
-# macOS/Linux
-source .venv/bin/activate
+## ✨ Funcionalidades
+
+### 🎫 Sistema de Tickets ITIL
+- Tipos: Incidente, Requisição, Problema, Mudança
+- Hierarquia: Tickets pai/filho, merge e vinculação
+- Watchers/Followers
+- Kanban Board interativo
+- Anexos com validação de segurança (magic bytes)
+- Exportação para Excel/CSV/PDF
+
+### ⏱️ SLA (Service Level Agreement)
+- Políticas de SLA por categoria e prioridade
+- Monitoramento automático com alertas
+- Escalação multinível
+- Dashboard de compliance
+- Violações rastreadas com webhooks
+
+### 💬 Chat em Tempo Real
+- WebSocket via Django Channels
+- Salas de chat vinculadas a tickets
+- Criação de ticket a partir do chat
+- Histórico persistente
+
+### 🤖 Chatbot IA
+- Motor de IA com análise de sentimentos
+- Base de conhecimento configurável
+- Predição de prioridade automática
+- Detecção de tickets duplicados
+
+### 📱 WhatsApp Business
+- Integração via API oficial
+- Recebimento e envio de mensagens
+- Criação automática de tickets
+- Webhooks configuráveis
+
+### 📊 Dashboard Executivo
+- KPIs em tempo real
+- Gráficos analíticos
+- Alertas de métricas configuráveis
+- Relatórios agendados (email automático)
+
+### 🔐 Segurança
+- CSP com nonces criptográficos por request
+- Headers de segurança (HSTS, X-Frame-Options, etc.)
+- Rate limiting por IP/usuário
+- Upload validation com magic bytes
+- Django Axes (proteção brute-force)
+- Criptografia de PII em repouso (LGPD/BACEN)
+- JWT com rotation de tokens
+- RBAC (Role-Based Access Control)
+- Audit trail completo
+
+### 🛡️ LGPD
+- Gestão de consentimentos com expiração
+- Solicitações de direitos do titular (Art. 18)
+- Log de acesso a dados pessoais
+- Retenção automática de dados (Celery Beat)
+- Criptografia de CPF, telefone, dados sensíveis
+
+### 🏢 Multi-tenancy
+- Isolamento de dados por organização
+- Convites e gestão de membros
+- Switch entre tenants
+
+### 🎮 Gamificação
+- Leaderboard de agentes
+- Métricas de performance
+- Atualização automática
+
+### 📦 Módulos Adicionais
+- **Equipamentos**: Gestão de inventário com alertas de garantia
+- **Estoque**: Controle de produtos e serviços
+- **Financeiro**: Itens de atendimento com valores
+- **PWA**: Progressive Web App com push notifications
+- **Mobile**: Interface otimizada para dispositivos móveis
+- **SSO**: SAML/OIDC para Single Sign-On
+
+## 🚀 Quick Start
+
+### Pré-requisitos
+- Python 3.13+
+- Docker & Docker Compose (recomendado)
+- Git
+
+### Opção 1: Docker Compose (Recomendado)
+
+```bash
+# Clonar o repositório
+git clone https://github.com/chriisataide/controle_atendimento_iconnect.git
+cd controle_atendimento_iconnect
+
+# Configurar variáveis de ambiente
+cp .env.example .env
+# Edite o .env com suas credenciais (SECRET_KEY, POSTGRES_PASSWORD, etc.)
+
+# Subir todos os serviços
+docker compose up -d
+
+# Verificar status
+docker compose ps
+```
+
+Serviços disponíveis:
+| Serviço | Porta | Descrição |
+|---------|-------|-----------|
+| **nginx** | 80/443 | Reverse proxy com SSL |
+| **web** | 8000 | Django ASGI (Daphne) |
+| **db** | — | PostgreSQL 15 (rede interna) |
+| **redis** | — | Redis 7 (rede interna) |
+| **celery** | — | Worker de tarefas assíncronas |
+| **celery-beat** | — | Agendador de tarefas periódicas |
+| **flower** | 5555 | Monitor Celery (autenticado) |
+
+### Opção 2: Desenvolvimento Local
+
+```bash
+# Criar e ativar ambiente virtual
+python -m venv .venv
+source .venv/bin/activate  # macOS/Linux
 
 # Instalar dependências
 pip install -r requirements.txt
-```
 
-### **3. Configurar Banco de Dados**
-```bash
+# Configurar variáveis
+cp .env.example .env
+# Edite o .env (mínimo: SECRET_KEY)
+
 # Aplicar migrações
 python manage.py migrate
 
 # Criar superusuário
 python manage.py createsuperuser
 
-# Criar dados de exemplo (opcional)
-python manage.py criar_dados_exemplo
-```
-
-### **4. Executar o Servidor**
-```bash
+# Executar
 python manage.py runserver
 ```
 
-Acesse: `http://127.0.0.1:8000/`
+## 📋 Variáveis de Ambiente
+
+Consulte o arquivo `.env.example` para a lista completa. Principais:
+
+| Variável | Obrigatória | Descrição |
+|----------|:-----------:|-----------|
+| `SECRET_KEY` | ✅ | Chave secreta Django |
+| `POSTGRES_PASSWORD` | ✅ (Docker) | Senha do PostgreSQL |
+| `REDIS_PASSWORD` | ✅ (Docker) | Senha do Redis |
+| `ALLOWED_HOSTS` | ✅ (Prod) | Hosts permitidos |
+| `CELERY_BROKER_URL` | — | URL do broker Redis |
+| `OPENAI_API_KEY` | — | Chave para chatbot IA |
+| `WHATSAPP_TOKEN` | — | Token WhatsApp Business |
+
+## 🧪 Testes
+
+```bash
+# Testes com cobertura
+coverage run --source=dashboard manage.py test dashboard.tests -v2
+coverage report --fail-under=60
+
+# Ou com pytest
+pytest -v
+
+# Módulos de teste disponíveis:
+# dashboard/tests/test_models.py       — Models
+# dashboard/tests/test_api.py          — API REST
+# dashboard/tests/test_services.py     — Serviços
+# dashboard/tests/test_views.py        — Views
+# dashboard/tests/test_sso.py          — SSO
+# dashboard/tests/test_workflows.py    — Workflows
+# dashboard/tests/test_tenants.py      — Multi-tenancy
+# dashboard/tests_legacy.py            — Testes legados (em migração)
+```
 
 ## 📚 Estrutura do Projeto
 
 ```
 controle_atendimento_iconnect/
-├── controle_atendimento/          # Configurações principais do Django
-├── dashboard/                     # App principal do sistema
-│   ├── models.py                 # Modelos de dados
-│   ├── views.py                  # Views e lógica de negócio
-│   ├── admin.py                  # Interface administrativa
-│   └── management/commands/      # Comandos personalizados
-├── templates/                     # Templates HTML
-│   ├── base.html                 # Template base
-│   └── dashboard/                # Templates específicos
-│       ├── tickets/              # Templates de tickets
-│       ├── agente/               # Templates do agente
-│       └── cliente/              # Templates do cliente
-├── assets/                        # Arquivos estáticos (Material Dashboard)
-├── media/                         # Uploads de usuários
-└── requirements.txt               # Dependências Python
+├── controle_atendimento/       # Configurações Django (settings, urls, celery, asgi)
+├── dashboard/                  # App principal
+│   ├── models*.py             # Models (tickets, chat, LGPD, equipamentos, etc.)
+│   ├── views.py               # Views de template
+│   ├── api_views.py           # API REST (v1)
+│   ├── serializers.py         # Serializers DRF
+│   ├── consumers.py           # WebSocket consumers
+│   ├── tasks.py               # Celery tasks
+│   ├── security.py            # Rate limiting, upload validation, CSP
+│   ├── sla.py                 # Motor de SLA
+│   ├── rbac.py                # Sistema de permissões
+│   ├── tenants.py             # Multi-tenancy
+│   ├── sso.py                 # SAML/OIDC
+│   ├── tests/                 # Testes organizados por módulo
+│   └── services/              # Serviços de negócio
+├── templates/                  # Templates HTML (Material Dashboard)
+├── assets/                     # Arquivos estáticos (CSS, JS, imagens)
+├── docker/                     # Entrypoints e configs Docker
+├── .github/workflows/          # CI/CD (GitHub Actions)
+├── docker-compose.yml          # Orquestração de containers
+├── Dockerfile                  # Build multi-stage
+└── requirements.txt            # Dependências Python
 ```
 
-## 🔧 Principais URLs do Sistema
+## 🔧 Tarefas Periódicas (Celery Beat)
 
-| Função | URL | Descrição |
-|--------|-----|-----------|
-| **Dashboard Principal** | `/` | Visão geral do sistema |
-| **Lista de Tickets** | `/tickets/` | Gerenciamento completo de tickets |
-| **Criar Ticket** | `/tickets/novo/` | Formulário de criação |
-| **Detalhes do Ticket** | `/tickets/<id>/` | Visualização e interações |
-| **Dashboard Agente** | `/agente/` | Painel do agente |
-| **Meus Tickets (Agente)** | `/agente/tickets/` | Tickets atribuídos |
-| **Portal Cliente** | `/cliente/` | Área do cliente |
-| **Meus Tickets (Cliente)** | `/cliente/tickets/` | Tickets do cliente |
-| **Perfil** | `/profile/` | Configurações de perfil |
-| **Admin** | `/admin/` | Interface administrativa |
-
-## 🎨 Customização de Interface
-
-### **Temas e Cores**
-O sistema utiliza o Material Dashboard com suporte a:
-- **Cores Primárias**: Blue, Green, Orange, Red, Purple
-- **Modo Escuro**: Suporte completo a tema dark
-- **Responsividade**: Mobile-first design
-- **Componentes**: Material Design components
-
-### **Personalização de Estilos**
-```scss
-// Localização: assets/scss/material-dashboard.scss
-// Personalize cores, fontes e componentes
-```
+| Task | Frequência | Descrição |
+|------|-----------|-----------|
+| `monitor_sla_breaches` | 5 min | Verificar violações de SLA |
+| `execute_scheduled_rules` | 5 min | Executar regras de automação |
+| `check_inbound_emails` | 5 min | Processar emails recebidos |
+| `check_kpi_alerts` | 15 min | Verificar alertas de KPI |
+| `send_scheduled_reports` | 1 hora | Enviar relatórios agendados |
+| `check_equipment_alerts` | 1 hora | Alertas de equipamentos |
+| `update_agent_leaderboard` | 1 hora | Atualizar ranking de agentes |
+| `recalculate_customer_health` | 6 horas | Health score dos clientes |
+| `lgpd_data_retention` | 24 horas | Retenção de dados LGPD |
 
 ## 🔐 Sistema de Permissões
 
-### **Tipos de Usuário**
-1. **Administrador**: Acesso completo ao sistema
-2. **Agente**: Gestão de tickets atribuídos
-3. **Cliente**: Visualização dos próprios tickets
-4. **Usuário**: Acesso básico ao sistema
-
-### **Controle de Acesso**
-- Autenticação obrigatória em todas as páginas
-- Decorators `@login_required` para views
-- Permissões baseadas em grupos do Django
-- Middleware personalizado para controle de acesso
-
-## 📊 API e Integrações
-
-### **APIs AJAX Disponíveis**
-- **Atualizar Status do Ticket**: `POST /api/tickets/status/`
-- **Atualizar Status do Agente**: `POST /api/agente/status/`
-- **Adicionar Interação**: `POST /tickets/<id>/interacao/`
-
-### **Exemplo de Uso da API**
-```javascript
-// Atualizar status do ticket via JavaScript
-fetch('/api/tickets/status/', {
-    method: 'POST',
-    headers: {
-        'X-CSRFToken': csrfToken,
-        'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: `ticket_id=${ticketId}&status=${newStatus}`
-})
-```
-
-## 🚀 Deploy em Produção
-
-### **Configurações de Produção**
-```python
-# settings.py
-DEBUG = False
-ALLOWED_HOSTS = ['seu-dominio.com']
-
-# Banco de dados PostgreSQL
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'controle_atendimento',
-        'USER': 'postgres',
-        'PASSWORD': 'sua_senha',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
-}
-```
-
-### **Deploy com Docker (Opcional)**
-```dockerfile
-# Dockerfile
-FROM python:3.13
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-COPY . .
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
-```
-
-## 🧪 Testes
-
-### **Executar Testes**
-```bash
-python manage.py test
-```
-
-### **Cobertura de Testes**
-```bash
-pip install coverage
-coverage run --source='.' manage.py test
-coverage report
-coverage html
-```
-
-## 📈 Métricas e Monitoramento
-
-### **Logs do Sistema**
-- Logs automáticos de interações
-- Rastreamento de mudanças de status
-- Auditoria de ações dos usuários
-
-### **Métricas Disponíveis**
-- Total de tickets por período
-- Tempo médio de resolução
-- Performance dos agentes
-- Satisfação dos clientes
+| Tipo | Acesso |
+|------|--------|
+| **Administrador** | Acesso total, configurações, tenants |
+| **Supervisor** | Gestão de equipe, SLA, relatórios |
+| **Agente** | Tickets atribuídos, chat, base de conhecimento |
+| **Cliente** | Portal próprio, tickets, acompanhamento |
 
 ## 🤝 Contribuição
 
@@ -297,30 +275,11 @@ coverage html
 
 Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
 
-## 👥 Créditos
-
-- **Django Framework**: [Django Project](https://www.djangoproject.com/)
-- **Bootstrap**: [Bootstrap Team](https://getbootstrap.com/)
-- **Material Icons**: [Google Material Design](https://material.io/icons/)
-
 ## 📞 Suporte
 
-Para suporte e dúvidas:
-- 📧 Email: chrisataide@example.com
 - 🐛 Issues: [GitHub Issues](https://github.com/chriisataide/controle_atendimento_iconnect/issues)
 - 📖 Documentação: [Wiki do Projeto](https://github.com/chriisataide/controle_atendimento_iconnect/wiki)
 
 ---
 
-## 🎯 Roadmap Futuro
-
-- [ ] **Sistema de Relatórios Avançados**
-- [ ] **Notificações em Tempo Real**
-- [ ] **API REST Completa**
-- [ ] **Integração com WhatsApp/Telegram**
-- [ ] **Sistema de SLA e Métricas**
-- [ ] **Dashboard Executivo**
-- [ ] **Módulo de Conhecimento (KB)**
-- [ ] **Chatbot Inteligente**
-
-**🌟 Desenvolvido com ❤️ usando Django**
+**🌟 Desenvolvido com ❤️ usando Django — iCodev Tecnologia e Inovação**

@@ -208,35 +208,35 @@ class Produto(SoftDeleteModel):
         ]
         constraints = [
             models.CheckConstraint(
-                check=Q(preco_custo__gte=0),
+                condition=Q(preco_custo__gte=0),
                 name='produto_preco_custo_gte_0',
             ),
             models.CheckConstraint(
-                check=Q(preco_venda__gte=0),
+                condition=Q(preco_venda__gte=0),
                 name='produto_preco_venda_gte_0',
             ),
             models.CheckConstraint(
-                check=Q(estoque_minimo__gte=0),
+                condition=Q(estoque_minimo__gte=0),
                 name='produto_estoque_minimo_gte_0',
             ),
             models.CheckConstraint(
-                check=Q(estoque_maximo__gte=0),
+                condition=Q(estoque_maximo__gte=0),
                 name='produto_estoque_maximo_gte_0',
             ),
             models.CheckConstraint(
-                check=Q(peso__gte=0),
+                condition=Q(peso__gte=0),
                 name='produto_peso_gte_0',
             ),
             models.CheckConstraint(
-                check=Q(altura__gte=0),
+                condition=Q(altura__gte=0),
                 name='produto_altura_gte_0',
             ),
             models.CheckConstraint(
-                check=Q(largura__gte=0),
+                condition=Q(largura__gte=0),
                 name='produto_largura_gte_0',
             ),
             models.CheckConstraint(
-                check=Q(profundidade__gte=0),
+                condition=Q(profundidade__gte=0),
                 name='produto_profundidade_gte_0',
             ),
         ]
@@ -381,15 +381,15 @@ class MovimentacaoEstoque(SoftDeleteModel):
         ]
         constraints = [
             models.CheckConstraint(
-                check=Q(quantidade__gt=0),
+                condition=Q(quantidade__gt=0),
                 name='mov_estoque_quantidade_gt_0',
             ),
             models.CheckConstraint(
-                check=Q(valor_unitario__gte=0),
+                condition=Q(valor_unitario__gte=0),
                 name='mov_estoque_valor_unitario_gte_0',
             ),
             models.CheckConstraint(
-                check=Q(valor_total__gte=0),
+                condition=Q(valor_total__gte=0),
                 name='mov_estoque_valor_total_gte_0',
             ),
         ]

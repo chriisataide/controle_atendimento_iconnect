@@ -4,7 +4,7 @@
 # ================================
 
 # Stage 1: Build
-FROM python:3.11-slim as builder
+FROM python:3.13-slim as builder
 
 WORKDIR /app
 
@@ -19,7 +19,7 @@ RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Stage 2: Runtime
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 LABEL maintainer="Chris Ataide <chris@iconnect.com>"
 LABEL description="Sistema de Controle de Atendimento iConnect"

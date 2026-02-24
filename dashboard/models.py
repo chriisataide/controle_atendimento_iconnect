@@ -195,19 +195,19 @@ class SLAPolicy(models.Model):
         unique_together = ['categoria', 'prioridade']
         constraints = [
             models.CheckConstraint(
-                check=Q(first_response_time__gt=0),
+                condition=Q(first_response_time__gt=0),
                 name='sla_first_response_time_gt_0',
             ),
             models.CheckConstraint(
-                check=Q(resolution_time__gt=0),
+                condition=Q(resolution_time__gt=0),
                 name='sla_resolution_time_gt_0',
             ),
             models.CheckConstraint(
-                check=Q(escalation_time__gt=0),
+                condition=Q(escalation_time__gt=0),
                 name='sla_escalation_time_gt_0',
             ),
             models.CheckConstraint(
-                check=Q(warning_percentage__gte=0, warning_percentage__lte=100),
+                condition=Q(warning_percentage__gte=0, warning_percentage__lte=100),
                 name='sla_warning_pct_0_100',
             ),
         ]
@@ -321,6 +321,13 @@ class Ticket(models.Model):
         verbose_name = "Ticket"
         verbose_name_plural = "Tickets"
         ordering = ['-criado_em']
+        indexes = [
+            models.Index(fields=['status', 'prioridade', 'criado_em'], name='idx_ticket_status_prio_data'),
+            models.Index(fields=['status', 'agente', 'criado_em'], name='idx_ticket_status_agente_data'),
+            models.Index(fields=['cliente', 'status', 'criado_em'], name='idx_ticket_cliente_status'),
+            models.Index(fields=['status', 'sla_deadline'], name='idx_ticket_status_sla'),
+            models.Index(fields=['categoria', 'status'], name='idx_ticket_categoria_status'),
+        ]
     
     def save(self, *args, **kwargs):
         with transaction.atomic():
@@ -510,15 +517,15 @@ class ItemAtendimento(SoftDeleteModel):
         unique_together = ['ticket', 'produto']  # Evita duplicação do mesmo produto no mesmo ticket
         constraints = [
             models.CheckConstraint(
-                check=Q(quantidade__gt=0),
+                condition=Q(quantidade__gt=0),
                 name='item_atend_quantidade_gt_0',
             ),
             models.CheckConstraint(
-                check=Q(valor_unitario__gte=0),
+                condition=Q(valor_unitario__gte=0),
                 name='item_atend_valor_unitario_gte_0',
             ),
             models.CheckConstraint(
-                check=Q(desconto_percentual__gte=0, desconto_percentual__lte=100),
+                condition=Q(desconto_percentual__gte=0, desconto_percentual__lte=100),
                 name='item_atend_desconto_0_100',
             ),
         ]
@@ -798,15 +805,15 @@ class KnowledgeBase(models.Model):
         ordering = ['-view_count', '-created_at']
         constraints = [
             models.CheckConstraint(
-                check=Q(view_count__gte=0),
+                condition=Q(view_count__gte=0),
                 name='kb_view_count_gte_0',
             ),
             models.CheckConstraint(
-                check=Q(helpful_votes__gte=0),
+                condition=Q(helpful_votes__gte=0),
                 name='kb_helpful_votes_gte_0',
             ),
             models.CheckConstraint(
-                check=Q(unhelpful_votes__gte=0),
+                condition=Q(unhelpful_votes__gte=0),
                 name='kb_unhelpful_votes_gte_0',
             ),
         ]
@@ -951,7 +958,7 @@ class Contrato(SoftDeleteModel):
         ordering = ['-criado_em']
         constraints = [
             models.CheckConstraint(
-                check=Q(valor_mensal__gte=Decimal('0.01')),
+                condition=Q(valor_mensal__gte=Decimal('0.01')),
                 name='contrato_valor_mensal_gte_001',
             ),
         ]
@@ -984,7 +991,7 @@ class Fatura(SoftDeleteModel):
         ordering = ['-data_vencimento']
         constraints = [
             models.CheckConstraint(
-                check=Q(valor__gte=Decimal('0.01')),
+                condition=Q(valor__gte=Decimal('0.01')),
                 name='fatura_valor_gte_001',
             ),
         ]
@@ -1009,7 +1016,7 @@ class Pagamento(SoftDeleteModel):
         ordering = ['-data_pagamento']
         constraints = [
             models.CheckConstraint(
-                check=Q(valor_pago__gte=Decimal('0.01')),
+                condition=Q(valor_pago__gte=Decimal('0.01')),
                 name='pagamento_valor_pago_gte_001',
             ),
         ]
@@ -1045,7 +1052,7 @@ class MovimentacaoFinanceira(SoftDeleteModel):
         ordering = ['-data_movimentacao']
         constraints = [
             models.CheckConstraint(
-                check=Q(valor__gte=Decimal('0.01')),
+                condition=Q(valor__gte=Decimal('0.01')),
                 name='mov_financeira_valor_gte_001',
             ),
         ]
@@ -1132,15 +1139,15 @@ class CentroCusto(SoftDeleteModel):
         ordering = ['departamento', 'codigo']
         constraints = [
             models.CheckConstraint(
-                check=Q(orcamento_mensal__gte=0),
+                condition=Q(orcamento_mensal__gte=0),
                 name='cc_orcamento_mensal_gte_0',
             ),
             models.CheckConstraint(
-                check=Q(orcamento_anual__gte=0),
+                condition=Q(orcamento_anual__gte=0),
                 name='cc_orcamento_anual_gte_0',
             ),
             models.CheckConstraint(
-                check=Q(alerta_percentual__gte=0, alerta_percentual__lte=100),
+                condition=Q(alerta_percentual__gte=0, alerta_percentual__lte=100),
                 name='cc_alerta_pct_0_100',
             ),
         ]
@@ -1368,7 +1375,7 @@ class WebhookEndpoint(models.Model):
         verbose_name_plural = "Webhook Endpoints"
         constraints = [
             models.CheckConstraint(
-                check=Q(failure_count__gte=0),
+                condition=Q(failure_count__gte=0),
                 name='webhook_failure_count_gte_0',
             ),
         ]
@@ -1428,7 +1435,7 @@ class APIKey(models.Model):
         verbose_name_plural = "API Keys"
         constraints = [
             models.CheckConstraint(
-                check=Q(rate_limit__gt=0),
+                condition=Q(rate_limit__gt=0),
                 name='apikey_rate_limit_gt_0',
             ),
         ]
@@ -1518,7 +1525,7 @@ class EscalationLevel(models.Model):
         unique_together = ('chain', 'nivel')
         constraints = [
             models.CheckConstraint(
-                check=Q(timeout_minutos__gt=0),
+                condition=Q(timeout_minutos__gt=0),
                 name='escalation_timeout_gt_0',
             ),
         ]
@@ -1851,23 +1858,23 @@ class CustomerHealthScore(models.Model):
         verbose_name_plural = "Health Scores dos Clientes"
         constraints = [
             models.CheckConstraint(
-                check=Q(score__gte=0, score__lte=100),
+                condition=Q(score__gte=0, score__lte=100),
                 name='health_score_0_100',
             ),
             models.CheckConstraint(
-                check=Q(ticket_frequency_score__gte=0, ticket_frequency_score__lte=100),
+                condition=Q(ticket_frequency_score__gte=0, ticket_frequency_score__lte=100),
                 name='health_ticket_freq_0_100',
             ),
             models.CheckConstraint(
-                check=Q(satisfaction_score__gte=0, satisfaction_score__lte=100),
+                condition=Q(satisfaction_score__gte=0, satisfaction_score__lte=100),
                 name='health_satisfaction_0_100',
             ),
             models.CheckConstraint(
-                check=Q(resolution_time_score__gte=0, resolution_time_score__lte=100),
+                condition=Q(resolution_time_score__gte=0, resolution_time_score__lte=100),
                 name='health_resolution_0_100',
             ),
             models.CheckConstraint(
-                check=Q(escalation_score__gte=0, escalation_score__lte=100),
+                condition=Q(escalation_score__gte=0, escalation_score__lte=100),
                 name='health_escalation_0_100',
             ),
         ]
@@ -1999,7 +2006,7 @@ class AgentLeaderboard(models.Model):
         ordering = ['-pontos_total']
         constraints = [
             models.CheckConstraint(
-                check=Q(first_response_rate__gte=0, first_response_rate__lte=100),
+                condition=Q(first_response_rate__gte=0, first_response_rate__lte=100),
                 name='leaderboard_frr_0_100',
             ),
         ]

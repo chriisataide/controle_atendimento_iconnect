@@ -80,7 +80,7 @@ services:
       redis:
         condition: service_healthy
     command: >
-      sh -c "chmod +x docker/docker-entrypoint-dev.sh && ./docker/docker-entrypoint-dev.sh"
+      sh -c "chmod +x docker/docker-entrypoint.sh && ./docker/docker-entrypoint.sh"
     networks:
       - backend
       - frontend
@@ -114,6 +114,32 @@ services:
       timeout: 15s
       retries: 3
       start_period: 30s
+    networks:
+      - backend
+
+  # Worker Celery Beat (agendamento de tarefas periódicas)
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: iconnect_celery_beat
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DEBUG=False
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-iconnect_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-iconnect_db}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A controle_atendimento beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     networks:
       - backend
 
