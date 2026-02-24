@@ -287,6 +287,14 @@
                 </div>
                 <div class="col-md-6">
                   <div class="input-group-outline">
+                    <label class="form-label">Ponto de Venda</label>
+                    {{ form.ponto_de_venda }}
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="input-group-outline">
                     <label class="form-label">Título do Ticket</label>
                     {{ form.titulo }}
                   </div>
@@ -904,6 +912,48 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // ============================================
+    // CASCADING: FILTRAR PDV POR CLIENTE
+    // ============================================
+    const clienteSelect = document.getElementById('clienteSelect');
+    const pdvSelect = document.getElementById('pdvSelect');
+    if (clienteSelect && pdvSelect) {
+        // Armazenar todas as opções originais do PdV
+        const allPdvOptions = Array.from(pdvSelect.options).map(opt => ({
+            value: opt.value,
+            text: opt.textContent,
+            clienteId: opt.dataset.clienteId || ''
+        }));
+
+        clienteSelect.addEventListener('change', function() {
+            const clienteId = this.value;
+            if (!clienteId) {
+                // Se nenhum cliente selecionado, mostrar todos
+                pdvSelect.innerHTML = '<option value="">Selecione um ponto de venda...</option>';
+                allPdvOptions.forEach(opt => {
+                    if (opt.value) {
+                        const option = new Option(opt.text, opt.value);
+                        pdvSelect.add(option);
+                    }
+                });
+                return;
+            }
+            // Busca AJAX
+            fetch(`{% url 'dashboard:api_pdv_por_cliente' %}?cliente_id=${clienteId}`)
+                .then(r => r.json())
+                .then(data => {
+                    pdvSelect.innerHTML = '<option value="">Selecione um ponto de venda...</option>';
+                    data.forEach(p => {
+                        const label = p.cidade ? `${p.nome_fantasia} — ${p.cidade}` : p.nome_fantasia;
+                        pdvSelect.add(new Option(label, p.id));
+                    });
+                })
+                .catch(() => {
+                    pdvSelect.innerHTML = '<option value="">Erro ao carregar PdVs</option>';
+                });
+        });
+    }
 
 });
 </script>

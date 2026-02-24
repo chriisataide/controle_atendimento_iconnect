@@ -14,6 +14,8 @@
         </div>
         <div class="card-body">
           <dl class="row">
+            <dt class="col-sm-4">Cliente (Empresa)</dt>
+            <dd class="col-sm-8">{% if object.cliente %}<span class="badge bg-info text-white">{{ object.cliente.nome }}</span> — {{ object.cliente.empresa|default:"" }}{% else %}<span class="text-muted">Não vinculado</span>{% endif %}</dd>
             <dt class="col-sm-4">Nome Fantasia</dt>
             <dd class="col-sm-8">{{ object.nome_fantasia }}</dd>
             <dt class="col-sm-4">Razão Social</dt>

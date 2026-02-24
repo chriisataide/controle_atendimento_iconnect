@@ -188,15 +188,19 @@ class TicketForm(forms.ModelForm):
 
 
 class TicketCreateForm(forms.ModelForm):
-    """Formulário para criação de tickets com cliente"""
+    """Formulário para criação de tickets com cliente e ponto de venda"""
     
     class Meta:
         model = Ticket
-        fields = ['cliente', 'categoria', 'titulo', 'descricao', 'prioridade', 'tags']
+        fields = ['cliente', 'ponto_de_venda', 'categoria', 'titulo', 'descricao', 'prioridade', 'tags']
         widgets = {
             'cliente': forms.Select(attrs={
                 'class': 'form-control',
                 'id': 'clienteSelect'
+            }),
+            'ponto_de_venda': forms.Select(attrs={
+                'class': 'form-control',
+                'id': 'pdvSelect'
             }),
             'categoria': forms.Select(attrs={
                 'class': 'form-control',
@@ -225,9 +229,12 @@ class TicketCreateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        from .models import PontoDeVenda
         self.fields['cliente'].queryset = Cliente.objects.all().order_by('nome')
+        self.fields['ponto_de_venda'].queryset = PontoDeVenda.objects.select_related('cliente').all().order_by('nome_fantasia')
         self.fields['categoria'].queryset = CategoriaTicket.objects.all()
         self.fields['cliente'].empty_label = "Selecione um cliente..."
+        self.fields['ponto_de_venda'].empty_label = "Selecione um ponto de venda..."
         self.fields['categoria'].empty_label = "Selecione uma categoria..."
         self.fields['prioridade'].empty_label = "Selecione a prioridade..."
 

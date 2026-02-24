@@ -57,6 +57,7 @@ urlpatterns = [
     path('api/agente/status/', views.update_agent_status, name='update_agent_status'),
     path('api/metrics/', views.ajax_metrics, name='ajax_metrics'),
     path('api/cliente/stats/', views.cliente_stats_ajax, name='cliente_stats_ajax'),
+    path('api/pontos-de-venda/', views.api_pontos_de_venda_por_cliente, name='api_pdv_por_cliente'),
     
     # APIs para Itens de Atendimento
     path('api/produtos-ativos/', views.api_produtos_ativos, name='api_produtos_ativos'),

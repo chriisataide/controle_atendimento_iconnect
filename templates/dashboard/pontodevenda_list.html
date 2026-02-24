@@ -102,6 +102,7 @@
               <thead>
                 <tr>
                   <th class="sortable" data-sort="nome_fantasia" title="Ordenar">Nome Fantasia <i class="material-icons sort-icon">unfold_more</i></th>
+                  <th class="sortable" data-sort="cliente" title="Ordenar">Cliente <i class="material-icons sort-icon">unfold_more</i></th>
                   <th class="sortable" data-sort="razao_social" title="Ordenar">Razão Social <i class="material-icons sort-icon">unfold_more</i></th>
                   <th class="sortable" data-sort="cnpj" title="Ordenar">CNPJ <i class="material-icons sort-icon">unfold_more</i></th>
                   <th class="sortable" data-sort="cidade" title="Ordenar">Cidade <i class="material-icons sort-icon">unfold_more</i></th>
@@ -115,6 +116,7 @@
                 {% for p in pontosdevenda %}
                 <tr tabindex="0" class="pdv-row">
                   <td><span class="material-icons text-primary me-1" title="Ponto de venda">store</span> <strong>{{ p.nome_fantasia }}</strong></td>
+                  <td>{% if p.cliente %}<span class="badge bg-info text-white">{{ p.cliente.nome }}</span>{% else %}<span class="text-muted text-xs">—</span>{% endif %}</td>
                   <td>{{ p.razao_social }}</td>
                   <td>
                     <span class="badge bg-light text-dark">{{ p.cnpj }}</span>
@@ -134,7 +136,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                  <td colspan="8" class="text-center py-4">
+                  <td colspan="9" class="text-center py-4">
                     <div class="d-flex flex-column align-items-center">
                       <i class="material-symbols-rounded text-muted" style="font-size: 48px;">inbox</i>
                       <p class="text-muted mt-2">Nenhum ponto de venda cadastrado.</p>

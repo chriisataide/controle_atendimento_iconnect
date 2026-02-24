@@ -17,7 +17,7 @@ import logging
 
 from ..models import (
     Cliente, Ticket, CategoriaTicket, InteracaoTicket, PerfilAgente,
-    StatusTicket, PrioridadeTicket, TicketAnexo,
+    StatusTicket, PrioridadeTicket, TicketAnexo, PontoDeVenda,
 )
 from ..forms import TicketCreateForm
 from ..views_helpers import get_role_filtered_tickets, user_can_access_ticket
@@ -202,6 +202,7 @@ class TicketCreateView(CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['clientes'] = Cliente.objects.all().order_by('nome')
+        context['pontos_de_venda'] = PontoDeVenda.objects.select_related('cliente').all().order_by('nome_fantasia')
         context['categorias'] = CategoriaTicket.objects.all()
 
         try:
@@ -285,7 +286,7 @@ class TicketCreateView(CreateView):
 class TicketUpdateView(UpdateView):
     model = Ticket
     template_name = 'dashboard/tickets/update.html'
-    fields = ['categoria', 'titulo', 'descricao', 'status', 'prioridade', 'agente']
+    fields = ['cliente', 'ponto_de_venda', 'categoria', 'titulo', 'descricao', 'status', 'prioridade', 'agente']
 
     def get_queryset(self):
         base_qs = Ticket.objects.all()
@@ -297,6 +298,7 @@ class TicketUpdateView(UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['clientes'] = Cliente.objects.all().order_by('nome')
+        context['pontos_de_venda'] = PontoDeVenda.objects.select_related('cliente').all().order_by('nome_fantasia')
         context['categorias'] = CategoriaTicket.objects.all()
         context['agentes'] = User.objects.filter(perfilagente__isnull=False)
         return context

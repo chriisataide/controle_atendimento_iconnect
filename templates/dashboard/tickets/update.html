@@ -67,15 +67,25 @@
               <i class="material-symbols-rounded text-sm me-1">info</i> Informações Básicas
             </h6>
             <div class="row mb-3">
-              <div class="col-md-8">
+              <div class="col-md-6">
                 <label class="form-label text-xs text-uppercase mb-1">Título</label>
                 <input type="text" class="form-control form-control-sm" name="titulo" value="{{ object.titulo }}" required>
               </div>
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <label class="form-label text-xs text-uppercase mb-1">Cliente</label>
-                <select class="form-select form-select-sm" name="cliente" required>
+                <select class="form-select form-select-sm" name="cliente" id="clienteSelect">
+                  <option value="">Selecione um cliente...</option>
                   {% for c in clientes %}
                   <option value="{{ c.id }}" {% if c.id == object.cliente_id %}selected{% endif %}>{{ c.nome }} ({{ c.email }})</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label text-xs text-uppercase mb-1">Ponto de Venda</label>
+                <select class="form-select form-select-sm" name="ponto_de_venda" id="pdvSelect">
+                  <option value="">Selecione um ponto de venda...</option>
+                  {% for p in pontos_de_venda %}
+                  <option value="{{ p.id }}" data-cliente-id="{{ p.cliente_id|default:'' }}" {% if p.id == object.ponto_de_venda_id %}selected{% endif %}>{{ p.nome_fantasia }}{% if p.cidade %} — {{ p.cidade }}{% endif %}</option>
                   {% endfor %}
                 </select>
               </div>
@@ -223,4 +233,32 @@
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const clienteSelect = document.getElementById('clienteSelect');
+    const pdvSelect = document.getElementById('pdvSelect');
+    if (clienteSelect && pdvSelect) {
+        clienteSelect.addEventListener('change', function() {
+            const clienteId = this.value;
+            if (!clienteId) {
+                pdvSelect.innerHTML = '<option value="">Selecione um ponto de venda...</option>';
+                return;
+            }
+            fetch(`{% url 'dashboard:api_pdv_por_cliente' %}?cliente_id=${clienteId}`)
+                .then(r => r.json())
+                .then(data => {
+                    pdvSelect.innerHTML = '<option value="">Selecione um ponto de venda...</option>';
+                    data.forEach(p => {
+                        const label = p.cidade ? `${p.nome_fantasia} — ${p.cidade}` : p.nome_fantasia;
+                        pdvSelect.add(new Option(label, p.id));
+                    });
+                })
+                .catch(() => {
+                    pdvSelect.innerHTML = '<option value="">Erro ao carregar PdVs</option>';
+                });
+        });
+    }
+});
+</script>
 {% endblock %}

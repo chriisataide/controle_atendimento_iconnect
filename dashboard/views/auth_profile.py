@@ -31,6 +31,7 @@ class PontoDeVendaForm(forms.ModelForm):
         model = PontoDeVenda
         fields = '__all__'
         widgets = {
+            'cliente': forms.Select(attrs={'class': 'form-select', 'id': 'clienteSelect'}),
             'razao_social': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
             'nome_fantasia': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
             'cnpj': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
@@ -55,6 +56,13 @@ class PontoDeVendaForm(forms.ModelForm):
             'responsavel_email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': ' '}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from ..models import Cliente
+        self.fields['cliente'].queryset = Cliente.objects.all().order_by('nome')
+        self.fields['cliente'].empty_label = "Selecione um cliente..."
+        self.fields['cliente'].required = False
+
 
 @method_decorator([login_required], name='dispatch')
 class PontoDeVendaListView(ListView):
@@ -62,6 +70,9 @@ class PontoDeVendaListView(ListView):
     template_name = 'dashboard/pontodevenda_list.html'
     context_object_name = 'pontosdevenda'
     paginate_by = 25
+
+    def get_queryset(self):
+        return PontoDeVenda.objects.select_related('cliente').all()
 
     def dispatch(self, request, *args, **kwargs):
         if not (request.user.is_staff or request.user.is_superuser):
@@ -119,6 +130,18 @@ class PontoDeVendaUpdateView(UpdateView):
         obj = form.save()
         messages.success(self.request, f'Ponto de Venda "{obj.nome_fantasia}" atualizado com sucesso.')
         return super().form_valid(form)
+
+
+@login_required
+def api_pontos_de_venda_por_cliente(request):
+    """API AJAX para retornar pontos de venda filtrados por cliente"""
+    cliente_id = request.GET.get('cliente_id')
+    if cliente_id:
+        pdvs = PontoDeVenda.objects.filter(cliente_id=cliente_id).order_by('nome_fantasia')
+    else:
+        pdvs = PontoDeVenda.objects.all().order_by('nome_fantasia')
+    data = [{'id': p.id, 'nome_fantasia': p.nome_fantasia, 'cidade': p.cidade or ''} for p in pdvs]
+    return JsonResponse(data, safe=False)
 
 
 # ========== GESTÃO DE USUÁRIOS ==========
