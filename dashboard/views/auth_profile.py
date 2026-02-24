@@ -160,9 +160,15 @@ class UserCreateView(CreateView):
             return redirect('dashboard:index')
         return super().dispatch(request, *args, **kwargs)
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request_user'] = self.request.user
+        return kwargs
+
     def form_valid(self, form):
         user = form.save()
-        messages.success(self.request, f'Usuário {user.username} criado com sucesso.')
+        role_display = dict(form.fields['role'].choices).get(form.cleaned_data['role'], '')
+        messages.success(self.request, f'Usuário {user.username} criado com sucesso como {role_display}.')
         return super().form_valid(form)
 
 

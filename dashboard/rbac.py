@@ -19,16 +19,38 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 ROLE_ADMIN = "admin"
+ROLE_GERENTE = "gerente"
 ROLE_SUPERVISOR = "supervisor"
+ROLE_TECNICO_SENIOR = "tecnico_senior"
 ROLE_AGENTE = "agente"
+ROLE_FINANCEIRO = "financeiro"
+ROLE_VISUALIZADOR = "visualizador"
 ROLE_CLIENTE = "cliente"
 
-ALL_ROLES = [ROLE_ADMIN, ROLE_SUPERVISOR, ROLE_AGENTE, ROLE_CLIENTE]
+ALL_ROLES = [
+    ROLE_ADMIN, ROLE_GERENTE, ROLE_SUPERVISOR, ROLE_TECNICO_SENIOR,
+    ROLE_AGENTE, ROLE_FINANCEIRO, ROLE_VISUALIZADOR, ROLE_CLIENTE,
+]
 
 # Mapeamento de permissoes por role (app_label.codename)
 ROLE_PERMISSIONS = {
     ROLE_ADMIN: [
         # Tudo --- admin recebe is_staff=True + superuser
+    ],
+    ROLE_GERENTE: [
+        # Gestão estratégica: dashboards executivos, relatórios, visão geral
+        "dashboard.view_ticket",
+        "dashboard.view_cliente",
+        "dashboard.change_cliente",
+        "dashboard.view_interacaoticket",
+        "dashboard.view_slapolicy",
+        "dashboard.view_slahistory",
+        "dashboard.view_slaalert",
+        "dashboard.view_slaviolation",
+        "dashboard.view_perfilagente",
+        "dashboard.view_categoriaticket",
+        "dashboard.view_auditevent",
+        "dashboard.view_securityalert",
     ],
     ROLE_SUPERVISOR: [
         "dashboard.view_ticket",
@@ -53,6 +75,22 @@ ROLE_PERMISSIONS = {
         "dashboard.view_auditevent",
         "dashboard.view_securityalert",
     ],
+    ROLE_TECNICO_SENIOR: [
+        # Agente com mais autonomia: relatórios, gerenciamento de filas
+        "dashboard.view_ticket",
+        "dashboard.change_ticket",
+        "dashboard.add_ticket",
+        "dashboard.delete_ticket",
+        "dashboard.view_cliente",
+        "dashboard.change_cliente",
+        "dashboard.view_interacaoticket",
+        "dashboard.add_interacaoticket",
+        "dashboard.view_slapolicy",
+        "dashboard.view_slahistory",
+        "dashboard.view_slaalert",
+        "dashboard.view_categoriaticket",
+        "dashboard.view_perfilagente",
+    ],
     ROLE_AGENTE: [
         "dashboard.view_ticket",
         "dashboard.change_ticket",
@@ -61,6 +99,26 @@ ROLE_PERMISSIONS = {
         "dashboard.view_interacaoticket",
         "dashboard.add_interacaoticket",
         "dashboard.view_categoriaticket",
+    ],
+    ROLE_FINANCEIRO: [
+        # Gestão financeira: cobranças, custos, relatórios financeiros
+        "dashboard.view_ticket",
+        "dashboard.view_cliente",
+        "dashboard.change_cliente",
+        "dashboard.view_interacaoticket",
+        "dashboard.view_categoriaticket",
+    ],
+    ROLE_VISUALIZADOR: [
+        # Somente leitura: tickets e relatórios
+        "dashboard.view_ticket",
+        "dashboard.view_cliente",
+        "dashboard.view_interacaoticket",
+        "dashboard.view_slapolicy",
+        "dashboard.view_slahistory",
+        "dashboard.view_slaalert",
+        "dashboard.view_slaviolation",
+        "dashboard.view_categoriaticket",
+        "dashboard.view_auditevent",
     ],
     ROLE_CLIENTE: [
         "dashboard.view_ticket",
@@ -80,8 +138,12 @@ class UserRole(models.Model):
 
     ROLE_CHOICES = [
         (ROLE_ADMIN, "Administrador"),
+        (ROLE_GERENTE, "Gerente"),
         (ROLE_SUPERVISOR, "Supervisor"),
+        (ROLE_TECNICO_SENIOR, "Técnico Sênior"),
         (ROLE_AGENTE, "Agente"),
+        (ROLE_FINANCEIRO, "Financeiro"),
+        (ROLE_VISUALIZADOR, "Visualizador"),
         (ROLE_CLIENTE, "Cliente"),
     ]
 
@@ -143,7 +205,7 @@ def assign_role(user: User, role: str):
     if role == ROLE_ADMIN:
         user.is_staff = True
         user.is_superuser = True
-    elif role == ROLE_SUPERVISOR:
+    elif role in (ROLE_GERENTE, ROLE_SUPERVISOR, ROLE_TECNICO_SENIOR, ROLE_FINANCEIRO):
         user.is_staff = True
         user.is_superuser = False
     else:
@@ -240,16 +302,24 @@ def rbac_context(request):
         return {
             "user_role": role,
             "is_admin": role == ROLE_ADMIN,
-            "is_supervisor": role in (ROLE_ADMIN, ROLE_SUPERVISOR),
-            "is_agente": role in (ROLE_ADMIN, ROLE_SUPERVISOR, ROLE_AGENTE),
+            "is_gerente": role in (ROLE_ADMIN, ROLE_GERENTE),
+            "is_supervisor": role in (ROLE_ADMIN, ROLE_GERENTE, ROLE_SUPERVISOR),
+            "is_tecnico_senior": role in (ROLE_ADMIN, ROLE_GERENTE, ROLE_SUPERVISOR, ROLE_TECNICO_SENIOR),
+            "is_agente": role in (ROLE_ADMIN, ROLE_GERENTE, ROLE_SUPERVISOR, ROLE_TECNICO_SENIOR, ROLE_AGENTE),
+            "is_financeiro": role in (ROLE_ADMIN, ROLE_GERENTE, ROLE_FINANCEIRO),
+            "is_visualizador": role in (ROLE_ADMIN, ROLE_GERENTE, ROLE_SUPERVISOR, ROLE_TECNICO_SENIOR, ROLE_AGENTE, ROLE_FINANCEIRO, ROLE_VISUALIZADOR),
             "is_cliente": role == ROLE_CLIENTE,
             "user_perfil": user_perfil,
         }
     return {
         "user_role": ROLE_CLIENTE,
         "is_admin": False,
+        "is_gerente": False,
         "is_supervisor": False,
+        "is_tecnico_senior": False,
         "is_agente": False,
+        "is_financeiro": False,
+        "is_visualizador": False,
         "is_cliente": True,
         "user_perfil": None,
     }

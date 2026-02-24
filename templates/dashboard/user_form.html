@@ -6,180 +6,283 @@
 
 {% block extra_css %}
 <style>
-    .create-user-card {
+    /* ── Card principal ── */
+    .uc-card {
         border-radius: 16px;
         border: none;
         overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 6px 16px rgba(0,0,0,.04);
     }
-    .create-header {
-        background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
-        padding: 2rem 2rem 3.5rem;
+    .uc-header {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        padding: 2rem 2rem 3rem;
         position: relative;
     }
-    .create-header::after {
+    .uc-header::after {
         content: '';
         position: absolute;
-        bottom: -1px;
-        left: 0;
-        right: 0;
-        height: 30px;
+        bottom: -1px; left: 0; right: 0;
+        height: 24px;
         background: #fff;
         border-radius: 24px 24px 0 0;
     }
-    .avatar-preview {
-        width: 80px;
-        height: 80px;
+    .uc-avatar {
+        width: 72px; height: 72px;
         border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: #334155;
-        background: rgba(255,255,255,0.95);
-        border: 3px solid rgba(255,255,255,0.4);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.6rem; font-weight: 700;
+        color: #1e293b;
+        background: rgba(255,255,255,.95);
+        border: 3px solid rgba(255,255,255,.35);
         margin: 0 auto;
-        transition: all 0.3s;
+        transition: all .3s ease;
+        letter-spacing: -0.5px;
     }
-    .form-section {
-        padding: 0 2rem;
-    }
-    .section-label {
-        font-size: 0.7rem;
+
+    /* ── Seções ── */
+    .uc-section { padding: 0 1.75rem; }
+    .uc-section-title {
+        font-size: .68rem;
         text-transform: uppercase;
-        letter-spacing: 0.8px;
+        letter-spacing: .9px;
         font-weight: 700;
         color: #06b6d4;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        margin-bottom: .85rem;
+        display: flex; align-items: center; gap: 7px;
+        padding-bottom: .5rem;
+        border-bottom: 1px solid #f1f5f9;
     }
-    .section-label i {
-        font-size: 18px;
+    .uc-section-title i { font-size: 17px; }
+    .uc-divider { border: none; border-top: 1px solid #f1f5f9; margin: .25rem 0 1rem; }
+
+    /* ── Form controls ── */
+    .uc-card .form-label {
+        font-size: .78rem; font-weight: 600;
+        color: #334155; margin-bottom: .3rem;
     }
-    .form-label {
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: #334155;
-        margin-bottom: 0.35rem;
-    }
-    .form-control {
+    .uc-card .form-control,
+    .uc-card .form-select {
         border-radius: 10px;
-        border: 1px solid #e2e8f0;
-        padding: 0.6rem 1rem;
-        font-size: 0.85rem;
-        transition: all 0.2s;
+        border: 1.5px solid #e2e8f0;
+        padding: .55rem .9rem;
+        font-size: .84rem;
+        transition: border-color .2s, box-shadow .2s;
+        background-color: #fff;
     }
-    .form-control:focus {
+    .uc-card .form-control:focus,
+    .uc-card .form-select:focus {
         border-color: #06b6d4;
-        box-shadow: 0 0 0 3px rgba(6,182,212,0.1);
+        box-shadow: 0 0 0 3px rgba(6,182,212,.1);
     }
-    .form-check-input:checked {
+    .uc-card .form-check-input:checked {
         background-color: #06b6d4;
         border-color: #06b6d4;
     }
-    .password-hint {
-        font-size: 0.72rem;
-        color: #94a3b8;
-        margin-top: 4px;
+    .uc-hint {
+        font-size: .7rem; color: #94a3b8; margin-top: 3px; line-height: 1.4;
     }
-    .password-hint ul {
-        padding-left: 1rem;
-        margin-bottom: 0;
-    }
-    .btn-create {
-        background: linear-gradient(135deg, #06b6d4, #0891b2);
-        border: none;
-        color: #fff;
-        padding: 0.65rem 2rem;
+    .uc-hint ul { padding-left: 1rem; margin-bottom: 0; }
+
+    /* ── Nível de acesso ── */
+    .uc-role-detail {
+        padding: .75rem 1rem;
         border-radius: 10px;
-        font-weight: 600;
-        font-size: 0.85rem;
-        transition: all 0.2s;
+        border: 1.5px solid transparent;
+        transition: all .25s ease;
     }
-    .btn-create:hover {
+    .uc-active-switch {
+        background: #f8fafc;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 10px;
+        padding: .7rem 1rem;
+        transition: border-color .2s;
+    }
+    .uc-active-switch:has(.form-check-input:checked) {
+        border-color: #06b6d4;
+        background: #f0fdfa;
+    }
+
+    /* ── Botões ── */
+    .btn-uc-primary {
+        background: linear-gradient(135deg, #06b6d4, #0891b2);
+        border: none; color: #fff;
+        padding: .6rem 1.75rem;
+        border-radius: 10px;
+        font-weight: 600; font-size: .84rem;
+        transition: all .2s;
+    }
+    .btn-uc-primary:hover {
         background: linear-gradient(135deg, #0891b2, #0e7490);
         color: #fff;
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(6,182,212,0.3);
+        box-shadow: 0 4px 14px rgba(6,182,212,.3);
     }
-    .btn-back {
-        border: 1px solid #e2e8f0;
+    .btn-uc-secondary {
+        border: 1.5px solid #e2e8f0;
         color: #64748b;
-        padding: 0.65rem 1.5rem;
+        padding: .6rem 1.5rem;
         border-radius: 10px;
-        font-weight: 600;
-        font-size: 0.85rem;
+        font-weight: 600; font-size: .84rem;
         background: #fff;
-        transition: all 0.2s;
+        transition: all .2s;
     }
-    .btn-back:hover {
-        background: #f8fafc;
-        color: #334155;
+    .btn-uc-secondary:hover {
+        background: #f8fafc; color: #334155;
         border-color: #cbd5e1;
     }
-    .error-list {
-        background: rgba(239,68,68,0.05);
-        border: 1px solid rgba(239,68,68,0.15);
+
+    /* ── Erros ── */
+    .uc-errors {
+        background: #fef2f2;
+        border: 1.5px solid #fecaca;
         border-radius: 10px;
-        padding: 1rem 1.25rem;
-        margin-bottom: 1.5rem;
+        padding: .85rem 1.1rem;
     }
-    .error-list li {
-        color: #ef4444;
-        font-size: 0.82rem;
-        margin-bottom: 2px;
+    .uc-errors li {
+        color: #dc2626; font-size: .8rem; margin-bottom: 2px;
     }
-    .info-card {
-        background: #f8fafc;
-        border-radius: 12px;
-        border: 1px solid #e2e8f0;
+
+    /* ── Sidebar ── */
+    .uc-sidebar-card {
+        background: #fff;
+        border-radius: 14px;
+        border: 1.5px solid #e2e8f0;
+        box-shadow: 0 1px 2px rgba(0,0,0,.04);
+        overflow: hidden;
+    }
+    .uc-sidebar-header {
+        padding: .9rem 1.15rem;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .uc-sidebar-header h6 {
+        font-size: .78rem; font-weight: 700;
+        color: #334155; margin: 0;
+    }
+    .uc-sidebar-body { padding: .75rem 1rem; }
+
+    .uc-role-row {
+        display: flex; align-items: center; gap: 10px;
+        padding: .45rem .6rem;
+        border-radius: 8px;
+        margin-bottom: 3px;
+        transition: background .15s;
+        cursor: default;
+    }
+    .uc-role-row:hover { filter: brightness(.97); }
+    .uc-role-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .uc-role-name {
+        font-size: .75rem; font-weight: 600; line-height: 1;
+    }
+    .uc-role-sub {
+        font-size: .68rem; color: #94a3b8; line-height: 1;
+    }
+
+    .uc-tip-item {
+        display: flex; align-items: flex-start; gap: 8px;
+        margin-bottom: .6rem;
+    }
+    .uc-tip-item:last-child { margin-bottom: 0; }
+    .uc-tip-icon {
+        flex-shrink: 0; margin-top: 1px;
+        font-size: 15px;
+    }
+    .uc-tip-text {
+        font-size: .74rem; color: #64748b; line-height: 1.45;
+    }
+
+    /* ── Steps indicator ── */
+    .uc-steps {
+        display: flex; gap: 0; justify-content: center;
+        margin-bottom: .25rem;
+    }
+    .uc-step {
+        display: flex; align-items: center; gap: 6px;
+        padding: .4rem .8rem;
+        font-size: .68rem; font-weight: 600;
+        color: #94a3b8;
+        position: relative;
+    }
+    .uc-step.active { color: #06b6d4; }
+    .uc-step.active .uc-step-num {
+        background: #06b6d4; color: #fff;
+    }
+    .uc-step-num {
+        width: 20px; height: 20px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: .65rem; font-weight: 700;
+        background: #e2e8f0; color: #94a3b8;
+        transition: all .25s;
+    }
+    .uc-step-line {
+        width: 28px; height: 2px;
+        background: #e2e8f0;
+        align-self: center;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 991px) {
+        .uc-section { padding: 0 1.25rem; }
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid py-2">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-lg-8 col-md-7">
-            <div class="ms-3">
-                <h3 class="mb-0 h4 font-weight-bolder">Criar Novo Usuário</h3>
-                <p class="mb-0 text-sm text-secondary">Preencha os dados para criar uma nova conta</p>
-            </div>
+    <!-- Page Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4 px-2">
+        <div>
+            <h4 class="mb-0 fw-bold" style="color: #1e293b;">Novo Usuário</h4>
+            <p class="mb-0 text-sm" style="color: #94a3b8;">Preencha os dados abaixo para criar uma nova conta de acesso</p>
         </div>
-        <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
-            <a href="{% url 'dashboard:user_list' %}" class="btn btn-outline-secondary btn-sm mb-0">
-                <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Voltar
-            </a>
-        </div>
+        <a href="{% url 'dashboard:user_list' %}" class="btn btn-uc-secondary btn-sm">
+            <i class="material-symbols-rounded text-sm me-1" style="font-size: 16px;">arrow_back</i> Voltar
+        </a>
     </div>
 
-    <div class="row mx-1">
-        <!-- Formulário principal -->
-        <div class="col-lg-8 col-12 mb-4">
-            <div class="card create-user-card shadow-sm">
+    <div class="row g-4 px-1">
+        <!-- ═══ Formulário principal ═══ -->
+        <div class="col-lg-8 col-12">
+            <div class="card uc-card">
                 <!-- Header com avatar -->
-                <div class="create-header text-center">
-                    <div class="avatar-preview mb-2" id="avatarPreview">
-                        <i class="material-symbols-rounded" style="font-size: 32px;">person</i>
+                <div class="uc-header text-center">
+                    <div class="uc-avatar mb-2" id="avatarPreview">
+                        <i class="material-symbols-rounded" style="font-size: 30px; color: #64748b;">person</i>
                     </div>
-                    <h6 class="text-white mb-0 mt-2">Novo Usuário</h6>
-                    <p class="text-white-50 text-xs mb-0">O avatar será gerado a partir das iniciais</p>
+                    <p class="text-white-50 mb-0" style="font-size: .72rem;">Avatar gerado pelas iniciais do nome</p>
                 </div>
 
-                <div class="card-body pt-2 pb-4">
+                <div class="card-body pt-1 pb-4">
+                    <!-- Steps indicator -->
+                    <div class="uc-steps mb-3">
+                        <div class="uc-step active" data-step="1">
+                            <span class="uc-step-num">1</span> Acesso
+                        </div>
+                        <div class="uc-step-line"></div>
+                        <div class="uc-step" data-step="2">
+                            <span class="uc-step-num">2</span> Pessoal
+                        </div>
+                        <div class="uc-step-line"></div>
+                        <div class="uc-step" data-step="3">
+                            <span class="uc-step-num">3</span> Permissões
+                        </div>
+                    </div>
+
                     <form method="post" id="createUserForm">
                         {% csrf_token %}
 
                         <!-- Erros do formulário -->
                         {% if form.errors %}
-                        <div class="mx-2 mb-3">
-                            <div class="error-list">
+                        <div class="uc-section mb-3">
+                            <div class="uc-errors">
                                 <div class="d-flex align-items-center mb-2">
-                                    <i class="material-symbols-rounded me-2" style="color: #ef4444; font-size: 18px;">error</i>
-                                    <strong class="text-sm" style="color: #ef4444;">Corrija os erros abaixo:</strong>
+                                    <i class="material-symbols-rounded me-2" style="color: #dc2626; font-size: 17px;">error</i>
+                                    <strong style="color: #dc2626; font-size: .82rem;">Corrija os erros abaixo</strong>
                                 </div>
                                 <ul class="mb-0 ps-4">
                                     {% for field in form %}
@@ -195,89 +298,117 @@
                         </div>
                         {% endif %}
 
-                        <!-- Dados de Acesso -->
-                        <div class="form-section mb-4">
-                            <div class="section-label">
-                                <i class="material-symbols-rounded">login</i>
+                        <!-- ── 1. Dados de Acesso ── -->
+                        <div class="uc-section mb-4" data-section="1">
+                            <div class="uc-section-title">
+                                <i class="material-symbols-rounded">passkey</i>
                                 Dados de Acesso
                             </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label" for="id_username">Nome de usuário <span class="text-danger">*</span></label>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="id_username">
+                                        Nome de usuário <span class="text-danger">*</span>
+                                    </label>
                                     {{ form.username }}
                                     {% if form.username.help_text %}
-                                    <div class="password-hint">{{ form.username.help_text }}</div>
+                                    <div class="uc-hint">{{ form.username.help_text }}</div>
                                     {% endif %}
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label" for="id_email">Email</label>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="id_email">Email <span class="text-danger">*</span></label>
                                     {{ form.email }}
                                 </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-6">
                                     <label class="form-label" for="id_password1">Senha <span class="text-danger">*</span></label>
                                     {{ form.password1 }}
-                                    {% if form.password1.help_text %}
-                                    <div class="password-hint">{{ form.password1.help_text }}</div>
-                                    {% endif %}
                                 </div>
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-6">
                                     <label class="form-label" for="id_password2">Confirmar Senha <span class="text-danger">*</span></label>
                                     {{ form.password2 }}
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Informações Pessoais -->
-                        <div class="form-section mb-4">
-                            <div class="section-label">
+                        <!-- ── 2. Informações Pessoais ── -->
+                        <div class="uc-section mb-4" data-section="2">
+                            <div class="uc-section-title">
                                 <i class="material-symbols-rounded">badge</i>
                                 Informações Pessoais
                             </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
+                            <div class="row g-3">
+                                <div class="col-md-6">
                                     <label class="form-label" for="id_first_name">Primeiro Nome</label>
                                     {{ form.first_name }}
                                 </div>
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-6">
                                     <label class="form-label" for="id_last_name">Sobrenome</label>
                                     {{ form.last_name }}
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Permissões -->
-                        <div class="form-section mb-4">
-                            <div class="section-label">
+                        <!-- ── 3. Nível de Acesso & Status ── -->
+                        <div class="uc-section mb-4" data-section="3">
+                            <div class="uc-section-title">
                                 <i class="material-symbols-rounded">shield_person</i>
-                                Permissões
+                                Nível de Acesso
                             </div>
-                            <div class="d-flex align-items-center p-3 rounded-3 mb-2" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+
+                            <div class="row g-3">
+                                <!-- Select do nível -->
+                                <div class="col-md-7">
+                                    <label class="form-label" for="id_role">
+                                        Selecione o nível <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.role }}
+                                </div>
+                                <!-- Badge preview -->
+                                <div class="col-md-5 d-flex align-items-end pb-1">
+                                    <span class="badge rounded-pill px-3 py-2" id="roleBadge" style="font-size: .74rem; transition: all .25s;"></span>
+                                </div>
+                            </div>
+
+                            <!-- Painel descritivo do nível -->
+                            <div class="uc-role-detail mt-3" id="roleDetails" style="display: none;">
+                                <div class="d-flex align-items-start gap-2">
+                                    <i class="material-symbols-rounded" id="roleIcon" style="font-size: 20px; margin-top: 1px;">admin_panel_settings</i>
+                                    <div>
+                                        <div class="fw-bold" id="roleTitle" style="font-size: .82rem; line-height: 1.2;"></div>
+                                        <p class="mb-0 mt-1" id="roleDesc" style="font-size: .74rem; color: #64748b; line-height: 1.45;"></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="uc-divider mt-3">
+
+                            <!-- Switch conta ativa -->
+                            <div class="uc-active-switch d-flex align-items-center">
                                 <div class="form-check form-switch mb-0">
                                     {{ form.is_active }}
                                 </div>
-                                <div class="ms-3">
-                                    <h6 class="mb-0 text-sm">Conta Ativa</h6>
-                                    <p class="text-xs text-secondary mb-0">O usuário poderá fazer login e acessar o sistema</p>
+                                <div class="ms-2">
+                                    <div class="fw-semibold" style="font-size: .82rem; color: #334155;">Conta Ativa</div>
+                                    <div style="font-size: .72rem; color: #94a3b8;">O usuário poderá fazer login e acessar o sistema</div>
                                 </div>
-                            </div>
-                            <div class="text-xs text-muted mt-2 px-1">
-                                <i class="material-symbols-rounded align-middle" style="font-size: 14px;">info</i>
-                                Novos usuários são criados com permissão básica. Permissões avançadas podem ser configuradas no painel administrativo.
                             </div>
                         </div>
 
-                        <!-- Botões -->
-                        <div class="form-section">
-                            <hr class="my-3" style="border-color: #f1f5f9;">
-                            <div class="d-flex justify-content-end gap-2">
-                                <a href="{% url 'dashboard:user_list' %}" class="btn btn-back">
-                                    <i class="material-symbols-rounded text-sm me-1">close</i> Cancelar
-                                </a>
-                                <button type="submit" class="btn btn-create">
-                                    <i class="material-symbols-rounded text-sm me-1">person_add</i> Criar Usuário
-                                </button>
+                        <!-- ── Ações ── -->
+                        <div class="uc-section">
+                            <hr class="uc-divider">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span style="font-size: .72rem; color: #94a3b8;">
+                                    <i class="material-symbols-rounded align-middle" style="font-size: 14px;">info</i>
+                                    Permissões definidas automaticamente pelo RBAC
+                                </span>
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'dashboard:user_list' %}" class="btn btn-uc-secondary">
+                                        <i class="material-symbols-rounded text-sm me-1" style="font-size: 16px;">close</i> Cancelar
+                                    </a>
+                                    <button type="submit" class="btn btn-uc-primary">
+                                        <i class="material-symbols-rounded text-sm me-1" style="font-size: 16px;">person_add</i> Criar Usuário
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </form>
@@ -285,60 +416,123 @@
             </div>
         </div>
 
-        <!-- Sidebar informativa -->
+        <!-- ═══ Sidebar ═══ -->
         <div class="col-lg-4 col-12">
-            <div class="card info-card mb-4">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center mb-3">
-                        <i class="material-symbols-rounded me-2" style="color: #06b6d4; font-size: 22px;">help</i>
-                        <h6 class="mb-0 text-sm">Dicas</h6>
+            <!-- Card Níveis de Acesso -->
+            <div class="uc-sidebar-card mb-3">
+                <div class="uc-sidebar-header">
+                    <i class="material-symbols-rounded" style="font-size: 18px; color: #8b5cf6;">deployed_code_account</i>
+                    <h6>Níveis de Acesso</h6>
+                </div>
+                <div class="uc-sidebar-body">
+                    <div class="uc-role-row" style="background: #fef2f2;">
+                        <span class="uc-role-dot" style="background: #ef4444;"></span>
+                        <div>
+                            <div class="uc-role-name" style="color: #dc2626;">Administrador</div>
+                            <div class="uc-role-sub">Acesso total ao sistema</div>
+                        </div>
                     </div>
-                    <ul class="list-unstyled mb-0">
-                        <li class="d-flex align-items-start mb-3">
-                            <i class="material-symbols-rounded me-2 mt-1" style="color: #22c55e; font-size: 16px;">check_circle</i>
-                            <span class="text-xs text-secondary">O nome de usuário deve ser único e será usado para login</span>
-                        </li>
-                        <li class="d-flex align-items-start mb-3">
-                            <i class="material-symbols-rounded me-2 mt-1" style="color: #22c55e; font-size: 16px;">check_circle</i>
-                            <span class="text-xs text-secondary">A senha deve ter pelo menos 8 caracteres</span>
-                        </li>
-                        <li class="d-flex align-items-start mb-3">
-                            <i class="material-symbols-rounded me-2 mt-1" style="color: #22c55e; font-size: 16px;">check_circle</i>
-                            <span class="text-xs text-secondary">O email será usado para notificações e recuperação de senha</span>
-                        </li>
-                        <li class="d-flex align-items-start">
-                            <i class="material-symbols-rounded me-2 mt-1" style="color: #f59e0b; font-size: 16px;">info</i>
-                            <span class="text-xs text-secondary">Dados como telefone, cargo e departamento poderão ser preenchidos no perfil</span>
-                        </li>
-                    </ul>
+                    <div class="uc-role-row" style="background: #fffbeb;">
+                        <span class="uc-role-dot" style="background: #f59e0b;"></span>
+                        <div>
+                            <div class="uc-role-name" style="color: #b45309;">Gerente</div>
+                            <div class="uc-role-sub">Dashboards e gestão estratégica</div>
+                        </div>
+                    </div>
+                    <div class="uc-role-row" style="background: #f5f3ff;">
+                        <span class="uc-role-dot" style="background: #8b5cf6;"></span>
+                        <div>
+                            <div class="uc-role-name" style="color: #6d28d9;">Supervisor</div>
+                            <div class="uc-role-sub">Gerencia equipes e SLA</div>
+                        </div>
+                    </div>
+                    <div class="uc-role-row" style="background: #eff6ff;">
+                        <span class="uc-role-dot" style="background: #3b82f6;"></span>
+                        <div>
+                            <div class="uc-role-name" style="color: #1d4ed8;">Técnico Sênior</div>
+                            <div class="uc-role-sub">Agente com autonomia ampliada</div>
+                        </div>
+                    </div>
+                    <div class="uc-role-row" style="background: #ecfdf5;">
+                        <span class="uc-role-dot" style="background: #10b981;"></span>
+                        <div>
+                            <div class="uc-role-name" style="color: #047857;">Agente</div>
+                            <div class="uc-role-sub">Atendimento de tickets</div>
+                        </div>
+                    </div>
+                    <div class="uc-role-row" style="background: #fdf4ff;">
+                        <span class="uc-role-dot" style="background: #a855f7;"></span>
+                        <div>
+                            <div class="uc-role-name" style="color: #7e22ce;">Financeiro</div>
+                            <div class="uc-role-sub">Cobranças e relatórios financeiros</div>
+                        </div>
+                    </div>
+                    <div class="uc-role-row" style="background: #f8fafc;">
+                        <span class="uc-role-dot" style="background: #64748b;"></span>
+                        <div>
+                            <div class="uc-role-name" style="color: #374151;">Visualizador</div>
+                            <div class="uc-role-sub">Somente leitura</div>
+                        </div>
+                    </div>
+                    <div class="uc-role-row" style="background: #f0fdfa;">
+                        <span class="uc-role-dot" style="background: #14b8a6;"></span>
+                        <div>
+                            <div class="uc-role-name" style="color: #0f766e;">Cliente</div>
+                            <div class="uc-role-sub">Acesso aos próprios tickets</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="card info-card">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center mb-3">
-                        <i class="material-symbols-rounded me-2" style="color: #334155; font-size: 22px;">security</i>
-                        <h6 class="mb-0 text-sm">Segurança</h6>
+            <!-- Card Dicas -->
+            <div class="uc-sidebar-card mb-3">
+                <div class="uc-sidebar-header">
+                    <i class="material-symbols-rounded" style="font-size: 18px; color: #06b6d4;">lightbulb</i>
+                    <h6>Dicas</h6>
+                </div>
+                <div class="uc-sidebar-body">
+                    <div class="uc-tip-item">
+                        <i class="material-symbols-rounded uc-tip-icon" style="color: #22c55e;">check_circle</i>
+                        <span class="uc-tip-text">Nome de usuário único, usado para login</span>
                     </div>
-                    <p class="text-xs text-secondary mb-2">Requisitos de senha:</p>
-                    <ul class="list-unstyled mb-0">
-                        <li class="text-xs text-secondary mb-1">
-                            <i class="material-symbols-rounded align-middle me-1" style="font-size: 14px;">lock</i>
-                            Mínimo 8 caracteres
-                        </li>
-                        <li class="text-xs text-secondary mb-1">
-                            <i class="material-symbols-rounded align-middle me-1" style="font-size: 14px;">lock</i>
-                            Não pode ser muito semelhante aos dados pessoais
-                        </li>
-                        <li class="text-xs text-secondary mb-1">
-                            <i class="material-symbols-rounded align-middle me-1" style="font-size: 14px;">lock</i>
-                            Não pode ser uma senha comum
-                        </li>
-                        <li class="text-xs text-secondary">
-                            <i class="material-symbols-rounded align-middle me-1" style="font-size: 14px;">lock</i>
-                            Não pode ser totalmente numérica
-                        </li>
-                    </ul>
+                    <div class="uc-tip-item">
+                        <i class="material-symbols-rounded uc-tip-icon" style="color: #22c55e;">check_circle</i>
+                        <span class="uc-tip-text">Senha com no mínimo 8 caracteres</span>
+                    </div>
+                    <div class="uc-tip-item">
+                        <i class="material-symbols-rounded uc-tip-icon" style="color: #22c55e;">check_circle</i>
+                        <span class="uc-tip-text">Email para notificações e recuperação de senha</span>
+                    </div>
+                    <div class="uc-tip-item">
+                        <i class="material-symbols-rounded uc-tip-icon" style="color: #f59e0b;">info</i>
+                        <span class="uc-tip-text">Dados como telefone e departamento são preenchidos no perfil</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Segurança -->
+            <div class="uc-sidebar-card">
+                <div class="uc-sidebar-header">
+                    <i class="material-symbols-rounded" style="font-size: 18px; color: #334155;">lock</i>
+                    <h6>Requisitos de Senha</h6>
+                </div>
+                <div class="uc-sidebar-body">
+                    <div class="uc-tip-item">
+                        <i class="material-symbols-rounded uc-tip-icon" style="color: #94a3b8; font-size: 14px;">radio_button_unchecked</i>
+                        <span class="uc-tip-text">Mínimo 8 caracteres</span>
+                    </div>
+                    <div class="uc-tip-item">
+                        <i class="material-symbols-rounded uc-tip-icon" style="color: #94a3b8; font-size: 14px;">radio_button_unchecked</i>
+                        <span class="uc-tip-text">Não pode ser semelhante aos dados pessoais</span>
+                    </div>
+                    <div class="uc-tip-item">
+                        <i class="material-symbols-rounded uc-tip-icon" style="color: #94a3b8; font-size: 14px;">radio_button_unchecked</i>
+                        <span class="uc-tip-text">Não pode ser uma senha comum</span>
+                    </div>
+                    <div class="uc-tip-item">
+                        <i class="material-symbols-rounded uc-tip-icon" style="color: #94a3b8; font-size: 14px;">radio_button_unchecked</i>
+                        <span class="uc-tip-text">Não pode ser totalmente numérica</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -353,22 +547,115 @@ document.addEventListener('DOMContentLoaded', function() {
     const firstNameField = document.getElementById('id_first_name');
     const lastNameField = document.getElementById('id_last_name');
     const avatarPreview = document.getElementById('avatarPreview');
+    const roleField = document.getElementById('id_role');
 
+    /* ── Avatar preview ── */
     function updateAvatar() {
         const first = (firstNameField.value || usernameField.value || '').charAt(0).toUpperCase();
         const last = lastNameField.value.charAt(0).toUpperCase();
         if (first) {
             avatarPreview.textContent = first + (last || '');
+            avatarPreview.style.color = '#1e293b';
         } else {
-            avatarPreview.innerHTML = '<i class="material-symbols-rounded" style="font-size: 32px;">person</i>';
+            avatarPreview.innerHTML = '<i class="material-symbols-rounded" style="font-size: 30px; color: #64748b;">person</i>';
+        }
+    }
+    [usernameField, firstNameField, lastNameField].forEach(function(f) {
+        if (f) f.addEventListener('input', updateAvatar);
+    });
+    updateAvatar();
+
+    /* ── Steps highlight ── */
+    const sections = document.querySelectorAll('[data-section]');
+    const steps = document.querySelectorAll('.uc-step');
+    function highlightStep(num) {
+        steps.forEach(function(s) {
+            const n = parseInt(s.dataset.step);
+            s.classList.toggle('active', n <= num);
+        });
+    }
+    sections.forEach(function(sec) {
+        sec.querySelectorAll('input, select, textarea').forEach(function(input) {
+            input.addEventListener('focus', function() {
+                highlightStep(parseInt(sec.dataset.section));
+            });
+        });
+    });
+
+    /* ── Role info ── */
+    const roleInfo = {
+        'admin': {
+            icon: 'admin_panel_settings', title: 'Administrador',
+            desc: 'Acesso total ao sistema — gerencia usuários, configurações, todos os módulos e permissões.',
+            color: '#ef4444', bg: '#fef2f2'
+        },
+        'gerente': {
+            icon: 'supervisor_account', title: 'Gerente',
+            desc: 'Gestão estratégica — dashboards executivos, relatórios e visão geral de toda operação.',
+            color: '#d97706', bg: '#fffbeb'
+        },
+        'supervisor': {
+            icon: 'manage_accounts', title: 'Supervisor',
+            desc: 'Gerencia equipes de agentes, define SLAs, configura categorias e monitora desempenho.',
+            color: '#7c3aed', bg: '#f5f3ff'
+        },
+        'tecnico_senior': {
+            icon: 'engineering', title: 'Técnico Sênior',
+            desc: 'Agente com autonomia ampliada — acessa relatórios, gerencia filas e pode excluir tickets.',
+            color: '#2563eb', bg: '#eff6ff'
+        },
+        'agente': {
+            icon: 'support_agent', title: 'Agente',
+            desc: 'Atendimento padrão — visualiza, cria e responde tickets dos clientes.',
+            color: '#059669', bg: '#ecfdf5'
+        },
+        'financeiro': {
+            icon: 'account_balance', title: 'Financeiro',
+            desc: 'Gestão de cobranças, custos e relatórios financeiros. Visualiza tickets e clientes.',
+            color: '#9333ea', bg: '#fdf4ff'
+        },
+        'visualizador': {
+            icon: 'visibility', title: 'Visualizador',
+            desc: 'Somente leitura — acompanha tickets, SLA, relatórios e auditoria sem modificar dados.',
+            color: '#475569', bg: '#f8fafc'
+        },
+        'cliente': {
+            icon: 'person', title: 'Cliente',
+            desc: 'Acesso restrito aos próprios tickets — pode criar e acompanhar chamados.',
+            color: '#0d9488', bg: '#f0fdfa'
+        }
+    };
+
+    function updateRoleInfo() {
+        if (!roleField) return;
+        const info = roleInfo[roleField.value];
+        const details = document.getElementById('roleDetails');
+        const badge = document.getElementById('roleBadge');
+
+        if (info) {
+            details.style.display = 'block';
+            details.style.background = info.bg;
+            details.style.borderColor = info.color + '25';
+
+            document.getElementById('roleIcon').textContent = info.icon;
+            document.getElementById('roleIcon').style.color = info.color;
+            document.getElementById('roleTitle').textContent = info.title;
+            document.getElementById('roleTitle').style.color = info.color;
+            document.getElementById('roleDesc').textContent = info.desc;
+
+            badge.textContent = info.title;
+            badge.style.background = info.color;
+            badge.style.color = '#fff';
+        } else {
+            details.style.display = 'none';
+            badge.textContent = '';
         }
     }
 
-    [usernameField, firstNameField, lastNameField].forEach(function(field) {
-        if (field) field.addEventListener('input', updateAvatar);
-    });
-
-    updateAvatar();
+    if (roleField) {
+        roleField.addEventListener('change', updateRoleInfo);
+        updateRoleInfo();
+    }
 });
 </script>
 {% endblock %}

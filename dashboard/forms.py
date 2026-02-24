@@ -2,19 +2,26 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
 from .models import Ticket, Cliente, CategoriaTicket
+from .rbac import UserRole, ALL_ROLES, ROLE_ADMIN, ROLE_AGENTE, assign_role
 
 User = get_user_model()
 
 
 class DashboardUserCreationForm(UserCreationForm):
-    """Formulário seguro para criação de usuários.
-    SEGURANÇA: is_staff e is_superuser NÃO são expostos no formulário.
-    Apenas superusuários podem definir esses campos via admin.
+    """Formulário seguro para criação de usuários com seleção de nível de acesso.
+    SEGURANÇA: is_staff e is_superuser são definidos automaticamente pelo RBAC.
     """
     email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'}))
     first_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Primeiro nome'}))
     last_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Último nome'}))
     is_active = forms.BooleanField(required=False, initial=True, widget=forms.CheckboxInput())
+    role = forms.ChoiceField(
+        choices=UserRole.ROLE_CHOICES,
+        initial=ROLE_AGENTE,
+        required=True,
+        label='Nível de Acesso',
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
 
     class Meta:
         model = User
@@ -27,13 +34,32 @@ class DashboardUserCreationForm(UserCreationForm):
         self.fields['password2'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Confirme a senha'})
         self.fields['username'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Nome de usuário'})
 
+        # Apenas admin pode atribuir role de admin
+        if self.request_user and not self.request_user.is_superuser:
+            self.fields['role'].choices = [
+                (val, label) for val, label in UserRole.ROLE_CHOICES
+                if val != ROLE_ADMIN
+            ]
+
+    def clean_role(self):
+        role = self.cleaned_data.get('role')
+        if role not in ALL_ROLES:
+            raise forms.ValidationError('Nível de acesso inválido.')
+        # Apenas superuser pode criar admin
+        if role == ROLE_ADMIN and self.request_user and not self.request_user.is_superuser:
+            raise forms.ValidationError('Apenas administradores podem criar outros administradores.')
+        return role
+
     def save(self, commit=True):
         user = super().save(commit=False)
-        # Forçar valores seguros — nunca confiar em dados do formulário
+        # Flags serão definidos pelo assign_role — não confiar em dados do formulário
         user.is_staff = False
         user.is_superuser = False
         if commit:
             user.save()
+            # Atribuir nível de acesso via RBAC
+            role = self.cleaned_data.get('role', ROLE_AGENTE)
+            assign_role(user, role)
         return user
 """
 Formulários para iConnect
