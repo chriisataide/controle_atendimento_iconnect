@@ -8,21 +8,16 @@ const DYNAMIC_CACHE = 'iconnect-dynamic-v1.0.0';
 const MOBILE_CACHE = 'iconnect-mobile-v1.0.0';
 const OFFLINE_URL = '/mobile/offline/';
 
-// Recursos essenciais para cache offline
+// Recursos essenciais para cache offline (apenas estáticos que não requerem auth)
 const STATIC_ASSETS = [
-    '/',
-    '/dashboard/',
-    '/dashboard/chat/',
-    '/mobile/',
-    '/mobile/tickets/',
-    '/mobile/offline/',
-    '/assets/css/material-dashboard.min.css',
-    '/assets/js/core/bootstrap.bundle.min.js',
-    '/assets/fonts/nucleo-icons.woff2',
-    '/assets/fonts/nucleo.woff2',
-    'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap',
-    'https://fonts.googleapis.com/icon?family=Material+Icons',
-    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css'
+    '/static/css/material-dashboard.min.css',
+    '/static/css/dashboard-colors.css',
+    '/static/js/core/bootstrap.bundle.min.js',
+    '/static/js/material-dashboard.min.js',
+    '/static/fonts/nucleo-icons.woff2',
+    '/static/fonts/nucleo.woff2',
+    '/static/img/icons/icon-144x144.png',
+    '/static/manifest.json'
 ];
 
 // URLs que sempre devem buscar da rede
@@ -49,7 +44,14 @@ self.addEventListener('install', (event) => {
         caches.open(STATIC_CACHE)
             .then((cache) => {
                 console.log('[SW] Caching static assets');
-                return cache.addAll(STATIC_ASSETS);
+                // Cache individual para não falhar se um recurso 404
+                return Promise.allSettled(
+                    STATIC_ASSETS.map(url =>
+                        cache.add(url).catch(err => {
+                            console.warn('[SW] Falha ao cachear:', url, err.message);
+                        })
+                    )
+                );
             })
             .then(() => {
                 console.log('[SW] Static assets cached successfully');

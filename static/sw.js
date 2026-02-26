@@ -2,14 +2,13 @@
 const CACHE_NAME = 'iconnect-pwa-v1.1';
 const OFFLINE_URL = '/dashboard/';
 
-// Recursos para cache (apenas arquivos estáticos para evitar erros de autenticação)
+// Recursos para cache (apenas arquivos estáticos que existem)
 const CACHE_URLS = [
     '/static/css/material-dashboard.min.css',
     '/static/css/dashboard-colors.css',
     '/static/js/material-dashboard.min.js',
     '/static/js/plugins/chartjs.min.js',
-    '/static/img/logo-ct-dark.png',
-    '/static/img/icons/icon-192x192.png',
+    '/static/img/icons/icon-144x144.png',
     '/static/manifest.json'
 ];
 
@@ -21,7 +20,14 @@ self.addEventListener('install', event => {
         caches.open(CACHE_NAME)
             .then(cache => {
                 console.log('📦 Service Worker: Fazendo cache dos arquivos');
-                return cache.addAll(CACHE_URLS);
+                // Cache individual para não falhar se um recurso 404
+                return Promise.allSettled(
+                    CACHE_URLS.map(url =>
+                        cache.add(url).catch(err => {
+                            console.warn('📦 SW: Falha ao cachear:', url, err.message);
+                        })
+                    )
+                );
             })
             .then(() => {
                 console.log('📦 Service Worker: Instalado com sucesso');

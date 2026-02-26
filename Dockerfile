@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip
+RUN pip install --no-cache-dir --upgrade pip setuptools
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Stage 2: Runtime
@@ -35,6 +35,10 @@ RUN apt-get update && apt-get install -y \
 
 # Copiar dependencias Python do stage builder
 COPY --from=builder /root/.local /usr/local
+
+# setuptools é necessário em runtime (drf-yasg usa pkg_resources)
+# pkg_resources foi removido no setuptools 82+, pinnar versão compatível
+RUN pip install --no-cache-dir "setuptools<81"
 
 # Variaveis de ambiente
 ENV PYTHONUNBUFFERED=1
@@ -62,7 +66,7 @@ USER appuser
 EXPOSE 8000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=30s --start-period=120s --retries=5 \
     CMD curl -f http://localhost:8000/health/ || exit 1
 
 ENTRYPOINT ["./docker/docker-entrypoint.sh"]

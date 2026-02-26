@@ -19,6 +19,8 @@ except ImportError:
     pass
 
 # Application definition
+ASGI_APPLICATION = 'controle_atendimento.asgi.application'
+
 INSTALLED_APPS = [
     'daphne',  # ASGI server — deve vir antes de staticfiles
     'django.contrib.admin',
@@ -28,6 +30,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'dashboard',
+    'calculo_vigilante',
     
     # Terceiros
     'django_extensions',

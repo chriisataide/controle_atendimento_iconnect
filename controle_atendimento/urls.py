@@ -48,6 +48,9 @@ urlpatterns = [
     # Mobile Interface
     path('mobile/', include('dashboard.mobile_urls')),
     
+    # Cálculo de Implantação de Vigilante
+    path('calculo-vigilante/', include('calculo_vigilante.urls')),
+    
     # PWA Files
     path('manifest.json', views.manifest, name='manifest'),
     path('service-worker.js', views.service_worker, name='service_worker'),

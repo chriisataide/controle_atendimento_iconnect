@@ -4,21 +4,14 @@ const CACHE_NAME = 'iconnect-v1.0.0';
 const STATIC_CACHE = 'iconnect-static-v1.0.0';
 const DYNAMIC_CACHE = 'iconnect-dynamic-v1.0.0';
 
-// URLs para cache offline
+// URLs para cache offline (apenas estáticos que não requerem auth)
 const STATIC_URLS = [
-  '/',
-  '/dashboard/',
-  '/dashboard/tickets/',
-  '/dashboard/tickets/novo/',
-  '/dashboard/profile/',
   '/static/css/material-dashboard.min.css',
+  '/static/css/dashboard-colors.css',
   '/static/js/core/bootstrap.bundle.min.js',
-  '/static/img/icodev-logo.png',
-  '/static/img/icodev-favicon.ico',
-  'https://fonts.googleapis.com/css2?family=Inter:300,400,500,600,700,900',
-  'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0',
-  'https://cdn.jsdelivr.net/npm/chart.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css'
+  '/static/js/material-dashboard.min.js',
+  '/static/img/icons/icon-144x144.png',
+  '/static/manifest.json'
 ];
 
 // Páginas offline fallback
@@ -32,7 +25,13 @@ self.addEventListener('install', event => {
     caches.open(STATIC_CACHE)
       .then(cache => {
         console.log('📦 Cache estático criado');
-        return cache.addAll(STATIC_URLS.map(url => new Request(url, {credentials: 'same-origin'})));
+        // Cache individual para não falhar se um recurso 404
+        return Promise.allSettled(
+          STATIC_URLS.map(url =>
+            cache.add(new Request(url, {credentials: 'same-origin'}))
+              .catch(err => console.warn('⚠️ Falha ao cachear:', url, err.message))
+          )
+        );
       })
       .then(() => {
         console.log('✅ Recursos estáticos cacheados');

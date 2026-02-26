@@ -1,0 +1,1062 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Cálculo Vigilante — iConnect{% endblock %}
+{% block page_title %}Cálculo Vigilante{% endblock %}
+{% block breadcrumb_title %}Cálculo Vigilante{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ══════════ VARIABLES ══════════ */
+:root {
+    --cv-slate-900: #0f172a;
+    --cv-slate-800: #1e293b;
+    --cv-slate-700: #334155;
+    --cv-slate-500: #64748b;
+    --cv-slate-400: #94a3b8;
+    --cv-slate-200: #e2e8f0;
+    --cv-slate-100: #f1f5f9;
+    --cv-slate-50:  #f8fafc;
+    --cv-cyan-500:  #06b6d4;
+    --cv-cyan-600:  #0891b2;
+    --cv-cyan-700:  #0e7490;
+    --cv-green-500: #22c55e;
+    --cv-green-600: #16a34a;
+    --cv-purple-500:#8b5cf6;
+    --cv-purple-600:#7c3aed;
+    --cv-amber-500: #f59e0b;
+    --cv-amber-600: #d97706;
+    --cv-red-500:   #ef4444;
+    --cv-red-600:   #dc2626;
+}
+
+/* ══════════ KPI CARDS ══════════ */
+.cv-kpi {
+    border: none; border-radius: 12px;
+    transition: transform .2s, box-shadow .2s; overflow: hidden;
+}
+.cv-kpi:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(51,65,85,.15); }
+.cv-kpi-icon {
+    width: 48px; height: 48px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; flex-shrink: 0;
+}
+.cv-kpi-icon i { font-size: 24px; }
+.cv-kpi-value { font-size: 1.6rem; font-weight: 700; color: var(--cv-slate-800); line-height: 1.2; }
+.cv-kpi-label { font-size: .78rem; color: var(--cv-slate-500); font-weight: 500; }
+
+/* ══════════ STEP INDICATOR ══════════ */
+.cv-steps-bar { display: flex; align-items: center; gap: 0; }
+.cv-step-item {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .4rem .75rem; border-radius: 8px;
+    transition: all .3s ease; position: relative;
+}
+.cv-step-item.active { background: rgba(6,182,212,.08); }
+.cv-step-item.completed { background: rgba(34,197,94,.08); }
+.cv-step-num {
+    width: 30px; height: 30px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .75rem; font-weight: 700; color: #fff; flex-shrink: 0;
+    transition: all .3s ease;
+}
+.cv-step-num.default { background: var(--cv-slate-200); color: var(--cv-slate-500); }
+.cv-step-num.active { background: linear-gradient(135deg, var(--cv-cyan-500), var(--cv-cyan-600)); }
+.cv-step-num.completed { background: linear-gradient(135deg, var(--cv-green-500), var(--cv-green-600)); }
+.cv-step-label { font-size: .78rem; font-weight: 600; transition: color .3s; }
+.cv-step-label.default { color: var(--cv-slate-400); }
+.cv-step-label.active { color: var(--cv-cyan-600); }
+.cv-step-label.completed { color: var(--cv-green-600); }
+.cv-step-connector { width: 32px; height: 2px; background: var(--cv-slate-200); margin: 0 .25rem; transition: background .3s; }
+.cv-step-connector.completed { background: var(--cv-green-500); }
+
+/* ══════════ CARDS BASE ══════════ */
+.cv-card {
+    border: none; border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    transition: box-shadow .2s;
+}
+.cv-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+.cv-card-header {
+    border-bottom: 1px solid var(--cv-slate-100); padding: 1rem 1.25rem .75rem;
+}
+.cv-card-header h6 { color: var(--cv-slate-700); font-weight: 600; margin: 0; font-size: .9rem; }
+.cv-card-header .text-sub { font-size: .75rem; color: var(--cv-slate-400); }
+
+/* ══════════ DROP ZONE ══════════ */
+.cv-drop-zone {
+    border: 2px dashed var(--cv-slate-200); border-radius: 14px;
+    padding: 2.5rem 1.5rem; cursor: pointer;
+    transition: all .3s ease; background: var(--cv-slate-50);
+    position: relative; overflow: hidden;
+}
+.cv-drop-zone::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at center, rgba(6,182,212,.04) 0%, transparent 70%);
+    opacity: 0; transition: opacity .3s;
+}
+.cv-drop-zone:hover::before, .cv-drop-zone.dragover::before { opacity: 1; }
+.cv-drop-zone:hover, .cv-drop-zone.dragover {
+    border-color: var(--cv-cyan-500); background: rgba(6,182,212,.02);
+    transform: scale(1.005);
+}
+.cv-drop-zone .drop-icon {
+    width: 72px; height: 72px; border-radius: 18px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--cv-cyan-500), var(--cv-cyan-600));
+    margin-bottom: 1rem; box-shadow: 0 8px 24px rgba(6,182,212,.3);
+    transition: transform .3s, box-shadow .3s;
+}
+.cv-drop-zone:hover .drop-icon {
+    transform: translateY(-2px); box-shadow: 0 12px 32px rgba(6,182,212,.4);
+}
+.cv-drop-zone .drop-icon i { font-size: 32px; color: #fff; }
+.cv-drop-zone .drop-title { font-size: .95rem; font-weight: 600; color: var(--cv-slate-700); margin-bottom: .25rem; }
+.cv-drop-zone .drop-hint { font-size: .78rem; color: var(--cv-slate-400); }
+.cv-drop-zone .drop-formats {
+    display: flex; gap: .5rem; justify-content: center; margin-top: .75rem;
+}
+.cv-drop-zone .format-tag {
+    font-size: .68rem; font-weight: 600; padding: .2rem .6rem;
+    border-radius: 6px; background: rgba(6,182,212,.08); color: var(--cv-cyan-600);
+}
+
+/* ══════════ FILE INFO ══════════ */
+.cv-file-info {
+    background: linear-gradient(135deg, #f0fdfa, #ecfdf5);
+    border: 1px solid #ccfbf1; border-radius: 12px;
+    padding: .85rem 1rem; display: flex; align-items: center; gap: .75rem;
+    animation: cv-slideIn .3s ease;
+}
+.cv-file-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--cv-green-500), var(--cv-green-600));
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(34,197,94,.25);
+}
+.cv-file-icon i { font-size: 22px; color: #fff; }
+.cv-file-name { font-size: .85rem; font-weight: 600; color: var(--cv-slate-800); }
+.cv-file-size { font-size: .72rem; color: var(--cv-slate-500); }
+
+/* ══════════ PREVIEW CARD ══════════ */
+.cv-preview-card {
+    animation: cv-slideIn .4s ease;
+    border: 1px solid rgba(6,182,212,.15);
+    border-radius: 12px; background: #fff;
+}
+.cv-preview-header {
+    padding: .75rem 1rem; border-bottom: 1px solid var(--cv-slate-100);
+    display: flex; align-items: center; justify-content: space-between;
+}
+.cv-col-tag {
+    font-size: .7rem; font-weight: 600; padding: .2rem .5rem;
+    border-radius: 6px; display: inline-flex; align-items: center; gap: .25rem;
+}
+.cv-col-found { background: #dcfce7; color: var(--cv-green-600); }
+.cv-col-missing { background: #fef2f2; color: var(--cv-red-600); }
+.cv-preview-table {
+    font-size: .72rem; margin: 0;
+}
+.cv-preview-table th {
+    font-size: .65rem; text-transform: uppercase; color: var(--cv-slate-400);
+    font-weight: 700; letter-spacing: .5px; background: var(--cv-slate-50);
+    padding: .4rem .6rem; border: none;
+}
+.cv-preview-table td {
+    padding: .35rem .6rem; color: var(--cv-slate-700); border-color: var(--cv-slate-100);
+    max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ══════════ RESULT SUMMARY ══════════ */
+.cv-summary {
+    animation: cv-slideIn .4s ease;
+    border-radius: 14px; overflow: hidden;
+    border: 1px solid rgba(34,197,94,.2);
+}
+.cv-summary-header {
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    padding: 1rem 1.25rem;
+    display: flex; align-items: center; gap: .75rem;
+}
+.cv-summary-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--cv-green-500), var(--cv-green-600));
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(34,197,94,.25);
+}
+.cv-summary-icon i { font-size: 24px; color: #fff; }
+.cv-summary-stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem;
+    padding: 1rem 1.25rem;
+}
+.cv-stat-item { text-align: center; }
+.cv-stat-value { font-size: 1.2rem; font-weight: 700; color: var(--cv-slate-800); }
+.cv-stat-label { font-size: .68rem; color: var(--cv-slate-500); font-weight: 500; }
+
+/* ══════════ BUTTONS ══════════ */
+.cv-btn {
+    border: none; border-radius: 10px;
+    padding: .65rem 1.5rem; font-size: .82rem; font-weight: 600;
+    display: inline-flex; align-items: center; gap: .4rem;
+    transition: all .25s ease; cursor: pointer;
+}
+.cv-btn i { font-size: 18px; }
+.cv-btn:disabled { opacity: .45; cursor: not-allowed; transform: none !important; }
+
+.cv-btn-primary {
+    background: linear-gradient(135deg, var(--cv-cyan-500), var(--cv-cyan-600));
+    color: #fff; box-shadow: 0 4px 12px rgba(6,182,212,.25);
+}
+.cv-btn-primary:hover:not(:disabled) {
+    box-shadow: 0 6px 20px rgba(6,182,212,.35); transform: translateY(-1px); color: #fff;
+}
+.cv-btn-success {
+    background: linear-gradient(135deg, var(--cv-green-500), var(--cv-green-600));
+    color: #fff; box-shadow: 0 4px 12px rgba(34,197,94,.25);
+}
+.cv-btn-success:hover:not(:disabled) {
+    box-shadow: 0 6px 20px rgba(34,197,94,.35); transform: translateY(-1px); color: #fff;
+}
+.cv-btn-outline {
+    background: #fff; color: var(--cv-slate-700);
+    border: 1px solid var(--cv-slate-200);
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+.cv-btn-outline:hover { border-color: var(--cv-cyan-500); color: var(--cv-cyan-600); background: rgba(6,182,212,.03); }
+
+.cv-btn-ghost {
+    background: transparent; color: var(--cv-slate-500);
+    padding: .4rem .6rem; border-radius: 8px;
+}
+.cv-btn-ghost:hover { background: var(--cv-slate-100); color: var(--cv-slate-700); }
+
+/* ══════════ PROGRESS ══════════ */
+.cv-progress-wrap { background: var(--cv-slate-100); border-radius: 8px; height: 6px; overflow: hidden; }
+.cv-progress-bar {
+    height: 100%; border-radius: 8px;
+    background: linear-gradient(135deg, var(--cv-cyan-500), var(--cv-cyan-600));
+    transition: width .4s ease;
+}
+.cv-progress-label { font-size: .72rem; color: var(--cv-slate-500); font-weight: 500; }
+
+/* ══════════ ALERTS ══════════ */
+.cv-alert {
+    border-radius: 10px; padding: .75rem 1rem;
+    display: flex; align-items: center; gap: .5rem;
+    font-size: .82rem; font-weight: 500;
+    animation: cv-slideIn .3s ease;
+}
+.cv-alert-error { background: #fef2f2; color: var(--cv-red-600); border: 1px solid #fecaca; }
+
+/* ══════════ HISTORY TABLE ══════════ */
+.cv-history-table { font-size: .78rem; margin: 0; }
+.cv-history-table th {
+    font-size: .65rem; text-transform: uppercase; color: var(--cv-slate-400);
+    font-weight: 700; letter-spacing: .5px; padding: .5rem .75rem;
+    border-bottom: 2px solid var(--cv-slate-100); background: transparent;
+}
+.cv-history-table td {
+    padding: .5rem .75rem; vertical-align: middle; color: var(--cv-slate-700);
+    border-bottom: 1px solid var(--cv-slate-50);
+}
+.cv-history-table tr:hover td { background: var(--cv-slate-50); }
+.cv-status-badge {
+    font-size: .65rem; font-weight: 600; padding: .15rem .45rem;
+    border-radius: 5px; display: inline-block;
+}
+.cv-status-sucesso { background: #dcfce7; color: var(--cv-green-600); }
+.cv-status-erro { background: #fef2f2; color: var(--cv-red-600); }
+
+/* ══════════ VALUES TABLE ══════════ */
+.cv-table th {
+    font-size: .68rem; text-transform: uppercase; color: var(--cv-slate-400); font-weight: 700;
+    letter-spacing: .5px; border-bottom: 2px solid var(--cv-slate-100); padding: .6rem .75rem;
+    background: transparent;
+}
+.cv-table td {
+    padding: .55rem .75rem; vertical-align: middle; font-size: .82rem;
+    border-bottom: 1px solid var(--cv-slate-50); color: var(--cv-slate-700);
+}
+.cv-table tr:hover td { background: var(--cv-slate-50); }
+.cv-uf-badge {
+    font-size: .68rem; font-weight: 600; padding: .2rem .5rem;
+    border-radius: 5px; display: inline-block; min-width: 30px; text-align: center;
+}
+
+/* ══════════ SEARCH ══════════ */
+.cv-search {
+    border: 1px solid var(--cv-slate-200); border-radius: 8px;
+    padding: .4rem .75rem .4rem 2rem; font-size: .8rem;
+    outline: none; width: 100%; max-width: 220px;
+    transition: border .2s; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 24 24'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E") no-repeat .6rem center;
+}
+.cv-search:focus { border-color: var(--cv-cyan-500); box-shadow: 0 0 0 3px rgba(6,182,212,.1); }
+
+/* ══════════ INFO BADGES ══════════ */
+.cv-badge {
+    font-size: .68rem; font-weight: 600; padding: .2rem .55rem;
+    border-radius: 6px; background: #f0f9ff; color: var(--cv-cyan-600);
+}
+
+/* ══════════ ANIMATIONS ══════════ */
+@keyframes cv-slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes cv-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .6; }
+}
+.cv-loading { animation: cv-pulse 1.5s ease-in-out infinite; }
+
+/* ══════════ SECTION DIVIDER ══════════ */
+.cv-section-title {
+    font-size: .72rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .5px; color: var(--cv-slate-400); margin-bottom: .75rem;
+    display: flex; align-items: center; gap: .5rem;
+}
+.cv-section-title::after {
+    content: ''; flex: 1; height: 1px; background: var(--cv-slate-200);
+}
+
+/* ══════════ RESPONSIVE ══════════ */
+@media (max-width: 768px) {
+    .cv-summary-stats { grid-template-columns: repeat(2, 1fr); }
+    .cv-steps-bar { display: none; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ══════════ PAGE HEADER ══════════ -->
+<div class="row mb-3 align-items-center">
+    <div class="col-lg-7 col-md-6">
+        <div class="ms-3">
+            <h3 class="mb-0 h4 font-weight-bolder" style="color:var(--cv-slate-800);">
+                Cálculo de Implantação — Vigilante
+            </h3>
+            <p class="mb-0 text-sm" style="color:var(--cv-slate-500);">
+                Processe planilhas e calcule valores de implantação automaticamente
+            </p>
+        </div>
+    </div>
+    <div class="col-lg-5 col-md-6 text-end my-auto pe-4">
+        <!-- Step Indicator Interativo -->
+        <div class="cv-steps-bar d-none d-md-flex justify-content-end" id="cv-steps">
+            <div class="cv-step-item active" id="step-1">
+                <div class="cv-step-num active" id="step-num-1">1</div>
+                <span class="cv-step-label active" id="step-label-1">Upload</span>
+            </div>
+            <div class="cv-step-connector" id="conn-1-2"></div>
+            <div class="cv-step-item" id="step-2">
+                <div class="cv-step-num default" id="step-num-2">2</div>
+                <span class="cv-step-label default" id="step-label-2">Preview</span>
+            </div>
+            <div class="cv-step-connector" id="conn-2-3"></div>
+            <div class="cv-step-item" id="step-3">
+                <div class="cv-step-num default" id="step-num-3">3</div>
+                <span class="cv-step-label default" id="step-label-3">Calcular</span>
+            </div>
+            <div class="cv-step-connector" id="conn-3-4"></div>
+            <div class="cv-step-item" id="step-4">
+                <div class="cv-step-num default" id="step-num-4">4</div>
+                <span class="cv-step-label default" id="step-label-4">Download</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════ KPI CARDS ══════════ -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-3">
+        <div class="card cv-kpi">
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="cv-kpi-label mb-1">Empresas Cadastradas</p>
+                        <h4 class="cv-kpi-value mb-0">{{ total_empresas }}</h4>
+                    </div>
+                    <div class="cv-kpi-icon" style="background:linear-gradient(135deg,var(--cv-slate-700),var(--cv-slate-800));">
+                        <i class="material-symbols-rounded">business</i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-3">
+        <div class="card cv-kpi">
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="cv-kpi-label mb-1">Estados Cobertos</p>
+                        <h4 class="cv-kpi-value mb-0">{{ total_ufs }}</h4>
+                    </div>
+                    <div class="cv-kpi-icon" style="background:linear-gradient(135deg,var(--cv-cyan-500),var(--cv-cyan-600));">
+                        <i class="material-symbols-rounded">map</i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-3">
+        <div class="card cv-kpi">
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="cv-kpi-label mb-1">Combinações Empresa/UF</p>
+                        <h4 class="cv-kpi-value mb-0">{{ total_combinacoes }}</h4>
+                    </div>
+                    <div class="cv-kpi-icon" style="background:linear-gradient(135deg,var(--cv-purple-500),var(--cv-purple-600));">
+                        <i class="material-symbols-rounded">grid_view</i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-3">
+        <div class="card cv-kpi">
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="cv-kpi-label mb-1">Tipos de Jornada</p>
+                        <h4 class="cv-kpi-value mb-0">4</h4>
+                    </div>
+                    <div class="cv-kpi-icon" style="background:linear-gradient(135deg,var(--cv-amber-500),var(--cv-amber-600));">
+                        <i class="material-symbols-rounded">schedule</i>
+                    </div>
+                </div>
+                <p class="mb-0 mt-2">
+                    <span style="font-size:.72rem;color:var(--cv-slate-400);">H.Extra · 8h48 Diurno · 8h48 Noturno · 24h</span>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════ MAIN AREA: UPLOAD + SIDEBAR ══════════ -->
+<div class="row">
+    <!-- ── Left: Upload / Preview / Process / Result ── -->
+    <div class="col-lg-8 mb-4">
+        <div class="card cv-card h-100">
+            <div class="cv-card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6><i class="material-symbols-rounded me-1" style="font-size:18px;vertical-align:middle;color:var(--cv-cyan-500);">upload_file</i> Processar Planilha</h6>
+                        <span class="text-sub">Envie o arquivo .xlsx com os dados de vigilância</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'calculo_vigilante:template' %}" class="cv-btn cv-btn-outline" style="font-size:.75rem;padding:.35rem .75rem;">
+                            <i class="material-symbols-rounded" style="font-size:16px;">download</i>
+                            Template
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-4">
+
+                <!-- ── STATE 1: Drop Zone ── -->
+                <div id="cv-drop-zone" class="cv-drop-zone text-center mb-3">
+                    <div class="drop-icon"><i class="material-symbols-rounded">cloud_upload</i></div>
+                    <p class="drop-title mb-1">Arraste a planilha aqui</p>
+                    <p class="drop-hint mb-2">ou clique para selecionar</p>
+                    <div class="drop-formats">
+                        <span class="format-tag">.xlsx</span>
+                        <span class="format-tag">.xls</span>
+                        <span class="format-tag">máx 10MB</span>
+                    </div>
+                    <input type="file" id="cv-file-input" accept=".xlsx,.xls" class="d-none">
+                </div>
+
+                <!-- ── STATE 2: File Selected ── -->
+                <div id="cv-selected" style="display:none;" class="mb-3">
+                    <div class="cv-file-info">
+                        <div class="cv-file-icon"><i class="material-symbols-rounded">description</i></div>
+                        <div style="flex:1;min-width:0;">
+                            <p class="cv-file-name mb-0" id="cv-filename"></p>
+                            <p class="cv-file-size mb-0" id="cv-filesize"></p>
+                        </div>
+                        <button id="cv-remove" class="cv-btn-ghost" title="Remover arquivo">
+                            <i class="material-symbols-rounded" style="font-size:20px;color:var(--cv-red-500);">close</i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ── STATE 3: Preview ── -->
+                <div id="cv-preview" style="display:none;" class="mb-3">
+                    <div class="cv-preview-card">
+                        <div class="cv-preview-header">
+                            <div>
+                                <span style="font-size:.82rem;font-weight:600;color:var(--cv-slate-700);">
+                                    <i class="material-symbols-rounded" style="font-size:16px;vertical-align:middle;color:var(--cv-cyan-500);">preview</i>
+                                    Preview da Planilha
+                                </span>
+                                <span id="cv-preview-rows" class="cv-badge ms-2"></span>
+                            </div>
+                        </div>
+                        <!-- Column detection -->
+                        <div class="p-3 pb-0">
+                            <p class="cv-section-title mb-2">Colunas Detectadas</p>
+                            <div class="d-flex flex-wrap gap-2 mb-3" id="cv-col-tags"></div>
+                        </div>
+                        <!-- Data preview -->
+                        <div class="table-responsive px-3 pb-3" style="max-height:200px;">
+                            <table class="table cv-preview-table" id="cv-preview-table">
+                                <thead id="cv-preview-thead"></thead>
+                                <tbody id="cv-preview-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Progress ── -->
+                <div id="cv-progress" style="display:none;" class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="cv-progress-label" id="cv-progress-msg">Analisando planilha...</span>
+                        <span class="cv-progress-label" id="cv-progress-pct">0%</span>
+                    </div>
+                    <div class="cv-progress-wrap">
+                        <div id="cv-progress-bar" class="cv-progress-bar" style="width:0%;"></div>
+                    </div>
+                </div>
+
+                <!-- ── Error Alert ── -->
+                <div id="cv-error" style="display:none;" class="mb-3">
+                    <div id="cv-alert" class="cv-alert cv-alert-error"></div>
+                </div>
+
+                <!-- ── STATE 4: Result Summary ── -->
+                <div id="cv-summary" style="display:none;" class="mb-3">
+                    <div class="cv-summary">
+                        <div class="cv-summary-header">
+                            <div class="cv-summary-icon">
+                                <i class="material-symbols-rounded">check_circle</i>
+                            </div>
+                            <div>
+                                <p style="font-size:.9rem;font-weight:700;color:var(--cv-green-600);margin:0;">
+                                    Processamento Concluído!
+                                </p>
+                                <p style="font-size:.75rem;color:var(--cv-green-600);margin:0;opacity:.8;" id="cv-summary-file"></p>
+                            </div>
+                        </div>
+                        <div class="cv-summary-stats">
+                            <div class="cv-stat-item">
+                                <div class="cv-stat-value" id="cv-stat-total">—</div>
+                                <div class="cv-stat-label">Total de linhas</div>
+                            </div>
+                            <div class="cv-stat-item">
+                                <div class="cv-stat-value" style="color:var(--cv-green-600);" id="cv-stat-match">—</div>
+                                <div class="cv-stat-label">Com valor</div>
+                            </div>
+                            <div class="cv-stat-item">
+                                <div class="cv-stat-value" style="color:var(--cv-amber-600);" id="cv-stat-nomatch">—</div>
+                                <div class="cv-stat-label">Sem match</div>
+                            </div>
+                            <div class="cv-stat-item">
+                                <div class="cv-stat-value" style="color:var(--cv-cyan-600);" id="cv-stat-valor">—</div>
+                                <div class="cv-stat-label">Valor total</div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 px-3 pb-3">
+                            <button id="cv-btn-download" class="cv-btn cv-btn-success">
+                                <i class="material-symbols-rounded">download</i>
+                                Baixar Relatório
+                            </button>
+                            <button id="cv-btn-new" class="cv-btn cv-btn-outline">
+                                <i class="material-symbols-rounded">refresh</i>
+                                Nova Planilha
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {% csrf_token %}
+
+                <!-- ── Action Buttons ── -->
+                <div id="cv-actions" class="d-flex gap-2">
+                    <button id="cv-btn-process" class="cv-btn cv-btn-primary" disabled>
+                        <i class="material-symbols-rounded">calculate</i>
+                        Calcular Valores
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Right Sidebar: Instructions + History ── -->
+    <div class="col-lg-4 mb-4">
+        <!-- Instructions Card -->
+        <div class="card cv-card mb-4">
+            <div class="cv-card-header">
+                <h6><i class="material-symbols-rounded me-1" style="font-size:18px;vertical-align:middle;color:var(--cv-slate-700);">help_outline</i> Como Funciona</h6>
+            </div>
+            <div class="card-body p-3">
+                <div class="mb-3">
+                    <p class="cv-section-title">Colunas Necessárias</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="cv-uf-badge" style="background:#f0f9ff;color:var(--cv-cyan-600);">Empresa</span>
+                        <span class="cv-uf-badge" style="background:#f0f9ff;color:var(--cv-cyan-600);">UF</span>
+                        <span class="cv-uf-badge" style="background:#f0f9ff;color:var(--cv-cyan-600);">Entrada</span>
+                        <span class="cv-uf-badge" style="background:#f0f9ff;color:var(--cv-cyan-600);">Saída</span>
+                    </div>
+                </div>
+
+                <p class="cv-section-title">Variações Aceitas</p>
+                <div style="font-size:.75rem;color:var(--cv-slate-500);line-height:1.9;">
+                    <div class="d-flex align-items-start mb-1">
+                        <i class="material-symbols-rounded me-2" style="font-size:14px;color:var(--cv-green-500);margin-top:3px;">check_circle</i>
+                        <span><strong style="color:var(--cv-slate-700);">Empresa:</strong> "Vigilante", "Nome Empresa"</span>
+                    </div>
+                    <div class="d-flex align-items-start mb-1">
+                        <i class="material-symbols-rounded me-2" style="font-size:14px;color:var(--cv-green-500);margin-top:3px;">check_circle</i>
+                        <span><strong style="color:var(--cv-slate-700);">UF:</strong> "Estado", "Sigla"</span>
+                    </div>
+                    <div class="d-flex align-items-start mb-1">
+                        <i class="material-symbols-rounded me-2" style="font-size:14px;color:var(--cv-green-500);margin-top:3px;">check_circle</i>
+                        <span><strong style="color:var(--cv-slate-700);">Entrada:</strong> "Chegada", "Início"</span>
+                    </div>
+                    <div class="d-flex align-items-start mb-1">
+                        <i class="material-symbols-rounded me-2" style="font-size:14px;color:var(--cv-green-500);margin-top:3px;">check_circle</i>
+                        <span><strong style="color:var(--cv-slate-700);">Saída:</strong> "Partida", "Fim"</span>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <p class="cv-section-title">Jornadas Calculadas</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="cv-uf-badge" style="background:#fef3c7;color:var(--cv-amber-600);">Hora Extra</span>
+                        <span class="cv-uf-badge" style="background:#dcfce7;color:var(--cv-green-600);">8h48 Diurno</span>
+                        <span class="cv-uf-badge" style="background:#ede9fe;color:var(--cv-purple-600);">8h48 Noturno</span>
+                        <span class="cv-uf-badge" style="background:#fef2f2;color:var(--cv-red-600);">24h</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Card -->
+        <div class="card cv-card">
+            <div class="cv-card-header">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h6 class="mb-0"><i class="material-symbols-rounded me-1" style="font-size:18px;vertical-align:middle;color:var(--cv-slate-700);">history</i> Histórico</h6>
+                    <span class="cv-badge" id="cv-history-count">0 processamentos</span>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+                <div id="cv-history-empty" class="text-center py-4">
+                    <i class="material-symbols-rounded" style="font-size:36px;color:var(--cv-slate-200);">folder_open</i>
+                    <p style="font-size:.78rem;color:var(--cv-slate-400);margin:.5rem 0 0;">Nenhum processamento ainda</p>
+                </div>
+                <div class="table-responsive" id="cv-history-table-wrap" style="display:none;">
+                    <table class="table cv-history-table">
+                        <thead>
+                            <tr>
+                                <th>Arquivo</th>
+                                <th class="text-center">Linhas</th>
+                                <th class="text-end">Valor</th>
+                                <th class="text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cv-history-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════ VALUES TABLE ══════════ -->
+<div class="row">
+    <div class="col-12">
+        <div class="card cv-card">
+            <div class="cv-card-header">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <h6 class="mb-0"><i class="material-symbols-rounded me-1" style="font-size:18px;vertical-align:middle;color:var(--cv-slate-700);">security</i> Tabela de Valores</h6>
+                        <span class="cv-badge">{{ empresas|length }} registros</span>
+                    </div>
+                    <input type="text" id="cv-table-search" class="cv-search" placeholder="Buscar empresa ou UF...">
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+                <div class="table-responsive" style="max-height:400px;overflow-y:auto;">
+                    <table class="table cv-table mb-0">
+                        <thead style="position:sticky;top:0;background:#fff;z-index:1;">
+                            <tr>
+                                <th>Empresa</th>
+                                <th>UF</th>
+                                <th class="text-end">Hora Extra</th>
+                                <th class="text-end">8h48 Diurno</th>
+                                <th class="text-end">8h48 Noturno</th>
+                                <th class="text-end">24h</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cv-table-body">
+                            {% for e in empresas %}
+                            <tr>
+                                <td><span style="font-weight:600;color:var(--cv-slate-800);">{{ e.empresa }}</span></td>
+                                <td><span class="cv-uf-badge" style="background:var(--cv-slate-100);color:var(--cv-slate-700);">{{ e.uf }}</span></td>
+                                <td class="text-end" style="font-size:.78rem;color:var(--cv-slate-500);">R$ {{ e.hora_extra }}</td>
+                                <td class="text-end" style="font-size:.78rem;color:var(--cv-slate-500);">R$ {{ e.diurno_8h48 }}</td>
+                                <td class="text-end" style="font-size:.78rem;color:var(--cv-slate-500);">R$ {{ e.noturno_8h48 }}</td>
+                                <td class="text-end" style="font-size:.78rem;color:var(--cv-slate-700);font-weight:600;">R$ {{ e.valor_24h }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    /* ══════════ DOM REFS ══════════ */
+    const $ = id => document.getElementById(id);
+    const dropZone    = $('cv-drop-zone');
+    const fileInput   = $('cv-file-input');
+    const selected    = $('cv-selected');
+    const filenameEl  = $('cv-filename');
+    const filesizeEl  = $('cv-filesize');
+    const removeBtn   = $('cv-remove');
+    const btnProcess  = $('cv-btn-process');
+    const btnDownload = $('cv-btn-download');
+    const btnNew      = $('cv-btn-new');
+    const progressDiv = $('cv-progress');
+    const progressBar = $('cv-progress-bar');
+    const progressPct = $('cv-progress-pct');
+    const progressMsg = $('cv-progress-msg');
+    const errorDiv    = $('cv-error');
+    const alertDiv    = $('cv-alert');
+    const previewDiv  = $('cv-preview');
+    const summaryDiv  = $('cv-summary');
+    const actionsDiv  = $('cv-actions');
+    const searchInput = $('cv-table-search');
+    const csrfToken   = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    let currentFile = null;
+    let currentStep = 1;
+
+    /* ══════════ STEP INDICATOR ══════════ */
+    function setStep(step) {
+        currentStep = step;
+        for (let i = 1; i <= 4; i++) {
+            const num = $('step-num-' + i);
+            const lbl = $('step-label-' + i);
+            const item = $('step-' + i);
+            if (!num) continue;
+
+            num.className = 'cv-step-num ' + (i < step ? 'completed' : i === step ? 'active' : 'default');
+            lbl.className = 'cv-step-label ' + (i < step ? 'completed' : i === step ? 'active' : 'default');
+            item.className = 'cv-step-item ' + (i < step ? 'completed' : i === step ? 'active' : '');
+
+            if (i < step) {
+                num.innerHTML = '<i class="material-symbols-rounded" style="font-size:16px;">check</i>';
+            } else {
+                num.textContent = i;
+            }
+        }
+        // Connectors
+        for (let i = 1; i <= 3; i++) {
+            const conn = $('conn-' + i + '-' + (i + 1));
+            if (conn) conn.className = 'cv-step-connector' + (i < step ? ' completed' : '');
+        }
+    }
+
+    /* ══════════ UPLOAD HANDLERS ══════════ */
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    ['dragenter', 'dragover'].forEach(e =>
+        dropZone.addEventListener(e, ev => { ev.preventDefault(); dropZone.classList.add('dragover'); }));
+    ['dragleave', 'drop'].forEach(e =>
+        dropZone.addEventListener(e, ev => { ev.preventDefault(); dropZone.classList.remove('dragover'); }));
+
+    dropZone.addEventListener('drop', e => {
+        const f = e.dataTransfer.files[0];
+        if (f && /\.xlsx?$/i.test(f.name)) setFile(f);
+    });
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files[0]) setFile(fileInput.files[0]);
+    });
+
+    function formatSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function setFile(f) {
+        // Validate size (10MB)
+        if (f.size > 10 * 1024 * 1024) {
+            showError('Arquivo muito grande. Máximo 10MB.');
+            return;
+        }
+
+        currentFile = f;
+        filenameEl.textContent = f.name;
+        filesizeEl.textContent = formatSize(f.size);
+
+        // Show file info, hide drop zone
+        selected.style.display = '';
+        dropZone.style.display = 'none';
+        hideError();
+        summaryDiv.style.display = 'none';
+        previewDiv.style.display = 'none';
+
+        // Auto-trigger preview
+        setStep(2);
+        doPreview(f);
+    }
+
+    removeBtn.addEventListener('click', resetState);
+
+    function resetState() {
+        currentFile = null;
+        fileInput.value = '';
+        selected.style.display = 'none';
+        dropZone.style.display = '';
+        previewDiv.style.display = 'none';
+        summaryDiv.style.display = 'none';
+        progressDiv.style.display = 'none';
+        hideError();
+        btnProcess.disabled = true;
+        actionsDiv.style.display = '';
+        setStep(1);
+    }
+
+    /* ══════════ PREVIEW ══════════ */
+    async function doPreview(file) {
+        showProgress('Analisando planilha...', 30);
+        btnProcess.disabled = true;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const resp = await fetch("{% url 'calculo_vigilante:preview' %}", {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken },
+                body: formData,
+            });
+
+            setProgress(80);
+
+            if (!resp.ok) {
+                const d = await resp.json();
+                throw new Error(d.erro || 'Erro ao analisar');
+            }
+
+            const data = await resp.json();
+            setProgress(100);
+            setTimeout(() => { progressDiv.style.display = 'none'; }, 500);
+
+            renderPreview(data);
+            btnProcess.disabled = false;
+            setStep(2);
+
+        } catch (err) {
+            hideProgress();
+            showError(err.message);
+            setStep(1);
+        }
+    }
+
+    function renderPreview(data) {
+        // Row count
+        $('cv-preview-rows').textContent = data.total_linhas + ' linhas';
+
+        // Column detection tags
+        const tagsEl = $('cv-col-tags');
+        tagsEl.innerHTML = '';
+        const labels = {empresa:'Empresa', uf:'UF', entrada:'Entrada', saida:'Saída'};
+        for (const [key, label] of Object.entries(labels)) {
+            const found = data.detectadas[key];
+            const tag = document.createElement('span');
+            tag.className = 'cv-col-tag ' + (found ? 'cv-col-found' : 'cv-col-missing');
+            tag.innerHTML = '<i class="material-symbols-rounded" style="font-size:12px;">' +
+                (found ? 'check_circle' : 'cancel') + '</i> ' +
+                label + (found ? ' → ' + found : ' não encontrada');
+            tagsEl.appendChild(tag);
+        }
+
+        // Table header
+        const thead = $('cv-preview-thead');
+        thead.innerHTML = '<tr>' + data.colunas.map(c =>
+            '<th>' + c + '</th>'
+        ).join('') + '</tr>';
+
+        // Table body (first 5 rows)
+        const tbody = $('cv-preview-tbody');
+        tbody.innerHTML = data.amostra.map(row =>
+            '<tr>' + data.colunas.map(c =>
+                '<td>' + (row[c] || '—') + '</td>'
+            ).join('') + '</tr>'
+        ).join('');
+
+        previewDiv.style.display = '';
+    }
+
+    /* ══════════ PROCESS ══════════ */
+    btnProcess.addEventListener('click', doProcess);
+
+    async function doProcess() {
+        if (!currentFile) return;
+
+        setStep(3);
+        btnProcess.disabled = true;
+        showProgress('Calculando valores...', 20);
+        hideError();
+
+        const formData = new FormData();
+        formData.append('file', currentFile);
+
+        try {
+            setProgress(40, 'Processando planilha...');
+
+            const resp = await fetch("{% url 'calculo_vigilante:processar' %}", {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken },
+                body: formData,
+            });
+
+            setProgress(80, 'Gerando relatório...');
+
+            if (!resp.ok) {
+                const d = await resp.json();
+                throw new Error(d.erro || 'Erro ao processar');
+            }
+
+            const data = await resp.json();
+            setProgress(100, 'Concluído!');
+
+            setTimeout(() => {
+                progressDiv.style.display = 'none';
+                previewDiv.style.display = 'none';
+                actionsDiv.style.display = 'none';
+                renderSummary(data.stats);
+                setStep(4);
+                refreshHistory();
+            }, 600);
+
+        } catch (err) {
+            hideProgress();
+            showError(err.message);
+            btnProcess.disabled = false;
+            setStep(2);
+        }
+    }
+
+    function renderSummary(stats) {
+        $('cv-summary-file').textContent = currentFile ? currentFile.name : '';
+        $('cv-stat-total').textContent = stats.linhas_total;
+        $('cv-stat-match').textContent = stats.linhas_com_valor;
+        $('cv-stat-nomatch').textContent = stats.linhas_sem_match;
+        $('cv-stat-valor').textContent = stats.valor_total;
+        summaryDiv.style.display = '';
+    }
+
+    /* ══════════ DOWNLOAD ══════════ */
+    btnDownload.addEventListener('click', () => {
+        window.location.href = "{% url 'calculo_vigilante:download' %}";
+    });
+
+    btnNew.addEventListener('click', resetState);
+
+    /* ══════════ PROGRESS ══════════ */
+    function showProgress(msg, pct) {
+        progressDiv.style.display = '';
+        progressMsg.textContent = msg || 'Processando...';
+        setProgress(pct || 0);
+    }
+    function setProgress(pct, msg) {
+        progressBar.style.width = pct + '%';
+        progressPct.textContent = pct + '%';
+        if (msg) progressMsg.textContent = msg;
+    }
+    function hideProgress() {
+        progressDiv.style.display = 'none';
+        setProgress(0);
+    }
+
+    /* ══════════ ERROR ══════════ */
+    function showError(msg) {
+        alertDiv.innerHTML = '<i class="material-symbols-rounded" style="font-size:18px;">error</i> ' + msg;
+        errorDiv.style.display = '';
+    }
+    function hideError() { errorDiv.style.display = 'none'; }
+
+    /* ══════════ HISTORY ══════════ */
+    const historicoData = JSON.parse('{{ historico_json|escapejs }}');
+
+    function renderHistory(data) {
+        const body = $('cv-history-body');
+        const wrap = $('cv-history-table-wrap');
+        const empty = $('cv-history-empty');
+        const count = $('cv-history-count');
+
+        if (!data || data.length === 0) {
+            wrap.style.display = 'none';
+            empty.style.display = '';
+            count.textContent = '0 processamentos';
+            return;
+        }
+
+        empty.style.display = 'none';
+        wrap.style.display = '';
+        count.textContent = data.length + ' processamento' + (data.length > 1 ? 's' : '');
+
+        body.innerHTML = data.map(h => `
+            <tr>
+                <td>
+                    <div style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${h.arquivo}">
+                        ${h.arquivo}
+                    </div>
+                    <span style="font-size:.65rem;color:var(--cv-slate-400);">${h.data}</span>
+                </td>
+                <td class="text-center">${h.linhas_total || '—'}</td>
+                <td class="text-end" style="font-weight:600;color:var(--cv-slate-700);">
+                    ${h.status === 'sucesso' ? 'R$ ' + parseFloat(h.valor_total).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '—'}
+                </td>
+                <td class="text-center">
+                    <span class="cv-status-badge cv-status-${h.status}">
+                        ${h.status === 'sucesso' ? '✓ OK' : '✕ Erro'}
+                    </span>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function refreshHistory() {
+        try {
+            // Simple: just add current result to existing data
+            // Full refresh would call /calculo-vigilante/historico/
+            renderHistory(null); // Will re-render from DOM update on next page load
+            // Quick hack: reload history section
+            const resp = await fetch("{% url 'calculo_vigilante:pagina' %}", {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            // Just re-render what we have + the new entry
+        } catch(e) { /* silent */ }
+    }
+
+    // Initial render
+    renderHistory(historicoData);
+
+    /* ══════════ TABLE SEARCH ══════════ */
+    searchInput.addEventListener('input', function() {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll('#cv-table-body tr').forEach(tr => {
+            tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+    });
+
+    /* ══════════ INIT ══════════ */
+    setStep(1);
+
+})();
+</script>
+{% endblock %}

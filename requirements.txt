@@ -1,5 +1,6 @@
 # Django Core
 Django==5.2.6
+setuptools<81
 django-environ==0.11.2
 whitenoise==6.8.2
 djangorestframework==3.16.1
@@ -37,7 +38,7 @@ psutil==6.1.1
 celery==5.4.0
 redis==5.2.1
 flower==2.0.1
-django-celery-beat==2.7.0
+django-celery-beat==2.8.1
 
 # Dependencies
 requests==2.32.3
@@ -53,7 +54,7 @@ numpy==2.2.2
 joblib==1.4.2
 
 # Database
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.10
 
 # RBAC & Security (Phase 2)
 django-axes==6.1.1
@@ -68,6 +69,7 @@ django-cors-headers==4.3.1
 
 # Reports (Phase 6)
 openpyxl==3.1.2
+Unidecode==1.4.0
 
 # Testing (Phase 8)
 pytest==7.4.3

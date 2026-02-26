@@ -80,7 +80,7 @@ services:
       redis:
         condition: service_healthy
     command: >
-      sh -c "chmod +x docker/docker-entrypoint.sh && ./docker/docker-entrypoint.sh"
+      sh -c "chmod +x docker/docker-entrypoint.sh && ./docker/docker-entrypoint.sh daphne -b 0.0.0.0 -p 8000 --proxy-headers controle_atendimento.asgi:application"
     networks:
       - backend
       - frontend
