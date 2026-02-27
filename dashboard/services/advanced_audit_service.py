@@ -8,7 +8,7 @@ from typing import Dict, Any, Optional
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-from dashboard.audit_models import (
+from dashboard.models.audit import (
     AuditEvent,
     SecurityAlert,
     ComplianceReport,

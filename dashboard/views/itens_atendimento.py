@@ -17,7 +17,7 @@ logger = logging.getLogger('dashboard')
 @login_required
 def api_produtos_ativos(request):
     """API para listar produtos ativos para seleção"""
-    from ..models_estoque import Produto
+    from ..models import Produto
 
     produtos = Produto.objects.filter(
         status='ativo'
@@ -44,7 +44,7 @@ def api_produtos_ativos(request):
 def api_add_item_atendimento(request):
     """API para adicionar item ao atendimento"""
     from ..models import ItemAtendimento
-    from ..models_estoque import Produto
+    from ..models import Produto
 
     try:
         ticket_id = request.POST.get('ticket_id')

@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from dashboard.models_whatsapp import (
+from dashboard.models import (
     WhatsAppBusinessAccount, WhatsAppTemplate, WhatsAppAutoResponse
 )
 

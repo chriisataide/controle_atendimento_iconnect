@@ -68,7 +68,7 @@ class GamificationService:
 
             elif metric == 'avg_satisfaction':
                 try:
-                    from dashboard.models_satisfacao import AvaliacaoSatisfacao
+                    from dashboard.models import AvaliacaoSatisfacao
                     avg = AvaliacaoSatisfacao.objects.filter(
                         ticket__agente=user
                     ).aggregate(avg=Avg('nota_atendimento'))['avg']
@@ -130,7 +130,7 @@ class GamificationService:
 
             # Avg satisfaction
             try:
-                from dashboard.models_satisfacao import AvaliacaoSatisfacao
+                from dashboard.models import AvaliacaoSatisfacao
                 avg = AvaliacaoSatisfacao.objects.filter(
                     ticket__agente=agent,
                     criado_em__gte=last_30d

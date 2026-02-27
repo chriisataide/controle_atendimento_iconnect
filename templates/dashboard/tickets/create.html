@@ -7,544 +7,1228 @@
 
 {% block extra_css %}
 <style>
-  .template-selector {
-    padding: 1.25rem;
-    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
-    border-radius: 12px;
+  :root {
+    --tk-slate-900: #0f172a;
+    --tk-slate-800: #1e293b;
+    --tk-slate-700: #334155;
+    --tk-slate-600: #475569;
+    --tk-slate-500: #64748b;
+    --tk-slate-400: #94a3b8;
+    --tk-slate-300: #cbd5e1;
+    --tk-slate-200: #e2e8f0;
+    --tk-slate-100: #f1f5f9;
+    --tk-slate-50: #f8fafc;
+    --tk-cyan-600: #0891b2;
+    --tk-cyan-500: #06b6d4;
+    --tk-cyan-400: #22d3ee;
+    --tk-cyan-100: #cffafe;
+    --tk-cyan-50: #ecfeff;
+    --tk-green-600: #059669;
+    --tk-green-500: #10b981;
+    --tk-green-100: #d1fae5;
+    --tk-amber-500: #f59e0b;
+    --tk-amber-100: #fef3c7;
+    --tk-red-500: #ef4444;
+    --tk-red-100: #fee2e2;
+    --tk-purple-500: #8b5cf6;
+    --tk-purple-100: #ede9fe;
+    --tk-shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --tk-shadow-md: 0 4px 6px rgba(0,0,0,.05), 0 2px 4px rgba(0,0,0,.03);
+    --tk-shadow-lg: 0 10px 25px rgba(0,0,0,.08);
+    --tk-radius: 12px;
+    --tk-radius-sm: 8px;
+    --tk-transition: all .25s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ============================
+     STEPPER
+     ============================ */
+  .tk-stepper {
+    display: flex;
+    gap: 0;
     margin-bottom: 1.5rem;
-  }
-  .template-selector h6 { color: #fff; font-weight: 600; margin-bottom: 1rem; }
-  .template-option {
-    padding: 1rem .75rem;
-    background: rgba(255,255,255,.95);
-    border-radius: 10px;
-    cursor: pointer;
-    text-align: center;
-    border: 2px solid transparent;
-    transition: all .25s ease;
-    height: 100px;
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-  }
-  .template-option:hover { border-color: #06b6d4; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(6,182,212,.2); }
-  .template-option.active { background: linear-gradient(135deg, #06b6d4, #0891b2); color: #fff; border-color: #0891b2; }
-  .template-option i { font-size: 1.6rem; margin-bottom: .35rem; }
-  .template-option small { font-size: .72rem; opacity: .7; }
-
-  .form-section {
     background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.25rem;
+    border-radius: var(--tk-radius);
+    padding: .75rem 1rem;
+    box-shadow: var(--tk-shadow-sm);
+    border: 1px solid var(--tk-slate-200);
   }
-  .form-section h6 {
-    color: #334155;
+  .tk-step {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .5rem .75rem;
+    font-size: .8rem;
+    color: var(--tk-slate-400);
+    cursor: pointer;
+    transition: var(--tk-transition);
+    border-radius: var(--tk-radius-sm);
+    position: relative;
+    font-weight: 500;
+  }
+  .tk-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: -4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid var(--tk-slate-300);
+    border-top: 2px solid var(--tk-slate-300);
+    transform: translateY(-50%) rotate(45deg);
+  }
+  .tk-step.active {
+    color: var(--tk-cyan-600);
+    background: var(--tk-cyan-50);
     font-weight: 600;
-    display: flex; align-items: center;
-    margin-bottom: 1rem;
+  }
+  .tk-step.completed {
+    color: var(--tk-green-600);
+  }
+  .tk-step-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .7rem;
+    font-weight: 700;
+    background: var(--tk-slate-100);
+    color: var(--tk-slate-500);
+    flex-shrink: 0;
+  }
+  .tk-step.active .tk-step-num {
+    background: var(--tk-cyan-500);
+    color: #fff;
+  }
+  .tk-step.completed .tk-step-num {
+    background: var(--tk-green-500);
+    color: #fff;
+  }
+
+  /* ============================
+     FORM SECTIONS
+     ============================ */
+  .tk-section {
+    background: #fff;
+    border: 1px solid var(--tk-slate-200);
+    border-radius: var(--tk-radius);
+    padding: 1.75rem;
+    margin-bottom: 1.25rem;
+    box-shadow: var(--tk-shadow-sm);
+    transition: var(--tk-transition);
+  }
+  .tk-section:hover {
+    box-shadow: var(--tk-shadow-md);
+  }
+  .tk-section-header {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: 1.25rem;
     padding-bottom: .75rem;
-    border-bottom: 2px solid #06b6d4;
+    border-bottom: 2px solid var(--tk-cyan-500);
   }
-  .form-section h6 i { color: #06b6d4; }
+  .tk-section-header i {
+    color: var(--tk-cyan-500);
+    font-size: 1.2rem;
+  }
+  .tk-section-header h6 {
+    font-weight: 700;
+    color: var(--tk-slate-700);
+    font-size: .9rem;
+    margin: 0;
+  }
+  .tk-section-header .tk-section-badge {
+    margin-left: auto;
+    font-size: .65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    padding: .2rem .5rem;
+    border-radius: 4px;
+  }
+  .tk-badge-required { background: var(--tk-red-100); color: var(--tk-red-500); }
+  .tk-badge-optional { background: var(--tk-slate-100); color: var(--tk-slate-500); }
 
-  .input-group-outline { position: relative; margin-bottom: 1.25rem; }
-  .input-group-outline .form-label {
-    font-size: .8rem; font-weight: 600; color: #475569; margin-bottom: .35rem; display: block;
+  /* ============================
+     FORM CONTROLS
+     ============================ */
+  .tk-field { position: relative; margin-bottom: 1.25rem; }
+  .tk-field label {
+    display: block;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--tk-slate-600);
+    margin-bottom: .4rem;
+    display: flex;
+    align-items: center;
+    gap: .3rem;
   }
-  .input-group-outline .form-control,
-  .input-group-outline select.form-control {
-    border: 1px solid #cbd5e1; border-radius: 8px; padding: .6rem .85rem; font-size: .875rem;
-    transition: border-color .2s, box-shadow .2s; width: 100%; background: #fff;
+  .tk-field label .required-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--tk-red-500); display: inline-block;
   }
-  .input-group-outline .form-control:focus {
-    border-color: #06b6d4; box-shadow: 0 0 0 3px rgba(6,182,212,.15); outline: none;
+  .tk-field .form-control,
+  .tk-field select.form-control {
+    border: 1.5px solid var(--tk-slate-300);
+    border-radius: var(--tk-radius-sm);
+    padding: .65rem .9rem;
+    font-size: .875rem;
+    transition: var(--tk-transition);
+    width: 100%;
+    background: #fff;
+    color: var(--tk-slate-800);
   }
-  .input-group-outline textarea.form-control { min-height: 120px; resize: vertical; }
+  .tk-field .form-control:focus {
+    border-color: var(--tk-cyan-500);
+    box-shadow: 0 0 0 3px rgba(6,182,212,.12);
+    outline: none;
+  }
+  .tk-field .form-control::placeholder { color: var(--tk-slate-400); }
+  .tk-field textarea.form-control { min-height: 130px; resize: vertical; line-height: 1.6; }
+  .tk-field .field-hint {
+    font-size: .7rem;
+    color: var(--tk-slate-400);
+    margin-top: .3rem;
+    display: block;
+  }
 
-  /* Rich editor */
-  .rich-editor-wrapper { border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; }
-  .rich-editor-wrapper:focus-within { border-color: #06b6d4; box-shadow: 0 0 0 3px rgba(6,182,212,.15); }
-  .editor-toolbar {
-    background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: .4rem .6rem;
-    display: flex; gap: .25rem; flex-wrap: wrap;
+  /* ============================
+     UNIORG AUTOCOMPLETE
+     ============================ */
+  .tk-uniorg-wrapper { position: relative; }
+  .tk-uniorg-input-wrap { position: relative; }
+  .tk-uniorg-input-wrap input {
+    padding-left: 2.3rem !important;
   }
-  .format-btn {
-    background: none; border: 1px solid transparent; border-radius: 4px; padding: .25rem .45rem;
-    cursor: pointer; color: #475569; font-size: .85rem; transition: all .15s;
+  .tk-uniorg-input-wrap .search-icon {
+    position: absolute;
+    left: .7rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.05rem;
+    color: var(--tk-slate-400);
+    pointer-events: none;
+    transition: color .2s;
   }
-  .format-btn:hover { background: #e2e8f0; border-color: #cbd5e1; }
-  .editor-content {
-    min-height: 180px; padding: 1rem; font-size: .875rem; outline: none; line-height: 1.6;
+  .tk-uniorg-input-wrap input:focus ~ .search-icon {
+    color: var(--tk-cyan-500);
   }
-  .editor-content:empty::before {
-    content: 'Descreva detalhadamente o problema ou solicitação...';
-    color: #94a3b8; font-style: italic;
+  .tk-uniorg-spinner {
+    display: none;
+    position: absolute;
+    right: .7rem;
+    top: 50%;
+    transform: translateY(-50%);
   }
+  .tk-uniorg-spinner i {
+    font-size: .95rem;
+    color: var(--tk-cyan-500);
+    animation: tk-spin .7s linear infinite;
+  }
+  @keyframes tk-spin { to { transform: rotate(360deg); } }
 
-  /* Produtos */
-  .produto-autocomplete { position: relative; }
-  .produto-suggestions {
-    position: absolute; top: 100%; left: 0; right: 0; z-index: 50;
-    background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
-    max-height: 250px; overflow-y: auto; display: none;
-    box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  .tk-suggestions {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: #fff;
+    border: 1px solid var(--tk-slate-200);
+    border-radius: var(--tk-radius-sm);
+    max-height: 280px;
+    overflow-y: auto;
+    display: none;
+    box-shadow: var(--tk-shadow-lg);
   }
-  .produto-suggestion {
-    padding: .75rem 1rem; cursor: pointer; border-bottom: 1px solid #f1f5f9;
+  .tk-suggestions.show { display: block; }
+  .tk-suggestions::-webkit-scrollbar { width: 6px; }
+  .tk-suggestions::-webkit-scrollbar-thumb { background: var(--tk-slate-300); border-radius: 3px; }
+  .tk-sug-item {
+    padding: .6rem .85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    border-bottom: 1px solid var(--tk-slate-100);
     transition: background .15s;
   }
-  .produto-suggestion:hover { background: #f0fdfa; }
-  .produto-info { display: flex; justify-content: space-between; align-items: center; }
-  .produto-nome { font-weight: 600; color: #334155; font-size: .875rem; }
-  .produto-codigo { font-size: .75rem; color: #64748b; }
-  .produto-preco { font-weight: 700; color: #06b6d4; }
-  .produto-tipo { font-size: .65rem; padding: .15rem .45rem; border-radius: 4px; background: #f1f5f9; color: #475569; }
+  .tk-sug-item:last-child { border-bottom: none; }
+  .tk-sug-item:hover, .tk-sug-item.active { background: var(--tk-cyan-50); }
+  .tk-sug-code {
+    font-weight: 700;
+    font-family: 'Roboto Mono', 'SF Mono', monospace;
+    font-size: .82rem;
+    color: var(--tk-cyan-600);
+    min-width: 70px;
+    background: rgba(6,182,212,.08);
+    padding: .2rem .5rem;
+    border-radius: 4px;
+    text-align: center;
+  }
+  .tk-sug-name {
+    flex: 1;
+    font-size: .82rem;
+    color: var(--tk-slate-700);
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tk-sug-city {
+    font-size: .72rem;
+    color: var(--tk-slate-500);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: .2rem;
+  }
+  .tk-sug-city i { font-size: .75rem; }
+  .tk-sug-empty {
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--tk-slate-400);
+    font-size: .82rem;
+  }
+  .tk-sug-empty i { font-size: 1.5rem; display: block; margin-bottom: .35rem; }
+  .tk-feedback {
+    display: block;
+    font-size: .7rem;
+    margin-top: .35rem;
+    min-height: .9rem;
+    transition: color .2s;
+  }
+  .tk-feedback.success { color: var(--tk-green-600); font-weight: 500; }
+  .tk-feedback.error { color: var(--tk-red-500); }
+  .tk-feedback.info { color: var(--tk-slate-500); }
+  #uniorgSearch.matched {
+    border-color: var(--tk-green-500) !important;
+    box-shadow: 0 0 0 3px rgba(16,185,129,.1) !important;
+    background: rgba(16,185,129,.03) !important;
+  }
+  #uniorgSearch.no-match {
+    border-color: var(--tk-amber-500) !important;
+    box-shadow: 0 0 0 3px rgba(245,158,11,.1) !important;
+  }
+  .tk-pdv-info {
+    font-size: .72rem;
+    color: var(--tk-cyan-600);
+    margin-top: .35rem;
+    display: none;
+    align-items: center;
+    gap: .25rem;
+    font-weight: 500;
+  }
+  .tk-pdv-info.show { display: flex; }
 
-  .btn-add-produto {
-    background: linear-gradient(135deg, #06b6d4, #0891b2); color: #fff;
-    border: none; border-radius: 8px; padding: .55rem 1rem; font-size: .8rem; font-weight: 600;
-    transition: all .2s;
+  /* ============================
+     TEMPLATES RÁPIDOS
+     ============================ */
+  .tk-templates {
+    background: linear-gradient(135deg, var(--tk-slate-700) 0%, var(--tk-slate-800) 100%);
+    border-radius: var(--tk-radius);
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
   }
-  .btn-add-produto:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(6,182,212,.3); color: #fff; }
-  .btn-add-produto:disabled { opacity: .5; cursor: not-allowed; }
+  .tk-templates h6 {
+    color: #fff;
+    font-weight: 600;
+    font-size: .85rem;
+    margin-bottom: .85rem;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+  }
+  .tk-templates h6 small {
+    font-weight: 400;
+    opacity: .6;
+    font-size: .72rem;
+  }
+  .tk-tpl-option {
+    background: rgba(255,255,255,.95);
+    border-radius: 10px;
+    padding: .75rem .5rem;
+    text-align: center;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: var(--tk-transition);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .25rem;
+    height: 82px;
+  }
+  .tk-tpl-option i {
+    font-size: 1.5rem;
+    color: var(--tk-slate-700);
+    transition: color .2s;
+  }
+  .tk-tpl-option small {
+    font-size: .68rem;
+    color: var(--tk-slate-600);
+    font-weight: 500;
+    line-height: 1.2;
+  }
+  .tk-tpl-option:hover {
+    border-color: var(--tk-cyan-500);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(6,182,212,.2);
+  }
+  .tk-tpl-option.active {
+    background: linear-gradient(135deg, var(--tk-cyan-500), var(--tk-cyan-600));
+    border-color: var(--tk-cyan-600);
+    color: #fff;
+  }
+  .tk-tpl-option.active i,
+  .tk-tpl-option.active small { color: #fff; }
 
-  .item-produto {
-    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
-    padding: 1rem; margin-bottom: .75rem;
+  /* ============================
+     RICH EDITOR
+     ============================ */
+  .tk-editor-wrap {
+    border: 1.5px solid var(--tk-slate-300);
+    border-radius: var(--tk-radius-sm);
+    overflow: hidden;
+    transition: var(--tk-transition);
   }
-  .item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: .5rem; }
-  .item-header h6 { margin: 0; font-size: .875rem; color: #334155; }
-  .btn-remove-item {
-    background: none; border: none; color: #ef4444; cursor: pointer; padding: .15rem;
-    border-radius: 4px; transition: background .15s;
+  .tk-editor-wrap:focus-within {
+    border-color: var(--tk-cyan-500);
+    box-shadow: 0 0 0 3px rgba(6,182,212,.12);
   }
-  .btn-remove-item:hover { background: #fee2e2; }
+  .tk-editor-toolbar {
+    background: var(--tk-slate-50);
+    border-bottom: 1px solid var(--tk-slate-200);
+    padding: .4rem .6rem;
+    display: flex;
+    gap: .2rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .tk-editor-toolbar .divider {
+    width: 1px;
+    height: 20px;
+    background: var(--tk-slate-300);
+    margin: 0 .35rem;
+  }
+  .tk-fmt-btn {
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: .25rem .4rem;
+    cursor: pointer;
+    color: var(--tk-slate-600);
+    font-size: .82rem;
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+  }
+  .tk-fmt-btn:hover { background: var(--tk-slate-200); border-color: var(--tk-slate-300); }
+  .tk-fmt-btn i { font-size: .95rem; }
+  .tk-editor-content {
+    min-height: 200px;
+    padding: 1rem 1.15rem;
+    font-size: .875rem;
+    outline: none;
+    line-height: 1.7;
+    color: var(--tk-slate-800);
+  }
+  .tk-editor-content:empty::before {
+    content: 'Descreva detalhadamente o problema ou solicitação. Quanto mais informações, melhor...';
+    color: var(--tk-slate-400);
+    font-style: italic;
+  }
+  .tk-editor-footer {
+    background: var(--tk-slate-50);
+    border-top: 1px solid var(--tk-slate-200);
+    padding: .35rem .75rem;
+    display: flex;
+    justify-content: space-between;
+    font-size: .68rem;
+    color: var(--tk-slate-400);
+  }
 
-  .resumo-produtos {
-    background: linear-gradient(135deg, #334155, #1e293b); color: #fff;
-    border-radius: 10px; padding: 1.25rem; margin-top: 1rem;
+  /* ============================
+     PRIORITY SELECTOR
+     ============================ */
+  .tk-priority-options {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
   }
-  .resumo-produtos h6 { color: #fff; margin-bottom: .75rem; }
-  .resumo-linha { display: flex; justify-content: space-between; padding: .35rem 0; font-size: .875rem; }
-  .resumo-linha.total { border-top: 1px solid rgba(255,255,255,.2); padding-top: .75rem; margin-top: .5rem; font-weight: 700; font-size: 1rem; }
-  .resumo-linha .value { color: #67e8f9; }
+  .tk-priority-opt {
+    flex: 1;
+    min-width: 80px;
+    padding: .6rem .5rem;
+    border: 2px solid var(--tk-slate-200);
+    border-radius: var(--tk-radius-sm);
+    text-align: center;
+    cursor: pointer;
+    transition: var(--tk-transition);
+    font-size: .78rem;
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .25rem;
+  }
+  .tk-priority-opt .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+  .tk-priority-opt:hover { transform: translateY(-1px); box-shadow: var(--tk-shadow-sm); }
+  .tk-priority-opt.selected { transform: translateY(-1px); box-shadow: var(--tk-shadow-md); }
+  .tk-priority-opt[data-value="baixa"] .dot { background: var(--tk-green-500); }
+  .tk-priority-opt[data-value="baixa"].selected { border-color: var(--tk-green-500); background: var(--tk-green-100); color: var(--tk-green-600); }
+  .tk-priority-opt[data-value="media"] .dot { background: var(--tk-amber-500); }
+  .tk-priority-opt[data-value="media"].selected { border-color: var(--tk-amber-500); background: var(--tk-amber-100); color: #92400e; }
+  .tk-priority-opt[data-value="alta"] .dot { background: #f97316; }
+  .tk-priority-opt[data-value="alta"].selected { border-color: #f97316; background: #fff7ed; color: #9a3412; }
+  .tk-priority-opt[data-value="critica"] .dot { background: var(--tk-red-500); }
+  .tk-priority-opt[data-value="critica"].selected { border-color: var(--tk-red-500); background: var(--tk-red-100); color: #991b1b; }
 
-  .empty-produtos {
-    text-align: center; padding: 2rem; color: #94a3b8;
+  /* ============================
+     FILE UPLOAD
+     ============================ */
+  .tk-upload-area {
+    border: 2px dashed var(--tk-slate-300);
+    border-radius: var(--tk-radius);
+    padding: 2rem 1.5rem;
+    text-align: center;
+    position: relative;
+    cursor: pointer;
+    background: var(--tk-slate-50);
+    transition: var(--tk-transition);
   }
-  .empty-produtos i { font-size: 2.5rem; margin-bottom: .5rem; display: block; }
-  .loading-produtos {
-    display: none; text-align: center; padding: 1rem; color: #64748b;
+  .tk-upload-area:hover, .tk-upload-area.drag-over {
+    border-color: var(--tk-cyan-500);
+    background: var(--tk-cyan-50);
   }
-  .loading-produtos i { animation: spin 1s linear infinite; font-size: 1.5rem; }
+  .tk-upload-area i { font-size: 2.5rem; color: var(--tk-slate-400); margin-bottom: .5rem; }
+  .tk-upload-area p { color: var(--tk-slate-500); font-size: .85rem; margin: .25rem 0; }
+  .tk-upload-area small { color: var(--tk-slate-400); font-size: .72rem; }
+  .tk-upload-area input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer;
+  }
+  .tk-file-list { margin-top: .75rem; }
+  .tk-file-item {
+    background: #fff;
+    border: 1px solid var(--tk-slate-200);
+    border-radius: var(--tk-radius-sm);
+    padding: .55rem .8rem;
+    margin-bottom: .4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: .82rem;
+    animation: tk-fadeIn .25s ease;
+  }
+  .tk-file-item .file-info {
+    display: flex; align-items: center; gap: .5rem; overflow: hidden;
+  }
+  .tk-file-item .file-info i { color: var(--tk-cyan-500); font-size: 1.1rem; }
+  .tk-file-item .file-name {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: var(--tk-slate-700); font-weight: 500;
+  }
+  .tk-file-item .file-size { color: var(--tk-slate-400); font-size: .72rem; white-space: nowrap; }
+  .tk-file-remove {
+    border: none; background: none; color: var(--tk-red-500);
+    cursor: pointer; padding: .15rem; border-radius: 4px;
+    transition: background .15s;
+  }
+  .tk-file-remove:hover { background: var(--tk-red-100); }
 
-  /* File upload */
-  .file-upload-area {
-    border: 2px dashed #cbd5e1; border-radius: 10px; padding: 2rem;
-    text-align: center; position: relative; transition: all .25s; cursor: pointer;
-    background: #f8fafc;
+  /* ============================
+     PRODUTOS/SERVIÇOS
+     ============================ */
+  .tk-produto-search { position: relative; }
+  .tk-produto-suggestions {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0; z-index: 50;
+    background: #fff;
+    border: 1px solid var(--tk-slate-200);
+    border-radius: var(--tk-radius-sm);
+    max-height: 250px;
+    overflow-y: auto;
+    display: none;
+    box-shadow: var(--tk-shadow-lg);
   }
-  .file-upload-area:hover, .file-upload-area.drag-over {
-    border-color: #06b6d4; background: #f0fdfa;
+  .tk-produto-suggestions.show { display: block; }
+  .tk-prod-item {
+    padding: .65rem .85rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--tk-slate-100);
+    transition: background .15s;
   }
-  .file-item {
-    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
-    padding: .6rem .85rem; margin-bottom: .5rem;
-    display: flex; align-items: center; justify-content: space-between;
+  .tk-prod-item:hover { background: var(--tk-cyan-50); }
+  .tk-prod-info {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .tk-prod-name { font-weight: 600; color: var(--tk-slate-700); font-size: .85rem; }
+  .tk-prod-code { font-size: .72rem; color: var(--tk-slate-500); }
+  .tk-prod-price { font-weight: 700; color: var(--tk-cyan-600); font-size: .85rem; }
+  .tk-prod-type {
+    font-size: .62rem; padding: .15rem .4rem; border-radius: 4px;
+    background: var(--tk-slate-100); color: var(--tk-slate-500);
+    font-weight: 600; text-transform: uppercase;
+  }
+  .tk-item-card {
+    background: var(--tk-slate-50);
+    border: 1px solid var(--tk-slate-200);
+    border-radius: var(--tk-radius-sm);
+    padding: 1rem;
+    margin-bottom: .65rem;
+    animation: tk-fadeIn .25s ease;
+  }
+  .tk-item-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: .5rem;
+  }
+  .tk-item-header h6 { margin: 0; font-size: .85rem; color: var(--tk-slate-700); font-weight: 600; }
+  .tk-btn-remove {
+    background: none; border: none; color: var(--tk-red-500);
+    cursor: pointer; padding: .2rem; border-radius: 4px;
+    transition: background .15s;
+  }
+  .tk-btn-remove:hover { background: var(--tk-red-100); }
+  .tk-resumo {
+    background: linear-gradient(135deg, var(--tk-slate-700), var(--tk-slate-900));
+    color: #fff;
+    border-radius: var(--tk-radius);
+    padding: 1.15rem 1.25rem;
+    margin-top: .75rem;
+  }
+  .tk-resumo h6 { color: #fff; font-size: .85rem; margin-bottom: .65rem; }
+  .tk-resumo-row {
+    display: flex; justify-content: space-between;
+    padding: .3rem 0; font-size: .85rem;
+  }
+  .tk-resumo-row.total {
+    border-top: 1px solid rgba(255,255,255,.2);
+    padding-top: .6rem; margin-top: .4rem;
+    font-weight: 700; font-size: .95rem;
+  }
+  .tk-resumo-row .val { color: var(--tk-cyan-400); }
+
+  .tk-empty-produtos {
+    text-align: center; padding: 1.5rem; color: var(--tk-slate-400);
+  }
+  .tk-empty-produtos i { font-size: 2rem; display: block; margin-bottom: .35rem; }
+  .tk-btn-add-produto {
+    background: linear-gradient(135deg, var(--tk-cyan-500), var(--tk-cyan-600));
+    color: #fff; border: none; border-radius: var(--tk-radius-sm);
+    padding: .5rem .85rem; font-size: .78rem; font-weight: 600;
+    transition: var(--tk-transition);
+    display: flex; align-items: center; gap: .35rem;
+  }
+  .tk-btn-add-produto:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(6,182,212,.3);
+    color: #fff;
+  }
+  .tk-btn-add-produto:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* ============================
+     SIDEBAR
+     ============================ */
+  .tk-sidebar-card {
+    background: #fff;
+    border: 1px solid var(--tk-slate-200);
+    border-radius: var(--tk-radius);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--tk-shadow-sm);
+  }
+  .tk-sidebar-card h6 {
+    color: var(--tk-slate-700);
+    font-weight: 700;
+    font-size: .82rem;
+    margin-bottom: .85rem;
+    padding-bottom: .5rem;
+    border-bottom: 2px solid var(--tk-cyan-500);
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+  }
+  .tk-sidebar-card h6 i { color: var(--tk-cyan-500); font-size: 1rem; }
+  .tk-preview-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: .4rem 0;
+    font-size: .78rem;
+    border-bottom: 1px dashed var(--tk-slate-200);
+  }
+  .tk-preview-row:last-child { border-bottom: none; }
+  .tk-preview-label { color: var(--tk-slate-500); font-weight: 500; }
+  .tk-preview-value {
+    color: var(--tk-slate-700); font-weight: 600; text-align: right;
+    max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .tk-preview-empty { color: var(--tk-slate-400); font-style: italic; font-weight: 400; }
+
+  .tk-shortcuts dt { font-size: .72rem; color: var(--tk-slate-500); margin-bottom: .15rem; }
+  .tk-shortcuts dd { margin-bottom: .5rem; }
+  .tk-shortcuts kbd {
+    background: var(--tk-slate-100); border: 1px solid var(--tk-slate-300);
+    border-radius: 4px; padding: .1rem .35rem;
+    font-size: .7rem; font-family: 'SF Mono','Roboto Mono', monospace;
+    color: var(--tk-slate-700);
   }
 
-  /* Priority visual */
-  .priority-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: .35rem; }
-
-  /* Sidebar summary */
-  .sidebar-card {
-    background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
-    padding: 1.25rem; margin-bottom: 1rem;
+  .tk-tips li {
+    font-size: .75rem; color: var(--tk-slate-600);
+    padding: .3rem 0; border-bottom: 1px dashed var(--tk-slate-100);
+    display: flex; align-items: flex-start; gap: .35rem;
   }
-  .sidebar-card h6 {
-    color: #334155; font-weight: 600; font-size: .85rem;
-    margin-bottom: .75rem; padding-bottom: .5rem; border-bottom: 2px solid #06b6d4;
+  .tk-tips li:last-child { border-bottom: none; }
+  .tk-tips li i { color: var(--tk-cyan-500); font-size: .8rem; flex-shrink: 0; margin-top: 1px; }
+
+  /* ============================
+     BUTTONS
+     ============================ */
+  .tk-btn-primary {
+    background: linear-gradient(135deg, var(--tk-cyan-500), var(--tk-cyan-600));
+    color: #fff;
+    border: none;
+    border-radius: var(--tk-radius-sm);
+    padding: .7rem 1.75rem;
+    font-size: .875rem;
+    font-weight: 600;
+    transition: var(--tk-transition);
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    box-shadow: 0 2px 8px rgba(6,182,212,.25);
+  }
+  .tk-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(6,182,212,.35);
+    color: #fff;
+  }
+  .tk-btn-primary:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+  .tk-btn-secondary {
+    background: var(--tk-slate-100);
+    color: var(--tk-slate-600);
+    border: 1px solid var(--tk-slate-300);
+    border-radius: var(--tk-radius-sm);
+    padding: .7rem 1.25rem;
+    font-size: .875rem;
+    font-weight: 500;
+    transition: var(--tk-transition);
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+  }
+  .tk-btn-secondary:hover { background: var(--tk-slate-200); color: var(--tk-slate-700); }
+
+  .tk-actions {
+    display: flex; gap: .75rem; justify-content: flex-end;
+    align-items: center; padding-top: 1rem;
+    border-top: 1px solid var(--tk-slate-200);
+    margin-top: .5rem;
   }
 
-  @keyframes spin { to { transform: rotate(360deg); } }
+  /* ============================
+     ANIMATIONS
+     ============================ */
+  @keyframes tk-fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
+  /* ============================
+     RESPONSIVE
+     ============================ */
+  @media (max-width: 992px) {
+    .tk-stepper { flex-wrap: wrap; }
+    .tk-step::after { display: none; }
+  }
   @media (max-width: 768px) {
-    .template-option { height: auto; padding: .75rem; }
-    .form-section { padding: 1rem; }
-    .produto-info { flex-direction: column; gap: .5rem; }
+    .tk-section { padding: 1.15rem; }
+    .tk-priority-options { flex-direction: column; }
+    .tk-tpl-option { height: 68px; }
   }
 
-  /* Dark mode overrides */
-  .dark-version .form-section { background: var(--bg-card) !important; border-color: var(--border-color) !important; }
-  .dark-version .form-section h6 { color: var(--text-primary) !important; }
-  .dark-version .input-group-outline .form-label { color: var(--text-secondary) !important; }
-  .dark-version .input-group-outline .form-control { background: var(--bg-primary) !important; color: var(--text-primary) !important; border-color: var(--border-color) !important; }
-  .dark-version .input-group-outline .form-control:focus { border-color: var(--accent) !important; }
-  .dark-version .template-option { background: var(--bg-card) !important; color: var(--text-primary) !important; }
-  .dark-version .template-option.active { background: linear-gradient(135deg, #06b6d4, #0891b2) !important; color: #fff !important; }
-  .dark-version .produto-suggestion { border-bottom-color: var(--border-color) !important; }
-  .dark-version .produto-suggestion:hover { background: rgba(6,182,212,0.06) !important; }
-  .dark-version .produto-suggestions { background: var(--bg-card) !important; border-color: var(--border-color) !important; }
-  .dark-version .produto-nome { color: var(--text-primary) !important; }
-  .dark-version .produto-tipo { background: var(--bg-primary) !important; color: var(--text-secondary) !important; }
-  .dark-version .item-produto { background: var(--bg-primary) !important; border-color: var(--border-color) !important; }
-  .dark-version .item-header h6 { color: var(--text-primary) !important; }
-  .dark-version .file-upload-area { border-color: var(--border-color) !important; background: var(--bg-primary) !important; }
-  .dark-version .file-upload-area:hover { border-color: var(--accent) !important; background: rgba(6,182,212,0.04) !important; }
-  .dark-version .file-item { background: var(--bg-primary) !important; border-color: var(--border-color) !important; }
-  .dark-version .sidebar-card { background: var(--bg-card) !important; border-color: var(--border-color) !important; }
-  .dark-version .sidebar-card h6 { color: var(--text-primary) !important; }
-  .dark-version .editor-toolbar { background: var(--bg-primary) !important; border-bottom-color: var(--border-color) !important; }
-  .dark-version .editor-content { color: var(--text-primary) !important; }
-  .dark-version .rich-editor-wrapper { border-color: var(--border-color) !important; }
-  .dark-version .format-btn { color: var(--text-secondary) !important; }
-  .dark-version .format-btn:hover { background: var(--bg-secondary) !important; border-color: var(--border-color) !important; }
+  /* ============================
+     DARK MODE
+     ============================ */
+  .dark-version .tk-stepper { background: var(--bg-card); border-color: var(--border-color); }
+  .dark-version .tk-step { color: var(--text-secondary); }
+  .dark-version .tk-step.active { background: rgba(6,182,212,.08); }
+  .dark-version .tk-step-num { background: rgba(255,255,255,.06); color: var(--text-secondary); }
+  .dark-version .tk-section { background: var(--bg-card); border-color: var(--border-color); }
+  .dark-version .tk-section-header h6 { color: var(--text-primary); }
+  .dark-version .tk-field label { color: var(--text-secondary); }
+  .dark-version .tk-field .form-control {
+    background: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+  }
+  .dark-version .tk-field .form-control:focus { border-color: var(--accent) !important; }
+  .dark-version .tk-suggestions { background: var(--bg-card); border-color: var(--border-color); }
+  .dark-version .tk-sug-item { border-bottom-color: var(--border-color); }
+  .dark-version .tk-sug-item:hover, .dark-version .tk-sug-item.active { background: rgba(6,182,212,.06); }
+  .dark-version .tk-sug-name { color: var(--text-primary); }
+  .dark-version .tk-editor-wrap { border-color: var(--border-color); }
+  .dark-version .tk-editor-toolbar { background: var(--bg-primary); border-bottom-color: var(--border-color); }
+  .dark-version .tk-editor-content { color: var(--text-primary); }
+  .dark-version .tk-editor-footer { background: var(--bg-primary); border-top-color: var(--border-color); }
+  .dark-version .tk-fmt-btn { color: var(--text-secondary); }
+  .dark-version .tk-fmt-btn:hover { background: rgba(255,255,255,.05); }
+  .dark-version .tk-priority-opt { border-color: var(--border-color); color: var(--text-secondary); }
+  .dark-version .tk-upload-area { background: var(--bg-primary); border-color: var(--border-color); }
+  .dark-version .tk-upload-area:hover { border-color: var(--accent); background: rgba(6,182,212,.04); }
+  .dark-version .tk-file-item { background: var(--bg-primary); border-color: var(--border-color); }
+  .dark-version .tk-sidebar-card { background: var(--bg-card); border-color: var(--border-color); }
+  .dark-version .tk-sidebar-card h6 { color: var(--text-primary); }
+  .dark-version .tk-preview-label { color: var(--text-secondary); }
+  .dark-version .tk-preview-value { color: var(--text-primary); }
+  .dark-version .tk-tpl-option { background: rgba(255,255,255,.9); }
+  .dark-version .tk-produto-suggestions { background: var(--bg-card); border-color: var(--border-color); }
+  .dark-version .tk-prod-item:hover { background: rgba(6,182,212,.06); }
+  .dark-version .tk-prod-name { color: var(--text-primary); }
+  .dark-version .tk-item-card { background: var(--bg-primary); border-color: var(--border-color); }
+  .dark-version .tk-item-header h6 { color: var(--text-primary); }
+  .dark-version .tk-btn-secondary { background: var(--bg-primary); color: var(--text-secondary); border-color: var(--border-color); }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid py-2">
-  <div class="ms-3">
-    <h3 class="mb-0 h4 font-weight-bolder">Criar Novo Ticket</h3>
-    <p class="mb-4 text-sm text-muted">Preencha os dados abaixo para registrar um novo ticket de suporte</p>
+
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-lg-8 col-md-7">
+      <div class="ms-3">
+        <h3 class="mb-0 h4 font-weight-bolder">Criar Novo Ticket</h3>
+        <p class="mb-0 text-sm text-secondary">Preencha as informações abaixo para registrar um novo ticket de suporte</p>
+      </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+      <a href="{% url 'dashboard:ticket_list' %}" class="btn btn-sm btn-outline-secondary mb-0">
+        <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Voltar
+      </a>
+    </div>
+  </div>
+
+  <!-- Stepper -->
+  <div class="tk-stepper" id="ticketStepper">
+    <div class="tk-step active" data-step="1">
+      <span class="tk-step-num">1</span>
+      Identificação
+    </div>
+    <div class="tk-step" data-step="2">
+      <span class="tk-step-num">2</span>
+      Detalhes
+    </div>
+    <div class="tk-step" data-step="3">
+      <span class="tk-step-num">3</span>
+      Produtos
+    </div>
+    <div class="tk-step" data-step="4">
+      <span class="tk-step-num">4</span>
+      Anexos
+    </div>
   </div>
 
   <div class="row">
-    <!-- Main Form Column -->
+    <!-- ====== Main Column ====== -->
     <div class="col-lg-8">
-      <div class="card border-0 shadow-sm">
-        <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-          <div class="border-radius-lg pt-4 pb-3 d-flex align-items-center" style="background: linear-gradient(135deg, #334155, #1e293b);">
-            <h6 class="text-white text-capitalize ps-3 mb-0">
-              <i class="material-symbols-rounded me-2 opacity-8">confirmation_number</i>
-              Novo Ticket de Suporte
-            </h6>
+      <form method="post" id="ticketForm" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <!-- Templates Rápidos -->
+        <div class="tk-templates">
+          <h6>
+            <i class="material-symbols-rounded">library_books</i>
+            Templates Rápidos <small>(clique para preencher automaticamente)</small>
+          </h6>
+          <div class="row g-2" id="templateOptions">
+            <div class="col-4 col-md-2">
+              <div class="tk-tpl-option" data-template="suporte-tecnico">
+                <i class="material-symbols-rounded">computer</i>
+                <small>Suporte Técnico</small>
+              </div>
+            </div>
+            <div class="col-4 col-md-2">
+              <div class="tk-tpl-option" data-template="duvida">
+                <i class="material-symbols-rounded">help</i>
+                <small>Dúvida</small>
+              </div>
+            </div>
+            <div class="col-4 col-md-2">
+              <div class="tk-tpl-option" data-template="solicitacao">
+                <i class="material-symbols-rounded">request_quote</i>
+                <small>Solicitação</small>
+              </div>
+            </div>
+            <div class="col-4 col-md-2">
+              <div class="tk-tpl-option" data-template="bug">
+                <i class="material-symbols-rounded">bug_report</i>
+                <small>Bug Report</small>
+              </div>
+            </div>
+            <div class="col-4 col-md-2">
+              <div class="tk-tpl-option" data-template="melhoria">
+                <i class="material-symbols-rounded">lightbulb</i>
+                <small>Melhoria</small>
+              </div>
+            </div>
+            <div class="col-4 col-md-2">
+              <div class="tk-tpl-option" data-template="acesso">
+                <i class="material-symbols-rounded">key</i>
+                <small>Acesso</small>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="card-body pt-3">
 
-          <!-- Templates Rápidos -->
-          <div class="template-selector">
-            <h6>
-              <i class="material-symbols-rounded me-2">library_books</i>
-              Templates Rápidos <small class="fw-normal opacity-75 ms-2">(Opcional - clique para preencher)</small>
-            </h6>
-            <div class="row g-2" id="templateOptions">
-              <div class="col-4 col-md-2">
-                <div class="template-option" data-template="suporte-tecnico">
-                  <i class="material-symbols-rounded">computer</i>
-                  <small>Suporte Técnico</small>
-                </div>
+        <!-- Section 1: Identificação -->
+        <div class="tk-section" id="section-1">
+          <div class="tk-section-header">
+            <i class="material-symbols-rounded">badge</i>
+            <h6>Identificação</h6>
+            <span class="tk-section-badge tk-badge-required">Obrigatório</span>
+          </div>
+
+          <div class="row">
+            <div class="col-md-4">
+              <div class="tk-field">
+                <label>Cliente <span class="required-dot"></span></label>
+                {{ form.cliente }}
               </div>
-              <div class="col-4 col-md-2">
-                <div class="template-option" data-template="duvida">
-                  <i class="material-symbols-rounded">help</i>
-                  <small>Dúvida</small>
+            </div>
+            <div class="col-md-3">
+              <div class="tk-field tk-uniorg-wrapper">
+                <label>
+                  UNIORG / Cód. PdV
+                  <i class="material-symbols-rounded" style="font-size:.78rem;color:var(--tk-cyan-500);cursor:help;" title="Digite o código UNIORG para localizar o Ponto de Venda automaticamente">help</i>
+                </label>
+                <div class="tk-uniorg-input-wrap">
+                  <input type="text" id="uniorgSearch" class="form-control" placeholder="Selecione um cliente primeiro" autocomplete="off" disabled>
+                  <i class="material-symbols-rounded search-icon">search</i>
+                  <div class="tk-uniorg-spinner" id="uniorgSpinner">
+                    <i class="material-symbols-rounded">progress_activity</i>
+                  </div>
                 </div>
+                <div class="tk-suggestions" id="uniorgSuggestions"></div>
+                <small class="tk-feedback" id="uniorgFeedback"></small>
               </div>
-              <div class="col-4 col-md-2">
-                <div class="template-option" data-template="solicitacao">
-                  <i class="material-symbols-rounded">request_quote</i>
-                  <small>Solicitação</small>
-                </div>
-              </div>
-              <div class="col-4 col-md-2">
-                <div class="template-option" data-template="bug">
-                  <i class="material-symbols-rounded">bug_report</i>
-                  <small>Bug Report</small>
-                </div>
-              </div>
-              <div class="col-4 col-md-2">
-                <div class="template-option" data-template="melhoria">
-                  <i class="material-symbols-rounded">lightbulb</i>
-                  <small>Melhoria</small>
-                </div>
-              </div>
-              <div class="col-4 col-md-2">
-                <div class="template-option" data-template="acesso">
-                  <i class="material-symbols-rounded">key</i>
-                  <small>Acesso</small>
-                </div>
+            </div>
+            <div class="col-md-5">
+              <div class="tk-field">
+                <label>Ponto de Venda</label>
+                {{ form.ponto_de_venda }}
+                <small class="tk-pdv-info" id="pdvInfo"></small>
               </div>
             </div>
           </div>
 
-          <form method="post" id="ticketForm" enctype="multipart/form-data">
-            {% csrf_token %}
-
-            <!-- Informações Básicas -->
-            <div class="form-section">
-              <h6>
-                <i class="material-symbols-rounded me-2">info</i>
-                Informações Básicas
-              </h6>
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="input-group-outline">
-                    <label class="form-label">Cliente</label>
-                    {{ form.cliente }}
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="input-group-outline">
-                    <label class="form-label">Ponto de Venda</label>
-                    {{ form.ponto_de_venda }}
-                  </div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="input-group-outline">
-                    <label class="form-label">Título do Ticket</label>
-                    {{ form.titulo }}
-                  </div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-4">
-                  <div class="input-group-outline">
-                    <label class="form-label">Categoria</label>
-                    {{ form.categoria }}
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="input-group-outline" id="prioridadeContainer">
-                    <label class="form-label">Prioridade</label>
-                    {{ form.prioridade }}
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="input-group-outline">
-                    <label class="form-label">Tags</label>
-                    {{ form.tags }}
-                    <small class="text-muted mt-1 d-block" style="font-size:.72rem;">Separe por vírgula (ex: sistema, login, urgente)</small>
-                  </div>
-                </div>
+          <div class="row">
+            <div class="col-md-8">
+              <div class="tk-field">
+                <label>Título do Ticket <span class="required-dot"></span></label>
+                {{ form.titulo }}
+                <span class="field-hint" id="tituloHint">Descreva brevemente o problema</span>
               </div>
             </div>
-
-            <!-- Descrição Detalhada -->
-            <div class="form-section">
-              <h6>
-                <i class="material-symbols-rounded me-2">description</i>
-                Descrição Detalhada
-              </h6>
-              <div class="rich-editor-wrapper">
-                <div class="editor-toolbar">
-                  <button type="button" class="format-btn" data-command="bold" title="Negrito"><b>B</b></button>
-                  <button type="button" class="format-btn" data-command="italic" title="Itálico"><i>I</i></button>
-                  <button type="button" class="format-btn" data-command="underline" title="Sublinhado"><u>U</u></button>
-                  <button type="button" class="format-btn" data-command="insertUnorderedList" title="Lista">
-                    <i class="material-symbols-rounded" style="font-size:1rem;">format_list_bulleted</i>
-                  </button>
-                  <button type="button" class="format-btn" data-command="insertOrderedList" title="Lista Numerada">
-                    <i class="material-symbols-rounded" style="font-size:1rem;">format_list_numbered</i>
-                  </button>
-                </div>
-                <div class="editor-content" id="editorContent" contenteditable="true"></div>
-              </div>
-              <input type="hidden" name="descricao" id="descricaoHidden">
-            </div>
-
-            <!-- Produtos e Serviços -->
-            <div class="form-section">
-              <h6>
-                <i class="material-symbols-rounded me-2">inventory_2</i>
-                Produtos e Serviços
-                <small class="text-muted fw-normal ms-2">(Opcional)</small>
-              </h6>
-
-              <div class="row g-2 mb-3">
-                <div class="col-md-5">
-                  <div class="input-group-outline produto-autocomplete">
-                    <label class="form-label">Buscar Produto/Serviço</label>
-                    <input type="text" class="form-control" id="produtoSearch" placeholder="Digite o nome ou código..." autocomplete="off">
-                    <div class="produto-suggestions" id="produtoSuggestions"></div>
-                  </div>
-                </div>
-                <div class="col-md-2">
-                  <div class="input-group-outline">
-                    <label class="form-label">Qtd</label>
-                    <input type="number" class="form-control" id="quantidadeProduto" value="1" min="0.001" step="0.001">
-                  </div>
-                </div>
-                <div class="col-md-2">
-                  <div class="input-group-outline">
-                    <label class="form-label">Valor Unit. (R$)</label>
-                    <input type="number" class="form-control" id="valorProduto" step="0.01" min="0">
-                  </div>
-                </div>
-                <div class="col-md-2">
-                  <div class="input-group-outline">
-                    <label class="form-label">Desconto (%)</label>
-                    <input type="number" class="form-control" id="descontoProduto" value="0" min="0" max="100" step="0.01">
-                  </div>
-                </div>
-                <div class="col-md-1 d-flex align-items-end" style="padding-bottom:1.25rem;">
-                  <button type="button" class="btn-add-produto w-100" id="btnAddProduto" disabled title="Adicionar">
-                    <i class="material-symbols-rounded" style="font-size:1.1rem;">add</i>
-                  </button>
-                </div>
-              </div>
-              <div class="row g-2 mb-3">
-                <div class="col-12">
-                  <div class="input-group-outline" style="margin-bottom:0;">
-                    <label class="form-label">Observações do Item</label>
-                    <input type="text" class="form-control" id="observacoesProduto" placeholder="Observações específicas sobre o item...">
-                  </div>
-                </div>
-              </div>
-
-              <div class="loading-produtos" id="loadingProdutos">
-                <i class="material-symbols-rounded">refresh</i>
-                <p class="mt-1 mb-0">Carregando produtos...</p>
-              </div>
-
-              <div id="listaProdutos">
-                <div class="empty-produtos" id="emptyProdutos">
-                  <i class="material-symbols-rounded">inventory</i>
-                  <p class="mb-0">Nenhum produto adicionado.</p>
-                  <small>Use o campo acima para buscar e adicionar itens.</small>
-                </div>
-              </div>
-
-              <div class="resumo-produtos" id="resumoProdutos" style="display:none;">
-                <h6>
-                  <i class="material-symbols-rounded me-2">calculate</i>
-                  Resumo Financeiro
-                </h6>
-                <div class="resumo-linha">
-                  <span>Subtotal:</span>
-                  <span class="value" id="subtotalResumo">R$ 0,00</span>
-                </div>
-                <div class="resumo-linha">
-                  <span>Desconto Total:</span>
-                  <span class="value" id="descontoResumo">R$ 0,00</span>
-                </div>
-                <div class="resumo-linha total">
-                  <span>Total Geral:</span>
-                  <span class="value" id="totalResumo">R$ 0,00</span>
-                </div>
+            <div class="col-md-4">
+              <div class="tk-field">
+                <label>Categoria</label>
+                {{ form.categoria }}
               </div>
             </div>
+          </div>
+        </div>
 
-            <!-- Anexos -->
-            <div class="form-section">
-              <h6>
-                <i class="material-symbols-rounded me-2">attach_file</i>
-                Anexos
-                <small class="text-muted fw-normal ms-2">(Opcional)</small>
-              </h6>
-              <div class="file-upload-area" id="uploadArea">
-                <i class="material-symbols-rounded mb-2" style="font-size:2rem;color:#64748b;">cloud_upload</i>
-                <p class="mb-1"><strong>Clique ou arraste arquivos aqui</strong></p>
-                <p class="text-muted mb-0" style="font-size:.8rem;">PDF, DOC, DOCX, TXT, PNG, JPG, JPEG, GIF (máx. 10MB)</p>
-                <input type="file" id="anexosInput" name="anexos" class="form-control"
-                       multiple accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif"
-                       style="position:absolute;opacity:0;width:100%;height:100%;top:0;left:0;cursor:pointer;">
+        <!-- Section 2: Detalhes -->
+        <div class="tk-section" id="section-2">
+          <div class="tk-section-header">
+            <i class="material-symbols-rounded">edit_note</i>
+            <h6>Detalhes do Ticket</h6>
+            <span class="tk-section-badge tk-badge-required">Obrigatório</span>
+          </div>
+
+          <!-- Rich Editor -->
+          <div class="tk-field">
+            <label>Descrição <span class="required-dot"></span></label>
+            <div class="tk-editor-wrap">
+              <div class="tk-editor-toolbar">
+                <button type="button" class="tk-fmt-btn" data-command="bold" title="Negrito (Ctrl+B)"><b>B</b></button>
+                <button type="button" class="tk-fmt-btn" data-command="italic" title="Itálico (Ctrl+I)"><i>I</i></button>
+                <button type="button" class="tk-fmt-btn" data-command="underline" title="Sublinhado (Ctrl+U)"><u>U</u></button>
+                <div class="divider"></div>
+                <button type="button" class="tk-fmt-btn" data-command="insertUnorderedList" title="Lista">
+                  <i class="material-symbols-rounded" style="font-size:.95rem;">format_list_bulleted</i>
+                </button>
+                <button type="button" class="tk-fmt-btn" data-command="insertOrderedList" title="Lista Numerada">
+                  <i class="material-symbols-rounded" style="font-size:.95rem;">format_list_numbered</i>
+                </button>
+                <div class="divider"></div>
+                <button type="button" class="tk-fmt-btn" data-command="formatBlock" data-value="H3" title="Título">
+                  <i class="material-symbols-rounded" style="font-size:.95rem;">title</i>
+                </button>
+                <button type="button" class="tk-fmt-btn" data-command="formatBlock" data-value="BLOCKQUOTE" title="Citação">
+                  <i class="material-symbols-rounded" style="font-size:.95rem;">format_quote</i>
+                </button>
+                <button type="button" class="tk-fmt-btn" data-command="createLink" title="Link">
+                  <i class="material-symbols-rounded" style="font-size:.95rem;">link</i>
+                </button>
               </div>
-              <div id="filePreview" class="mt-2" style="display:none;">
-                <small class="text-muted fw-600">Arquivos selecionados:</small>
-                <div id="fileList" class="mt-1"></div>
+              <div class="tk-editor-content" id="editorContent" contenteditable="true"></div>
+              <div class="tk-editor-footer">
+                <span id="charCount">0 caracteres</span>
+                <span>Dica: Ctrl+B para negrito</span>
               </div>
             </div>
+            {{ form.descricao }}
+          </div>
 
-            <!-- Ações -->
-            <div class="d-flex justify-content-between align-items-center mt-3 mb-4">
-              <small class="text-muted">
-                <i class="material-symbols-rounded me-1" style="font-size:14px;vertical-align:middle;">keyboard</i>
-                <strong>Ctrl+Enter</strong> para enviar
-              </small>
-              <div>
-                <a href="{% url 'dashboard:ticket_list' %}" class="btn btn-outline-secondary me-2">
-                  <i class="material-symbols-rounded me-1" style="font-size:1rem;">close</i>
-                  Cancelar
-                </a>
-                <button type="submit" class="btn text-white px-4" id="submitBtn" style="background:linear-gradient(135deg,#06b6d4,#0891b2);">
-                  <i class="material-symbols-rounded me-1" style="font-size:1rem;">send</i>
-                  Criar Ticket
+          <div class="row">
+            <div class="col-md-6">
+              <div class="tk-field">
+                <label>Prioridade <span class="required-dot"></span></label>
+                <div class="tk-priority-options" id="priorityOptions">
+                  <div class="tk-priority-opt" data-value="baixa">
+                    <span class="dot"></span>
+                    Baixa
+                  </div>
+                  <div class="tk-priority-opt selected" data-value="media">
+                    <span class="dot"></span>
+                    Média
+                  </div>
+                  <div class="tk-priority-opt" data-value="alta">
+                    <span class="dot"></span>
+                    Alta
+                  </div>
+                  <div class="tk-priority-opt" data-value="critica">
+                    <span class="dot"></span>
+                    Crítica
+                  </div>
+                </div>
+                <div style="display:none;">{{ form.prioridade }}</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="tk-field">
+                <label>Tags</label>
+                {{ form.tags }}
+                <span class="field-hint">Separe por vírgula (ex: sistema, login, urgente)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Produtos/Serviços -->
+        <div class="tk-section" id="section-3">
+          <div class="tk-section-header">
+            <i class="material-symbols-rounded">inventory_2</i>
+            <h6>Produtos e Serviços</h6>
+            <span class="tk-section-badge tk-badge-optional">Opcional</span>
+          </div>
+
+          <div class="row align-items-end">
+            <div class="col-md-8">
+              <div class="tk-field tk-produto-search">
+                <label>Buscar Produto ou Serviço</label>
+                <input type="text" id="produtoSearch" class="form-control" placeholder="Digite o nome ou código do produto..." autocomplete="off">
+                <div class="tk-produto-suggestions" id="produtoSuggestions"></div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="tk-field">
+                <button type="button" class="tk-btn-add-produto w-100" id="btnAddProduto" disabled>
+                  <i class="material-symbols-rounded" style="font-size:1rem;">add_circle</i>
+                  Adicionar Item
                 </button>
               </div>
             </div>
-          </form>
+          </div>
+
+          <div id="produtoSelecionadoInfo" style="display:none;" class="mb-3">
+            <div class="tk-item-card">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <strong id="prodSelNome" class="text-sm"></strong>
+                  <span id="prodSelTipo" class="tk-prod-type ms-2"></span>
+                </div>
+                <span id="prodSelPreco" class="tk-prod-price"></span>
+              </div>
+              <div class="row mt-2 g-2">
+                <div class="col-4">
+                  <label class="d-block" style="font-size:.72rem;color:var(--tk-slate-500);font-weight:600;">Quantidade</label>
+                  <input type="number" id="prodQtd" class="form-control form-control-sm" value="1" min="1" step="1">
+                </div>
+                <div class="col-4">
+                  <label class="d-block" style="font-size:.72rem;color:var(--tk-slate-500);font-weight:600;">Valor Unit. (R$)</label>
+                  <input type="number" id="prodValor" class="form-control form-control-sm" step="0.01" min="0">
+                </div>
+                <div class="col-4">
+                  <label class="d-block" style="font-size:.72rem;color:var(--tk-slate-500);font-weight:600;">Desconto (%)</label>
+                  <input type="number" id="prodDesconto" class="form-control form-control-sm" value="0" min="0" max="100" step="1">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="itensList">
+            <div class="tk-empty-produtos" id="emptyProdutos">
+              <i class="material-symbols-rounded">shopping_cart</i>
+              <p style="font-size:.82rem;">Nenhum produto ou serviço adicionado</p>
+              <small>Busque e adicione itens acima</small>
+            </div>
+          </div>
+
+          <div id="resumoProdutos" class="tk-resumo" style="display:none;">
+            <h6><i class="material-symbols-rounded me-1" style="font-size:1rem;">receipt_long</i> Resumo</h6>
+            <div class="tk-resumo-row">
+              <span>Itens</span>
+              <span class="val" id="resumoQtd">0</span>
+            </div>
+            <div class="tk-resumo-row">
+              <span>Subtotal</span>
+              <span class="val" id="resumoSubtotal">R$ 0,00</span>
+            </div>
+            <div class="tk-resumo-row">
+              <span>Descontos</span>
+              <span class="val" id="resumoDescontos">- R$ 0,00</span>
+            </div>
+            <div class="tk-resumo-row total">
+              <span>Total</span>
+              <span class="val" id="resumoTotal">R$ 0,00</span>
+            </div>
+          </div>
+
+          <input type="hidden" name="produtos_dados" id="produtosDados" value="">
         </div>
-      </div>
+
+        <!-- Section 4: Anexos -->
+        <div class="tk-section" id="section-4">
+          <div class="tk-section-header">
+            <i class="material-symbols-rounded">attach_file</i>
+            <h6>Anexos</h6>
+            <span class="tk-section-badge tk-badge-optional">Opcional</span>
+          </div>
+
+          <div class="tk-upload-area" id="uploadArea">
+            <input type="file" name="anexos" id="anexosInput" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.zip,.rar,.txt,.csv">
+            <i class="material-symbols-rounded">cloud_upload</i>
+            <p><strong>Arraste arquivos aqui</strong> ou clique para selecionar</p>
+            <small>PDF, DOC, XLS, imagens, ZIP — Máximo 10MB por arquivo</small>
+          </div>
+
+          <div class="tk-file-list" id="fileList"></div>
+        </div>
+
+        <!-- Actions -->
+        <div class="tk-section">
+          <div class="tk-actions">
+            <a href="{% url 'dashboard:ticket_list' %}" class="tk-btn-secondary">
+              <i class="material-symbols-rounded" style="font-size:1.1rem;">close</i>
+              Cancelar
+            </a>
+            <button type="submit" id="submitBtn" class="tk-btn-primary">
+              <i class="material-symbols-rounded" style="font-size:1.1rem;">send</i>
+              Criar Ticket
+            </button>
+          </div>
+        </div>
+
+      </form>
     </div>
 
-    <!-- Sidebar -->
+    <!-- ====== Sidebar ====== -->
     <div class="col-lg-4">
-      <!-- Dicas -->
-      <div class="sidebar-card">
+      <!-- Preview -->
+      <div class="tk-sidebar-card" id="previewCard">
         <h6>
-          <i class="material-symbols-rounded me-2" style="color:#06b6d4;font-size:1rem;">tips_and_updates</i>
-          Dicas para um bom ticket
+          <i class="material-symbols-rounded">preview</i>
+          Preview do Ticket
         </h6>
-        <ul class="list-unstyled mb-0" style="font-size:.8rem;color:#475569;">
-          <li class="mb-2">
-            <i class="material-symbols-rounded me-1" style="font-size:.85rem;color:#06b6d4;vertical-align:middle;">check_circle</i>
-            Use um título claro e descritivo
-          </li>
-          <li class="mb-2">
-            <i class="material-symbols-rounded me-1" style="font-size:.85rem;color:#06b6d4;vertical-align:middle;">check_circle</i>
-            Detalhe os passos para reproduzir o problema
-          </li>
-          <li class="mb-2">
-            <i class="material-symbols-rounded me-1" style="font-size:.85rem;color:#06b6d4;vertical-align:middle;">check_circle</i>
-            Selecione a prioridade corretamente
-          </li>
-          <li class="mb-2">
-            <i class="material-symbols-rounded me-1" style="font-size:.85rem;color:#06b6d4;vertical-align:middle;">check_circle</i>
-            Anexe prints de tela quando possível
+        <div class="tk-preview-row">
+          <span class="tk-preview-label">Cliente</span>
+          <span class="tk-preview-value" id="prevCliente"><em class="tk-preview-empty">—</em></span>
+        </div>
+        <div class="tk-preview-row">
+          <span class="tk-preview-label">UNIORG</span>
+          <span class="tk-preview-value" id="prevUniorg"><em class="tk-preview-empty">—</em></span>
+        </div>
+        <div class="tk-preview-row">
+          <span class="tk-preview-label">Ponto de Venda</span>
+          <span class="tk-preview-value" id="prevPdv"><em class="tk-preview-empty">—</em></span>
+        </div>
+        <div class="tk-preview-row">
+          <span class="tk-preview-label">Título</span>
+          <span class="tk-preview-value" id="prevTitulo"><em class="tk-preview-empty">—</em></span>
+        </div>
+        <div class="tk-preview-row">
+          <span class="tk-preview-label">Categoria</span>
+          <span class="tk-preview-value" id="prevCategoria"><em class="tk-preview-empty">—</em></span>
+        </div>
+        <div class="tk-preview-row">
+          <span class="tk-preview-label">Prioridade</span>
+          <span class="tk-preview-value" id="prevPrioridade">Média</span>
+        </div>
+        <div class="tk-preview-row">
+          <span class="tk-preview-label">Anexos</span>
+          <span class="tk-preview-value" id="prevAnexos"><em class="tk-preview-empty">0</em></span>
+        </div>
+      </div>
+
+      <!-- Shortcuts -->
+      <div class="tk-sidebar-card">
+        <h6>
+          <i class="material-symbols-rounded">keyboard</i>
+          Atalhos
+        </h6>
+        <dl class="tk-shortcuts mb-0">
+          <dt>Enviar formulário</dt>
+          <dd><kbd>Ctrl</kbd> + <kbd>Enter</kbd></dd>
+          <dt>Cancelar</dt>
+          <dd><kbd>Esc</kbd></dd>
+          <dt>Formatação no editor</dt>
+          <dd><kbd>Ctrl</kbd> + <kbd>B</kbd> / <kbd>I</kbd> / <kbd>U</kbd></dd>
+        </dl>
+      </div>
+
+      <!-- Tips -->
+      <div class="tk-sidebar-card">
+        <h6>
+          <i class="material-symbols-rounded">tips_and_updates</i>
+          Dicas
+        </h6>
+        <ul class="tk-tips list-unstyled mb-0">
+          <li>
+            <i class="material-symbols-rounded">check_circle</i>
+            Use templates rápidos para agilizar o preenchimento
           </li>
           <li>
-            <i class="material-symbols-rounded me-1" style="font-size:.85rem;color:#06b6d4;vertical-align:middle;">check_circle</i>
-            Use templates para agilizar o preenchimento
+            <i class="material-symbols-rounded">check_circle</i>
+            Digite o UNIORG para encontrar rapidamente o PdV
+          </li>
+          <li>
+            <i class="material-symbols-rounded">check_circle</i>
+            Seja detalhado na descrição para agilizar o atendimento
+          </li>
+          <li>
+            <i class="material-symbols-rounded">check_circle</i>
+            Anexe prints de tela ou documentos relevantes
+          </li>
+          <li>
+            <i class="material-symbols-rounded">check_circle</i>
+            Tags facilitam a busca e organização dos tickets
           </li>
         </ul>
-      </div>
-
-      <!-- Prioridades -->
-      <div class="sidebar-card">
-        <h6>
-          <i class="material-symbols-rounded me-2" style="color:#06b6d4;font-size:1rem;">priority_high</i>
-          Níveis de Prioridade
-        </h6>
-        <div style="font-size:.8rem;">
-          <div class="d-flex align-items-center mb-2">
-            <span class="priority-indicator" style="background:#22c55e;"></span>
-            <strong class="me-1">Baixa</strong> — Pode aguardar, sem impacto
-          </div>
-          <div class="d-flex align-items-center mb-2">
-            <span class="priority-indicator" style="background:#f59e0b;"></span>
-            <strong class="me-1">Média</strong> — Atenção normal
-          </div>
-          <div class="d-flex align-items-center mb-2">
-            <span class="priority-indicator" style="background:#ef4444;"></span>
-            <strong class="me-1">Alta</strong> — Urgente, impacta operação
-          </div>
-          <div class="d-flex align-items-center">
-            <span class="priority-indicator" style="background:#7c2d12;"></span>
-            <strong class="me-1">Crítica</strong> — Sistema parado
-          </div>
-        </div>
-      </div>
-
-      <!-- Atalhos -->
-      <div class="sidebar-card">
-        <h6>
-          <i class="material-symbols-rounded me-2" style="color:#06b6d4;font-size:1rem;">keyboard</i>
-          Atalhos de Teclado
-        </h6>
-        <div style="font-size:.8rem;color:#475569;">
-          <div class="d-flex justify-content-between mb-1">
-            <span>Enviar formulário</span>
-            <kbd style="background:#334155;color:#fff;padding:.15rem .4rem;border-radius:4px;font-size:.7rem;">Ctrl+Enter</kbd>
-          </div>
-          <div class="d-flex justify-content-between mb-1">
-            <span>Cancelar</span>
-            <kbd style="background:#334155;color:#fff;padding:.15rem .4rem;border-radius:4px;font-size:.7rem;">Esc</kbd>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -556,79 +1240,127 @@
 document.addEventListener('DOMContentLoaded', function() {
 
     // ============================================
-    // TEMPLATES DE TICKET
+    // STEPPER TRACKING
     // ============================================
-    const ticketTemplates = {
+    const sections = document.querySelectorAll('.tk-section[id^="section-"]');
+    const steps = document.querySelectorAll('.tk-step');
+
+    function updateStepper() {
+        sections.forEach((section, idx) => {
+            const inputs = section.querySelectorAll('input:not([type=hidden]):not([type=file]), select, [contenteditable]');
+            let filled = false;
+            inputs.forEach(inp => {
+                if (inp.contentEditable === 'true') {
+                    if (inp.textContent.trim()) filled = true;
+                } else if (inp.value && inp.value.trim()) {
+                    filled = true;
+                }
+            });
+            const step = steps[idx];
+            if (step) {
+                if (filled) {
+                    step.classList.add('completed');
+                    step.classList.remove('active');
+                    step.querySelector('.tk-step-num').innerHTML = '<i class="material-symbols-rounded" style="font-size:.8rem;">check</i>';
+                } else {
+                    step.classList.remove('completed');
+                    step.querySelector('.tk-step-num').textContent = idx + 1;
+                }
+            }
+        });
+        // Set first non-completed as active
+        const firstNonComplete = Array.from(steps).find(s => !s.classList.contains('completed'));
+        steps.forEach(s => s.classList.remove('active'));
+        if (firstNonComplete) firstNonComplete.classList.add('active');
+    }
+
+    // Click on step scrolls to section
+    steps.forEach(step => {
+        step.addEventListener('click', () => {
+            const idx = step.dataset.step;
+            const section = document.getElementById(`section-${idx}`);
+            if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+
+    // ============================================
+    // TEMPLATES RÁPIDOS
+    // ============================================
+    const templates = {
         'suporte-tecnico': {
-            title: 'Suporte Técnico - [Descreva o problema]',
-            description: '<h4>🔧 PROBLEMA TÉCNICO</h4><p><strong>Descrição:</strong><br>Descreva o problema técnico.</p><p><strong>Passos para Reproduzir:</strong></p><ol><li>Acesse [sistema/página]</li><li>Execute [ação]</li><li>Observe [resultado]</li></ol><p><strong>Resultado Esperado:</strong><br>O que deveria acontecer.</p><p><strong>Resultado Atual:</strong><br>O que está acontecendo.</p><p><strong>Info do Sistema:</strong><br>Navegador: [Chrome/Firefox] | SO: [Windows/Mac]</p>',
-            priority: 'media',
-            tags: 'suporte, técnico, sistema'
+            titulo: 'Suporte Técnico — ',
+            descricao: '<p><strong>Problema:</strong></p><p></p><p><strong>Passos para reproduzir:</strong></p><ol><li></li></ol><p><strong>Comportamento esperado:</strong></p><p></p>',
+            categoria: 'suporte',
+            prioridade: 'media'
         },
         'duvida': {
-            title: 'Dúvida - [Assunto]',
-            description: '<h4>❓ DÚVIDA / CONSULTA</h4><p><strong>Sua Dúvida:</strong><br>Formule sua pergunta.</p><p><strong>Contexto:</strong><br>Explique a situação.</p><p><strong>O que já tentou:</strong><br>Liste tentativas anteriores.</p>',
-            priority: 'baixa',
-            tags: 'dúvida, consulta, orientação'
+            titulo: 'Dúvida — ',
+            descricao: '<p><strong>Dúvida:</strong></p><p></p><p><strong>Contexto:</strong></p><p></p>',
+            categoria: 'duvida',
+            prioridade: 'baixa'
         },
         'solicitacao': {
-            title: 'Solicitação - [Tipo]',
-            description: '<h4>📋 SOLICITAÇÃO DE SERVIÇO</h4><p><strong>O que precisa:</strong><br>Descreva o serviço.</p><p><strong>Justificativa:</strong><br>Por que é necessário?</p><p><strong>Prazo:</strong><br>Quando precisa?</p>',
-            priority: 'media',
-            tags: 'solicitação, serviço, demanda'
+            titulo: 'Solicitação — ',
+            descricao: '<p><strong>Solicitação:</strong></p><p></p><p><strong>Justificativa:</strong></p><p></p><p><strong>Prazo desejado:</strong></p><p></p>',
+            categoria: 'solicitacao',
+            prioridade: 'media'
         },
         'bug': {
-            title: 'Bug Report - [Sistema/Funcionalidade]',
-            description: '<h4>🐛 RELATÓRIO DE BUG</h4><p><strong>Resumo:</strong><br>Descreva o bug.</p><p><strong>Passos para Reproduzir:</strong></p><ol><li>Primeiro passo</li><li>Segundo passo</li><li>Terceiro passo</li></ol><p><strong>Esperado:</strong><br>O que deveria acontecer?</p><p><strong>Atual:</strong><br>O que está acontecendo?</p>',
-            priority: 'alta',
-            tags: 'bug, erro, defeito'
+            titulo: '[BUG] ',
+            descricao: '<p><strong>🐛 Descrição do Bug:</strong></p><p></p><p><strong>Passos para reproduzir:</strong></p><ol><li>Acessar...</li><li>Clicar em...</li><li>Observar...</li></ol><p><strong>Resultado atual:</strong></p><p></p><p><strong>Resultado esperado:</strong></p><p></p><p><strong>Ambiente:</strong> Navegador / Sistema / Versão</p>',
+            categoria: 'bug',
+            prioridade: 'alta'
         },
         'melhoria': {
-            title: 'Sugestão de Melhoria - [Área]',
-            description: '<h4>💡 SUGESTÃO DE MELHORIA</h4><p><strong>Melhoria Proposta:</strong><br>Descreva sua sugestão.</p><p><strong>Situação Atual:</strong><br>Como funciona hoje?</p><p><strong>Situação Desejada:</strong><br>Como deveria funcionar?</p>',
-            priority: 'baixa',
-            tags: 'melhoria, sugestão, otimização'
+            titulo: '[MELHORIA] ',
+            descricao: '<p><strong>💡 Sugestão de Melhoria:</strong></p><p></p><p><strong>Benefícios esperados:</strong></p><ul><li></li></ul><p><strong>Alternativas consideradas:</strong></p><p></p>',
+            categoria: 'melhoria',
+            prioridade: 'baixa'
         },
         'acesso': {
-            title: 'Solicitação de Acesso - [Sistema/Recurso]',
-            description: '<h4>🔑 SOLICITAÇÃO DE ACESSO</h4><p><strong>Acesso Solicitado:</strong><br>Sistema ou recurso.</p><p><strong>Justificativa:</strong><br>Por que precisa?</p><p><strong>Período:</strong><br>Por quanto tempo?</p>',
-            priority: 'media',
-            tags: 'acesso, permissão, sistema'
+            titulo: 'Solicitação de Acesso — ',
+            descricao: '<p><strong>🔑 Tipo de acesso:</strong></p><p></p><p><strong>Usuário:</strong></p><p></p><p><strong>Sistema/Recurso:</strong></p><p></p><p><strong>Justificativa:</strong></p><p></p>',
+            categoria: 'acesso',
+            prioridade: 'media'
         }
     };
 
-    // Template click handlers
-    document.querySelectorAll('.template-option').forEach(option => {
-        option.addEventListener('click', function(e) {
-            e.preventDefault();
-            const template = ticketTemplates[this.dataset.template];
-            if (!template) return;
-
-            document.querySelectorAll('.template-option').forEach(o => o.classList.remove('active'));
+    document.querySelectorAll('.tk-tpl-option').forEach(opt => {
+        opt.addEventListener('click', function() {
+            document.querySelectorAll('.tk-tpl-option').forEach(o => o.classList.remove('active'));
             this.classList.add('active');
 
-            // Fill title
-            const titulo = document.querySelector('[name="titulo"]');
-            if (titulo) titulo.value = template.title;
+            const tpl = templates[this.dataset.template];
+            if (!tpl) return;
 
-            // Fill rich editor
-            const editor = document.getElementById('editorContent');
-            const hidden = document.getElementById('descricaoHidden');
-            if (editor && hidden) {
-                editor.innerHTML = template.description;
-                hidden.value = template.description;
+            const tituloInput = document.getElementById('tituloInput');
+            const editorContent = document.getElementById('editorContent');
+            const categoriaSelect = document.getElementById('categoriaSelect');
+
+            if (tituloInput && tpl.titulo) {
+                tituloInput.value = tpl.titulo;
+                tituloInput.focus();
+                // Place cursor at end
+                const len = tituloInput.value.length;
+                tituloInput.setSelectionRange(len, len);
             }
-
-            // Fill priority
-            const prioridade = document.querySelector('[name="prioridade"]');
-            if (prioridade) {
-                prioridade.value = template.priority;
-                prioridade.dispatchEvent(new Event('change'));
+            if (editorContent && tpl.descricao) {
+                editorContent.innerHTML = tpl.descricao;
+                updateHiddenDescricao();
             }
-
-            // Fill tags
-            const tags = document.querySelector('[name="tags"]');
-            if (tags) tags.value = template.tags;
+            if (categoriaSelect && tpl.categoria) {
+                // Try to match option
+                Array.from(categoriaSelect.options).forEach(o => {
+                    if (o.text.toLowerCase().includes(tpl.categoria)) {
+                        categoriaSelect.value = o.value;
+                    }
+                });
+            }
+            if (tpl.prioridade) {
+                selectPriority(tpl.prioridade);
+            }
+            updateStepper();
+            updatePreview();
         });
     });
 
@@ -636,267 +1368,629 @@ document.addEventListener('DOMContentLoaded', function() {
     // RICH TEXT EDITOR
     // ============================================
     const editorContent = document.getElementById('editorContent');
-    const descricaoHidden = document.getElementById('descricaoHidden');
+    const descricaoField = document.querySelector('#id_descricao, [name="descricao"]');
+    const charCount = document.getElementById('charCount');
 
-    if (editorContent && descricaoHidden) {
+    function updateHiddenDescricao() {
+        if (descricaoField && editorContent) {
+            descricaoField.value = editorContent.innerHTML;
+        }
+        if (charCount && editorContent) {
+            const len = editorContent.textContent.length;
+            charCount.textContent = `${len} caractere${len !== 1 ? 's' : ''}`;
+        }
+    }
+
+    if (descricaoField) {
+        descricaoField.style.display = 'none';
+        if (descricaoField.value && editorContent) {
+            editorContent.innerHTML = descricaoField.value;
+        }
+    }
+
+    if (editorContent) {
         editorContent.addEventListener('input', function() {
-            descricaoHidden.value = this.innerHTML;
+            updateHiddenDescricao();
+            updateStepper();
+            updatePreview();
         });
     }
 
-    document.querySelectorAll('.format-btn').forEach(btn => {
+    // Format buttons
+    document.querySelectorAll('.tk-fmt-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
-            document.execCommand(this.dataset.command);
+            const cmd = this.dataset.command;
+            if (cmd === 'createLink') {
+                const url = prompt('URL do link:');
+                if (url) document.execCommand(cmd, false, url);
+            } else if (cmd === 'formatBlock') {
+                document.execCommand(cmd, false, this.dataset.value);
+            } else {
+                document.execCommand(cmd, false, null);
+            }
             editorContent.focus();
-            if (descricaoHidden) descricaoHidden.value = editorContent.innerHTML;
+            updateHiddenDescricao();
         });
     });
 
     // ============================================
-    // SISTEMA DE PRODUTOS
+    // PRIORITY SELECTOR
     // ============================================
-    const produtoSearch = document.getElementById('produtoSearch');
-    const produtoSuggestions = document.getElementById('produtoSuggestions');
-    const quantidadeInput = document.getElementById('quantidadeProduto');
-    const valorInput = document.getElementById('valorProduto');
-    const descontoInput = document.getElementById('descontoProduto');
-    const observacoesInput = document.getElementById('observacoesProduto');
-    const btnAddProduto = document.getElementById('btnAddProduto');
-    const listaProdutos = document.getElementById('listaProdutos');
-    const emptyProdutos = document.getElementById('emptyProdutos');
-    const resumoProdutos = document.getElementById('resumoProdutos');
-    const loadingProdutos = document.getElementById('loadingProdutos');
+    const prioridadeSelect = document.querySelector('#id_prioridade, [name="prioridade"], #prioridadeSelect');
 
-    let produtoSelecionado = null;
-    window.itensProdutos = [];
-    let searchTimeout = null;
-
-    function buscarProdutos(termo) {
-        if (termo.length < 2) { produtoSuggestions.style.display = 'none'; return; }
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            loadingProdutos.style.display = 'block';
-            fetch('/dashboard/api/produtos-ativos/')
-                .then(r => r.json())
-                .then(data => {
-                    loadingProdutos.style.display = 'none';
-                    if (data.success) {
-                        const filtrados = data.produtos.filter(p =>
-                            p.nome.toLowerCase().includes(termo.toLowerCase()) ||
-                            p.codigo.toLowerCase().includes(termo.toLowerCase())
-                        );
-                        mostrarSugestoes(filtrados);
-                    }
-                })
-                .catch(() => { loadingProdutos.style.display = 'none'; });
-        }, 300);
-    }
-
-    function mostrarSugestoes(produtos) {
-        produtoSuggestions.innerHTML = '';
-        if (produtos.length === 0) {
-            produtoSuggestions.innerHTML = '<div class="produto-suggestion text-center text-muted py-3"><i class="material-symbols-rounded">search_off</i><p class="mb-0 mt-1">Nenhum produto encontrado</p></div>';
-            produtoSuggestions.style.display = 'block';
-            return;
-        }
-        produtos.forEach(p => {
-            const div = document.createElement('div');
-            div.className = 'produto-suggestion';
-            div.innerHTML = `<div class="produto-info"><div><div class="produto-nome">${p.nome}</div><div class="produto-codigo">${p.codigo}</div><span class="produto-tipo">${p.tipo}</span></div><div class="text-end"><div class="produto-preco">R$ ${p.preco_venda}</div><small class="text-muted">Estoque: ${p.estoque_atual}</small></div></div>`;
-            div.addEventListener('click', () => selecionarProduto(p));
-            produtoSuggestions.appendChild(div);
+    function selectPriority(value) {
+        document.querySelectorAll('.tk-priority-opt').forEach(opt => {
+            opt.classList.toggle('selected', opt.dataset.value === value);
         });
-        produtoSuggestions.style.display = 'block';
+        if (prioridadeSelect) prioridadeSelect.value = value;
+        updatePreview();
     }
 
-    function selecionarProduto(produto) {
-        produtoSelecionado = produto;
-        produtoSearch.value = `${produto.codigo} - ${produto.nome}`;
-        valorInput.value = produto.preco_venda;
-        produtoSuggestions.style.display = 'none';
-        btnAddProduto.disabled = false;
+    document.querySelectorAll('.tk-priority-opt').forEach(opt => {
+        opt.addEventListener('click', () => selectPriority(opt.dataset.value));
+    });
+
+    // ============================================
+    // CASCADING: CLIENTE → UNIORG → PDV
+    // ============================================
+    const clienteSelect = document.getElementById('clienteSelect');
+    const pdvSelect = document.getElementById('pdvSelect');
+    const uniorgInput = document.getElementById('uniorgSearch');
+    const uniorgSuggestions = document.getElementById('uniorgSuggestions');
+    const uniorgFeedback = document.getElementById('uniorgFeedback');
+    const uniorgSpinner = document.getElementById('uniorgSpinner');
+    const pdvInfo = document.getElementById('pdvInfo');
+
+    let cachedPdvs = [];
+    let uniorgDebounce = null;
+    let activeSuggestionIdx = -1;
+
+    function setFeedback(msg, type) {
+        if (!uniorgFeedback) return;
+        uniorgFeedback.textContent = msg;
+        uniorgFeedback.className = 'tk-feedback ' + (type || '');
     }
 
-    function adicionarProduto() {
-        if (!produtoSelecionado) return;
-        const qtd = parseFloat(quantidadeInput.value) || 1;
-        const val = parseFloat(valorInput.value) || 0;
-        const desc = parseFloat(descontoInput.value) || 0;
-        const obs = observacoesInput.value.trim();
-
-        if (window.itensProdutos.find(i => i.produto.id === produtoSelecionado.id)) {
-            alert('Este produto já foi adicionado.');
-            return;
+    function setPdvInfo(pdv) {
+        if (!pdvInfo) return;
+        if (pdv) {
+            const parts = [pdv.cidade, pdv.estado].filter(Boolean).join('/');
+            pdvInfo.innerHTML = `<i class="material-symbols-rounded" style="font-size:.78rem;">location_on</i> ${parts}${pdv.cnpj ? ' — CNPJ: ' + pdv.cnpj : ''}`;
+            pdvInfo.classList.add('show');
+        } else {
+            pdvInfo.classList.remove('show');
         }
+    }
 
-        const subtotal = qtd * val;
-        const valorDesc = subtotal * (desc / 100);
-        const total = subtotal - valorDesc;
+    function fetchPdvs(clienteId, callback) {
+        const url = clienteId
+            ? `{% url 'dashboard:api_pdv_por_cliente' %}?cliente_id=${clienteId}`
+            : `{% url 'dashboard:api_pdv_por_cliente' %}`;
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                cachedPdvs = data;
+                if (callback) callback(data);
+            })
+            .catch(() => {
+                cachedPdvs = [];
+                if (callback) callback([]);
+            });
+    }
 
-        window.itensProdutos.push({
-            id: Date.now(),
-            produto: produtoSelecionado,
-            quantidade: qtd,
-            valorUnitario: val,
-            descontoPercentual: desc,
-            observacoes: obs,
-            subtotal, valorDesconto: valorDesc, total
+    function populatePdvSelect(pdvs) {
+        if (!pdvSelect) return;
+        pdvSelect.innerHTML = '<option value="">Selecione um ponto de venda...</option>';
+        pdvs.forEach(p => {
+            const parts = [p.nome_fantasia];
+            if (p.uniorg) parts.push(`[${p.uniorg}]`);
+            if (p.cidade) parts.push(`— ${p.cidade}`);
+            const opt = new Option(parts.join(' '), p.id);
+            opt.dataset.uniorg = p.uniorg || '';
+            pdvSelect.add(opt);
         });
-
-        renderizarProdutos();
-        limparFormProduto();
     }
 
-    function renderizarProdutos() {
-        const itensExistentes = listaProdutos.querySelectorAll('.item-produto');
-        itensExistentes.forEach(i => i.remove());
+    function closeSuggestions() {
+        if (uniorgSuggestions) {
+            uniorgSuggestions.classList.remove('show');
+            uniorgSuggestions.innerHTML = '';
+        }
+        activeSuggestionIdx = -1;
+    }
 
-        if (window.itensProdutos.length === 0) {
-            emptyProdutos.style.display = 'block';
-            resumoProdutos.style.display = 'none';
+    function renderSuggestions(matches) {
+        if (!uniorgSuggestions) return;
+        if (matches.length === 0) {
+            uniorgSuggestions.innerHTML = '<div class="tk-sug-empty"><i class="material-symbols-rounded">search_off</i>Nenhum resultado encontrado</div>';
+            uniorgSuggestions.classList.add('show');
             return;
         }
-        emptyProdutos.style.display = 'none';
-        resumoProdutos.style.display = 'block';
-
-        window.itensProdutos.forEach(item => {
+        uniorgSuggestions.innerHTML = '';
+        matches.slice(0, 15).forEach((p, i) => {
             const div = document.createElement('div');
-            div.className = 'item-produto';
+            div.className = 'tk-sug-item';
+            div.dataset.index = i;
             div.innerHTML = `
-                <div class="item-header">
-                    <div>
-                        <h6>${item.produto.nome}</h6>
-                        <small class="text-muted">${item.produto.codigo} • ${item.produto.tipo}${item.observacoes ? ' • <span class="text-info">' + item.observacoes + '</span>' : ''}</small>
-                    </div>
-                    <button type="button" class="btn-remove-item" onclick="removerProduto(${item.id})">
-                        <i class="material-symbols-rounded" style="font-size:1.1rem;">close</i>
-                    </button>
-                </div>
-                <div class="d-flex justify-content-between mt-2" style="font-size:.8rem;">
-                    <span>Qtd: <strong>${item.quantidade}</strong></span>
-                    <span>Unit: <strong>R$ ${item.valorUnitario.toFixed(2)}</strong></span>
-                    <span>Desc: <strong class="text-danger">${item.descontoPercentual}%</strong></span>
-                    <span>Total: <strong class="text-success">R$ ${item.total.toFixed(2)}</strong></span>
-                </div>`;
-            listaProdutos.insertBefore(div, emptyProdutos);
+                <span class="tk-sug-code">${p.uniorg || '—'}</span>
+                <span class="tk-sug-name">${p.nome_fantasia}</span>
+                <span class="tk-sug-city"><i class="material-symbols-rounded">location_on</i>${[p.cidade, p.estado].filter(Boolean).join('/')}</span>
+            `;
+            div.addEventListener('click', () => selectPdv(p));
+            div.addEventListener('mouseenter', () => {
+                activeSuggestionIdx = i;
+                highlightSuggestion();
+            });
+            uniorgSuggestions.appendChild(div);
         });
-
-        atualizarResumo();
-    }
-
-    function atualizarResumo() {
-        const sub = window.itensProdutos.reduce((a, i) => a + i.subtotal, 0);
-        const des = window.itensProdutos.reduce((a, i) => a + i.valorDesconto, 0);
-        const tot = window.itensProdutos.reduce((a, i) => a + i.total, 0);
-        document.getElementById('subtotalResumo').textContent = `R$ ${sub.toFixed(2)}`;
-        document.getElementById('descontoResumo').textContent = `R$ ${des.toFixed(2)}`;
-        document.getElementById('totalResumo').textContent = `R$ ${tot.toFixed(2)}`;
-    }
-
-    function limparFormProduto() {
-        produtoSearch.value = '';
-        quantidadeInput.value = '1';
-        valorInput.value = '';
-        descontoInput.value = '0';
-        observacoesInput.value = '';
-        produtoSelecionado = null;
-        btnAddProduto.disabled = true;
-    }
-
-    window.removerProduto = function(itemId) {
-        if (confirm('Remover este item?')) {
-            window.itensProdutos = window.itensProdutos.filter(i => i.id !== itemId);
-            renderizarProdutos();
+        if (matches.length > 15) {
+            const more = document.createElement('div');
+            more.style.cssText = 'padding:.6rem;text-align:center;color:var(--tk-slate-400);font-size:.72rem;';
+            more.textContent = `+ ${matches.length - 15} resultados — refine a busca`;
+            uniorgSuggestions.appendChild(more);
         }
-    };
-
-    if (produtoSearch) {
-        produtoSearch.addEventListener('input', e => {
-            buscarProdutos(e.target.value);
-            if (e.target.value.length < 2) { produtoSelecionado = null; btnAddProduto.disabled = true; }
-        });
-        produtoSearch.addEventListener('focus', () => {
-            if (produtoSearch.value.length >= 2) produtoSuggestions.style.display = 'block';
-        });
+        uniorgSuggestions.classList.add('show');
+        activeSuggestionIdx = -1;
     }
 
-    document.addEventListener('click', e => {
-        if (produtoSearch && !produtoSearch.contains(e.target) && !produtoSuggestions.contains(e.target)) {
-            produtoSuggestions.style.display = 'none';
+    function highlightSuggestion() {
+        const items = uniorgSuggestions.querySelectorAll('.tk-sug-item[data-index]');
+        items.forEach((el, i) => el.classList.toggle('active', i === activeSuggestionIdx));
+    }
+
+    function selectPdv(pdv) {
+        if (pdvSelect) {
+            pdvSelect.value = pdv.id;
+            pdvSelect.dispatchEvent(new Event('change', {bubbles: true}));
         }
-    });
+        if (uniorgInput) {
+            uniorgInput.value = pdv.uniorg || '';
+            uniorgInput.classList.remove('no-match');
+            uniorgInput.classList.add('matched');
+        }
+        setFeedback(`✓ ${pdv.nome_fantasia}`, 'success');
+        setPdvInfo(pdv);
+        closeSuggestions();
+        updateStepper();
+        updatePreview();
+    }
 
-    if (btnAddProduto) btnAddProduto.addEventListener('click', adicionarProduto);
-
-    [quantidadeInput, valorInput, descontoInput, observacoesInput].forEach(input => {
-        if (input) input.addEventListener('keypress', e => {
-            if (e.key === 'Enter' && !btnAddProduto.disabled) { e.preventDefault(); adicionarProduto(); }
+    function searchUniorg(query) {
+        if (!query || query.length < 1) {
+            closeSuggestions();
+            if (uniorgInput) uniorgInput.classList.remove('matched', 'no-match');
+            setFeedback('', '');
+            setPdvInfo(null);
+            return;
+        }
+        const q = query.toLowerCase().trim();
+        const matches = cachedPdvs.filter(p => {
+            const uniorg = (p.uniorg || '').toLowerCase();
+            const nome = (p.nome_fantasia || '').toLowerCase();
+            return uniorg.includes(q) || nome.includes(q);
         });
-    });
+        const exactMatch = cachedPdvs.find(p => (p.uniorg || '').toLowerCase() === q);
+        if (exactMatch) {
+            selectPdv(exactMatch);
+            return;
+        }
+        if (matches.length > 0) {
+            renderSuggestions(matches);
+            if (uniorgInput) uniorgInput.classList.remove('matched', 'no-match');
+            setFeedback(`${matches.length} resultado${matches.length > 1 ? 's' : ''}`, 'info');
+        } else {
+            renderSuggestions([]);
+            if (uniorgInput) {
+                uniorgInput.classList.remove('matched');
+                uniorgInput.classList.add('no-match');
+            }
+            setFeedback('Nenhum PdV encontrado', 'error');
+        }
+    }
 
-    // ============================================
-    // FORM SUBMIT — Include products
-    // ============================================
-    const ticketForm = document.getElementById('ticketForm');
-    if (ticketForm) {
-        ticketForm.addEventListener('submit', function() {
-            if (window.itensProdutos && window.itensProdutos.length > 0) {
-                const existing = ticketForm.querySelectorAll('input[name="produtos_dados"]');
-                existing.forEach(i => i.remove());
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'produtos_dados';
-                input.value = JSON.stringify(window.itensProdutos);
-                ticketForm.appendChild(input);
+    // Cliente change
+    if (clienteSelect) {
+        clienteSelect.addEventListener('change', function() {
+            const clienteId = this.value;
+            if (uniorgInput) {
+                uniorgInput.value = '';
+                uniorgInput.classList.remove('matched', 'no-match');
+                uniorgInput.disabled = !clienteId;
+                uniorgInput.placeholder = clienteId ? 'Digite o UNIORG ou nome...' : 'Selecione um cliente primeiro';
+            }
+            setFeedback('', '');
+            setPdvInfo(null);
+            closeSuggestions();
+
+            if (!clienteId) {
+                populatePdvSelect([]);
+                cachedPdvs = [];
+                updateStepper();
+                updatePreview();
+                return;
+            }
+
+            if (uniorgSpinner) uniorgSpinner.style.display = '';
+            fetchPdvs(clienteId, (data) => {
+                if (uniorgSpinner) uniorgSpinner.style.display = 'none';
+                populatePdvSelect(data);
+                setFeedback(`${data.length} ponto${data.length !== 1 ? 's' : ''} disponíve${data.length !== 1 ? 'is' : 'l'}`, 'info');
+            });
+            updateStepper();
+            updatePreview();
+        });
+
+        if (!clienteSelect.value && uniorgInput) {
+            uniorgInput.disabled = true;
+            uniorgInput.placeholder = 'Selecione um cliente primeiro';
+        }
+        if (clienteSelect.value) {
+            fetchPdvs(clienteSelect.value, (data) => { cachedPdvs = data; });
+        }
+    }
+
+    // UNIORG input
+    if (uniorgInput) {
+        uniorgInput.addEventListener('input', function() {
+            clearTimeout(uniorgDebounce);
+            uniorgDebounce = setTimeout(() => searchUniorg(this.value), 200);
+        });
+
+        uniorgInput.addEventListener('keydown', function(e) {
+            const items = uniorgSuggestions ? uniorgSuggestions.querySelectorAll('.tk-sug-item[data-index]') : [];
+            if (!items.length) return;
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeSuggestionIdx = Math.min(activeSuggestionIdx + 1, items.length - 1);
+                highlightSuggestion();
+                items[activeSuggestionIdx]?.scrollIntoView({ block: 'nearest' });
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeSuggestionIdx = Math.max(activeSuggestionIdx - 1, 0);
+                highlightSuggestion();
+                items[activeSuggestionIdx]?.scrollIntoView({ block: 'nearest' });
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (activeSuggestionIdx >= 0) {
+                    const q = uniorgInput.value.toLowerCase().trim();
+                    const matches = cachedPdvs.filter(p => {
+                        const u = (p.uniorg || '').toLowerCase();
+                        const n = (p.nome_fantasia || '').toLowerCase();
+                        return u.includes(q) || n.includes(q);
+                    });
+                    if (matches[activeSuggestionIdx]) selectPdv(matches[activeSuggestionIdx]);
+                }
+            } else if (e.key === 'Escape') {
+                closeSuggestions();
             }
         });
+
+        uniorgInput.addEventListener('blur', () => setTimeout(closeSuggestions, 200));
     }
+
+    // PdV manual change
+    if (pdvSelect) {
+        pdvSelect.addEventListener('change', function() {
+            const selectedId = this.value;
+            if (!selectedId) {
+                if (uniorgInput) {
+                    uniorgInput.value = '';
+                    uniorgInput.classList.remove('matched', 'no-match');
+                }
+                setFeedback('', '');
+                setPdvInfo(null);
+                updatePreview();
+                return;
+            }
+            const pdv = cachedPdvs.find(p => String(p.id) === String(selectedId));
+            if (pdv) {
+                if (uniorgInput) {
+                    uniorgInput.value = pdv.uniorg || '';
+                    uniorgInput.classList.remove('no-match');
+                    uniorgInput.classList.add('matched');
+                }
+                setFeedback(`✓ ${pdv.nome_fantasia}`, 'success');
+                setPdvInfo(pdv);
+            }
+            updateStepper();
+            updatePreview();
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (uniorgInput && !uniorgInput.contains(e.target) && uniorgSuggestions && !uniorgSuggestions.contains(e.target)) {
+            closeSuggestions();
+        }
+    });
 
     // ============================================
     // FILE UPLOAD
     // ============================================
-    const fileInput = document.getElementById('anexosInput');
-    const filePreview = document.getElementById('filePreview');
-    const fileList = document.getElementById('fileList');
     const uploadArea = document.getElementById('uploadArea');
+    const anexosInput = document.getElementById('anexosInput');
+    const fileList = document.getElementById('fileList');
+    let selectedFiles = [];
 
-    if (fileInput && uploadArea) {
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(ev => {
-            uploadArea.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); }, false);
+    if (uploadArea) {
+        ['dragenter', 'dragover'].forEach(e => {
+            uploadArea.addEventListener(e, (ev) => { ev.preventDefault(); uploadArea.classList.add('drag-over'); });
         });
-        ['dragenter', 'dragover'].forEach(ev => {
-            uploadArea.addEventListener(ev, () => uploadArea.classList.add('drag-over'), false);
+        ['dragleave', 'drop'].forEach(e => {
+            uploadArea.addEventListener(e, (ev) => { ev.preventDefault(); uploadArea.classList.remove('drag-over'); });
         });
-        ['dragleave', 'drop'].forEach(ev => {
-            uploadArea.addEventListener(ev, () => uploadArea.classList.remove('drag-over'), false);
+        uploadArea.addEventListener('drop', (e) => {
+            if (e.dataTransfer.files.length) {
+                addFiles(e.dataTransfer.files);
+            }
         });
-        uploadArea.addEventListener('drop', e => {
-            fileInput.files = e.dataTransfer.files;
-            updateFilePreview(e.dataTransfer.files);
-        }, false);
-
-        fileInput.addEventListener('change', function() { updateFilePreview(this.files); });
-
-        function updateFilePreview(files) {
-            if (!files.length) { filePreview.style.display = 'none'; return; }
-            filePreview.style.display = 'block';
-            fileList.innerHTML = '';
-            Array.from(files).forEach(file => {
-                const div = document.createElement('div');
-                div.className = 'file-item';
-                div.innerHTML = `<div class="d-flex align-items-center"><i class="material-symbols-rounded me-2" style="color:#06b6d4;">description</i><div><div class="fw-medium" style="font-size:.85rem;">${file.name}</div><small class="text-muted">${formatSize(file.size)}</small></div></div>`;
-                fileList.appendChild(div);
-            });
-        }
-
-        function formatSize(bytes) {
-            if (!bytes) return '0 B';
-            const k = 1024, s = ['B', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + s[i];
-        }
     }
+
+    if (anexosInput) {
+        anexosInput.addEventListener('change', () => {
+            if (anexosInput.files.length) addFiles(anexosInput.files);
+        });
+    }
+
+    function addFiles(files) {
+        Array.from(files).forEach(f => {
+            if (f.size > 10 * 1024 * 1024) {
+                alert(`Arquivo "${f.name}" excede 10MB e foi ignorado.`);
+                return;
+            }
+            selectedFiles.push(f);
+        });
+        renderFiles();
+        updateStepper();
+        updatePreview();
+    }
+
+    function renderFiles() {
+        if (!fileList) return;
+        fileList.innerHTML = '';
+        selectedFiles.forEach((f, i) => {
+            const size = f.size < 1024 ? `${f.size} B` : f.size < 1048576 ? `${(f.size/1024).toFixed(1)} KB` : `${(f.size/1048576).toFixed(1)} MB`;
+            const icon = f.type.startsWith('image/') ? 'image' : f.name.endsWith('.pdf') ? 'picture_as_pdf' : 'description';
+            const div = document.createElement('div');
+            div.className = 'tk-file-item';
+            div.innerHTML = `
+                <div class="file-info">
+                    <i class="material-symbols-rounded">${icon}</i>
+                    <span class="file-name">${f.name}</span>
+                    <span class="file-size">${size}</span>
+                </div>
+                <button type="button" class="tk-file-remove" data-idx="${i}">
+                    <i class="material-symbols-rounded" style="font-size:1rem;">close</i>
+                </button>
+            `;
+            fileList.appendChild(div);
+        });
+        // Re-create the file input with selected files
+        updateFileInput();
+    }
+
+    fileList?.addEventListener('click', (e) => {
+        const btn = e.target.closest('.tk-file-remove');
+        if (btn) {
+            selectedFiles.splice(parseInt(btn.dataset.idx), 1);
+            renderFiles();
+            updatePreview();
+        }
+    });
+
+    function updateFileInput() {
+        const dt = new DataTransfer();
+        selectedFiles.forEach(f => dt.items.add(f));
+        if (anexosInput) anexosInput.files = dt.files;
+    }
+
+    // ============================================
+    // PRODUTOS / SERVIÇOS
+    // ============================================
+    const produtoSearch = document.getElementById('produtoSearch');
+    const produtoSuggestions = document.getElementById('produtoSuggestions');
+    const btnAddProduto = document.getElementById('btnAddProduto');
+    const itensList = document.getElementById('itensList');
+    const emptyProdutos = document.getElementById('emptyProdutos');
+    const resumoProdutos = document.getElementById('resumoProdutos');
+    const produtosDados = document.getElementById('produtosDados');
+
+    let produtoSelecionado = null;
+    let itensAdicionados = [];
+    let produtoDebounce = null;
+
+    if (produtoSearch) {
+        produtoSearch.addEventListener('input', function() {
+            clearTimeout(produtoDebounce);
+            produtoDebounce = setTimeout(() => searchProdutos(this.value), 300);
+        });
+    }
+
+    function searchProdutos(query) {
+        if (!query || query.length < 2) {
+            if (produtoSuggestions) produtoSuggestions.classList.remove('show');
+            return;
+        }
+        fetch(`{% url 'dashboard:api_produtos_ativos' %}`)
+            .then(r => r.json())
+            .then(data => {
+                const q = query.toLowerCase();
+                const matches = data.filter(p =>
+                    p.nome.toLowerCase().includes(q) || (p.codigo || '').toLowerCase().includes(q)
+                );
+                renderProdutoSuggestions(matches);
+            })
+            .catch(() => {
+                if (produtoSuggestions) produtoSuggestions.classList.remove('show');
+            });
+    }
+
+    function renderProdutoSuggestions(products) {
+        if (!produtoSuggestions) return;
+        produtoSuggestions.innerHTML = '';
+        if (products.length === 0) {
+            produtoSuggestions.innerHTML = '<div class="tk-sug-empty"><i class="material-symbols-rounded">search_off</i>Nenhum produto encontrado</div>';
+            produtoSuggestions.classList.add('show');
+            return;
+        }
+        products.slice(0, 10).forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'tk-prod-item';
+            div.innerHTML = `
+                <div class="tk-prod-info">
+                    <div>
+                        <span class="tk-prod-name">${p.nome}</span>
+                        <span class="tk-prod-code">${p.codigo || ''}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="tk-prod-type">${p.tipo}</span>
+                        <span class="tk-prod-price">R$ ${p.preco_venda.toFixed(2).replace('.', ',')}</span>
+                    </div>
+                </div>
+            `;
+            div.addEventListener('click', () => selectProduto(p));
+            produtoSuggestions.appendChild(div);
+        });
+        produtoSuggestions.classList.add('show');
+    }
+
+    function selectProduto(p) {
+        produtoSelecionado = p;
+        if (produtoSearch) produtoSearch.value = p.nome;
+        if (produtoSuggestions) produtoSuggestions.classList.remove('show');
+
+        const info = document.getElementById('produtoSelecionadoInfo');
+        if (info) {
+            document.getElementById('prodSelNome').textContent = p.nome;
+            document.getElementById('prodSelTipo').textContent = p.tipo;
+            document.getElementById('prodSelPreco').textContent = `R$ ${p.preco_venda.toFixed(2).replace('.', ',')}`;
+            document.getElementById('prodValor').value = p.preco_venda.toFixed(2);
+            document.getElementById('prodQtd').value = 1;
+            document.getElementById('prodDesconto').value = 0;
+            info.style.display = '';
+        }
+        if (btnAddProduto) btnAddProduto.disabled = false;
+    }
+
+    if (btnAddProduto) {
+        btnAddProduto.addEventListener('click', () => {
+            if (!produtoSelecionado) return;
+            const qtd = parseFloat(document.getElementById('prodQtd').value) || 1;
+            const valor = parseFloat(document.getElementById('prodValor').value) || produtoSelecionado.preco_venda;
+            const desconto = parseFloat(document.getElementById('prodDesconto').value) || 0;
+
+            itensAdicionados.push({
+                produto: produtoSelecionado,
+                quantidade: qtd,
+                valorUnitario: valor,
+                descontoPercentual: desconto,
+                observacoes: ''
+            });
+
+            produtoSelecionado = null;
+            if (produtoSearch) produtoSearch.value = '';
+            if (btnAddProduto) btnAddProduto.disabled = true;
+            document.getElementById('produtoSelecionadoInfo').style.display = 'none';
+
+            renderItens();
+            updateStepper();
+        });
+    }
+
+    function renderItens() {
+        if (!itensList) return;
+        const itemElements = itensList.querySelectorAll('.tk-item-card');
+        itemElements.forEach(e => e.remove());
+
+        if (itensAdicionados.length === 0) {
+            if (emptyProdutos) emptyProdutos.style.display = '';
+            if (resumoProdutos) resumoProdutos.style.display = 'none';
+            if (produtosDados) produtosDados.value = '';
+            return;
+        }
+
+        if (emptyProdutos) emptyProdutos.style.display = 'none';
+
+        let subtotal = 0, totalDescontos = 0;
+
+        itensAdicionados.forEach((item, i) => {
+            const sub = item.quantidade * item.valorUnitario;
+            const desc = sub * (item.descontoPercentual / 100);
+            subtotal += sub;
+            totalDescontos += desc;
+
+            const div = document.createElement('div');
+            div.className = 'tk-item-card';
+            div.innerHTML = `
+                <div class="tk-item-header">
+                    <h6>${item.produto.nome} <span class="tk-prod-type ms-2">${item.produto.tipo}</span></h6>
+                    <button type="button" class="tk-btn-remove" data-idx="${i}">
+                        <i class="material-symbols-rounded" style="font-size:1.1rem;">delete</i>
+                    </button>
+                </div>
+                <div class="d-flex gap-3" style="font-size:.8rem;color:var(--tk-slate-600);">
+                    <span>Qtd: <strong>${item.quantidade}</strong></span>
+                    <span>Valor: <strong>R$ ${item.valorUnitario.toFixed(2).replace('.', ',')}</strong></span>
+                    ${item.descontoPercentual > 0 ? `<span>Desc: <strong>${item.descontoPercentual}%</strong></span>` : ''}
+                    <span class="ms-auto fw-bold" style="color:var(--tk-cyan-600);">R$ ${(sub - desc).toFixed(2).replace('.', ',')}</span>
+                </div>
+            `;
+            itensList.insertBefore(div, emptyProdutos);
+        });
+
+        // Update summary
+        const total = subtotal - totalDescontos;
+        if (resumoProdutos) {
+            resumoProdutos.style.display = '';
+            document.getElementById('resumoQtd').textContent = itensAdicionados.length;
+            document.getElementById('resumoSubtotal').textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+            document.getElementById('resumoDescontos').textContent = `- R$ ${totalDescontos.toFixed(2).replace('.', ',')}`;
+            document.getElementById('resumoTotal').textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+        }
+
+        if (produtosDados) produtosDados.value = JSON.stringify(itensAdicionados);
+    }
+
+    itensList?.addEventListener('click', (e) => {
+        const btn = e.target.closest('.tk-btn-remove');
+        if (btn) {
+            itensAdicionados.splice(parseInt(btn.dataset.idx), 1);
+            renderItens();
+            updateStepper();
+        }
+    });
+
+    // Close produto suggestions on outside click
+    document.addEventListener('click', (e) => {
+        if (produtoSearch && !produtoSearch.contains(e.target) && produtoSuggestions && !produtoSuggestions.contains(e.target)) {
+            produtoSuggestions.classList.remove('show');
+        }
+    });
+
+    // ============================================
+    // PREVIEW SIDEBAR
+    // ============================================
+    function updatePreview() {
+        const prev = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = val || '<em class="tk-preview-empty">—</em>';
+        };
+        prev('prevCliente', clienteSelect ? clienteSelect.options[clienteSelect.selectedIndex]?.text : '');
+        prev('prevUniorg', uniorgInput ? uniorgInput.value : '');
+        prev('prevPdv', pdvSelect && pdvSelect.value ? pdvSelect.options[pdvSelect.selectedIndex]?.text : '');
+        prev('prevTitulo', document.getElementById('tituloInput')?.value);
+        const catSel = document.getElementById('categoriaSelect');
+        prev('prevCategoria', catSel && catSel.value ? catSel.options[catSel.selectedIndex]?.text : '');
+        const selectedPrio = document.querySelector('.tk-priority-opt.selected');
+        prev('prevPrioridade', selectedPrio ? selectedPrio.textContent.trim() : 'Média');
+        prev('prevAnexos', String(selectedFiles.length));
+    }
+
+    // Listen to all form changes
+    document.querySelectorAll('#ticketForm input, #ticketForm select').forEach(el => {
+        el.addEventListener('change', () => { updatePreview(); updateStepper(); });
+        el.addEventListener('input', () => { updatePreview(); updateStepper(); });
+    });
 
     // ============================================
     // KEYBOARD SHORTCUTS
@@ -904,9 +1998,15 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('keydown', function(e) {
         if (e.ctrlKey && e.key === 'Enter') {
             e.preventDefault();
-            document.getElementById('submitBtn').click();
+            document.getElementById('submitBtn')?.click();
         }
         if (e.key === 'Escape') {
+            // Only if no suggestion boxes open
+            if (uniorgSuggestions?.classList.contains('show') || produtoSuggestions?.classList.contains('show')) {
+                closeSuggestions();
+                produtoSuggestions?.classList.remove('show');
+                return;
+            }
             if (confirm('Cancelar criação do ticket?')) {
                 window.location.href = "{% url 'dashboard:ticket_list' %}";
             }
@@ -914,46 +2014,27 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ============================================
-    // CASCADING: FILTRAR PDV POR CLIENTE
+    // FORM SUBMISSION
     // ============================================
-    const clienteSelect = document.getElementById('clienteSelect');
-    const pdvSelect = document.getElementById('pdvSelect');
-    if (clienteSelect && pdvSelect) {
-        // Armazenar todas as opções originais do PdV
-        const allPdvOptions = Array.from(pdvSelect.options).map(opt => ({
-            value: opt.value,
-            text: opt.textContent,
-            clienteId: opt.dataset.clienteId || ''
-        }));
+    const ticketForm = document.getElementById('ticketForm');
+    if (ticketForm) {
+        ticketForm.addEventListener('submit', function(e) {
+            updateHiddenDescricao();
+            if (produtosDados) produtosDados.value = JSON.stringify(itensAdicionados);
 
-        clienteSelect.addEventListener('change', function() {
-            const clienteId = this.value;
-            if (!clienteId) {
-                // Se nenhum cliente selecionado, mostrar todos
-                pdvSelect.innerHTML = '<option value="">Selecione um ponto de venda...</option>';
-                allPdvOptions.forEach(opt => {
-                    if (opt.value) {
-                        const option = new Option(opt.text, opt.value);
-                        pdvSelect.add(option);
-                    }
-                });
-                return;
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="material-symbols-rounded" style="font-size:1.1rem;animation:tk-spin .7s linear infinite;">progress_activity</i> Criando...';
             }
-            // Busca AJAX
-            fetch(`{% url 'dashboard:api_pdv_por_cliente' %}?cliente_id=${clienteId}`)
-                .then(r => r.json())
-                .then(data => {
-                    pdvSelect.innerHTML = '<option value="">Selecione um ponto de venda...</option>';
-                    data.forEach(p => {
-                        const label = p.cidade ? `${p.nome_fantasia} — ${p.cidade}` : p.nome_fantasia;
-                        pdvSelect.add(new Option(label, p.id));
-                    });
-                })
-                .catch(() => {
-                    pdvSelect.innerHTML = '<option value="">Erro ao carregar PdVs</option>';
-                });
         });
     }
+
+    // ============================================
+    // INITIAL SETUP
+    // ============================================
+    updatePreview();
+    updateStepper();
 
 });
 </script>

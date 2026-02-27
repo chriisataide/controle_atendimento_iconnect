@@ -6,7 +6,7 @@ from django.test import TestCase, RequestFactory
 from django.contrib.auth.models import User
 
 from dashboard.models import Ticket, InteracaoTicket, StatusTicket, CategoriaTicket, Cliente
-from dashboard.ticket_operations import TicketOperations
+from dashboard.services.ticket_operations import TicketOperations
 
 
 class TicketMergeTest(TestCase):

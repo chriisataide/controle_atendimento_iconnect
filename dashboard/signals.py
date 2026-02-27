@@ -14,7 +14,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 from .models import Ticket, InteracaoTicket, Notification, PerfilAgente, Cliente, ItemAtendimento
-from .models_estoque import MovimentacaoEstoque, TipoMovimentacao, Produto
+from .models import MovimentacaoEstoque, TipoMovimentacao, Produto
 from django.contrib.auth.models import User
 from .services.sla_calculator import sla_calculator
 
@@ -565,7 +565,7 @@ def _get_ip(request):
 def audit_user_logged_in(sender, request, user, **kwargs):
     """Registrar login bem-sucedido"""
     try:
-        from .audit_models import AuditEvent
+        from .models.audit import AuditEvent
         AuditEvent.objects.create(
             event_type="login",
             severity="low",
@@ -583,7 +583,7 @@ def audit_user_logged_in(sender, request, user, **kwargs):
 def audit_user_logged_out(sender, request, user, **kwargs):
     """Registrar logout"""
     try:
-        from .audit_models import AuditEvent
+        from .models.audit import AuditEvent
         if user:
             AuditEvent.objects.create(
                 event_type="logout",
@@ -602,7 +602,7 @@ def audit_user_logged_out(sender, request, user, **kwargs):
 def audit_user_login_failed(sender, credentials, request, **kwargs):
     """Registrar tentativa de login falha"""
     try:
-        from .audit_models import AuditEvent
+        from .models.audit import AuditEvent
         username = credentials.get("username", "desconhecido")
         AuditEvent.objects.create(
             event_type="security_event",
@@ -626,7 +626,7 @@ def audit_user_login_failed(sender, credentials, request, **kwargs):
 def audit_ticket_change(sender, instance, created, **kwargs):
     """Registrar criacao/alteracao de tickets para audit trail"""
     try:
-        from .audit_models import AuditEvent
+        from .models.audit import AuditEvent
         from django.contrib.contenttypes.models import ContentType
         ct = ContentType.objects.get_for_model(Ticket)
         AuditEvent.objects.create(

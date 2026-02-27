@@ -18,7 +18,7 @@ import logging
 from ..models import (
     Cliente, Ticket, PerfilAgente, StatusTicket, PrioridadeTicket, Notification,
 )
-from ..security import rate_limit
+from ..utils.security import rate_limit
 
 logger = logging.getLogger('dashboard')
 User = get_user_model()
@@ -295,7 +295,7 @@ class DashboardView(TemplateView):
 
         # === WhatsApp status dinâmico ===
         try:
-            from ..models_whatsapp import WhatsAppBusinessAccount
+            from ..models import WhatsAppBusinessAccount
             whatsapp_ativo = WhatsAppBusinessAccount.objects.filter(ativo=True).exists()
             context['whatsapp_status'] = 'Conectado' if whatsapp_ativo else 'Desconectado'
         except Exception:

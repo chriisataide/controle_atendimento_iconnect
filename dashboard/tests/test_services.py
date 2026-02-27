@@ -106,13 +106,13 @@ class SLACalculatorTest(TestCase):
 
 class WorkflowEngineTest(TestCase):
     def test_execute_workflow_no_rules(self):
-        from dashboard.workflows import workflow_engine
+        from dashboard.services.workflows import workflow_engine
         t = TicketFactory()
         results = workflow_engine.execute_workflow(t, 'ticket_created')
         self.assertEqual(results, [])
 
     def test_execute_workflow_with_rule(self):
-        from dashboard.workflows import workflow_engine
+        from dashboard.services.workflows import workflow_engine
         from dashboard.models import WorkflowRule
         t = TicketFactory(prioridade='alta')
         WorkflowRule.objects.create(
@@ -127,7 +127,7 @@ class WorkflowEngineTest(TestCase):
         self.assertGreater(len(results), 0)
 
     def test_workflow_metrics(self):
-        from dashboard.workflows import workflow_engine
+        from dashboard.services.workflows import workflow_engine
         metrics = workflow_engine.get_workflow_metrics(days=30)
         self.assertIn('total_executions', metrics)
         self.assertIn('success_rate', metrics)

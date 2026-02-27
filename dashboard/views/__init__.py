@@ -2,14 +2,29 @@
 Pacote de views do dashboard.
 
 Módulos:
-    dashboard      - DashboardView, admin_dashboard, métricas AJAX
-    tickets        - CRUD de tickets, Kanban, dashboard do agente
-    clientes       - Portal do cliente, CRUD de clientes
-    auth_profile   - Autenticação, perfil, gestão de usuários, pontos de venda
-    notifications  - Centro de notificações e APIs
-    automation     - Motor de automação e workflows
-    features       - Relatórios, busca, PWA, chatbot, comunicação
-    itens_atendimento - APIs de itens de atendimento e relatório financeiro
+    dashboard          - DashboardView, admin_dashboard, métricas AJAX
+    tickets            - CRUD de tickets, Kanban, dashboard do agente
+    clientes           - Portal do cliente, CRUD de clientes
+    auth_profile       - Autenticação, perfil, gestão de usuários, pontos de venda
+    notifications      - Centro de notificações e APIs
+    automation         - Motor de automação e workflows
+    features           - Relatórios, busca, PWA, chatbot, comunicação
+    itens_atendimento  - APIs de itens de atendimento e relatório financeiro
+    analytics          - Views de analytics
+    chat               - Views de chat em tempo real
+    chatbot_ai         - Views do chatbot IA
+    equipamentos       - CRUD de equipamentos
+    estoque            - CRUD de estoque
+    executive          - Dashboard executivo
+    financeiro         - Módulo financeiro
+    mobile             - Views mobile
+    push               - Push notifications
+    sla                - Gestão de SLA
+    ticket_operations  - Merge, split, sub-tickets
+    api                - API REST views
+    whatsapp           - Integração WhatsApp
+    workflow_builder   - Construtor visual de workflows
+    helpers            - Funções auxiliares
 """
 
 # Dashboard principal e métricas

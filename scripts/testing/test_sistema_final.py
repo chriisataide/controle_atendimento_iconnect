@@ -77,7 +77,7 @@ def test_push_notifications():
     """Testa sistema de push notifications"""
     print("\n📱 Testando push notifications...")
     try:
-        from dashboard.push_views import send_push_notification
+        from dashboard.views.push import send_push_notification
         print("✅ Sistema de push notifications carregado")
         return True
     except Exception as e:
@@ -88,7 +88,7 @@ def test_ml_system():
     """Testa sistema de Machine Learning"""
     print("\n🤖 Testando Machine Learning...")
     try:
-        from dashboard.ml_engine import TicketPredictor
+        from dashboard.services.ml_engine import TicketPredictor
         ml_engine = TicketPredictor()
         
         # Testar predição básica

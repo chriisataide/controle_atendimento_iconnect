@@ -497,7 +497,7 @@ def check_equipment_alerts():
     de chamados, trocas ou garantia prestes a vencer.
     Roda de hora em hora via Celery Beat ou chamada manual.
     """
-    from dashboard.models_equipamento import (
+    from dashboard.models import (
         Equipamento, HistoricoEquipamento,
         AlertaEquipamento, ConfiguracaoAlertaEquipamento
     )
@@ -622,7 +622,7 @@ def lgpd_data_retention():
     Remove dados pessoais conforme LGPD Art. 15 e Art. 16.
     Roda diariamente via Celery Beat.
     """
-    from dashboard.models_lgpd import LGPDConsent, LGPDDataRequest
+    from dashboard.models import LGPDConsent, LGPDDataRequest
 
     now = timezone.now()
     processed = 0

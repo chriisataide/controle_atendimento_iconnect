@@ -8,7 +8,7 @@ from django.test import TestCase, RequestFactory
 from django.urls import reverse
 from django.utils import timezone
 
-from dashboard.sso import SSOProvider, SSOSession, SSOLoginLog, SSOEngine, sso_engine
+from dashboard.utils.sso import SSOProvider, SSOSession, SSOLoginLog, SSOEngine, sso_engine
 
 
 class SSOProviderModelTest(TestCase):

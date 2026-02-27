@@ -4,25 +4,22 @@
 {% block title %}Kanban — Tickets | iConnect{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="container-fluid py-2">
     <!-- Header -->
     <div class="row mb-4">
-        <div class="col-12 d-flex align-items-center justify-content-between">
-            <div>
-                <h4 class="mb-1 text-dark font-weight-bold">
-                    <i class="material-icons align-middle" style="color:#06b6d4;">view_kanban</i>
-                    Kanban Board
-                </h4>
-                <p class="text-sm text-muted mb-0">Arraste tickets entre colunas para atualizar o status</p>
+        <div class="col-lg-8 col-md-7">
+            <div class="ms-3">
+                <h3 class="mb-0 h4 font-weight-bolder">Kanban Board</h3>
+                <p class="mb-0 text-sm text-secondary">Arraste tickets entre colunas para atualizar o status</p>
             </div>
-            <div class="d-flex gap-2">
-                <a href="{% url 'dashboard:ticket_list' %}" class="btn btn-sm btn-outline-secondary">
-                    <i class="material-icons text-sm">list</i> Lista
-                </a>
-                <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-sm" style="background:linear-gradient(195deg,#06b6d4,#0891b2);color:#fff;">
-                    <i class="material-icons text-sm">add</i> Novo Ticket
-                </a>
-            </div>
+        </div>
+        <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+            <a href="{% url 'dashboard:ticket_list' %}" class="btn btn-sm btn-outline-secondary mb-0">
+                <i class="material-symbols-rounded text-sm me-1">list</i> Lista
+            </a>
+            <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-sm mb-0 ms-1" style="background:linear-gradient(195deg,#06b6d4,#0891b2);color:#fff;">
+                <i class="material-symbols-rounded text-sm me-1">add</i> Novo Ticket
+            </a>
         </div>
     </div>
 

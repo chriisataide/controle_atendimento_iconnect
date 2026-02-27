@@ -17,8 +17,8 @@ from ..models import (
     Ticket, PerfilUsuario, InteracaoTicket, PerfilAgente, PontoDeVenda,
 )
 from ..forms import DashboardUserCreationForm
-from ..security import rate_limit, log_suspicious_activity
-from ..api_versioning import api_version, APIResponseTransformer
+from ..utils.security import rate_limit, log_suspicious_activity
+from ..api.versioning import api_version, APIResponseTransformer
 
 logger = logging.getLogger('dashboard')
 User = get_user_model()
@@ -69,10 +69,87 @@ class PontoDeVendaListView(ListView):
     model = PontoDeVenda
     template_name = 'dashboard/pontodevenda_list.html'
     context_object_name = 'pontosdevenda'
-    paginate_by = 25
+    paginate_by = 50
 
     def get_queryset(self):
-        return PontoDeVenda.objects.select_related('cliente').all()
+        qs = PontoDeVenda.objects.select_related('cliente').all()
+
+        # Busca textual
+        q = self.request.GET.get('q', '').strip()
+        if q:
+            qs = qs.filter(
+                Q(nome_fantasia__icontains=q) |
+                Q(razao_social__icontains=q) |
+                Q(cnpj__icontains=q) |
+                Q(cidade__icontains=q) |
+                Q(bairro__icontains=q) |
+                Q(logradouro__icontains=q)
+            )
+
+        # Filtro por UF
+        uf = self.request.GET.get('uf', '').strip().upper()
+        if uf:
+            qs = qs.filter(estado=uf)
+
+        # Filtro por cliente
+        cliente_id = self.request.GET.get('cliente', '').strip()
+        if cliente_id:
+            qs = qs.filter(cliente_id=cliente_id)
+
+        # Ordenação
+        sort = self.request.GET.get('sort', '-criado_em')
+        allowed_sorts = [
+            'nome_fantasia', '-nome_fantasia',
+            'cidade', '-cidade',
+            'estado', '-estado',
+            'cnpj', '-cnpj',
+            'criado_em', '-criado_em',
+            'cliente__nome', '-cliente__nome',
+        ]
+        if sort in allowed_sorts:
+            qs = qs.order_by(sort)
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        from django.db.models import Count
+        from ..models import Cliente
+
+        all_pdvs = PontoDeVenda.objects.all()
+        ctx['total_pdvs'] = all_pdvs.count()
+        ctx['total_estados'] = all_pdvs.values('estado').distinct().count()
+        ctx['total_cidades'] = all_pdvs.values('cidade').distinct().count()
+        ctx['total_clientes'] = all_pdvs.values('cliente').distinct().count()
+
+        # Top 5 estados por quantidade
+        ctx['top_estados'] = (
+            all_pdvs.values('estado')
+            .annotate(total=Count('id'))
+            .order_by('-total')[:5]
+        )
+
+        # UFs disponíveis para filtro
+        ctx['ufs_disponiveis'] = (
+            all_pdvs.values_list('estado', flat=True)
+            .distinct()
+            .order_by('estado')
+        )
+
+        # Clientes disponíveis para filtro
+        ctx['clientes_disponiveis'] = (
+            Cliente.objects.filter(
+                pontos_de_venda__isnull=False
+            ).distinct().order_by('nome')
+        )
+
+        # Preservar filtros na UI
+        ctx['current_q'] = self.request.GET.get('q', '')
+        ctx['current_uf'] = self.request.GET.get('uf', '')
+        ctx['current_cliente'] = self.request.GET.get('cliente', '')
+        ctx['current_sort'] = self.request.GET.get('sort', '-criado_em')
+
+        return ctx
 
     def dispatch(self, request, *args, **kwargs):
         if not (request.user.is_staff or request.user.is_superuser):
@@ -136,11 +213,21 @@ class PontoDeVendaUpdateView(UpdateView):
 def api_pontos_de_venda_por_cliente(request):
     """API AJAX para retornar pontos de venda filtrados por cliente"""
     cliente_id = request.GET.get('cliente_id')
+    uniorg = request.GET.get('uniorg', '').strip()
     if cliente_id:
         pdvs = PontoDeVenda.objects.filter(cliente_id=cliente_id).order_by('nome_fantasia')
     else:
         pdvs = PontoDeVenda.objects.all().order_by('nome_fantasia')
-    data = [{'id': p.id, 'nome_fantasia': p.nome_fantasia, 'cidade': p.cidade or ''} for p in pdvs]
+    if uniorg:
+        pdvs = pdvs.filter(inscricao_estadual__icontains=uniorg)
+    data = [{
+        'id': p.id,
+        'nome_fantasia': p.nome_fantasia,
+        'cidade': p.cidade or '',
+        'estado': p.estado or '',
+        'uniorg': p.inscricao_estadual or '',
+        'cnpj': p.cnpj or '',
+    } for p in pdvs]
     return JsonResponse(data, safe=False)
 
 
@@ -384,7 +471,7 @@ class ProfileView(TemplateView):
             perfil.bio = request.POST.get('bio', '')
 
             if 'avatar' in request.FILES:
-                from ..security import validate_file_upload
+                from ..utils.security import validate_file_upload
                 is_valid, error_msg = validate_file_upload(request.FILES['avatar'])
                 if is_valid:
                     perfil.avatar = request.FILES['avatar']

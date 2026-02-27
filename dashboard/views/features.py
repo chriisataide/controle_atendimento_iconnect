@@ -12,7 +12,7 @@ import json
 import logging
 
 from ..models import Ticket, Cliente, StatusTicket, PrioridadeTicket
-from ..chatbot_service import ChatbotService
+from ..services.chatbot_service import ChatbotService
 
 logger = logging.getLogger('dashboard')
 
@@ -332,12 +332,12 @@ def communication_center(request):
     from django.db import models
 
     try:
-        from ..models_chat import ChatRoom, ChatMessage, ChatBot
+        from ..models import ChatRoom, ChatMessage, ChatBot
     except ImportError:
         ChatRoom = ChatMessage = ChatBot = None
 
     try:
-        from ..models_chatbot_ai import ChatbotConversation, ChatbotKnowledge
+        from ..models import ChatbotConversation, ChatbotKnowledge
     except ImportError:
         ChatbotConversation = None
         ChatbotKnowledge = None
@@ -405,7 +405,7 @@ def communication_center(request):
 
     satisfaction_rate_val = 0
     try:
-        from ..models_satisfacao import AvaliacaoSatisfacao
+        from ..models import AvaliacaoSatisfacao
         avaliacoes = AvaliacaoSatisfacao.objects.filter(
             criado_em__date=timezone.now().date()
         )

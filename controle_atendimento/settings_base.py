@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django_filters',
     'corsheaders',
     'channels',  # WebSocket & real-time
+    'django_celery_beat',  # Celery Beat — agendamento de tarefas periódicas
     'axes',
 ]
 
@@ -54,9 +55,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'dashboard.middleware.CSPNonceMiddleware',  # Gera nonce CSP por request
-    'dashboard.security.SecurityHeadersMiddleware',  # Headers de seguranca
-    'dashboard.audit_system.AuditMiddleware',  # Audit trail de requests
-    'dashboard.monitoring.MonitoringMiddleware',  # Monitoramento customizado
+    'dashboard.utils.security.SecurityHeadersMiddleware',  # Headers de seguranca
+    'dashboard.services.audit_system.AuditMiddleware',  # Audit trail de requests
+    'dashboard.utils.monitoring.MonitoringMiddleware',  # Monitoramento customizado
     'dashboard.tenants.TenantMiddleware',  # Multi-tenancy — injeta tenant no request
     'axes.middleware.AxesMiddleware',  # Brute-force protection (deve ser ultimo)
 ]
@@ -77,8 +78,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'dashboard.rbac.rbac_context',
-                'dashboard.sso.sso_context',
+                'dashboard.utils.rbac.rbac_context',
+                'dashboard.utils.sso.sso_context',
                 'dashboard.tenants.tenant_context',
             ],
         },

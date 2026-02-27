@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models_whatsapp import (
+from .models import (
     WhatsAppBusinessAccount, WhatsAppContact, WhatsAppConversation,
     WhatsAppMessage, WhatsAppTemplate, WhatsAppAutoResponse,
     WhatsAppAnalytics, WhatsAppWebhookLog

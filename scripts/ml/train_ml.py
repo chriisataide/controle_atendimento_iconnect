@@ -16,7 +16,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'controle_atendimento.settings')
 django.setup()
 
 from dashboard.models import Ticket, Cliente
-from dashboard.ml_engine import TicketPredictor
+from dashboard.services.ml_engine import TicketPredictor
 from django.utils import timezone
 from datetime import timedelta
 import random

@@ -393,7 +393,7 @@ class AIService:
     def _get_kb_articles(self, titulo: str, descricao: str, limit: int = 5) -> list:
         """Buscar artigos da KB por similaridade de texto"""
         try:
-            from dashboard.models_knowledge import ArtigoConhecimento
+            from dashboard.models import ArtigoConhecimento
             text = f"{titulo} {descricao}".lower()
             words = [w for w in text.split() if len(w) > 3]
 

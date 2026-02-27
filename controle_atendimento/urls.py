@@ -16,12 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from dashboard.api_docs import urlpatterns as api_docs_urlpatterns
+from dashboard.api.docs import urlpatterns as api_docs_urlpatterns
 from django.conf import settings
 from django.conf.urls.static import static
 from dashboard import views
-from dashboard.monitoring import HealthCheckView
-from dashboard.sso import SSOProviderListView, SSOLoginView, SSOCallbackView
+from dashboard.utils.monitoring import HealthCheckView
+from dashboard.utils.sso import SSOProviderListView, SSOLoginView, SSOCallbackView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -31,10 +31,10 @@ urlpatterns = [
     path('logout/', views.custom_logout, name='logout'),
     path('health/', HealthCheckView.as_view(), name='health_check'),  # Health check na raiz
     path('dashboard/', include('dashboard.urls')),
-    path('cliente/', include('dashboard.cliente_urls')),  # Portal Self-Service
-    path('financeiro/', include('dashboard.financeiro_urls')),  # Módulo Financeiro
-    path('estoque/', include('dashboard.estoque_urls')),  # Módulo de Estoque
-    path('equipamentos/', include('dashboard.equipamento_urls')),  # Gestão de Equipamentos
+    path('cliente/', include('dashboard.urls.clientes')),  # Portal Self-Service
+    path('financeiro/', include('dashboard.urls.financeiro')),  # Módulo Financeiro
+    path('estoque/', include('dashboard.urls.estoque')),  # Módulo de Estoque
+    path('equipamentos/', include('dashboard.urls.equipamentos')),  # Gestão de Equipamentos
     
     # SSO — Single Sign-On (SAML 2.0 + OIDC)
     path('sso/providers/', SSOProviderListView.as_view(), name='sso_providers'),
@@ -42,11 +42,11 @@ urlpatterns = [
     path('sso/callback/<slug:slug>/', SSOCallbackView.as_view(), name='sso_callback'),
     
     # APIs REST
-    path('api/v1/', include('dashboard.api_urls')),
+    path('api/v1/', include('dashboard.urls.api')),
     path('api/user-info/', views.get_user_info, name='user_info'),
     
     # Mobile Interface
-    path('mobile/', include('dashboard.mobile_urls')),
+    path('mobile/', include('dashboard.urls.mobile')),
     
     # Cálculo de Implantação de Vigilante
     path('calculo-vigilante/', include('calculo_vigilante.urls')),

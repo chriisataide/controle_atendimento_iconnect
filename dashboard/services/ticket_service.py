@@ -8,8 +8,8 @@ from typing import List, Dict, Optional
 import logging
 
 from ..models import Ticket, Cliente, PerfilAgente, CategoriaTicket
-from ..ml_engine import ml_predictor
-from ..notifications import NotificationService
+from .ml_engine import ml_predictor
+from .notifications import NotificationService
 
 logger = logging.getLogger(__name__)
 

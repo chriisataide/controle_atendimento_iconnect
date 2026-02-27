@@ -1139,7 +1139,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def add_reaction(self, message_id, reaction):
         """Adiciona reação a mensagem"""
         try:
-            from .models_chat import ChatReaction
+            from .models import ChatReaction
             message = ChatMessage.objects.get(id=message_id)
             reaction_obj, created = ChatReaction.objects.get_or_create(
                 message=message,

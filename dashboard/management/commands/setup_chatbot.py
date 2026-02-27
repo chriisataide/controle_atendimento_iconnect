@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from dashboard.models_chatbot_ai import ChatbotConfiguration, ChatbotKnowledgeBase
+from dashboard.models import ChatbotConfiguration, ChatbotKnowledgeBase
 
 
 class Command(BaseCommand):

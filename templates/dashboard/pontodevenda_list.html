@@ -1,334 +1,754 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block title %}Pontos de Venda - iConnect{% endblock %}
-{% block page_title %}Lista de Pontos de Venda{% endblock %}
+{% block page_title %}Pontos de Venda{% endblock %}
 {% block breadcrumb_title %}Pontos de Venda{% endblock %}
 
 {% block extra_css %}
 <style>
-  #searchInput {
-    background: linear-gradient(90deg, #f8fafc 60%, #e9f0ff 100%);
-    border: 1.5px solid #bfc9e0;
-    color: #364fc7;
-    font-weight: 500;
-    font-size: 1.04rem;
-    border-radius: 2rem;
-    box-shadow: 0 2px 12px 0 rgba(44,62,80,0.06);
-    padding: 0.55rem 1.2rem;
-    outline: none;
-    transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
-    letter-spacing: 0.01em;
-  }
-  #searchInput:focus {
-    border-color: #3b5bdb;
-    background: linear-gradient(90deg, #f4f7fe 60%, #dbeafe 100%);
-    box-shadow: 0 0 0 3px #bac8ff;
-    color: #243a6b;
-  }
-  #searchInput::placeholder {
-    color: #8da2c9;
-    opacity: 1;
-    font-weight: 400;
-    letter-spacing: 0.02em;
-  }
-  .action-menu {
-    box-shadow: 0 4px 24px rgba(0,0,0,0.13);
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    min-width: 120px;
-    max-width: 200px;
-    width: 150px;
-    padding: 0.35rem 0.15rem;
-    background: #fff;
-    z-index: 3000;
-    animation: fadeInMenu 0.18s;
-  }
-  .action-menu .dropdown-item {
-    font-size: 0.89rem;
-    border-radius: 6px;
-    transition: background 0.15s;
-    color: #222;
-    cursor: pointer;
-    padding-left: 1.1rem;
-    padding-right: 1.1rem;
-    font-weight: 500;
-    letter-spacing: 0.01em;
-  }
-  .action-menu .dropdown-item:hover {
-    background: #f3f6fa;
-    color: #2d3a8c;
-  }
-  .action-menu .dropdown-item.text-danger {
-    color: #c53030 !important;
-  }
-  .action-menu .dropdown-item.text-danger:hover {
-    background: #ffe3e3;
-    color: #a61b1b !important;
-  }
-  @keyframes fadeInMenu {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+    /* ── Design System ── */
+    :root {
+        --pdv-slate-900: #0f172a;
+        --pdv-slate-800: #1e293b;
+        --pdv-slate-700: #334155;
+        --pdv-slate-600: #475569;
+        --pdv-slate-500: #64748b;
+        --pdv-slate-400: #94a3b8;
+        --pdv-slate-300: #cbd5e1;
+        --pdv-slate-200: #e2e8f0;
+        --pdv-slate-100: #f1f5f9;
+        --pdv-slate-50:  #f8fafc;
+        --pdv-cyan-500:  #06b6d4;
+        --pdv-cyan-600:  #0891b2;
+        --pdv-green-500: #22c55e;
+        --pdv-green-600: #16a34a;
+        --pdv-amber-500: #f59e0b;
+        --pdv-purple-500:#8b5cf6;
+        --pdv-red-500:   #ef4444;
+    }
+
+    /* ── KPI Cards ── */
+    .pdv-stats-card {
+        border-radius: 12px;
+        border: none;
+        transition: transform 0.2s, box-shadow 0.2s;
+        overflow: hidden;
+    }
+    .pdv-stats-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    }
+    .pdv-stats-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    /* ── Search & Filter Toolbar ── */
+    .pdv-search-box {
+        position: relative;
+    }
+    .pdv-search-box .form-control {
+        padding-left: 2.5rem;
+        border-radius: 10px;
+        border: 1px solid var(--pdv-slate-200);
+        background: var(--pdv-slate-50);
+        transition: all 0.2s;
+        font-size: 0.88rem;
+    }
+    .pdv-search-box .form-control:focus {
+        background: #fff;
+        border-color: var(--pdv-cyan-500);
+        box-shadow: 0 0 0 3px rgba(6,182,212,0.1);
+    }
+    .pdv-search-box .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--pdv-slate-400);
+        font-size: 18px;
+    }
+    .pdv-filter-select {
+        border-radius: 10px;
+        border: 1px solid var(--pdv-slate-200);
+        background: var(--pdv-slate-50);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--pdv-slate-600);
+        padding: 6px 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        appearance: auto;
+    }
+    .pdv-filter-select:focus {
+        border-color: var(--pdv-cyan-500);
+        box-shadow: 0 0 0 3px rgba(6,182,212,0.1);
+        outline: none;
+    }
+    .pdv-active-filters {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .pdv-filter-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 10px;
+        border-radius: 16px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        background: rgba(6,182,212,0.1);
+        color: var(--pdv-cyan-600);
+        text-decoration: none;
+        transition: all 0.15s;
+    }
+    .pdv-filter-tag:hover {
+        background: rgba(239,68,68,0.1);
+        color: var(--pdv-red-500);
+    }
+    .pdv-filter-tag i {
+        font-size: 14px;
+    }
+
+    /* ── Table ── */
+    .pdv-table th {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--pdv-slate-500);
+        font-weight: 700;
+        padding: 12px 16px;
+        border-bottom: 2px solid var(--pdv-slate-200);
+        white-space: nowrap;
+        cursor: pointer;
+        user-select: none;
+        transition: color 0.15s;
+    }
+    .pdv-table th:hover {
+        color: var(--pdv-slate-800);
+    }
+    .pdv-table th.sorted-asc,
+    .pdv-table th.sorted-desc {
+        color: var(--pdv-cyan-600);
+    }
+    .pdv-table th .sort-arrow {
+        font-size: 14px;
+        vertical-align: middle;
+        opacity: 0.4;
+        transition: opacity 0.15s;
+    }
+    .pdv-table th.sorted-asc .sort-arrow,
+    .pdv-table th.sorted-desc .sort-arrow { opacity: 1; }
+    .pdv-table td {
+        padding: 10px 16px;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--pdv-slate-100);
+        font-size: 0.84rem;
+    }
+    .pdv-table tbody tr {
+        transition: background 0.15s;
+    }
+    .pdv-table tbody tr:hover {
+        background: var(--pdv-slate-50);
+    }
+
+    /* ── Avatar / Ícone do PdV ── */
+    .pdv-icon-circle {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.7rem;
+        color: #fff;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, var(--pdv-slate-700), var(--pdv-slate-800));
+    }
+
+    /* ── Badges ── */
+    .pdv-badge-uf {
+        font-size: 0.68rem;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-weight: 700;
+        background: rgba(6,182,212,0.1);
+        color: var(--pdv-cyan-600);
+        letter-spacing: 0.5px;
+    }
+    .pdv-badge-tipo {
+        font-size: 0.66rem;
+        padding: 2px 7px;
+        border-radius: 5px;
+        font-weight: 600;
+        background: rgba(139,92,246,0.1);
+        color: var(--pdv-purple-500);
+    }
+    .pdv-badge-cliente {
+        font-size: 0.68rem;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-weight: 600;
+        background: rgba(34,197,94,0.1);
+        color: var(--pdv-green-600);
+    }
+
+    /* ── Action Buttons ── */
+    .pdv-action-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--pdv-slate-200);
+        background: #fff;
+        color: var(--pdv-slate-500);
+        transition: all 0.2s;
+        cursor: pointer;
+        font-size: 16px;
+        text-decoration: none;
+    }
+    .pdv-action-btn:hover {
+        background: var(--pdv-slate-100);
+        color: var(--pdv-slate-700);
+        border-color: var(--pdv-slate-300);
+    }
+
+    /* ── Pagination ── */
+    .pdv-pagination .page-link {
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border: 1px solid var(--pdv-slate-200);
+        color: var(--pdv-slate-600);
+        margin: 0 2px;
+        padding: 6px 12px;
+        transition: all 0.15s;
+    }
+    .pdv-pagination .page-item.active .page-link {
+        background: var(--pdv-slate-800);
+        border-color: var(--pdv-slate-800);
+        color: #fff;
+    }
+    .pdv-pagination .page-link:hover {
+        background: var(--pdv-slate-100);
+        border-color: var(--pdv-slate-300);
+        color: var(--pdv-slate-800);
+    }
+
+    /* ── Empty State ── */
+    .pdv-empty-state {
+        padding: 3rem 1rem;
+        text-align: center;
+    }
+    .pdv-empty-state i {
+        font-size: 56px;
+        color: var(--pdv-slate-300);
+    }
+
+    /* ── Top Estados mini-bar ── */
+    .pdv-estado-bar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+    }
+    .pdv-estado-bar-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--pdv-slate-600);
+        width: 22px;
+        text-align: center;
+    }
+    .pdv-estado-bar-track {
+        flex: 1;
+        height: 6px;
+        background: var(--pdv-slate-100);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    .pdv-estado-bar-fill {
+        height: 100%;
+        border-radius: 3px;
+        background: linear-gradient(90deg, var(--pdv-cyan-500), var(--pdv-cyan-600));
+        transition: width 0.6s ease;
+    }
+    .pdv-estado-bar-count {
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--pdv-slate-500);
+        width: 36px;
+        text-align: right;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+        .pdv-table td, .pdv-table th { padding: 8px 10px; }
+        .pdv-hide-mobile { display: none !important; }
+    }
+
+    /* ── Dark Mode ── */
+    .dark-version .pdv-stats-card { background: var(--bg-card) !important; }
+    .dark-version .pdv-stats-card:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.25); }
+    .dark-version .pdv-search-box .form-control { background: var(--bg-primary) !important; color: var(--text-primary) !important; border-color: var(--border-color) !important; }
+    .dark-version .pdv-search-box .form-control:focus { background: var(--bg-card) !important; border-color: var(--accent) !important; }
+    .dark-version .pdv-filter-select { background: var(--bg-primary) !important; color: var(--text-primary) !important; border-color: var(--border-color) !important; }
+    .dark-version .pdv-table th { color: var(--text-secondary) !important; border-bottom-color: var(--border-color) !important; }
+    .dark-version .pdv-table td { border-bottom-color: var(--border-color) !important; color: var(--text-primary) !important; }
+    .dark-version .pdv-table tbody tr:hover { background: rgba(6,182,212,0.04) !important; }
+    .dark-version .pdv-action-btn { background: var(--bg-primary) !important; color: var(--text-secondary) !important; border-color: var(--border-color) !important; }
+    .dark-version .pdv-action-btn:hover { background: var(--bg-secondary) !important; color: var(--text-primary) !important; }
+    .dark-version .pdv-pagination .page-link { background: var(--bg-card) !important; color: var(--text-secondary) !important; border-color: var(--border-color) !important; }
+    .dark-version .pdv-pagination .page-item.active .page-link { background: var(--accent) !important; border-color: var(--accent) !important; color: #fff !important; }
+    .dark-version .pdv-icon-circle { background: linear-gradient(135deg, var(--bg-secondary), var(--bg-primary)); }
+    .dark-version .pdv-estado-bar-track { background: var(--border-color); }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid py-2">
-  <div class="ms-3">
-    <h3 class="mb-0 h4 font-weight-bolder">Gerenciar Pontos de Venda</h3>
-    <p class="mb-4">Visualize e gerencie todos os pontos de venda cadastrados</p>
-  </div>
-
-  <div class="row">
-    <div class="col-12">
-      <div class="card my-4">
-        <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-          <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <h6 class="text-white text-capitalize ps-3 mb-0">Lista de Pontos de Venda</h6>
-              <div class="me-3">
-                <a href="{% url 'dashboard:pontodevenda_create' %}" class="btn btn-outline-white btn-sm mb-0" id="novoPdvBtn" title="Novo Ponto de Venda (Ctrl+N)">
-                  <i class="material-symbols-rounded text-sm">add</i>&nbsp;&nbsp;Novo Ponto de Venda
-                </a>
-              </div>
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-lg-8 col-md-7">
+            <div class="ms-3">
+                <h3 class="mb-0 h4 font-weight-bolder">Pontos de Venda</h3>
+                <p class="mb-0 text-sm text-secondary">{{ total_pdvs }} ponto{{ total_pdvs|pluralize:"s" }} de venda em {{ total_estados }} estado{{ total_estados|pluralize:"s" }}</p>
             </div>
-            <div class="mt-3 px-3">
-              <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="Buscar por nome, CNPJ, cidade... (Ctrl+F)" autocomplete="off">
-            </div>
-          </div>
         </div>
-        <div class="card-body px-0 pb-2">
-          <div class="table-responsive p-0">
-            <table class="table align-items-center mb-0" id="pdvTable">
-              <thead>
-                <tr>
-                  <th class="sortable" data-sort="nome_fantasia" title="Ordenar">Nome Fantasia <i class="material-icons sort-icon">unfold_more</i></th>
-                  <th class="sortable" data-sort="cliente" title="Ordenar">Cliente <i class="material-icons sort-icon">unfold_more</i></th>
-                  <th class="sortable" data-sort="razao_social" title="Ordenar">Razão Social <i class="material-icons sort-icon">unfold_more</i></th>
-                  <th class="sortable" data-sort="cnpj" title="Ordenar">CNPJ <i class="material-icons sort-icon">unfold_more</i></th>
-                  <th class="sortable" data-sort="cidade" title="Ordenar">Cidade <i class="material-icons sort-icon">unfold_more</i></th>
-                  <th class="sortable" data-sort="responsavel_nome" title="Ordenar">Responsável <i class="material-icons sort-icon">unfold_more</i></th>
-                  <th>Email</th>
-                  <th>Criado em</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody id="pdvTableBody">
-                {% for p in pontosdevenda %}
-                <tr tabindex="0" class="pdv-row">
-                  <td><span class="material-icons text-primary me-1" title="Ponto de venda">store</span> <strong>{{ p.nome_fantasia }}</strong></td>
-                  <td>{% if p.cliente %}<span class="badge bg-info text-white">{{ p.cliente.nome }}</span>{% else %}<span class="text-muted text-xs">—</span>{% endif %}</td>
-                  <td>{{ p.razao_social }}</td>
-                  <td>
-                    <span class="badge bg-light text-dark">{{ p.cnpj }}</span>
-                    <button class="btn btn-link btn-sm p-0 ms-1 copy-btn" data-copy="{{ p.cnpj }}" title="Copiar CNPJ"><i class="material-icons">content_copy</i></button>
-                  </td>
-                  <td><span class="material-icons text-info me-1" title="Cidade">location_on</span> {{ p.cidade }}</td>
-                  <td><span class="material-icons text-secondary me-1" title="Responsável">person</span> {{ p.responsavel_nome }}</td>
-                  <td>{{ p.email_principal }}</td>
-                  <td>{{ p.criado_em|date:'d/m/Y H:i' }}</td>
-                  <td>
-                    <div class="text-center position-relative">
-                      <button class="btn btn-link px-2 py-1 action-menu-btn" type="button" data-id="{{ p.id }}" data-detail-url="{% url 'dashboard:pontodevenda_detail' p.id %}" data-edit-url="{% url 'dashboard:pontodevenda_update' p.id %}" data-delete-id="{{ p.id }}" title="Mais opções" style="box-shadow:none;">
-                        <i class="material-icons">more_vert</i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                {% empty %}
-                <tr>
-                  <td colspan="9" class="text-center py-4">
-                    <div class="d-flex flex-column align-items-center">
-                      <i class="material-symbols-rounded text-muted" style="font-size: 48px;">inbox</i>
-                      <p class="text-muted mt-2">Nenhum ponto de venda cadastrado.</p>
-                    </div>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          {% if is_paginated %}
-          <div class="d-flex justify-content-between align-items-center px-4 py-3">
-            <div>
-              <p class="text-sm text-secondary mb-0">
-                Mostrando {{ page_obj.start_index }} a {{ page_obj.end_index }} de {{ paginator.count }} pontos de venda
-              </p>
-            </div>
-            <nav>
-              <ul class="pagination pagination-sm mb-0">
-                {% if page_obj.has_previous %}
-                  <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
-                  </li>
-                {% endif %}
-                {% for num in page_obj.paginator.page_range %}
-                  {% if page_obj.number == num %}
-                    <li class="page-item active">
-                      <span class="page-link">{{ num }}</span>
-                    </li>
-                  {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                    <li class="page-item">
-                      <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                    </li>
-                  {% endif %}
-                {% endfor %}
-                {% if page_obj.has_next %}
-                  <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Próximo</a>
-                  </li>
-                {% endif %}
-              </ul>
-            </nav>
-          </div>
-          {% endif %}
+        <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+            <a href="{% url 'dashboard:pontodevenda_create' %}" class="btn bg-gradient-primary btn-sm mb-0" title="Ctrl+N">
+                <i class="material-symbols-rounded text-sm me-1">add_business</i> Novo PdV
+            </a>
         </div>
-      </div>
     </div>
-  </div>
+
+    <!-- KPI Cards -->
+    <div class="row mx-1 mb-4">
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-3">
+            <div class="card pdv-stats-card">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="pdv-stats-icon" style="background: rgba(51,65,85,0.1);">
+                            <i class="material-symbols-rounded" style="color: #334155; font-size: 24px;">store</i>
+                        </div>
+                        <div class="ms-3">
+                            <p class="text-xs text-secondary mb-0 text-uppercase fw-bold">Total PdVs</p>
+                            <h5 class="mb-0 fw-bold">{{ total_pdvs }}</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-3">
+            <div class="card pdv-stats-card">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="pdv-stats-icon" style="background: rgba(6,182,212,0.1);">
+                            <i class="material-symbols-rounded" style="color: #06b6d4; font-size: 24px;">map</i>
+                        </div>
+                        <div class="ms-3">
+                            <p class="text-xs text-secondary mb-0 text-uppercase fw-bold">Estados</p>
+                            <h5 class="mb-0 fw-bold">{{ total_estados }}</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-3">
+            <div class="card pdv-stats-card">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="pdv-stats-icon" style="background: rgba(139,92,246,0.1);">
+                            <i class="material-symbols-rounded" style="color: #8b5cf6; font-size: 24px;">location_city</i>
+                        </div>
+                        <div class="ms-3">
+                            <p class="text-xs text-secondary mb-0 text-uppercase fw-bold">Cidades</p>
+                            <h5 class="mb-0 fw-bold">{{ total_cidades }}</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-3">
+            <div class="card pdv-stats-card">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="pdv-stats-icon" style="background: rgba(34,197,94,0.1);">
+                            <i class="material-symbols-rounded" style="color: #22c55e; font-size: 24px;">business</i>
+                        </div>
+                        <div class="ms-3">
+                            <p class="text-xs text-secondary mb-0 text-uppercase fw-bold">Clientes</p>
+                            <h5 class="mb-0 fw-bold">{{ total_clientes }}</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mx-1">
+        <!-- ── Main Column: Table ── -->
+        <div class="col-xl-9 col-12 mb-4">
+            <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+
+                <!-- Toolbar -->
+                <div class="card-header bg-white border-0 pb-0" style="border-radius: 12px 12px 0 0;">
+                    <form method="get" id="filterForm">
+                        <div class="row align-items-center g-2">
+                            <!-- Search -->
+                            <div class="col-md-5 col-12">
+                                <div class="pdv-search-box">
+                                    <i class="material-symbols-rounded search-icon">search</i>
+                                    <input type="text" class="form-control" name="q" id="searchInput"
+                                           value="{{ current_q }}"
+                                           placeholder="Buscar nome, CNPJ, cidade..."
+                                           autocomplete="off">
+                                </div>
+                            </div>
+                            <!-- UF Filter -->
+                            <div class="col-md-2 col-6">
+                                <select name="uf" class="pdv-filter-select w-100" onchange="this.form.submit()">
+                                    <option value="">Todos UFs</option>
+                                    {% for uf in ufs_disponiveis %}
+                                    <option value="{{ uf }}" {% if current_uf == uf %}selected{% endif %}>{{ uf }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <!-- Cliente Filter -->
+                            <div class="col-md-3 col-6">
+                                <select name="cliente" class="pdv-filter-select w-100" onchange="this.form.submit()">
+                                    <option value="">Todos Clientes</option>
+                                    {% for cl in clientes_disponiveis %}
+                                    <option value="{{ cl.id }}" {% if current_cliente == cl.id|stringformat:"d" %}selected{% endif %}>{{ cl.nome }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <!-- Results count -->
+                            <div class="col-md-2 col-12 text-md-end">
+                                <span class="text-xs text-secondary fw-bold">
+                                    {{ paginator.count }} resultado{{ paginator.count|pluralize:"s" }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Active Filters -->
+                        {% if current_q or current_uf or current_cliente %}
+                        <div class="pdv-active-filters mt-2 pb-1">
+                            {% if current_q %}
+                            <a href="?{% if current_uf %}uf={{ current_uf }}&{% endif %}{% if current_cliente %}cliente={{ current_cliente }}{% endif %}" class="pdv-filter-tag">
+                                "{{ current_q }}" <i class="material-symbols-rounded">close</i>
+                            </a>
+                            {% endif %}
+                            {% if current_uf %}
+                            <a href="?{% if current_q %}q={{ current_q }}&{% endif %}{% if current_cliente %}cliente={{ current_cliente }}{% endif %}" class="pdv-filter-tag">
+                                UF: {{ current_uf }} <i class="material-symbols-rounded">close</i>
+                            </a>
+                            {% endif %}
+                            {% if current_cliente %}
+                            <a href="?{% if current_q %}q={{ current_q }}&{% endif %}{% if current_uf %}uf={{ current_uf }}{% endif %}" class="pdv-filter-tag">
+                                Cliente filtrado <i class="material-symbols-rounded">close</i>
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'dashboard:pontodevenda_list' %}" class="pdv-filter-tag" style="background:rgba(239,68,68,0.08);color:var(--pdv-red-500);">
+                                Limpar tudo <i class="material-symbols-rounded">filter_alt_off</i>
+                            </a>
+                        </div>
+                        {% endif %}
+
+                        <input type="hidden" name="sort" value="{{ current_sort }}">
+                    </form>
+                </div>
+
+                <!-- Table -->
+                <div class="card-body px-0 pt-3 pb-0">
+                    <div class="table-responsive">
+                        <table class="table pdv-table mb-0" id="pdvTable">
+                            <thead>
+                                <tr>
+                                    <th class="pdv-sortable {% if current_sort == 'nome_fantasia' %}sorted-asc{% elif current_sort == '-nome_fantasia' %}sorted-desc{% endif %}"
+                                        data-sort-asc="nome_fantasia" data-sort-desc="-nome_fantasia">
+                                        Ponto de Venda
+                                        <i class="material-symbols-rounded sort-arrow">{% if current_sort == 'nome_fantasia' %}arrow_upward{% elif current_sort == '-nome_fantasia' %}arrow_downward{% else %}unfold_more{% endif %}</i>
+                                    </th>
+                                    <th class="pdv-sortable pdv-hide-mobile {% if current_sort == 'cnpj' %}sorted-asc{% elif current_sort == '-cnpj' %}sorted-desc{% endif %}"
+                                        data-sort-asc="cnpj" data-sort-desc="-cnpj">
+                                        CNPJ
+                                        <i class="material-symbols-rounded sort-arrow">{% if current_sort == 'cnpj' %}arrow_upward{% elif current_sort == '-cnpj' %}arrow_downward{% else %}unfold_more{% endif %}</i>
+                                    </th>
+                                    <th class="pdv-sortable {% if current_sort == 'cidade' %}sorted-asc{% elif current_sort == '-cidade' %}sorted-desc{% endif %}"
+                                        data-sort-asc="cidade" data-sort-desc="-cidade">
+                                        Localização
+                                        <i class="material-symbols-rounded sort-arrow">{% if current_sort == 'cidade' %}arrow_upward{% elif current_sort == '-cidade' %}arrow_downward{% else %}unfold_more{% endif %}</i>
+                                    </th>
+                                    <th class="pdv-sortable pdv-hide-mobile {% if current_sort == 'cliente__nome' %}sorted-asc{% elif current_sort == '-cliente__nome' %}sorted-desc{% endif %}"
+                                        data-sort-asc="cliente__nome" data-sort-desc="-cliente__nome">
+                                        Cliente
+                                        <i class="material-symbols-rounded sort-arrow">{% if current_sort == 'cliente__nome' %}arrow_upward{% elif current_sort == '-cliente__nome' %}arrow_downward{% else %}unfold_more{% endif %}</i>
+                                    </th>
+                                    <th class="pdv-hide-mobile">Endereço</th>
+                                    <th style="width: 100px;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in pontosdevenda %}
+                                <tr>
+                                    <!-- Nome + tipo -->
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="pdv-icon-circle me-2">
+                                                {% with tipo=p.complemento|default:"PdV" %}
+                                                {{ tipo|truncatechars:2|upper }}
+                                                {% endwith %}
+                                            </div>
+                                            <div>
+                                                <span class="fw-bold text-dark" style="font-size:0.84rem;">{{ p.nome_fantasia|truncatechars:35 }}</span>
+                                                {% with tipo=p.complemento %}
+                                                {% if tipo %}
+                                                <br><span class="pdv-badge-tipo">{{ tipo|truncatechars:25 }}</span>
+                                                {% endif %}
+                                                {% endwith %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <!-- CNPJ -->
+                                    <td class="pdv-hide-mobile">
+                                        <code style="font-size:0.78rem; color:var(--pdv-slate-600); background:var(--pdv-slate-50); padding:2px 6px; border-radius:4px;">{{ p.cnpj }}</code>
+                                        <button class="btn btn-link btn-sm p-0 ms-1 pdv-copy-btn" data-copy="{{ p.cnpj }}" title="Copiar CNPJ" style="font-size:14px; color:var(--pdv-slate-400);">
+                                            <i class="material-symbols-rounded" style="font-size:14px;">content_copy</i>
+                                        </button>
+                                    </td>
+                                    <!-- Location -->
+                                    <td>
+                                        <div class="d-flex align-items-center gap-1">
+                                            <span class="pdv-badge-uf">{{ p.estado }}</span>
+                                            <span style="font-size:0.82rem; color:var(--pdv-slate-700);">{{ p.cidade }}</span>
+                                        </div>
+                                        <span class="text-xs text-secondary">{{ p.bairro }}</span>
+                                    </td>
+                                    <!-- Cliente -->
+                                    <td class="pdv-hide-mobile">
+                                        {% if p.cliente %}
+                                        <span class="pdv-badge-cliente">{{ p.cliente.nome }}</span>
+                                        {% else %}
+                                        <span class="text-muted text-xs">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <!-- Endereço -->
+                                    <td class="pdv-hide-mobile">
+                                        <span style="font-size:0.78rem; color:var(--pdv-slate-500);">
+                                            {{ p.logradouro|truncatechars:30 }}, {{ p.numero }}
+                                        </span>
+                                        <br><span class="text-xs text-secondary">CEP: {{ p.cep }}</span>
+                                    </td>
+                                    <!-- Actions -->
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            <a href="{% url 'dashboard:pontodevenda_detail' p.id %}" class="pdv-action-btn" title="Visualizar">
+                                                <i class="material-symbols-rounded" style="font-size:16px;">visibility</i>
+                                            </a>
+                                            <a href="{% url 'dashboard:pontodevenda_update' p.id %}" class="pdv-action-btn" title="Editar">
+                                                <i class="material-symbols-rounded" style="font-size:16px;">edit</i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6">
+                                        <div class="pdv-empty-state">
+                                            <i class="material-symbols-rounded">store_mall_directory</i>
+                                            <h6 class="mt-3 text-secondary">Nenhum ponto de venda encontrado</h6>
+                                            {% if current_q or current_uf or current_cliente %}
+                                            <p class="text-sm text-muted">Tente ajustar os filtros ou termos de busca.</p>
+                                            <a href="{% url 'dashboard:pontodevenda_list' %}" class="btn btn-sm bg-gradient-primary mt-2">Limpar filtros</a>
+                                            {% else %}
+                                            <p class="text-sm text-muted">Cadastre o primeiro ponto de venda para começar.</p>
+                                            <a href="{% url 'dashboard:pontodevenda_create' %}" class="btn btn-sm bg-gradient-primary mt-2">
+                                                <i class="material-symbols-rounded text-sm me-1">add_business</i> Novo PdV
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if is_paginated %}
+                    <div class="d-flex justify-content-between align-items-center px-4 py-3">
+                        <p class="text-xs text-secondary mb-0">
+                            Mostrando <strong>{{ page_obj.start_index }}</strong>–<strong>{{ page_obj.end_index }}</strong> de <strong>{{ paginator.count }}</strong>
+                        </p>
+                        <nav>
+                            <ul class="pagination pdv-pagination mb-0">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_q %}&q={{ current_q }}{% endif %}{% if current_uf %}&uf={{ current_uf }}{% endif %}{% if current_cliente %}&cliente={{ current_cliente }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">
+                                        <i class="material-symbols-rounded" style="font-size:16px;">chevron_left</i>
+                                    </a>
+                                </li>
+                                {% endif %}
+                                {% for num in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == num %}
+                                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                    {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% if current_q %}&q={{ current_q }}{% endif %}{% if current_uf %}&uf={{ current_uf }}{% endif %}{% if current_cliente %}&cliente={{ current_cliente }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">{{ num }}</a>
+                                    </li>
+                                    {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% if current_q %}&q={{ current_q }}{% endif %}{% if current_uf %}&uf={{ current_uf }}{% endif %}{% if current_cliente %}&cliente={{ current_cliente }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">{{ num }}</a>
+                                    </li>
+                                    {% elif num == 2 or num == page_obj.paginator.num_pages|add:"-1" %}
+                                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_q %}&q={{ current_q }}{% endif %}{% if current_uf %}&uf={{ current_uf }}{% endif %}{% if current_cliente %}&cliente={{ current_cliente }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">
+                                        <i class="material-symbols-rounded" style="font-size:16px;">chevron_right</i>
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Sidebar: Top Estados ── -->
+        <div class="col-xl-3 col-12">
+            <!-- Top Estados -->
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="material-symbols-rounded me-2" style="color:var(--pdv-cyan-500);">bar_chart</i>
+                        <h6 class="mb-0 fw-bold" style="font-size:0.85rem;">Top Estados</h6>
+                    </div>
+                    {% for item in top_estados %}
+                    <div class="pdv-estado-bar">
+                        <span class="pdv-estado-bar-label">{{ item.estado }}</span>
+                        <div class="pdv-estado-bar-track">
+                            <div class="pdv-estado-bar-fill" style="width: {% widthratio item.total total_pdvs 100 %}%;"></div>
+                        </div>
+                        <span class="pdv-estado-bar-count">{{ item.total }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Ações Rápidas -->
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="material-symbols-rounded me-2" style="color:var(--pdv-amber-500);">bolt</i>
+                        <h6 class="mb-0 fw-bold" style="font-size:0.85rem;">Ações Rápidas</h6>
+                    </div>
+                    <a href="{% url 'dashboard:pontodevenda_create' %}" class="btn btn-sm w-100 mb-2" style="background:var(--pdv-slate-800);color:#fff;border-radius:8px;">
+                        <i class="material-symbols-rounded text-sm me-1">add_business</i> Novo Ponto de Venda
+                    </a>
+                    <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-sm btn-outline-secondary w-100 mb-2" style="border-radius:8px;">
+                        <i class="material-symbols-rounded text-sm me-1">confirmation_number</i> Novo Ticket
+                    </a>
+                </div>
+            </div>
+
+            <!-- Info Card -->
+            <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="material-symbols-rounded me-2" style="color:var(--pdv-purple-500);">info</i>
+                        <h6 class="mb-0 fw-bold" style="font-size:0.85rem;">Dicas</h6>
+                    </div>
+                    <ul class="mb-0 ps-3" style="font-size:0.76rem; color:var(--pdv-slate-500); line-height: 1.8;">
+                        <li>Use <kbd style="font-size:0.7rem;">Ctrl+N</kbd> para criar novo PdV</li>
+                        <li>Use <kbd style="font-size:0.7rem;">Ctrl+F</kbd> para buscar</li>
+                        <li>Clique nos cabeçalhos para ordenar</li>
+                        <li>Filtre por UF ou cliente nos seletores</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<div id="globalActionMenu" class="action-menu position-fixed bg-white shadow rounded py-2 px-1" style="display:none; min-width: 180px; z-index: 3000;"></div>
 <script>
-// Garante execução após DOM pronto
 document.addEventListener('DOMContentLoaded', function() {
-  let currentBtn = null;
-  const globalMenu = document.getElementById('globalActionMenu');
 
-  // Função para montar o menu dinamicamente
-  function showActionMenu(btn) {
-    const detailUrl = btn.getAttribute('data-detail-url');
-    const editUrl = btn.getAttribute('data-edit-url');
-    const deleteId = btn.getAttribute('data-delete-id');
-    const rect = btn.getBoundingClientRect();
-    globalMenu.innerHTML = `
-      <a class="dropdown-item py-2" href="${detailUrl}">Visualizar</a>
-      <a class="dropdown-item py-2" href="${editUrl}">Editar</a>
-      <div class="dropdown-divider my-1"></div>
-      <a class="dropdown-item text-danger py-2 delete-btn" href="#" data-id="${deleteId}">Excluir</a>
-    `;
-    // Calcula posição para não sair da tela
-    const menuWidth = 150;
-    const menuHeight = 120;
-    let top = window.scrollY + rect.bottom + 4;
-    let left = window.scrollX + rect.left;
-    // Se ultrapassar a direita, ajusta
-    if (left + menuWidth > window.innerWidth - 8) {
-      left = window.innerWidth - menuWidth - 8;
-    }
-    // Se ultrapassar embaixo, mostra acima
-    if (top + menuHeight > window.scrollY + window.innerHeight - 8) {
-      top = window.scrollY + rect.top - menuHeight - 4;
-    }
-    globalMenu.style.top = top + 'px';
-    globalMenu.style.left = left + 'px';
-    globalMenu.style.display = 'block';
-    currentBtn = btn;
-  }
+    /* ── Search with debounce ── */
+    let searchTimeout;
+    const searchInput = document.getElementById('searchInput');
+    const filterForm = document.getElementById('filterForm');
 
-  // Evento para abrir menu
-  document.querySelectorAll('.action-menu-btn').forEach(function(btn) {
-    btn.addEventListener('click', function(e) {
-      e.preventDefault();
-      if (globalMenu.style.display === 'block' && currentBtn === btn) {
-        globalMenu.style.display = 'none';
-        currentBtn = null;
-        return;
-      }
-      showActionMenu(btn);
+    if (searchInput) {
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                filterForm.submit();
+            }
+        });
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => filterForm.submit(), 600);
+        });
+    }
+
+    /* ── Column Sorting ── */
+    document.querySelectorAll('.pdv-sortable').forEach(th => {
+        th.addEventListener('click', function() {
+            const sortInput = filterForm.querySelector('input[name="sort"]');
+            const currentSort = sortInput.value;
+            const sortAsc = th.dataset.sortAsc;
+            const sortDesc = th.dataset.sortDesc;
+            sortInput.value = (currentSort === sortAsc) ? sortDesc : sortAsc;
+            filterForm.submit();
+        });
     });
-  });
 
-  // Fecha o menu ao clicar fora
-  document.addEventListener('click', function(e) {
-    if (!e.target.closest('.action-menu-btn') && !e.target.closest('#globalActionMenu')) {
-      globalMenu.style.display = 'none';
-      currentBtn = null;
-    }
-  });
-  // Fecha o menu ao pressionar ESC
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-      globalMenu.style.display = 'none';
-      currentBtn = null;
-    }
-  });
-
-  // Delegação para ação de excluir
-  globalMenu.addEventListener('click', function(e) {
-    const delBtn = e.target.closest('.delete-btn');
-    if (delBtn) {
-      e.preventDefault();
-      if (confirm('Tem certeza que deseja excluir este ponto de venda?')) {
-        window.location.href = '/dashboard/pontodevenda/delete/' + delBtn.getAttribute('data-id') + '/';
-      }
-    }
-  });
-
-  // Busca instantânea
-  document.getElementById('searchInput').addEventListener('input', function() {
-    const val = this.value.toLowerCase();
-    document.querySelectorAll('#pdvTableBody tr.pdv-row').forEach(function(row) {
-      let show = false;
-      row.querySelectorAll('td').forEach(function(td) {
-        if (td.textContent.toLowerCase().indexOf(val) !== -1) show = true;
-      });
-      row.style.display = show ? '' : 'none';
+    /* ── Copy CNPJ ── */
+    document.querySelectorAll('.pdv-copy-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const text = btn.dataset.copy;
+            navigator.clipboard.writeText(text).then(() => {
+                const icon = btn.querySelector('i');
+                icon.textContent = 'check';
+                icon.style.color = 'var(--pdv-green-500)';
+                setTimeout(() => {
+                    icon.textContent = 'content_copy';
+                    icon.style.color = '';
+                }, 1500);
+            });
+        });
     });
-  });
 
-  // Ordenação de colunas
-  document.querySelectorAll('.sortable').forEach(function(th) {
-    th.addEventListener('click', function() {
-      const sortKey = th.getAttribute('data-sort');
-      const rows = Array.from(document.querySelectorAll('#pdvTableBody tr.pdv-row'));
-      const asc = !th.classList.contains('sorted-asc');
-      rows.sort(function(a, b) {
-        const aVal = a.querySelector('td:nth-child('+(th.cellIndex+1)+')').textContent.trim().toLowerCase();
-        const bVal = b.querySelector('td:nth-child('+(th.cellIndex+1)+')').textContent.trim().toLowerCase();
-        if (aVal < bVal) return asc ? -1 : 1;
-        if (aVal > bVal) return asc ? 1 : -1;
-        return 0;
-      });
-      rows.forEach(row => row.parentNode.appendChild(row));
-      document.querySelectorAll('.sortable').forEach(th2 => th2.classList.remove('sorted-asc','sorted-desc'));
-      th.classList.add(asc ? 'sorted-asc' : 'sorted-desc');
+    /* ── Keyboard shortcuts ── */
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key.toLowerCase() === 'n') {
+            e.preventDefault();
+            window.location.href = "{% url 'dashboard:pontodevenda_create' %}";
+        }
+        if (e.ctrlKey && e.key.toLowerCase() === 'f') {
+            e.preventDefault();
+            searchInput?.focus();
+            searchInput?.select();
+        }
     });
-  });
-
-  // Copiar CNPJ
-  document.querySelectorAll('.copy-btn').forEach(function(btn) {
-    btn.addEventListener('click', function(e) {
-      e.preventDefault();
-      navigator.clipboard.writeText(btn.getAttribute('data-copy'));
-      btn.title = 'Copiado!';
-      setTimeout(()=>{btn.title='Copiar CNPJ';}, 1200);
-    });
-  });
-
-  // Destaque de linha ao criar/editar
-  if (window.location.hash === '#novo' || window.location.hash.startsWith('#edit')) {
-    setTimeout(function() {
-      const row = document.querySelector('#pdvTableBody tr.pdv-row');
-      if (row) {
-        row.classList.add('table-success');
-        setTimeout(()=>row.classList.remove('table-success'), 2500);
-      }
-    }, 300);
-  }
-
-  // Atalhos de teclado
-  document.addEventListener('keydown', function(e) {
-    if (e.ctrlKey && e.key.toLowerCase() === 'n') {
-      e.preventDefault();
-      document.getElementById('novoPdvBtn').click();
-    }
-    if (e.ctrlKey && e.key.toLowerCase() === 'f') {
-      e.preventDefault();
-      document.getElementById('searchInput').focus();
-    }
-  });
 });
 </script>
 {% endblock %}

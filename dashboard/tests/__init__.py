@@ -12,4 +12,4 @@ from .test_workflows import *  # noqa: F401,F403
 from .test_tenants import *  # noqa: F401,F403
 
 # Testes legados (arquivo original monolítico — migrar gradualmente para os módulos acima)
-from dashboard.tests_legacy import *  # noqa: F401,F403
+from dashboard.tests.test_legacy import *  # noqa: F401,F403

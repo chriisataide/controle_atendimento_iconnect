@@ -20,7 +20,7 @@ from ..models import (
     StatusTicket, PrioridadeTicket, TicketAnexo, PontoDeVenda,
 )
 from ..forms import TicketCreateForm
-from ..views_helpers import get_role_filtered_tickets, user_can_access_ticket
+from .helpers import get_role_filtered_tickets, user_can_access_ticket
 
 logger = logging.getLogger('dashboard')
 User = get_user_model()
@@ -229,7 +229,7 @@ class TicketCreateView(CreateView):
             try:
                 from decimal import Decimal
                 from ..models import ItemAtendimento
-                from ..models_estoque import Produto
+                from ..models import Produto
 
                 itens = json.loads(produtos_dados)
 
@@ -262,7 +262,7 @@ class TicketCreateView(CreateView):
 
         # Processar anexos
         if 'anexos' in self.request.FILES:
-            from ..security import validate_file_upload
+            from ..utils.security import validate_file_upload
             anexos = self.request.FILES.getlist('anexos')
             for anexo in anexos:
                 is_valid, error_msg = validate_file_upload(anexo)

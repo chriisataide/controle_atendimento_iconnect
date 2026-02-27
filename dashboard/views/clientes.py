@@ -16,7 +16,7 @@ import logging
 
 from ..models import Cliente, Ticket
 from ..forms import ClienteForm
-from ..security import rate_limit
+from ..utils.security import rate_limit
 
 logger = logging.getLogger('dashboard')
 User = get_user_model()

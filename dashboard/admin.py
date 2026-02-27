@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import Cliente, CategoriaTicket, Ticket, InteracaoTicket, PerfilAgente, PerfilUsuario
-from .models_equipamento import (
+from .models import (
     Equipamento, HistoricoEquipamento, AlertaEquipamento,
     ConfiguracaoAlertaEquipamento
 )
