@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q, Avg, Count, F
 from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
+from asgiref.sync import async_to_sync
 from datetime import timedelta
 import csv
 import json
@@ -38,12 +39,12 @@ def chatbot_api(request):
             message = data.get('message', '')
 
             chatbot = ChatbotService()
-            response = chatbot.process_message(request.user.id, message)
+            response = async_to_sync(chatbot.process_message)(request.user.id, message)
 
             return JsonResponse({
                 'response': response.message,
-                'suggestions': response.suggestions,
-                'type': response.response_type
+                'suggestions': response.quick_replies or [],
+                'type': response.intent.value if response.intent else 'general'
             })
         except Exception as e:
             logger.error(f'Erro no chatbot_api: {e}', exc_info=True)
