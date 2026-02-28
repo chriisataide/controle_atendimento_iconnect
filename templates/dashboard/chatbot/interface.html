@@ -145,11 +145,25 @@ document.addEventListener('DOMContentLoaded', function() {
         this.style.height = Math.min(this.scrollHeight, 120) + 'px';
     });
 
+    function formatMessage(text) {
+        // Converter markdown básico para HTML
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.+?)\*/g, '<em>$1</em>')
+            .replace(/\n/g, '<br>')
+            .replace(/• /g, '&bull; ')
+            .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" class="text-primary">$1</a>');
+    }
+
     function addMessage(content, isUser) {
         const msgDiv = document.createElement('div');
         msgDiv.className = isUser ? 'user-msg' : 'bot-msg';
+        const formatted = isUser ? content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : formatMessage(content);
         msgDiv.innerHTML = `
-            <div class="bubble"><span class="text-sm">${content}</span></div>
+            <div class="bubble"><span class="text-sm">${formatted}</span></div>
             <p class="text-xs text-muted mt-1 ${isUser ? 'text-end' : ''}">${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</p>
         `;
         messagesDiv.appendChild(msgDiv);
@@ -187,6 +201,25 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             removeTyping();
             addMessage(data.response || data.message || 'Desculpe, não consegui processar sua solicitação.', false);
+
+            // Renderizar quick replies dinâmicas se existirem
+            if (data.suggestions && data.suggestions.length > 0) {
+                const qrDiv = document.createElement('div');
+                qrDiv.className = 'quick-replies d-flex flex-wrap gap-1 mb-2 ms-2';
+                data.suggestions.forEach(function(s) {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-outline-primary btn-sm px-2 py-1';
+                    btn.style.fontSize = '0.75rem';
+                    btn.textContent = s;
+                    btn.addEventListener('click', function() {
+                        qrDiv.remove();
+                        sendMessage(s);
+                    });
+                    qrDiv.appendChild(btn);
+                });
+                messagesDiv.appendChild(qrDiv);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
         } catch(err) {
             removeTyping();
             addMessage('Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.', false);
