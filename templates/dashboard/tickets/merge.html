@@ -1,0 +1,337 @@
+{% extends 'base.html' %}
+{% load static dashboard_extras %}
+
+{% block title %}Mesclar Tickets — iConnect{% endblock %}
+{% block page_title %}Mesclar Tickets{% endblock %}
+{% block breadcrumb_title %}Merge{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb bg-transparent mb-0 p-0">
+      <li class="breadcrumb-item text-sm">
+        <a href="{% url 'dashboard:ticket_list' %}" class="text-secondary">
+          <span class="material-symbols-rounded" style="font-size:16px;vertical-align:-3px;">confirmation_number</span> Tickets
+        </a>
+      </li>
+      <li class="breadcrumb-item text-sm active text-dark" aria-current="page">Mesclar Tickets</li>
+    </ol>
+  </nav>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card ic-card">
+        <div class="card-header pb-0 p-3">
+          <div class="d-flex align-items-center">
+            <div class="ic-kpi-icon shadow-sm me-3" style="background:linear-gradient(195deg,#42424a,#191919);width:42px;height:42px;">
+              <span class="material-symbols-rounded" style="font-size:20px;color:#fff;">merge</span>
+            </div>
+            <div>
+              <h5 class="font-weight-bold mb-0">Mesclar Tickets</h5>
+              <p class="text-xs text-muted mb-0">Combine tickets duplicados em um único ticket principal</p>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-3">
+          <!-- Alerta informativo -->
+          <div class="alert" style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;" role="alert">
+            <div class="d-flex align-items-start">
+              <span class="material-symbols-rounded text-info me-2" style="font-size:20px;">info</span>
+              <div>
+                <p class="text-sm mb-1 font-weight-bold" style="color:#0369a1;">Como funciona a mesclagem</p>
+                <ul class="text-xs mb-0" style="color:#0c4a6e;">
+                  <li>Todas as interações dos tickets de origem serão copiadas para o ticket principal</li>
+                  <li>Os tickets de origem serão fechados com referência ao ticket principal</li>
+                  <li>Anexos e notas internas são preservados</li>
+                  <li>Esta ação <strong>não pode ser desfeita</strong></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ticket Principal (Target) -->
+          <div class="mb-4">
+            <label class="form-label text-sm font-weight-bold">
+              <span class="material-symbols-rounded me-1" style="font-size:16px;vertical-align:-3px;">star</span>
+              Ticket Principal (destino)
+            </label>
+            <div class="input-group">
+              <span class="input-group-text">#</span>
+              <input type="number" id="targetTicketId" class="form-control" placeholder="ID do ticket principal" min="1" style="border-radius:0 10px 10px 0;">
+              <button class="btn ic-btn-slate btn-sm ms-2" onclick="previewTicket('target')" style="border-radius:10px;">
+                <span class="material-symbols-rounded" style="font-size:16px;vertical-align:-3px;">search</span>
+                Buscar
+              </button>
+            </div>
+            <div id="targetPreview" class="mt-2"></div>
+          </div>
+
+          <!-- Tickets de Origem (Sources) -->
+          <div class="mb-4">
+            <label class="form-label text-sm font-weight-bold">
+              <span class="material-symbols-rounded me-1" style="font-size:16px;vertical-align:-3px;">call_merge</span>
+              Tickets de Origem (serão mesclados)
+            </label>
+            <div id="sourceTickets">
+              <div class="input-group mb-2 source-row">
+                <span class="input-group-text">#</span>
+                <input type="number" class="form-control source-input" placeholder="ID do ticket" min="1">
+                <button class="btn btn-outline-secondary btn-sm" onclick="previewSourceTicket(this)" title="Buscar">
+                  <span class="material-symbols-rounded" style="font-size:16px;">search</span>
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="removeSourceRow(this)" title="Remover" disabled>
+                  <span class="material-symbols-rounded" style="font-size:16px;">close</span>
+                </button>
+              </div>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm" onclick="addSourceRow()">
+              <span class="material-symbols-rounded me-1" style="font-size:16px;vertical-align:-3px;">add</span>
+              Adicionar outro ticket
+            </button>
+          </div>
+
+          <!-- Motivo -->
+          <div class="mb-4">
+            <label class="form-label text-sm font-weight-bold">
+              <span class="material-symbols-rounded me-1" style="font-size:16px;vertical-align:-3px;">notes</span>
+              Motivo da Mesclagem
+            </label>
+            <textarea id="mergeReason" class="form-control" rows="3" placeholder="Ex: Tickets duplicados reportando o mesmo problema..." style="border-radius:10px;"></textarea>
+          </div>
+
+          <!-- Ações -->
+          <div class="d-flex justify-content-between align-items-center border-top pt-3">
+            <a href="{% url 'dashboard:ticket_list' %}" class="btn btn-outline-secondary btn-sm">
+              <span class="material-symbols-rounded me-1" style="font-size:16px;vertical-align:-3px;">arrow_back</span>
+              Voltar
+            </a>
+            <button class="btn ic-btn-primary" onclick="executeMerge()" id="btnMerge" disabled>
+              <span class="material-symbols-rounded me-1" style="font-size:18px;vertical-align:-3px;">merge</span>
+              Mesclar Tickets
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar: resumo -->
+    <div class="col-lg-4">
+      <div class="card ic-card">
+        <div class="card-header pb-0 p-3">
+          <h6 class="text-sm mb-0">
+            <span class="material-symbols-rounded me-1" style="font-size:18px;vertical-align:-3px;">summarize</span>
+            Resumo da Operação
+          </h6>
+        </div>
+        <div class="card-body p-3 pt-2" id="mergeSummary">
+          <div class="text-center py-4">
+            <span class="material-symbols-rounded text-muted" style="font-size:48px;">merge</span>
+            <p class="text-xs text-muted mt-2">Selecione os tickets para ver o resumo</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resultados -->
+      <div class="card ic-card mt-3 d-none" id="mergeResult">
+        <div class="card-body p-3 text-center" id="mergeResultBody">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const csrfToken = '{{ csrf_token }}';
+
+function addSourceRow() {
+  const container = document.getElementById('sourceTickets');
+  const row = document.createElement('div');
+  row.className = 'input-group mb-2 source-row';
+  row.innerHTML = `
+    <span class="input-group-text">#</span>
+    <input type="number" class="form-control source-input" placeholder="ID do ticket" min="1">
+    <button class="btn btn-outline-secondary btn-sm" onclick="previewSourceTicket(this)" title="Buscar">
+      <span class="material-symbols-rounded" style="font-size:16px;">search</span>
+    </button>
+    <button class="btn btn-outline-danger btn-sm" onclick="removeSourceRow(this)" title="Remover">
+      <span class="material-symbols-rounded" style="font-size:16px;">close</span>
+    </button>
+  `;
+  container.appendChild(row);
+  updateMergeButton();
+}
+
+function removeSourceRow(btn) {
+  const row = btn.closest('.source-row');
+  row.remove();
+  updateMergeButton();
+}
+
+function previewTicket(type) {
+  const id = document.getElementById('targetTicketId').value;
+  if (!id) return;
+  fetch(`/dashboard/tickets/${id}/`, {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+    .then(r => {
+      if (!r.ok) throw new Error('Ticket não encontrado');
+      return r.text();
+    })
+    .then(() => {
+      document.getElementById('targetPreview').innerHTML = `
+        <div class="d-flex align-items-center p-2 rounded" style="background:var(--ic-bg-hover);">
+          <span class="material-symbols-rounded text-success me-2">check_circle</span>
+          <span class="text-sm">Ticket <strong>#${id}</strong> encontrado</span>
+        </div>
+      `;
+      updateMergeButton();
+    })
+    .catch(() => {
+      document.getElementById('targetPreview').innerHTML = `
+        <div class="d-flex align-items-center p-2 rounded" style="background:#fef2f2;">
+          <span class="material-symbols-rounded text-danger me-2">error</span>
+          <span class="text-sm text-danger">Ticket #${id} não encontrado</span>
+        </div>
+      `;
+    });
+}
+
+function previewSourceTicket(btn) {
+  const input = btn.closest('.source-row').querySelector('.source-input');
+  const id = input.value;
+  if (!id) return;
+  // Simple validation — just mark as acknowledged
+  const row = btn.closest('.source-row');
+  let preview = row.querySelector('.source-preview');
+  if (!preview) {
+    preview = document.createElement('div');
+    preview.className = 'source-preview w-100 mt-1';
+    row.after(preview);
+  }
+  preview.innerHTML = `
+    <div class="d-flex align-items-center p-1 rounded mb-1" style="background:var(--ic-bg-hover);">
+      <span class="material-symbols-rounded text-success me-1" style="font-size:14px;">check_circle</span>
+      <span class="text-xs">Ticket #${id} selecionado</span>
+    </div>
+  `;
+  updateMergeButton();
+}
+
+function updateMergeButton() {
+  const targetId = document.getElementById('targetTicketId').value;
+  const sources = document.querySelectorAll('.source-input');
+  let hasSource = false;
+  sources.forEach(s => { if (s.value) hasSource = true; });
+  document.getElementById('btnMerge').disabled = !(targetId && hasSource);
+  updateSummary();
+}
+
+function updateSummary() {
+  const targetId = document.getElementById('targetTicketId').value;
+  const sources = [];
+  document.querySelectorAll('.source-input').forEach(s => {
+    if (s.value) sources.push(s.value);
+  });
+
+  if (!targetId && sources.length === 0) return;
+
+  let html = '<ul class="list-group list-group-flush">';
+  if (targetId) {
+    html += `<li class="list-group-item px-0 py-2 border-0 d-flex align-items-center">
+      <span class="material-symbols-rounded text-success me-2" style="font-size:16px;">star</span>
+      <span class="text-xs"><strong>Principal:</strong> #${targetId}</span>
+    </li>`;
+  }
+  sources.forEach(s => {
+    html += `<li class="list-group-item px-0 py-2 border-0 d-flex align-items-center">
+      <span class="material-symbols-rounded text-warning me-2" style="font-size:16px;">call_merge</span>
+      <span class="text-xs"><strong>Origem:</strong> #${s}</span>
+    </li>`;
+  });
+  html += '</ul>';
+  if (sources.length > 0) {
+    html += `<div class="text-xs text-muted mt-2 pt-2 border-top">
+      <strong>${sources.length}</strong> ticket(s) será(ão) mesclado(s) no ticket #${targetId || '?'}
+    </div>`;
+  }
+  document.getElementById('mergeSummary').innerHTML = html;
+}
+
+function executeMerge() {
+  const targetId = parseInt(document.getElementById('targetTicketId').value);
+  const sourceIds = [];
+  document.querySelectorAll('.source-input').forEach(s => {
+    if (s.value) sourceIds.push(parseInt(s.value));
+  });
+  const reason = document.getElementById('mergeReason').value;
+
+  if (!targetId || sourceIds.length === 0) {
+    alert('Preencha o ticket principal e pelo menos um ticket de origem.');
+    return;
+  }
+
+  if (!confirm(`Mesclar ${sourceIds.length} ticket(s) no ticket #${targetId}? Esta ação não pode ser desfeita.`)) return;
+
+  const btn = document.getElementById('btnMerge');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-rounded me-1 spinner" style="font-size:18px;animation:spin 1s linear infinite;">sync</span> Mesclando...';
+
+  fetch("{% url 'dashboard:api_merge_tickets' %}", {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken,
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: JSON.stringify({
+      target_ticket_id: targetId,
+      source_ticket_ids: sourceIds,
+      reason: reason
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    const resultCard = document.getElementById('mergeResult');
+    const resultBody = document.getElementById('mergeResultBody');
+    resultCard.classList.remove('d-none');
+
+    if (data.success || data.status === 'success') {
+      resultBody.innerHTML = `
+        <span class="material-symbols-rounded text-success" style="font-size:48px;">check_circle</span>
+        <h6 class="mt-2 text-success">Mesclagem concluída!</h6>
+        <p class="text-xs text-muted">${sourceIds.length} ticket(s) mesclado(s) no ticket #${targetId}</p>
+        <a href="/dashboard/tickets/${targetId}/" class="btn ic-btn-primary btn-sm mt-2">
+          <span class="material-symbols-rounded me-1" style="font-size:16px;vertical-align:-3px;">open_in_new</span>
+          Ver Ticket #${targetId}
+        </a>
+      `;
+    } else {
+      resultBody.innerHTML = `
+        <span class="material-symbols-rounded text-danger" style="font-size:48px;">error</span>
+        <h6 class="mt-2 text-danger">Erro na mesclagem</h6>
+        <p class="text-xs text-muted">${data.error || 'Erro desconhecido. Verifique os IDs e tente novamente.'}</p>
+      `;
+      btn.disabled = false;
+      btn.innerHTML = '<span class="material-symbols-rounded me-1" style="font-size:18px;vertical-align:-3px;">merge</span> Mesclar Tickets';
+    }
+  })
+  .catch(err => {
+    console.error('Merge error:', err);
+    alert('Erro de rede. Tente novamente.');
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-rounded me-1" style="font-size:18px;vertical-align:-3px;">merge</span> Mesclar Tickets';
+  });
+}
+
+// Listen for input changes
+document.getElementById('targetTicketId').addEventListener('input', updateMergeButton);
+document.addEventListener('input', function(e) {
+  if (e.target.classList.contains('source-input')) updateMergeButton();
+});
+</script>
+<style>
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+</style>
+{% endblock %}

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static dashboard_extras %}
 
 {% block title %}Tickets — iConnect{% endblock %}
 {% block page_title %}Tickets{% endblock %}
@@ -259,28 +259,10 @@
                     <p class="text-xs text-secondary mb-0">{{ ticket.cliente.empresa|default:"—" }}</p>
                   </td>
                   <td class="align-middle text-center text-sm">
-                    {% if ticket.status == 'aberto' %}
-                      <span class="badge badge-sm bg-gradient-danger">{{ ticket.get_status_display }}</span>
-                    {% elif ticket.status == 'em_andamento' %}
-                      <span class="badge badge-sm bg-gradient-warning">{{ ticket.get_status_display }}</span>
-                    {% elif ticket.status == 'aguardando_cliente' %}
-                      <span class="badge badge-sm" style="background: linear-gradient(195deg, #f59e0b, #d97706); color: #fff;">{{ ticket.get_status_display }}</span>
-                    {% elif ticket.status == 'resolvido' %}
-                      <span class="badge badge-sm bg-gradient-info">{{ ticket.get_status_display }}</span>
-                    {% else %}
-                      <span class="badge badge-sm bg-gradient-success">{{ ticket.get_status_display }}</span>
-                    {% endif %}
+                    {% status_badge ticket.status %}
                   </td>
                   <td class="align-middle text-center text-sm">
-                    {% if ticket.prioridade == 'critica' %}
-                      <span class="badge badge-sm bg-gradient-danger">{{ ticket.get_prioridade_display }}</span>
-                    {% elif ticket.prioridade == 'alta' %}
-                      <span class="badge badge-sm bg-gradient-warning">{{ ticket.get_prioridade_display }}</span>
-                    {% elif ticket.prioridade == 'media' %}
-                      <span class="badge badge-sm" style="background: linear-gradient(195deg, #06b6d4, #0891b2); color: #fff;">{{ ticket.get_prioridade_display }}</span>
-                    {% else %}
-                      <span class="badge badge-sm bg-gradient-secondary">{{ ticket.get_prioridade_display }}</span>
-                    {% endif %}
+                    {% priority_badge ticket.prioridade %}
                   </td>
                   <td class="align-middle text-center">
                     {% if ticket.categoria %}

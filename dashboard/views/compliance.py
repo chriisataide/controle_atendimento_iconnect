@@ -1,0 +1,217 @@
+"""
+Views de Compliance — Trilha de Auditoria e LGPD.
+
+Features:
+    - AuditTrailView: Painel interativo de trilha de auditoria (BACEN-compliant)
+    - LGPDPanelView: Painel de gestão LGPD com consentimentos e solicitações
+    - API endpoints para filtros/export
+"""
+import csv
+import json
+from datetime import timedelta
+
+from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
+from django.http import JsonResponse, HttpResponse
+from django.shortcuts import render
+from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.views.generic import ListView
+from django.db.models import Q, Count
+from django.contrib.auth.models import User
+
+from dashboard.models.audit import AuditEvent, SecurityAlert
+from dashboard.models.lgpd import LGPDConsent, LGPDDataRequest, LGPDAccessLog
+
+
+# ========== TRILHA DE AUDITORIA ==========
+
+@method_decorator([login_required, staff_member_required], name='dispatch')
+class AuditTrailView(ListView):
+    """Trilha de auditoria com filtros avançados — BACEN/LGPD compliant."""
+    model = AuditEvent
+    template_name = 'dashboard/compliance/audit_trail.html'
+    context_object_name = 'events'
+    paginate_by = 50
+
+    def get_queryset(self):
+        qs = AuditEvent.objects.select_related('user').all()
+
+        # Filtros
+        event_type = self.request.GET.get('type')
+        severity = self.request.GET.get('severity')
+        user_id = self.request.GET.get('user')
+        search = self.request.GET.get('q')
+        days = self.request.GET.get('days')
+        suspicious = self.request.GET.get('suspicious')
+
+        if event_type:
+            qs = qs.filter(event_type=event_type)
+        if severity:
+            qs = qs.filter(severity=severity)
+        if user_id:
+            qs = qs.filter(user_id=user_id)
+        if search:
+            qs = qs.filter(
+                Q(action__icontains=search) |
+                Q(description__icontains=search) |
+                Q(ip_address__icontains=search) |
+                Q(user__username__icontains=search)
+            )
+        if days:
+            try:
+                since = timezone.now() - timedelta(days=int(days))
+                qs = qs.filter(timestamp__gte=since)
+            except (ValueError, TypeError):
+                pass
+        if suspicious == '1':
+            qs = qs.filter(is_suspicious=True)
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        now = timezone.now()
+        last_24h = now - timedelta(hours=24)
+        last_7d = now - timedelta(days=7)
+
+        ctx['stats'] = {
+            'total_24h': AuditEvent.objects.filter(timestamp__gte=last_24h).count(),
+            'total_7d': AuditEvent.objects.filter(timestamp__gte=last_7d).count(),
+            'suspicious': AuditEvent.objects.filter(is_suspicious=True, is_resolved=False).count(),
+            'security_alerts': SecurityAlert.objects.filter(resolved=False).count(),
+        }
+        ctx['event_types'] = AuditEvent.EVENT_TYPES
+        ctx['severity_levels'] = AuditEvent.SEVERITY_LEVELS
+        ctx['users'] = User.objects.filter(is_active=True).order_by('username')
+
+        # Dados para chart de eventos por tipo (últimos 7d)
+        type_counts = (
+            AuditEvent.objects.filter(timestamp__gte=last_7d)
+            .values('event_type')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
+        ctx['chart_labels'] = json.dumps([t['event_type'] for t in type_counts])
+        ctx['chart_data'] = json.dumps([t['count'] for t in type_counts])
+
+        # Filtros ativos (para exibir tags)
+        ctx['active_filters'] = {
+            k: v for k, v in self.request.GET.items() if v and k != 'page'
+        }
+        return ctx
+
+
+@login_required
+@staff_member_required
+def audit_export_csv(request):
+    """Exporta eventos de auditoria em CSV."""
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="auditoria_{timezone.now():%Y%m%d_%H%M}.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow([
+        'Data/Hora', 'Tipo', 'Severidade', 'Usuário', 'Ação',
+        'Descrição', 'IP', 'Suspeito', 'Resolvido',
+    ])
+
+    qs = AuditEvent.objects.select_related('user').order_by('-timestamp')[:5000]
+    for e in qs:
+        writer.writerow([
+            e.timestamp.strftime('%d/%m/%Y %H:%M:%S'),
+            e.get_event_type_display(),
+            e.get_severity_display(),
+            e.user.username if e.user else '—',
+            e.action,
+            e.description[:200],
+            e.ip_address,
+            'Sim' if e.is_suspicious else 'Não',
+            'Sim' if e.is_resolved else 'Não',
+        ])
+
+    return response
+
+
+# ========== PAINEL LGPD ==========
+
+@method_decorator([login_required, staff_member_required], name='dispatch')
+class LGPDPanelView(View):
+    """Painel de gestão LGPD — consentimentos, solicitações e logs."""
+    template_name = 'dashboard/compliance/lgpd_panel.html'
+
+    def get(self, request):
+        now = timezone.now()
+        last_30d = now - timedelta(days=30)
+
+        # Stats
+        total_consents = LGPDConsent.objects.filter(granted=True, revoked_at__isnull=True).count()
+        pending_requests = LGPDDataRequest.objects.filter(status='pending').count()
+        overdue_requests = LGPDDataRequest.objects.filter(
+            status__in=['pending', 'in_progress'],
+            deadline__lt=now,
+        ).count()
+        access_logs_30d = LGPDAccessLog.objects.filter(timestamp__gte=last_30d).count()
+
+        # Solicitações recentes
+        recent_requests = (
+            LGPDDataRequest.objects
+            .select_related('user', 'processed_by')
+            .order_by('-created_at')[:20]
+        )
+
+        # Distribuição de consentimentos por finalidade
+        consent_stats = (
+            LGPDConsent.objects
+            .filter(granted=True, revoked_at__isnull=True)
+            .values('purpose')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
+
+        # Logs de acesso recentes
+        recent_logs = (
+            LGPDAccessLog.objects
+            .select_related('user')
+            .order_by('-timestamp')[:15]
+        )
+
+        context = {
+            'stats': {
+                'total_consents': total_consents,
+                'pending_requests': pending_requests,
+                'overdue_requests': overdue_requests,
+                'access_logs_30d': access_logs_30d,
+            },
+            'recent_requests': recent_requests,
+            'consent_stats': consent_stats,
+            'recent_logs': recent_logs,
+            'consent_purposes': LGPDConsent.PURPOSE_CHOICES,
+            'request_types': LGPDDataRequest.REQUEST_TYPES,
+        }
+        return render(request, self.template_name, context)
+
+
+@login_required
+@staff_member_required
+def lgpd_process_request(request, pk):
+    """Processa solicitação LGPD (aprovar/rejeitar)."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        lgpd_request = LGPDDataRequest.objects.get(pk=pk)
+    except LGPDDataRequest.DoesNotExist:
+        return JsonResponse({'error': 'Solicitação não encontrada'}, status=404)
+
+    action = request.POST.get('action')
+    response_text = request.POST.get('response', '')
+
+    if action == 'approve':
+        lgpd_request.complete(processed_by=request.user, response=response_text)
+        return JsonResponse({'status': 'approved', 'message': 'Solicitação aprovada com sucesso.'})
+    elif action == 'reject':
+        lgpd_request.reject(processed_by=request.user, response=response_text)
+        return JsonResponse({'status': 'rejected', 'message': 'Solicitação rejeitada.'})
+    else:
+        return JsonResponse({'error': 'Ação inválida'}, status=400)

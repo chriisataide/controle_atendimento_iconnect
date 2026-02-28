@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static dashboard_extras %}
 
 {% block title %}Dashboard - Controle de Atendimento iConnect{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
@@ -163,7 +163,7 @@
         </div>
       </div>
       <a href="{% url 'dashboard:ticket_list' %}?prioridade=critica&status=aberto" class="btn-urgent">
-        <i class="material-icons">visibility</i>
+        <i class="material-symbols-rounded">visibility</i>
         Ver Urgentes
       </a>
     </div>
@@ -361,28 +361,10 @@
                   <span class="text-sm">{% if ticket.cliente %}{{ ticket.cliente.nome }}{% else %}--{% endif %}</span>
                 </td>
                 <td class="text-center">
-                  {% if ticket.prioridade == 'critica' %}
-                    <span class="badge-priority" style="background:#fef2f2;color:#dc2626;">Cr&iacute;tica</span>
-                  {% elif ticket.prioridade == 'alta' %}
-                    <span class="badge-priority" style="background:#fff7ed;color:#ea580c;">Alta</span>
-                  {% elif ticket.prioridade == 'media' %}
-                    <span class="badge-priority" style="background:#ecfeff;color:#0891b2;">M&eacute;dia</span>
-                  {% else %}
-                    <span class="badge-priority" style="background:#f8fafc;color:#64748b;">Baixa</span>
-                  {% endif %}
+                  {% priority_badge ticket.prioridade %}
                 </td>
                 <td class="text-center">
-                  {% if ticket.status == 'resolvido' or ticket.status == 'fechado' %}
-                    <span class="badge-status" style="background:#f0fdf4;color:#16a34a;">{{ ticket.get_status_display }}</span>
-                  {% elif ticket.status == 'em_andamento' %}
-                    <span class="badge-status" style="background:#fefce8;color:#d97706;">{{ ticket.get_status_display }}</span>
-                  {% elif ticket.status == 'aberto' %}
-                    <span class="badge-status" style="background:#ecfeff;color:#0891b2;">{{ ticket.get_status_display }}</span>
-                  {% elif ticket.status == 'aguardando_cliente' %}
-                    <span class="badge-status" style="background:#f8fafc;color:#0891b2;">{{ ticket.get_status_display }}</span>
-                  {% else %}
-                    <span class="badge-status" style="background:#f8fafc;color:#64748b;">{{ ticket.get_status_display }}</span>
-                  {% endif %}
+                  {% status_badge ticket.status %}
                 </td>
                 <td class="text-center">
                   <span class="text-xs text-muted">{{ ticket.criado_em|timesince|truncatewords:2 }}</span>

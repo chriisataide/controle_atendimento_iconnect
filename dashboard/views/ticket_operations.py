@@ -6,11 +6,18 @@ import logging
 
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.shortcuts import render
 from django.views.decorators.http import require_POST, require_GET
 
 from ..services.ticket_operations import ticket_ops
 
 logger = logging.getLogger('dashboard')
+
+
+@login_required
+def merge_tickets_view(request):
+    """Página de UI para mesclar tickets."""
+    return render(request, 'dashboard/tickets/merge.html')
 
 
 @login_required

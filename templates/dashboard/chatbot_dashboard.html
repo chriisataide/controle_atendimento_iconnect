@@ -193,11 +193,11 @@
         </div>
         <div class="col-md-6 d-flex align-items-center justify-content-end">
             <button class="btn btn-outline-primary btn-sm me-2" onclick="refreshDashboard()">
-                <i class="fas fa-sync-alt me-1"></i>
+                <i class="material-symbols-rounded me-1">sync</i>
                 Atualizar
             </button>
             <button class="btn btn-outline-secondary btn-sm" onclick="exportReport()">
-                <i class="fas fa-download me-1"></i>
+                <i class="material-symbols-rounded me-1">download</i>
                 Exportar
             </button>
         </div>
@@ -209,7 +209,7 @@
             <div class="analytics-card">
                 <span class="analytics-number">{{ analytics.total_conversations|default:0 }}</span>
                 <div class="analytics-label">
-                    <i class="fas fa-comments me-1"></i>
+                    <i class="material-symbols-rounded me-1">forum</i>
                     Total de Conversas
                 </div>
             </div>
@@ -218,7 +218,7 @@
             <div class="analytics-card">
                 <span class="analytics-number">{{ analytics.messages_today|default:0 }}</span>
                 <div class="analytics-label">
-                    <i class="fas fa-comment-dots me-1"></i>
+                    <i class="material-symbols-rounded me-1">chat_bubble</i>
                     Mensagens Hoje
                 </div>
             </div>
@@ -227,7 +227,7 @@
             <div class="analytics-card">
                 <span class="analytics-number">{{ analytics.avg_confidence|default:0|floatformat:1 }}%</span>
                 <div class="analytics-label">
-                    <i class="fas fa-brain me-1"></i>
+                    <i class="material-symbols-rounded me-1">psychology</i>
                     Confiança Média
                 </div>
             </div>
@@ -236,7 +236,7 @@
             <div class="analytics-card">
                 <span class="analytics-number">{{ kb_count|default:0 }}</span>
                 <div class="analytics-label">
-                    <i class="fas fa-database me-1"></i>
+                    <i class="material-symbols-rounded me-1">storage</i>
                     Base de Conhecimento
                 </div>
             </div>
@@ -248,23 +248,23 @@
         <div class="col-12">
             <div class="quick-actions">
                 <h5 class="mb-3">
-                    <i class="fas fa-bolt me-2"></i>
+                    <i class="material-symbols-rounded me-2">bolt</i>
                     Ações Rápidas
                 </h5>
                 <a href="{% url 'dashboard:chatbot_ai_knowledge' %}" class="action-btn">
-                    <i class="fas fa-plus me-1"></i>
+                    <i class="material-symbols-rounded me-1">add</i>
                     Adicionar Conhecimento
                 </a>
                 <a href="{% url 'dashboard:chatbot_ai_settings' %}" class="action-btn">
-                    <i class="fas fa-graduation-cap me-1"></i>
+                    <i class="material-symbols-rounded me-1">school</i>
                     Configurações IA
                 </a>
                 <a href="{% url 'dashboard:chatbot_ai_conversations' %}" class="action-btn">
-                    <i class="fas fa-chart-line me-1"></i>
+                    <i class="material-symbols-rounded me-1">show_chart</i>
                     Ver Conversas
                 </a>
                 <a href="{% url 'dashboard:chatbot_ai_interface' %}" class="action-btn">
-                    <i class="fas fa-comments me-1"></i>
+                    <i class="material-symbols-rounded me-1">forum</i>
                     Testar Chatbot
                 </a>
             </div>
@@ -278,21 +278,21 @@
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="conversations-tab" data-bs-toggle="tab" 
                             data-bs-target="#conversations" type="button" role="tab">
-                        <i class="fas fa-comments me-1"></i>
+                        <i class="material-symbols-rounded me-1">forum</i>
                         Conversas Recentes
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="low-confidence-tab" data-bs-toggle="tab" 
                             data-bs-target="#low-confidence" type="button" role="tab">
-                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        <i class="material-symbols-rounded me-1">warning</i>
                         Baixa Confiança
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" 
                             data-bs-target="#analytics" type="button" role="tab">
-                        <i class="fas fa-chart-bar me-1"></i>
+                        <i class="material-symbols-rounded me-1">bar_chart</i>
                         Analytics
                     </button>
                 </li>
@@ -309,10 +309,10 @@
                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                         <h6 class="mb-0">
                                             {% if conversation.usuario %}
-                                                <i class="fas fa-user me-1"></i>
+                                                <i class="material-symbols-rounded me-1">person</i>
                                                 {{ conversation.usuario.get_full_name|default:conversation.usuario.username }}
                                             {% else %}
-                                                <i class="fas fa-user-secret me-1"></i>
+                                                <i class="material-symbols-rounded me-1">admin_panel_settings</i>
                                                 Usuário Anônimo
                                             {% endif %}
                                         </h6>
@@ -330,7 +330,7 @@
                                             {{ conversation.mensagens.count }} mensagens
                                         </span>
                                         <a href="#" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-eye me-1"></i>
+                                            <i class="material-symbols-rounded me-1">visibility</i>
                                             Ver Detalhes
                                         </a>
                                     </div>
@@ -340,7 +340,7 @@
                         </div>
                     {% else %}
                         <div class="empty-state">
-                            <i class="fas fa-comments"></i>
+                            <i class="material-symbols-rounded">forum</i>
                             <h5>Nenhuma conversa encontrada</h5>
                             <p>As conversas com o chatbot aparecerão aqui conforme forem iniciadas.</p>
                         </div>
@@ -399,10 +399,10 @@
                                         <td>
                                             <div class="btn-group btn-group-sm">
                                                 <button class="btn btn-outline-primary" title="Melhorar Resposta">
-                                                    <i class="fas fa-edit"></i>
+                                                    <i class="material-symbols-rounded">edit</i>
                                                 </button>
                                                 <button class="btn btn-outline-success" title="Marcar como Resolvido">
-                                                    <i class="fas fa-check"></i>
+                                                    <i class="material-symbols-rounded">check</i>
                                                 </button>
                                             </div>
                                         </td>
@@ -413,7 +413,7 @@
                         </div>
                     {% else %}
                         <div class="empty-state">
-                            <i class="fas fa-exclamation-triangle"></i>
+                            <i class="material-symbols-rounded">warning</i>
                             <h5>Ótimo! Nenhuma resposta com baixa confiança</h5>
                             <p>O chatbot está funcionando bem e respondendo com alta confiança.</p>
                         </div>
@@ -427,7 +427,7 @@
                             <div class="card analytics-chart-card">
                                 <div class="card-header">
                                     <h6 class="mb-0">
-                                        <i class="fas fa-chart-pie me-1"></i>
+                                        <i class="material-symbols-rounded me-1">pie_chart</i>
                                         Distribuição de Confiança
                                     </h6>
                                 </div>
@@ -443,7 +443,7 @@
                             <div class="card analytics-chart-card">
                                 <div class="card-header">
                                     <h6 class="mb-0">
-                                        <i class="fas fa-clock me-1"></i>
+                                        <i class="material-symbols-rounded me-1">schedule</i>
                                         Atividade por Hora
                                     </h6>
                                 </div>
@@ -461,7 +461,7 @@
                             <div class="card">
                                 <div class="card-header">
                                     <h6 class="mb-0">
-                                        <i class="fas fa-trending-up me-1"></i>
+                                        <i class="material-symbols-rounded me-1">trending_up</i>
                                         Tendências dos Últimos 30 Dias
                                     </h6>
                                 </div>
@@ -678,7 +678,7 @@ function showChartError(canvasId, message) {
         const container = canvas.parentElement;
         container.innerHTML = `
             <div class="text-center text-muted py-5">
-                <i class="fas fa-chart-bar fa-3x mb-3 opacity-50"></i>
+                <i class="material-symbols-rounded fa-3x mb-3 opacity-50">bar_chart</i>
                 <p>${message}</p>
                 <button class="btn btn-sm btn-outline-primary" onclick="location.reload()">
                     Tentar Novamente

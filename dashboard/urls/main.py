@@ -4,6 +4,8 @@ from ..services import integrations
 from ..views import sla, chat, push, executive, chatbot_ai, analytics
 from ..views import ticket_operations as ticket_operations_views
 from ..views import workflow_builder as workflow_builder_views
+from ..views import compliance as compliance_views
+from ..views import banking_features as banking_views
 from ..utils.monitoring import HealthCheckView, MetricsView
 from .. import tenants as tenant_views
 
@@ -136,6 +138,7 @@ urlpatterns = [
     path('api/workflows/metrics/', workflow_builder_views.api_workflow_metrics, name='api_workflow_metrics'),
 
     # Ticket Operations — Merge / Split / Parent-Child
+    path('tickets/merge/', ticket_operations_views.merge_tickets_view, name='ticket_merge'),
     path('api/tickets/merge/', ticket_operations_views.api_merge_tickets, name='api_merge_tickets'),
     path('api/tickets/split/', ticket_operations_views.api_split_ticket, name='api_split_ticket'),
     path('api/tickets/<int:pk>/sub-tickets/', ticket_operations_views.api_add_sub_ticket, name='api_add_sub_ticket'),
@@ -153,6 +156,7 @@ urlpatterns = [
     # User management (admin/staff)
     path('users/', views.UserListView.as_view(), name='user_list'),
     path('users/novo/', views.UserCreateView.as_view(), name='user_create'),
+    path('users/<int:pk>/editar/', views.UserEditView.as_view(), name='user_edit'),
     
     # Advanced Reports
     path('reports/', views.reports_dashboard, name='reports'),
@@ -206,6 +210,25 @@ urlpatterns = [
     
     # Central de Comunicação Unificada
     path('communication/', views.communication_center, name='communication_center'),
+    
+    # Base de Conhecimento
+    path('knowledge/', banking_views.KnowledgeBaseView.as_view(), name='knowledge_base'),
+    path('knowledge/<int:pk>/', banking_views.knowledge_article_detail, name='knowledge_article'),
+    path('knowledge/<int:pk>/vote/', banking_views.knowledge_vote, name='knowledge_vote'),
+
+    # Respostas Rápidas (Macros)
+    path('macros/', banking_views.macros_list, name='macros_list'),
+    path('macros/create/', banking_views.macro_create, name='macro_create'),
+    path('macros/<int:pk>/delete/', banking_views.macro_delete, name='macro_delete'),
+
+    # Time Tracking
+    path('api/tickets/<int:pk>/timetrack/', banking_views.ticket_timetrack, name='ticket_timetrack'),
+
+    # Compliance — Auditoria e LGPD
+    path('compliance/audit/', compliance_views.AuditTrailView.as_view(), name='audit_trail'),
+    path('compliance/audit/export/', compliance_views.audit_export_csv, name='audit_export_csv'),
+    path('compliance/lgpd/', compliance_views.LGPDPanelView.as_view(), name='lgpd_panel'),
+    path('compliance/lgpd/request/<int:pk>/process/', compliance_views.lgpd_process_request, name='lgpd_process_request'),
     
     # Webhooks para Integrações
     path('webhooks/whatsapp/', integrations.whatsapp_webhook, name='whatsapp_webhook'),

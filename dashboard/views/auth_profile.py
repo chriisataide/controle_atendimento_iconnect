@@ -282,6 +282,40 @@ class UserCreateView(CreateView):
         return super().form_valid(form)
 
 
+@method_decorator([login_required], name='dispatch')
+class UserEditView(UpdateView):
+    """View para edição de usuários existentes"""
+    model = User
+    template_name = 'dashboard/user_form.html'
+    fields = ['username', 'email', 'first_name', 'last_name', 'is_active']
+    success_url = reverse_lazy('dashboard:user_list')
+
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_staff or request.user.is_superuser):
+            messages.error(request, 'Acesso negado. Você não tem permissão para editar usuários.')
+            return redirect('dashboard:index')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        for field_name, field in form.fields.items():
+            if isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs.update({'class': 'form-check-input'})
+            else:
+                field.widget.attrs.update({'class': 'form-control'})
+        return form
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['editing'] = True
+        return context
+
+    def form_valid(self, form):
+        user = form.save()
+        messages.success(self.request, f'Usuário {user.username} atualizado com sucesso.')
+        return super().form_valid(form)
+
+
 # ========== VIEWS DE AUTENTICAÇÃO ==========
 
 def custom_login(request):

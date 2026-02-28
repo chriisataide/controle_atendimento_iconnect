@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load dashboard_extras %}
 {% block title %}Dashboard do Agente - iConnect{% endblock %}
 
 {% block page_title %}Dashboard do Agente{% endblock %}
@@ -161,7 +162,7 @@
             <div class="col-lg-6 col-7">
               <h6>Meus Tickets Recentes</h6>
               <p class="text-sm mb-0">
-                <i class="fas fa-check text-info" aria-hidden="true"></i>
+                <i class="material-symbols-rounded text-info" aria-hidden="true" style="font-size:16px;">check</i>
                 <span class="font-weight-bold ms-1">{{ tickets_recentes|length }}</span> tickets
               </p>
             </div>
@@ -202,15 +203,7 @@
                     <p class="text-xs text-secondary mb-0">{{ ticket.cliente.email }}</p>
                   </td>
                   <td class="align-middle text-center text-sm">
-                    {% if ticket.status == 'aberto' %}
-                      <span class="badge badge-sm bg-gradient-danger">{{ ticket.get_status_display }}</span>
-                    {% elif ticket.status == 'em_andamento' %}
-                      <span class="badge badge-sm bg-gradient-warning">{{ ticket.get_status_display }}</span>
-                    {% elif ticket.status == 'resolvido' %}
-                      <span class="badge badge-sm bg-gradient-info">{{ ticket.get_status_display }}</span>
-                    {% else %}
-                      <span class="badge badge-sm bg-gradient-success">{{ ticket.get_status_display }}</span>
-                    {% endif %}
+                    {% status_badge ticket.status %}
                   </td>
                   <td class="align-middle text-center">
                     <span class="text-secondary text-xs font-weight-bold">{{ ticket.atualizado_em|date:"d/m/Y" }}</span>

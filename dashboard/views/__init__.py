@@ -71,6 +71,7 @@ from .auth_profile import (
     api_pontos_de_venda_por_cliente,
     UserListView,
     UserCreateView,
+    UserEditView,
     custom_login,
     custom_logout,
     get_user_info,
@@ -115,6 +116,17 @@ from .features import (
     export_tickets,
 )
 
+# Banking Features — Knowledge Base & Macros
+from .banking_features import (
+    KnowledgeBaseView,
+    knowledge_article_detail,
+    knowledge_vote,
+    macros_list,
+    macro_create,
+    macro_delete,
+    ticket_timetrack,
+)
+
 # Itens de atendimento
 from .itens_atendimento import (
     api_produtos_ativos,
@@ -141,7 +153,7 @@ __all__ = [
     'PontoDeVendaForm', 'PontoDeVendaListView', 'PontoDeVendaCreateView',
     'PontoDeVendaDetailView', 'PontoDeVendaUpdateView',
     'api_pontos_de_venda_por_cliente',
-    'UserListView', 'UserCreateView',
+    'UserListView', 'UserCreateView', 'UserEditView',
     'custom_login', 'custom_logout', 'get_user_info',
     'ProfileView', 'update_agent_status',
     # Notifications
@@ -161,4 +173,7 @@ __all__ = [
     'api_produtos_ativos', 'api_add_item_atendimento',
     'api_listar_itens_atendimento', 'api_remover_item_atendimento',
     'relatorio_itens_atendimento', 'api_estatisticas_financeiras_ticket',
+    # Banking Features
+    'KnowledgeBaseView', 'knowledge_article_detail', 'knowledge_vote',
+    'macros_list', 'macro_create', 'macro_delete', 'ticket_timetrack',
 ]

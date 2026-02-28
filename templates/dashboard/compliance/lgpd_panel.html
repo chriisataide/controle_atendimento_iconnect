@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% load static dashboard_extras %}
+
+{% block title %}Painel LGPD — iConnect{% endblock %}
+{% block page_title %}Conformidade LGPD{% endblock %}
+{% block breadcrumb_title %}Compliance{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+
+  <!-- KPI Cards -->
+  <div class="row mb-4">
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+      <div class="card ic-kpi-card">
+        <div class="card-header p-3 pt-2">
+          <div class="ic-kpi-icon mt-n4 shadow" style="background: linear-gradient(195deg, #8b5cf6, #7c3aed);">
+            <span class="material-symbols-rounded">verified_user</span>
+          </div>
+          <div class="text-end pt-1">
+            <p class="ic-kpi-label">Consentimentos Ativos</p>
+            <h4 class="ic-kpi-value">{{ stats.total_consents }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+      <div class="card ic-kpi-card">
+        <div class="card-header p-3 pt-2">
+          <div class="ic-kpi-icon mt-n4 shadow" style="background: linear-gradient(195deg, var(--ic-warning), #d97706);">
+            <span class="material-symbols-rounded">pending_actions</span>
+          </div>
+          <div class="text-end pt-1">
+            <p class="ic-kpi-label">Solicitações Pendentes</p>
+            <h4 class="ic-kpi-value">{{ stats.pending_requests }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+      <div class="card ic-kpi-card">
+        <div class="card-header p-3 pt-2">
+          <div class="ic-kpi-icon mt-n4 shadow" style="background: linear-gradient(195deg, var(--ic-danger), #dc2626);">
+            <span class="material-symbols-rounded">timer_off</span>
+          </div>
+          <div class="text-end pt-1">
+            <p class="ic-kpi-label">Prazo Vencido</p>
+            <h4 class="ic-kpi-value">{{ stats.overdue_requests }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+      <div class="card ic-kpi-card">
+        <div class="card-header p-3 pt-2">
+          <div class="ic-kpi-icon mt-n4 shadow" style="background: linear-gradient(195deg, var(--ic-accent), var(--ic-accent-dark));">
+            <span class="material-symbols-rounded">visibility</span>
+          </div>
+          <div class="text-end pt-1">
+            <p class="ic-kpi-label">Acessos PII (30d)</p>
+            <h4 class="ic-kpi-value">{{ stats.access_logs_30d }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Solicitações LGPD -->
+    <div class="col-lg-8 mb-4">
+      <div class="card ic-card">
+        <div class="card-header pb-0 p-3">
+          <div class="ic-page-header mb-0">
+            <div>
+              <h6 class="ic-page-title">
+                <span class="material-symbols-rounded me-2" style="vertical-align:-4px;">gavel</span>
+                Solicitações de Titulares
+              </h6>
+              <p class="ic-page-subtitle">Art. 18 LGPD — Prazo legal: 15 dias úteis</p>
+            </div>
+            <span class="ic-compliance-badge ic-compliance-lgpd">Lei 13.709/2018</span>
+          </div>
+        </div>
+        <div class="card-body px-0 pt-0 pb-2">
+          <div class="table-responsive p-0">
+            <table class="table align-items-center mb-0">
+              <thead>
+                <tr>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Titular</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Tipo</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Status</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Data</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Prazo</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for req in recent_requests %}
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center px-2 py-1">
+                      <div class="ic-avatar ic-avatar-sm ic-avatar-accent me-2">
+                        {{ req.user.first_name.0|default:req.user.username.0|upper }}
+                      </div>
+                      <div>
+                        <h6 class="mb-0 text-sm">{{ req.user.get_full_name|default:req.user.username }}</h6>
+                        <p class="text-xs text-secondary mb-0">{{ req.user.email }}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <p class="text-xs font-weight-bold mb-0">{{ req.get_request_type_display }}</p>
+                  </td>
+                  <td class="align-middle text-center">
+                    {% if req.status == 'pending' %}
+                      <span class="ic-badge ic-badge-aberto">Pendente</span>
+                    {% elif req.status == 'in_progress' %}
+                      <span class="ic-badge ic-badge-em_andamento">Em Andamento</span>
+                    {% elif req.status == 'completed' %}
+                      <span class="ic-badge ic-badge-resolvido">Concluída</span>
+                    {% elif req.status == 'rejected' %}
+                      <span class="ic-badge ic-badge-fechado">Rejeitada</span>
+                    {% else %}
+                      <span class="ic-badge ic-badge-aguardando_cliente">Cancelada</span>
+                    {% endif %}
+                  </td>
+                  <td class="align-middle text-center">
+                    <span class="text-secondary text-xs font-weight-bold">{{ req.created_at|date:"d/m/Y" }}</span>
+                  </td>
+                  <td class="align-middle text-center">
+                    {% if req.deadline %}
+                      {% if req.deadline < now and req.status in 'pending,in_progress' %}
+                        <span class="text-danger text-xs font-weight-bold">
+                          <span class="material-symbols-rounded" style="font-size:14px;vertical-align:-2px;">warning</span>
+                          {{ req.deadline|date:"d/m/Y" }}
+                        </span>
+                      {% else %}
+                        <span class="text-secondary text-xs font-weight-bold">{{ req.deadline|date:"d/m/Y" }}</span>
+                      {% endif %}
+                    {% else %}
+                      <span class="text-muted text-xs">—</span>
+                    {% endif %}
+                  </td>
+                  <td class="align-middle text-center">
+                    {% if req.status == 'pending' or req.status == 'in_progress' %}
+                    <button class="btn btn-link text-success p-0 mb-0 me-2" 
+                            onclick="processRequest({{ req.pk }}, 'approve')" title="Aprovar">
+                      <span class="material-symbols-rounded" style="font-size:18px;">check_circle</span>
+                    </button>
+                    <button class="btn btn-link text-danger p-0 mb-0" 
+                            onclick="processRequest({{ req.pk }}, 'reject')" title="Rejeitar">
+                      <span class="material-symbols-rounded" style="font-size:18px;">cancel</span>
+                    </button>
+                    {% else %}
+                      <span class="text-muted text-xs">{{ req.processed_by.get_full_name|default:"—" }}</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="6">
+                    <div class="ic-empty-state">
+                      <span class="material-symbols-rounded">gavel</span>
+                      <h6>Nenhuma solicitação registrada</h6>
+                      <p>Solicitações de titulares de dados aparecerão aqui.</p>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar: Consentimentos + Logs PII -->
+    <div class="col-lg-4 mb-4">
+      <!-- Consentimentos por Finalidade -->
+      <div class="card ic-card mb-4">
+        <div class="card-header pb-0 p-3">
+          <h6 class="mb-0">
+            <span class="material-symbols-rounded me-1" style="vertical-align:-4px;">how_to_reg</span>
+            Consentimentos Ativos
+          </h6>
+        </div>
+        <div class="card-body p-3">
+          {% for stat in consent_stats %}
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-sm">
+              {% for val, label in consent_purposes %}
+                {% if val == stat.purpose %}{{ label }}{% endif %}
+              {% endfor %}
+            </span>
+            <span class="text-sm font-weight-bold" style="color: var(--ic-accent);">{{ stat.count }}</span>
+          </div>
+          {% if not forloop.last %}<hr class="horizontal dark my-1">{% endif %}
+          {% empty %}
+          <p class="text-xs text-muted text-center mb-0">Nenhum consentimento registrado.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Últimos Acessos PII -->
+      <div class="card ic-card">
+        <div class="card-header pb-0 p-3">
+          <h6 class="mb-0">
+            <span class="material-symbols-rounded me-1" style="vertical-align:-4px;">fingerprint</span>
+            Últimos Acessos PII
+          </h6>
+        </div>
+        <div class="card-body p-3 pt-0">
+          <ul class="list-group list-group-flush">
+            {% for log in recent_logs %}
+            <li class="list-group-item px-0 py-2 border-0 d-flex align-items-start">
+              <div class="ic-avatar ic-avatar-sm ic-avatar-primary me-2" style="font-size:0.6rem;">
+                {{ log.user.username.0|upper }}
+              </div>
+              <div class="flex-grow-1">
+                <p class="text-xs font-weight-bold mb-0">
+                  {{ log.user.username|default:"Sistema" }} — {{ log.get_action_display }}
+                </p>
+                <p class="text-xs text-secondary mb-0">
+                  {{ log.resource_type }} #{{ log.resource_id }} · {{ log.timestamp|timesince }} atrás
+                </p>
+              </div>
+            </li>
+            {% empty %}
+            <li class="list-group-item px-0 py-3 text-center text-xs text-muted border-0">
+              Nenhum acesso PII registrado.
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{% csp_nonce %}">
+function processRequest(pk, action) {
+    const actionLabel = action === 'approve' ? 'aprovar' : 'rejeitar';
+    if (!confirm(`Deseja ${actionLabel} esta solicitação LGPD?`)) return;
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+    const formData = new FormData();
+    formData.append('action', action);
+
+    fetch(`/dashboard/compliance/lgpd/request/${pk}/process/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken },
+        body: formData,
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Erro ao processar solicitação.');
+        }
+    })
+    .catch(() => alert('Erro de conexão.'));
+}
+</script>
+{% endblock %}

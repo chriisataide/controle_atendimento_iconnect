@@ -65,6 +65,8 @@
     <link href="{% static 'css/material-dashboard.css' %}" rel="stylesheet" />
     <link href="{% static 'css/dashboard-colors.css' %}" rel="stylesheet" />
     <link href="{% static 'css/mobile.css' %}" rel="stylesheet" />
+    <!-- iConnect Design System -->
+    <link href="{% static 'css/iconnect-design-system.css' %}" rel="stylesheet" />
         <!-- Service Worker para PWA -->
         <script nonce="{% csp_nonce %}">
             if ('serviceWorker' in navigator) {
@@ -79,9 +81,9 @@
             }
         </script>
     
-    <!-- Chart.js for Analytics -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
-    <!-- Socket.IO for Real-time notifications -->
+    <!-- Chart.js 4.4.0 for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+    <!-- Socket.IO 4.7.2 for Real-time notifications -->
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js" defer></script>
     
     <!-- Fix para Dropdowns -->
@@ -1212,11 +1214,13 @@
 </head>
 
 <body class="g-sidenav-show bg-gray-100">
+    <!-- WCAG 2.1 AA: Skip Navigation -->
+    <a href="#main-content" class="ic-skip-nav">Pular para o conteúdo principal</a>
     
     <!-- Sidebar -->
     <aside class="sidenav navbar navbar-vertical navbar-expand-xs border-radius-lg fixed-start ms-2 bg-white my-2" id="sidenav-main">
         <div class="sidenav-header">
-            <i class="fas fa-times p-3 cursor-pointer text-dark opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
+            <i class="material-symbols-rounded p-3 cursor-pointer text-dark opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav" style="font-size:18px;">close</i>
             <a class="navbar-brand px-4 py-3 m-0" href="{% url 'dashboard:index' %}">
                 <img src="{% static 'img/icodev-logo.png' %}" class="navbar-brand-img" width="26" height="26" alt="main_logo" style="border-radius: 6px; background: #fff; padding: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
                 <span class="ms-1 text-sm text-dark">iConnect</span>
@@ -1231,13 +1235,13 @@
                 <!-- ===== ACESSO RÁPIDO (sem dropdown) ===== -->
                 <li class="nav-item">
                     <a class="sidebar-quick-link {% if request.resolver_match.url_name == 'index' or request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard:index' %}">
-                        <span class="sq-icon"><i class="material-icons">space_dashboard</i></span>
+                        <span class="sq-icon"><i class="material-symbols-rounded">space_dashboard</i></span>
                         Dashboard
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="sidebar-quick-link {% if request.resolver_match.url_name == 'ticket_create' %}active{% endif %}" href="{% url 'dashboard:ticket_create' %}">
-                        <span class="sq-icon" style="{% if request.resolver_match.url_name != 'ticket_create' %}background:rgba(6,182,212,0.1);{% endif %}"><i class="material-icons" style="{% if request.resolver_match.url_name != 'ticket_create' %}color:#06b6d4;{% endif %}">add_circle</i></span>
+                        <span class="sq-icon" style="{% if request.resolver_match.url_name != 'ticket_create' %}background:rgba(6,182,212,0.1);{% endif %}"><i class="material-symbols-rounded" style="{% if request.resolver_match.url_name != 'ticket_create' %}color:#06b6d4;{% endif %}">add_circle</i></span>
                         Novo Ticket
                     </a>
                 </li>
@@ -1262,25 +1266,25 @@
                         <ul class="navbar-nav">
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.url_name == 'ticket_list' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:ticket_list' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">list_alt</i>
+                                    <i class="material-symbols-rounded">list_alt</i>
                                     <span class="nav-link-text ms-1">Todos os Tickets</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.url_name == 'ticket_kanban' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:ticket_kanban' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">view_kanban</i>
+                                    <i class="material-symbols-rounded">view_kanban</i>
                                     <span class="nav-link-text ms-1">Kanban Board</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.url_name == 'agente_tickets' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:agente_tickets' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">assignment_ind</i>
+                                    <i class="material-symbols-rounded">assignment_ind</i>
                                     <span class="nav-link-text ms-1">Meus Tickets (Agente)</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.url_name == 'cliente_tickets' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:cliente_tickets' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">person_pin</i>
+                                    <i class="material-symbols-rounded">person_pin</i>
                                     <span class="nav-link-text ms-1">Meus Tickets (Cliente)</span>
                                 </a>
                             </li>
@@ -1302,19 +1306,19 @@
                         <ul class="navbar-nav">
                             <li class="nav-item">
                                 <a class="nav-link {% if 'sla_dashboard' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:sla_dashboard' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">speed</i>
+                                    <i class="material-symbols-rounded">speed</i>
                                     <span class="nav-link-text ms-1">Dashboard SLA</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if 'sla_policies' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:sla_policies' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">policy</i>
+                                    <i class="material-symbols-rounded">policy</i>
                                     <span class="nav-link-text ms-1">Políticas SLA</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if 'sla_alerts' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:sla_alerts' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">warning_amber</i>
+                                    <i class="material-symbols-rounded">warning_amber</i>
                                     <span class="nav-link-text ms-1">Alertas SLA</span>
                                     {% if sla_alerts_count and sla_alerts_count > 0 %}
                                     <span class="sb-badge sb-badge-red ms-auto">{{ sla_alerts_count }}</span>
@@ -1323,7 +1327,7 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if 'sla_reports' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:sla_reports' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">analytics</i>
+                                    <i class="material-symbols-rounded">analytics</i>
                                     <span class="nav-link-text ms-1">Relatórios SLA</span>
                                 </a>
                             </li>
@@ -1350,33 +1354,33 @@
                         <ul class="navbar-nav">
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.url_name|default:'' == 'cliente_portal' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:cliente_portal' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">dashboard</i>
+                                    <i class="material-symbols-rounded">dashboard</i>
                                     <span class="nav-link-text ms-1">Portal do Cliente</span>
                                 </a>
                             </li>
                             {% if user.is_staff or user.is_superuser %}
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.url_name|default:'' == 'cliente_list' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:cliente_list' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">group</i>
+                                    <i class="material-symbols-rounded">group</i>
                                     <span class="nav-link-text ms-1">Lista de Clientes</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.url_name|default:'' == 'cliente_create' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:cliente_create' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">person_add</i>
+                                    <i class="material-symbols-rounded">person_add</i>
                                     <span class="nav-link-text ms-1">Novo Cliente</span>
                                 </a>
                             </li>
                             {% endif %}
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.url_name|default:'' == 'pontodevenda_list' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:pontodevenda_list' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">store</i>
+                                    <i class="material-symbols-rounded">store</i>
                                     <span class="nav-link-text ms-1">Pontos de Venda</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.url_name|default:'' == 'pontodevenda_create' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:pontodevenda_create' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">add_business</i>
+                                    <i class="material-symbols-rounded">add_business</i>
                                     <span class="nav-link-text ms-1">Novo PDV</span>
                                 </a>
                             </li>
@@ -1403,37 +1407,37 @@
                         <ul class="navbar-nav">
                             <li class="nav-item">
                                 <a class="nav-link {% if 'dashboard_financeiro' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'financeiro:dashboard_financeiro' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">monitoring</i>
+                                    <i class="material-symbols-rounded">monitoring</i>
                                     <span class="nav-link-text ms-1">Dashboard</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if 'contratos_lista' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'financeiro:contratos_lista' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">description</i>
+                                    <i class="material-symbols-rounded">description</i>
                                     <span class="nav-link-text ms-1">Contratos</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if 'faturas_lista' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'financeiro:faturas_lista' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">receipt_long</i>
+                                    <i class="material-symbols-rounded">receipt_long</i>
                                     <span class="nav-link-text ms-1">Faturas</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if 'movimentacoes_lista' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'financeiro:movimentacoes_lista' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">sync_alt</i>
+                                    <i class="material-symbols-rounded">sync_alt</i>
                                     <span class="nav-link-text ms-1">Movimentações</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if 'centros_custo' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'financeiro:centros_custo_lista' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">pie_chart</i>
+                                    <i class="material-symbols-rounded">pie_chart</i>
                                     <span class="nav-link-text ms-1">Centros de Custo</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if 'relatorios_financeiros' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'financeiro:relatorios_financeiros' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">assessment</i>
+                                    <i class="material-symbols-rounded">assessment</i>
                                     <span class="nav-link-text ms-1">Relatórios</span>
                                 </a>
                             </li>
@@ -1455,44 +1459,44 @@
                         <ul class="navbar-nav">
                             <li class="nav-item">
                                 <a class="nav-link {% if 'estoque_dashboard' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'estoque:dashboard' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">monitoring</i>
+                                    <i class="material-symbols-rounded">monitoring</i>
                                     <span class="nav-link-text ms-1">Dashboard</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if 'produto' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'estoque:produto_list' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">inventory</i>
+                                    <i class="material-symbols-rounded">inventory</i>
                                     <span class="nav-link-text ms-1">Produtos</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if 'movimentacao' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'estoque:movimentacao_list' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">sync</i>
+                                    <i class="material-symbols-rounded">sync</i>
                                     <span class="nav-link-text ms-1">Movimentações</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link text-dark" href="{% url 'estoque:produto_list' %}?estoque_critico=true" onclick="event.stopPropagation()">
-                                    <i class="material-icons">warning_amber</i>
+                                    <i class="material-symbols-rounded">warning_amber</i>
                                     <span class="nav-link-text ms-1">Estoque Crítico</span>
                                     <span class="sb-badge sb-badge-red ms-auto">!</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if 'relatorio' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'estoque:relatorios' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">assessment</i>
+                                    <i class="material-symbols-rounded">assessment</i>
                                     <span class="nav-link-text ms-1">Relatórios</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.app_name == 'equipamentos' and 'equipamento_list' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'equipamentos:equipamento_list' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">router</i>
+                                    <i class="material-symbols-rounded">router</i>
                                     <span class="nav-link-text ms-1">Equipamentos</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.app_name == 'equipamentos' and 'alerta_list' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'equipamentos:alerta_list' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">warning_amber</i>
+                                    <i class="material-symbols-rounded">warning_amber</i>
                                     <span class="nav-link-text ms-1">Alertas Equip.</span>
                                     <span class="sb-badge sb-badge-red ms-auto">!</span>
                                 </a>
@@ -1520,27 +1524,27 @@
                         <ul class="navbar-nav">
                             <li class="nav-item">
                                 <a class="nav-link {% if 'communication_center' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:communication_center' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">hub</i>
+                                    <i class="material-symbols-rounded">hub</i>
                                     <span class="nav-link-text ms-1">Central Unificada</span>
                                     <span class="sb-badge sb-badge-cyan ms-auto">Hub</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if 'chat_dashboard' in request.resolver_match.url_name or 'chat_room' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:chat_dashboard' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">chat</i>
+                                    <i class="material-symbols-rounded">chat</i>
                                     <span class="nav-link-text ms-1">Chat Avançado</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.url_name == 'chatbot' or request.resolver_match.url_name == 'chatbot_settings' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:chatbot' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">smart_toy</i>
+                                    <i class="material-symbols-rounded">smart_toy</i>
                                     <span class="nav-link-text ms-1">Chatbot IA</span>
                                     <span class="sb-badge sb-badge-purple ms-auto">IA</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if 'whatsapp' in request.resolver_match.url_name|default:'' or 'whatsapp' in request.resolver_match.namespace|default:'' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:whatsapp:dashboard' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">smartphone</i>
+                                    <i class="material-symbols-rounded">smartphone</i>
                                     <span class="nav-link-text ms-1">WhatsApp Business</span>
                                     <span class="sb-badge sb-badge-green ms-auto">API</span>
                                 </a>
@@ -1568,26 +1572,26 @@
                         <ul class="navbar-nav">
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.url_name == 'agente_dashboard' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:agente_dashboard' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">headset_mic</i>
+                                    <i class="material-symbols-rounded">headset_mic</i>
                                     <span class="nav-link-text ms-1">Dashboard Agente</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if 'executive_dashboard' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:executive_dashboard' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">business_center</i>
+                                    <i class="material-symbols-rounded">business_center</i>
                                     <span class="nav-link-text ms-1">Dashboard Executivo</span>
                                     <span class="sb-badge sb-badge-slate ms-auto">CEO</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if 'analytics_dashboard' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:analytics_dashboard' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">analytics</i>
+                                    <i class="material-symbols-rounded">analytics</i>
                                     <span class="nav-link-text ms-1">Analytics</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.url_name == 'reports' or 'report' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:reports' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">summarize</i>
+                                    <i class="material-symbols-rounded">summarize</i>
                                     <span class="nav-link-text ms-1">Relatórios Avançados</span>
                                 </a>
                             </li>
@@ -1615,7 +1619,7 @@
                         <ul class="navbar-nav">
                             <li class="nav-item">
                                 <a class="nav-link {% if active_page == 'calculo_vigilante' %}active{% else %}text-dark{% endif %}" href="{% url 'calculo_vigilante:pagina' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">security</i>
+                                    <i class="material-symbols-rounded">security</i>
                                     <span class="nav-link-text ms-1">Cálculo Vigilante</span>
                                 </a>
                             </li>
@@ -1642,13 +1646,13 @@
                         <ul class="navbar-nav">
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.url_name == 'workflow_builder' or request.resolver_match.url_name == 'automation_workflows' or request.resolver_match.url_name == 'automation' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:workflow_builder' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">account_tree</i>
+                                    <i class="material-symbols-rounded">account_tree</i>
                                     <span class="nav-link-text ms-1">Workflows</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.url_name == 'automation_rules' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:automation_rules' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">rule</i>
+                                    <i class="material-symbols-rounded">rule</i>
                                     <span class="nav-link-text ms-1">Regras</span>
                                 </a>
                             </li>
@@ -1656,47 +1660,107 @@
                     </div>
                 </li>
 
+                <!-- Base de Conhecimento & Macros -->
+                <li class="nav-item sidebar-dropdown">
+                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="knowledge" onclick="toggleSidebarDropdown(event,this,'knowledge')">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <span class="d-flex align-items-center">
+                                <i class="material-symbols-rounded opacity-5 me-2">menu_book</i>
+                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Conhecimento</h6>
+                            </span>
+                            <i class="material-symbols-rounded dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                        </div>
+                    </div>
+                    <div class="sidebar-dropdown-menu" id="dropdown-knowledge">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'knowledge_base' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:knowledge_base' %}" onclick="event.stopPropagation()">
+                                    <i class="material-symbols-rounded">library_books</i>
+                                    <span class="nav-link-text ms-1">Base de Conhecimento</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'macros_list' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:macros_list' %}" onclick="event.stopPropagation()">
+                                    <i class="material-symbols-rounded">bolt</i>
+                                    <span class="nav-link-text ms-1">Respostas Rápidas</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+                {% if user.is_superuser or user.is_staff %}
+                <!-- Compliance -->
+                <li class="nav-item sidebar-dropdown">
+                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="compliance" onclick="toggleSidebarDropdown(event,this,'compliance')">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <span class="d-flex align-items-center">
+                                <i class="material-symbols-rounded opacity-5 me-2">verified_user</i>
+                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Compliance</h6>
+                            </span>
+                            <i class="material-symbols-rounded dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                        </div>
+                    </div>
+                    <div class="sidebar-dropdown-menu" id="dropdown-compliance">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'audit_trail' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:audit_trail' %}" onclick="event.stopPropagation()">
+                                    <i class="material-symbols-rounded">policy</i>
+                                    <span class="nav-link-text ms-1">Trilha de Auditoria</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'lgpd_panel' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:lgpd_panel' %}" onclick="event.stopPropagation()">
+                                    <i class="material-symbols-rounded">gavel</i>
+                                    <span class="nav-link-text ms-1">Painel LGPD</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                {% endif %}
+
                 {% if user.is_superuser or user.is_staff %}
                 <li class="nav-item sidebar-dropdown">
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="sistema" onclick="toggleSidebarDropdown(event,this,'sistema')">
                         <div class="d-flex align-items-center justify-content-between w-100">
                             <span class="d-flex align-items-center">
-                                <i class="material-icons opacity-5 me-2">settings</i>
+                                <i class="material-symbols-rounded opacity-5 me-2">settings</i>
                                 <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Sistema & Usuários</h6>
                             </span>
-                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                            <i class="material-symbols-rounded dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
                         </div>
                     </div>
                     <div class="sidebar-dropdown-menu" id="dropdown-sistema">
                         <ul class="navbar-nav">
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:admin_dashboard' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">admin_panel_settings</i>
+                                    <i class="material-symbols-rounded">admin_panel_settings</i>
                                     <span class="nav-link-text ms-1">Painel Admin</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.url_name == 'user_list' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:user_list' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">people</i>
+                                    <i class="material-symbols-rounded">people</i>
                                     <span class="nav-link-text ms-1">Usuários</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.url_name == 'user_create' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:user_create' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">person_add</i>
+                                    <i class="material-symbols-rounded">person_add</i>
                                     <span class="nav-link-text ms-1">Novo Usuário</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link text-dark" href="{% url 'dashboard:pwa_info' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">phone_android</i>
+                                    <i class="material-symbols-rounded">phone_android</i>
                                     <span class="nav-link-text ms-1">Mobile / PWA</span>
                                     <span class="sb-badge sb-badge-cyan ms-auto">PWA</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link text-dark" href="/admin/" target="_blank" onclick="event.stopPropagation()">
-                                    <i class="material-icons">terminal</i>
+                                    <i class="material-symbols-rounded">terminal</i>
                                     <span class="nav-link-text ms-1">Django Admin</span>
                                 </a>
                             </li>
@@ -1710,11 +1774,11 @@
             <!-- ===== FOOTER DA SIDEBAR ===== -->
             <div class="sidebar-footer">
                 <a class="sidebar-footer-link" href="{% url 'dashboard:profile' %}">
-                    <i class="material-icons">account_circle</i>
+                    <i class="material-symbols-rounded">account_circle</i>
                     <span>{{ user.get_full_name|default:user.username|truncatewords:2 }}</span>
                 </a>
                 <a class="sidebar-footer-link text-danger" href="{% url 'logout' %}">
-                    <i class="material-icons">logout</i>
+                    <i class="material-symbols-rounded">logout</i>
                     <span>Sair</span>
                 </a>
             </div>
@@ -1722,7 +1786,7 @@
         {% endblock %}
     </aside>
 
-    <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
+    <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg" id="main-content" role="main">
         <!-- Navbar -->
         <nav class="navbar navbar-main navbar-expand-lg px-0 mx-3 shadow-none border-radius-xl" id="navbarBlur" data-scroll="true">
             <div class="container-fluid py-1 px-3">
@@ -1757,7 +1821,7 @@
                                     <p class="text-xs text-muted mb-0 mt-1">Nenhum resultado encontrado</p>
                                 </div>
                                 <a href="#" class="search-view-all" id="searchViewAll" style="display:none;">
-                                    <i class="material-icons" style="font-size:14px;">open_in_new</i>
+                                    <i class="material-symbols-rounded" style="font-size:14px;">open_in_new</i>
                                     Ver todos os resultados
                                 </a>
                             </div>
@@ -1775,7 +1839,7 @@
                         </li>
                         <li class="nav-item px-3 d-flex align-items-center">
                             <a href="{% url 'dashboard:notifications' %}" class="nav-link text-body p-0 position-relative" id="notificationButton" title="Central de Notificações">
-                                <i class="material-icons">notifications</i>
+                                <i class="material-symbols-rounded">notifications</i>
                                 {% if unread_notifications_count and unread_notifications_count > 0 %}
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationBadge" style="font-size: 10px;">
                                     {{ unread_notifications_count }}
@@ -1785,12 +1849,12 @@
                         </li>
                         <li class="nav-item dropdown px-3 d-flex align-items-center">
                             <a href="javascript:;" class="nav-link text-body p-0" id="configDropdownButton" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="material-icons">settings</i>
+                                <i class="material-symbols-rounded">settings</i>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end settings-dropdown" aria-labelledby="configDropdownButton">
                                 <!-- Header -->
                                 <div class="settings-header">
-                                    <i class="material-icons">settings</i>
+                                    <i class="material-symbols-rounded">settings</i>
                                     <h6>Configurações</h6>
                                 </div>
 
@@ -1800,23 +1864,23 @@
                                     <p class="settings-section-label">Administração</p>
                                     <a class="settings-item" href="{% url 'dashboard:admin_dashboard' %}">
                                         <div class="item-icon icon-admin">
-                                            <i class="material-icons">security</i>
+                                            <i class="material-symbols-rounded">security</i>
                                         </div>
                                         <div class="item-info">
                                             <p class="item-title">Painel Administrativo</p>
                                             <p class="item-desc">Gerenciar sistema e usuários</p>
                                         </div>
-                                        <i class="material-icons" style="font-size:16px;color:#94a3b8;">chevron_right</i>
+                                        <i class="material-symbols-rounded" style="font-size:16px;color:#94a3b8;">chevron_right</i>
                                     </a>
                                     <a class="settings-item" href="/admin/" target="_blank">
                                         <div class="item-icon icon-django">
-                                            <i class="material-icons">tune</i>
+                                            <i class="material-symbols-rounded">tune</i>
                                         </div>
                                         <div class="item-info">
                                             <p class="item-title">Django Admin</p>
                                             <p class="item-desc">Configurações avançadas</p>
                                         </div>
-                                        <i class="material-icons" style="font-size:16px;color:#94a3b8;">open_in_new</i>
+                                        <i class="material-symbols-rounded" style="font-size:16px;color:#94a3b8;">open_in_new</i>
                                     </a>
                                 </div>
                                 <div class="settings-divider"></div>
@@ -1827,7 +1891,7 @@
                                     <p class="settings-section-label">Aparência</p>
                                     <div class="settings-item" onclick="toggleTheme()" style="cursor:pointer;">
                                         <div class="item-icon icon-theme">
-                                            <i class="material-icons" id="theme-icon">brightness_6</i>
+                                            <i class="material-symbols-rounded" id="theme-icon">brightness_6</i>
                                         </div>
                                         <div class="item-info">
                                             <p class="item-title" id="theme-text">Modo Escuro</p>
@@ -1839,7 +1903,7 @@
                                     </div>
                                     <div class="settings-item" onclick="toggleSidebar()" style="cursor:pointer;">
                                         <div class="item-icon icon-sidebar">
-                                            <i class="material-icons" id="sidebar-icon">menu_open</i>
+                                            <i class="material-symbols-rounded" id="sidebar-icon">menu_open</i>
                                         </div>
                                         <div class="item-info">
                                             <p class="item-title" id="sidebar-text">Colapsar Menu</p>
@@ -1857,41 +1921,41 @@
                                     <p class="settings-section-label">Ferramentas</p>
                                     <a class="settings-item" href="#" onclick="event.preventDefault(); showKeyboardShortcuts();">
                                         <div class="item-icon icon-keyboard">
-                                            <i class="material-icons">keyboard</i>
+                                            <i class="material-symbols-rounded">keyboard</i>
                                         </div>
                                         <div class="item-info">
                                             <p class="item-title">Atalhos do Teclado</p>
                                             <p class="item-desc">Navegação rápida com teclas</p>
                                         </div>
-                                        <i class="material-icons" style="font-size:16px;color:#94a3b8;">chevron_right</i>
+                                        <i class="material-symbols-rounded" style="font-size:16px;color:#94a3b8;">chevron_right</i>
                                     </a>
                                     {% if user.is_superuser %}
                                     <a class="settings-item" href="{% url 'dashboard:export_tickets' %}">
                                         <div class="item-icon icon-export">
-                                            <i class="material-icons">file_download</i>
+                                            <i class="material-symbols-rounded">file_download</i>
                                         </div>
                                         <div class="item-info">
                                             <p class="item-title">Exportar Dados</p>
                                             <p class="item-desc">Baixar relatórios e tickets</p>
                                         </div>
-                                        <i class="material-icons" style="font-size:16px;color:#94a3b8;">chevron_right</i>
+                                        <i class="material-symbols-rounded" style="font-size:16px;color:#94a3b8;">chevron_right</i>
                                     </a>
                                     <a class="settings-item" href="#" onclick="event.preventDefault(); showSystemInfo();">
                                         <div class="item-icon icon-system">
-                                            <i class="material-icons">info</i>
+                                            <i class="material-symbols-rounded">info</i>
                                         </div>
                                         <div class="item-info">
                                             <p class="item-title">Info do Sistema</p>
                                             <p class="item-desc">Versão, status e detalhes</p>
                                         </div>
-                                        <i class="material-icons" style="font-size:16px;color:#94a3b8;">chevron_right</i>
+                                        <i class="material-symbols-rounded" style="font-size:16px;color:#94a3b8;">chevron_right</i>
                                     </a>
                                     {% endif %}
                                 </div>
 
                                 <!-- Footer -->
                                 <div class="settings-footer">
-                                    <i class="material-icons">verified</i>
+                                    <i class="material-symbols-rounded">verified</i>
                                     <span>iConnect v1.0.0</span>
                                 </div>
                             </div>
@@ -1901,7 +1965,7 @@
                                 {% if user_perfil and user_perfil.avatar %}
                                 <img src="{{ user_perfil.avatar.url }}" alt="Avatar" class="navbar-user-avatar">
                                 {% else %}
-                                <i class="material-icons">account_circle</i>
+                                <i class="material-symbols-rounded">account_circle</i>
                                 {% endif %}
                             </a>
                             <div class="dropdown-menu dropdown-menu-end user-dropdown" aria-labelledby="dropdownMenuButton">
@@ -1912,7 +1976,7 @@
                                         <img src="{{ user_perfil.avatar.url }}" alt="Avatar" class="user-avatar-img">
                                         {% else %}
                                         <div class="user-avatar-placeholder">
-                                            <i class="material-icons">person</i>
+                                            <i class="material-symbols-rounded">person</i>
                                         </div>
                                         {% endif %}
                                         <span class="user-status-dot"></span>
@@ -1947,7 +2011,7 @@
                                 <div class="user-dropdown-section">
                                     <a class="user-dropdown-item" href="{% url 'dashboard:profile' %}">
                                         <div class="udd-icon icon-profile">
-                                            <i class="material-icons">person</i>
+                                            <i class="material-symbols-rounded">person</i>
                                         </div>
                                         <div class="udd-info">
                                             <p class="udd-title">Meu Perfil</p>
@@ -1957,7 +2021,7 @@
                                     </a>
                                     <a class="user-dropdown-item" href="{% url 'dashboard:ticket_list' %}?agente={{ user.id }}">
                                         <div class="udd-icon icon-tickets">
-                                            <i class="material-icons">confirmation_number</i>
+                                            <i class="material-symbols-rounded">confirmation_number</i>
                                         </div>
                                         <div class="udd-info">
                                             <p class="udd-title">Meus Tickets</p>
@@ -1967,7 +2031,7 @@
                                     </a>
                                     <a class="user-dropdown-item" href="{% url 'dashboard:notifications' %}">
                                         <div class="udd-icon icon-notifs">
-                                            <i class="material-icons">notifications</i>
+                                            <i class="material-symbols-rounded">notifications</i>
                                         </div>
                                         <div class="udd-info">
                                             <p class="udd-title">Notificações</p>
@@ -1983,18 +2047,18 @@
                                 <div class="user-dropdown-section">
                                     {% if user_perfil and user_perfil.cargo %}
                                     <div class="user-dropdown-detail">
-                                        <i class="material-icons">work</i>
+                                        <i class="material-symbols-rounded">work</i>
                                         <span>{{ user_perfil.cargo }}</span>
                                     </div>
                                     {% endif %}
                                     {% if user_perfil and user_perfil.departamento %}
                                     <div class="user-dropdown-detail">
-                                        <i class="material-icons">business</i>
+                                        <i class="material-symbols-rounded">business</i>
                                         <span>{{ user_perfil.get_departamento_display }}</span>
                                     </div>
                                     {% endif %}
                                     <div class="user-dropdown-detail">
-                                        <i class="material-icons">schedule</i>
+                                        <i class="material-symbols-rounded">schedule</i>
                                         <span>Último login: {{ user.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</span>
                                     </div>
                                 </div>
@@ -2002,7 +2066,7 @@
                                 <!-- Sair -->
                                 <div class="user-dropdown-footer">
                                     <a class="user-dropdown-logout" href="{% url 'logout' %}">
-                                        <i class="material-icons">logout</i>
+                                        <i class="material-symbols-rounded">logout</i>
                                         <span>Sair da conta</span>
                                     </a>
                                 </div>
@@ -2051,11 +2115,6 @@
     <script src="{% static 'js/plugins/perfect-scrollbar.min.js' %}" defer></script>
     <script src="{% static 'js/plugins/smooth-scrollbar.min.js' %}" defer></script>
     
-    <!-- Chart.js apenas se necessário -->
-    <script data-lazy="true" data-src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
-    
-    <!-- Socket.IO apenas se necessário -->
-    <script data-lazy="true" data-src="https://cdn.socket.io/4.7.2/socket.io.min.js" defer></script>
     
     {% block extra_js %}{% endblock %}
 
@@ -2101,12 +2160,12 @@
             toast.className = 'toast-notification toast-' + type;
             toast.style.position = 'relative';
             toast.innerHTML =
-                '<div class="toast-icon"><i class="material-icons">' + iconMap[type] + '</i></div>' +
+                '<div class="toast-icon"><i class="material-symbols-rounded">' + iconMap[type] + '</i></div>' +
                 '<div class="toast-body">' +
                     '<p class="toast-title">' + titleMap[type] + '</p>' +
                     '<p class="toast-message">' + message + '</p>' +
                 '</div>' +
-                '<button class="toast-close" onclick="dismissToast(this.parentElement)"><i class="material-icons">close</i></button>' +
+                '<button class="toast-close" onclick="dismissToast(this.parentElement)"><i class="material-symbols-rounded">close</i></button>' +
                 '<div class="toast-progress"><div class="toast-progress-bar"></div></div>';
 
             container.appendChild(toast);
@@ -2181,14 +2240,14 @@
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 class="modal-title">
-                                    <i class="material-icons">keyboard</i>
+                                    <i class="material-symbols-rounded">keyboard</i>
                                     Atalhos do Teclado
                                 </h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
                                 <h6 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;margin-bottom:10px;">
-                                    <i class="material-icons" style="font-size:14px;vertical-align:middle;margin-right:4px;">explore</i>
+                                    <i class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;margin-right:4px;">explore</i>
                                     Navegação
                                 </h6>
                                 <div class="shortcut-row">
@@ -2209,7 +2268,7 @@
                                 </div>
                                 <hr style="margin:14px 0;">
                                 <h6 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;margin-bottom:10px;">
-                                    <i class="material-icons" style="font-size:14px;vertical-align:middle;margin-right:4px;">bolt</i>
+                                    <i class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;margin-right:4px;">bolt</i>
                                     Ações Rápidas
                                 </h6>
                                 <div class="shortcut-row">
@@ -2259,14 +2318,14 @@
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 class="modal-title">
-                                    <i class="material-icons">info</i>
+                                    <i class="material-symbols-rounded">info</i>
                                     Informações do Sistema
                                 </h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
                                 <div class="sysinfo-card">
-                                    <h6><i class="material-icons" style="font-size:14px;vertical-align:middle;margin-right:4px;">dns</i> Plataforma</h6>
+                                    <h6><i class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;margin-right:4px;">dns</i> Plataforma</h6>
                                     <div class="sysinfo-row">
                                         <span class="sysinfo-label">Sistema</span>
                                         <span class="sysinfo-value">iConnect Atendimento</span>
@@ -2289,7 +2348,7 @@
                                     </div>
                                 </div>
                                 <div class="sysinfo-card">
-                                    <h6><i class="material-icons" style="font-size:14px;vertical-align:middle;margin-right:4px;">person</i> Usuário Atual</h6>
+                                    <h6><i class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;margin-right:4px;">person</i> Usuário Atual</h6>
                                     <div class="sysinfo-row">
                                         <span class="sysinfo-label">Nome</span>
                                         <span class="sysinfo-value">{{ user.get_full_name|default:user.username }}</span>
@@ -3368,92 +3427,71 @@
     <!-- PWA Scripts otimizados -->
     {% if is_mobile %}
     <script src="{% static 'js/mobile.js' %}" defer></script>
+    {% else %}
+    <!-- Desktop PWA Install Prompt -->
+    <script nonce="{% csp_nonce %}">
+    (function() {
+        let deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Check if user dismissed recently (7-day cooldown)
+            const dismissed = localStorage.getItem('pwa_install_dismissed');
+            if (dismissed && (Date.now() - parseInt(dismissed)) < 7 * 24 * 60 * 60 * 1000) return;
+            // Don't show if already installed
+            if (window.matchMedia('(display-mode: standalone)').matches) return;
+            showDesktopInstallBanner();
+        });
+
+        function showDesktopInstallBanner() {
+            const banner = document.createElement('div');
+            banner.id = 'pwaInstallBanner';
+            banner.setAttribute('role', 'alert');
+            banner.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.15);padding:16px 20px;max-width:360px;display:flex;align-items:center;gap:12px;animation:slideUp .4s ease;';
+            banner.innerHTML = `
+                <div style="width:40px;height:40px;min-width:40px;border-radius:10px;background:linear-gradient(195deg,#06b6d4,#0891b2);display:flex;align-items:center;justify-content:center;">
+                    <span class="material-symbols-rounded" style="color:#fff;font-size:22px;">install_desktop</span>
+                </div>
+                <div style="flex:1;">
+                    <p style="margin:0;font-weight:600;font-size:0.85rem;color:#1e293b;">Instalar iConnect</p>
+                    <p style="margin:2px 0 0;font-size:0.75rem;color:#64748b;">Acesse mais rápido direto da sua área de trabalho</p>
+                </div>
+                <div style="display:flex;gap:6px;">
+                    <button id="pwaInstallBtn" style="background:linear-gradient(195deg,#06b6d4,#0891b2);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:0.75rem;font-weight:600;cursor:pointer;">Instalar</button>
+                    <button id="pwaDismissBtn" style="background:transparent;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:0.75rem;cursor:pointer;color:#64748b;">×</button>
+                </div>
+            `;
+            document.body.appendChild(banner);
+
+            document.getElementById('pwaInstallBtn').addEventListener('click', async function() {
+                if (!deferredPrompt) return;
+                deferredPrompt.prompt();
+                const result = await deferredPrompt.userChoice;
+                if (result.outcome === 'accepted') {
+                    banner.remove();
+                }
+                deferredPrompt = null;
+            });
+
+            document.getElementById('pwaDismissBtn').addEventListener('click', function() {
+                banner.style.opacity = '0';
+                banner.style.transform = 'translateY(20px)';
+                setTimeout(function() { banner.remove(); }, 300);
+                localStorage.setItem('pwa_install_dismissed', Date.now().toString());
+            });
+        }
+    })();
+    </script>
+    <style>
+    @keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    #pwaInstallBanner { transition: opacity .3s, transform .3s; }
+    </style>
     {% endif %}
     <script src="{% static 'js/push-notifications.js' %}" defer></script>
     <script src="{% static 'js/cache.js' %}" defer></script>
     
-    <!-- Service Worker Registration -->
+    <!-- Service Worker message handler (registro principal no <head>) -->
     <script nonce="{% csp_nonce %}">
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('{% static "js/sw.js" %}')
-                    .then((registration) => {
-                        // SW registrado com sucesso
-                        
-                        // Verifica por atualizações do service worker
-                        registration.addEventListener('updatefound', () => {
-                            const newWorker = registration.installing;
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    // Nova versão disponível
-                                    showUpdateAvailableNotification();
-                                }
-                            });
-                        });
-                    })
-                    .catch((error) => {
-                        console.error('Falha ao registrar Service Worker:', error);
-                    });
-            });
-        }
-        
-        function showUpdateAvailableNotification() {
-            if (window.mobileManager) {
-                const updateBanner = document.createElement('div');
-                updateBanner.className = 'update-banner';
-                updateBanner.innerHTML = `
-                    <div class="update-banner-content">
-                        <div class="update-banner-info">
-                            <i class="material-icons">system_update</i>
-                            <div>
-                                <strong>Atualização disponível</strong>
-                                <small>Nova versão do app disponível</small>
-                            </div>
-                        </div>
-                        <div class="update-banner-actions">
-                            <button class="btn-update">Atualizar</button>
-                            <button class="btn-dismiss">×</button>
-                        </div>
-                    </div>
-                `;
-                
-                updateBanner.style.cssText = `
-                    position: fixed;
-                    top: 16px;
-                    left: 16px;
-                    right: 16px;
-                    background: #2196F3;
-                    color: white;
-                    border-radius: 12px;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                    z-index: 1060;
-                    transform: translateY(-100%);
-                    transition: transform 0.3s ease;
-                `;
-                
-                document.body.appendChild(updateBanner);
-                
-                // Anima entrada
-                requestAnimationFrame(() => {
-                    updateBanner.style.transform = 'translateY(0)';
-                });
-                
-                // Event listeners
-                updateBanner.querySelector('.btn-update').addEventListener('click', () => {
-                    if (navigator.serviceWorker.controller) {
-                        navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
-                        window.location.reload();
-                    }
-                });
-                
-                updateBanner.querySelector('.btn-dismiss').addEventListener('click', () => {
-                    updateBanner.style.transform = 'translateY(-100%)';
-                    setTimeout(() => updateBanner.remove(), 300);
-                });
-            }
-        }
-        
-        // Handle service worker messages
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.addEventListener('message', (event) => {
                 if (event.data && event.data.type === 'SW_UPDATED') {
@@ -3753,7 +3791,7 @@
                             a.dataset.index = idx;
                             a.innerHTML = `
                                 <div class="search-result-icon" style="background:${item.color}">
-                                    <i class="material-icons">${item.icon}</i>
+                                    <i class="material-symbols-rounded">${item.icon}</i>
                                 </div>
                                 <div class="search-result-info">
                                     <p class="search-result-title">${escHtml(item.title)}</p>

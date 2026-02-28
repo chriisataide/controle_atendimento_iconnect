@@ -4,10 +4,11 @@ Views de funcionalidades diversas: relatórios, busca, PWA, chatbot, comunicaç�
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
-from django.db.models import Q, Avg, F
+from django.db.models import Q, Avg, Count, F
 from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from datetime import timedelta
+import csv
 import json
 import logging
 
@@ -67,16 +68,30 @@ def reports_dashboard(request):
     """Dashboard de Relatórios Avançados"""
     from ..models import RelatorioFinanceiro
 
+    now = timezone.now()
     total_reports = RelatorioFinanceiro.objects.count()
     relatorios_recentes = RelatorioFinanceiro.objects.order_by('-gerado_em')[:10]
+
+    # KPIs reais
+    tickets_total = Ticket.objects.count()
+    tickets_abertos = Ticket.objects.filter(status=StatusTicket.ABERTO).count()
+    tickets_resolvidos_mes = Ticket.objects.filter(
+        status=StatusTicket.RESOLVIDO,
+        atualizado_em__gte=now - timedelta(days=30)
+    ).count()
+
+    # Dados de agentes ativos
+    User = get_user_model()
+    agentes_ativos = User.objects.filter(is_staff=True, is_active=True).count()
 
     return render(request, 'dashboard/reports/advanced.html', {
         'title': 'Relatórios Avançados',
         'current_page': 'reports',
         'total_reports': total_reports,
-        'scheduled_reports': 0,
-        'avg_generation_time': 0,
-        'data_sources': 0,
+        'tickets_total': tickets_total,
+        'tickets_abertos': tickets_abertos,
+        'tickets_resolvidos_mes': tickets_resolvidos_mes,
+        'agentes_ativos': agentes_ativos,
         'relatorios_recentes': relatorios_recentes,
     })
 
@@ -85,7 +100,50 @@ def reports_dashboard(request):
 def generate_report(request):
     """Gerar Relatório Customizado"""
     if request.method == 'POST':
-        return JsonResponse({'status': 'success', 'report_id': 'temp_123'})
+        report_type = request.POST.get('type', request.GET.get('type', 'tickets'))
+        now = timezone.now()
+
+        # Gerar CSV real
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="relatorio_{report_type}_{now:%Y%m%d_%H%M}.csv"'
+        response.write('\ufeff')  # BOM for Excel UTF-8
+        writer = csv.writer(response, delimiter=';')
+
+        if report_type == 'tickets':
+            writer.writerow(['#', 'Título', 'Status', 'Prioridade', 'Cliente', 'Agente', 'Categoria', 'Criado', 'Atualizado'])
+            tickets = Ticket.objects.select_related('cliente', 'agente', 'categoria').order_by('-criado_em')[:5000]
+            for t in tickets:
+                writer.writerow([
+                    t.numero, t.titulo, t.get_status_display(),
+                    t.get_prioridade_display(),
+                    t.cliente.nome if t.cliente else '',
+                    t.agente.get_full_name() if t.agente else '',
+                    t.categoria.nome if t.categoria else '',
+                    t.criado_em.strftime('%d/%m/%Y %H:%M') if t.criado_em else '',
+                    t.atualizado_em.strftime('%d/%m/%Y %H:%M') if t.atualizado_em else '',
+                ])
+        elif report_type == 'clientes':
+            writer.writerow(['Nome', 'Email', 'Telefone', 'Total Tickets', 'Criado Em'])
+            clientes = Cliente.objects.annotate(total_tickets=Count('tickets')).order_by('-total_tickets')[:5000]
+            for c in clientes:
+                writer.writerow([
+                    c.nome, c.email, getattr(c, 'telefone', ''),
+                    c.total_tickets,
+                    c.criado_em.strftime('%d/%m/%Y') if hasattr(c, 'criado_em') and c.criado_em else '',
+                ])
+        elif report_type == 'agentes':
+            User = get_user_model()
+            writer.writerow(['Nome', 'Email', 'Tickets Atribuídos', 'Tickets Resolvidos'])
+            agentes = User.objects.filter(is_staff=True, is_active=True).annotate(
+                total=Count('tickets_atribuidos'),
+                resolvidos=Count('tickets_atribuidos', filter=Q(tickets_atribuidos__status=StatusTicket.RESOLVIDO))
+            )
+            for a in agentes:
+                writer.writerow([a.get_full_name() or a.username, a.email, a.total, a.resolvidos])
+        else:
+            writer.writerow(['Relatório não reconhecido'])
+
+        return response
 
     return render(request, 'dashboard/reports/generate.html', {
         'title': 'Gerar Relatório',
@@ -95,11 +153,18 @@ def generate_report(request):
 
 @login_required
 def download_report(request, report_id):
-    """Download de Relatório"""
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="relatorio_{report_id}.pdf"'
-    response.write(b'%PDF-1.4 placeholder')
-    return response
+    """Download de Relatório — redireciona para geração real"""
+    from ..models import RelatorioFinanceiro
+    try:
+        relatorio = RelatorioFinanceiro.objects.get(pk=report_id)
+        if hasattr(relatorio, 'arquivo') and relatorio.arquivo:
+            response = HttpResponse(relatorio.arquivo.read(), content_type='application/octet-stream')
+            response['Content-Disposition'] = f'attachment; filename="{relatorio.arquivo.name}"'
+            return response
+    except (RelatorioFinanceiro.DoesNotExist, ValueError):
+        pass
+    # Fallback: gerar CSV de tickets
+    return generate_report(request)
 
 
 @login_required

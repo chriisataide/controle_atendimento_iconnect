@@ -206,7 +206,7 @@
           <div class="col-md-3 text-end d-flex gap-2 justify-content-end">
             <a href="{% url 'dashboard:cliente_list' %}" class="btn btn-sm btn-outline-secondary mb-0"
                title="Limpar filtros">
-              <i class="material-icons" style="font-size:16px;">filter_alt_off</i>
+              <i class="material-symbols-rounded" style="font-size:16px;">filter_alt_off</i>
             </a>
             <button type="submit" class="btn btn-sm bg-gradient-primary mb-0">
               <i class="material-icons me-1" style="font-size:16px;">search</i> Filtrar
@@ -279,20 +279,20 @@
                   </td>
                   <td class="align-middle text-center">
                     <span class="stat-mini stat-pdv">
-                      <i class="material-icons" style="font-size:14px;">storefront</i>
+                      <i class="material-symbols-rounded" style="font-size:14px;">storefront</i>
                       {{ cliente.num_pdvs }}
                     </span>
                   </td>
                   <td class="align-middle text-center">
                     <span class="stat-mini stat-ticket">
-                      <i class="material-icons" style="font-size:14px;">confirmation_number</i>
+                      <i class="material-symbols-rounded" style="font-size:14px;">confirmation_number</i>
                       {{ cliente.num_tickets }}
                     </span>
                   </td>
                   <td class="align-middle text-center">
                     {% if cliente.tickets_abertos > 0 %}
                     <span class="stat-mini stat-aberto">
-                      <i class="material-icons" style="font-size:14px;">error_outline</i>
+                      <i class="material-symbols-rounded" style="font-size:14px;">error_outline</i>
                       {{ cliente.tickets_abertos }}
                     </span>
                     {% else %}
@@ -304,14 +304,14 @@
                   </td>
                   <td class="align-middle text-end pe-3">
                     <a href="{% url 'dashboard:cliente_detail' cliente.pk %}" class="action-btn view" title="Detalhes">
-                      <i class="material-icons" style="font-size:18px;">visibility</i>
+                      <i class="material-symbols-rounded" style="font-size:18px;">visibility</i>
                     </a>
                     <a href="{% url 'dashboard:cliente_update' cliente.pk %}" class="action-btn edit" title="Editar">
-                      <i class="material-icons" style="font-size:18px;">edit</i>
+                      <i class="material-symbols-rounded" style="font-size:18px;">edit</i>
                     </a>
                     <button class="action-btn delete" title="Excluir"
                             onclick="confirmDelete({{ cliente.pk }}, '{{ cliente.nome|escapejs }}')">
-                      <i class="material-icons" style="font-size:18px;">delete</i>
+                      <i class="material-symbols-rounded" style="font-size:18px;">delete</i>
                     </button>
                   </td>
                 </tr>
@@ -319,7 +319,7 @@
                 <tr>
                   <td colspan="8">
                     <div class="empty-state">
-                      <i class="material-icons">business_center</i>
+                      <i class="material-symbols-rounded">business_center</i>
                       <p class="text-muted mt-2 mb-1">Nenhum cliente encontrado.</p>
                       {% if search or segmento_selected or status_selected %}
                       <a href="{% url 'dashboard:cliente_list' %}" class="btn btn-sm btn-outline-primary mt-2 mb-0">
@@ -345,7 +345,7 @@
                 {% if page_obj.has_previous %}
                 <li class="page-item">
                   <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if segmento_selected %}&segmento={{ segmento_selected }}{% endif %}{% if status_selected %}&status={{ status_selected }}{% endif %}">
-                    <i class="material-icons" style="font-size:16px;">chevron_left</i>
+                    <i class="material-symbols-rounded" style="font-size:16px;">chevron_left</i>
                   </a>
                 </li>
                 {% endif %}
@@ -361,7 +361,7 @@
                 {% if page_obj.has_next %}
                 <li class="page-item">
                   <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if segmento_selected %}&segmento={{ segmento_selected }}{% endif %}{% if status_selected %}&status={{ status_selected }}{% endif %}">
-                    <i class="material-icons" style="font-size:16px;">chevron_right</i>
+                    <i class="material-symbols-rounded" style="font-size:16px;">chevron_right</i>
                   </a>
                 </li>
                 {% endif %}
@@ -385,7 +385,7 @@
       </div>
       <div class="modal-body text-center py-4">
         <div style="width:64px;height:64px;border-radius:50%;background:#fee2e2;display:inline-flex;align-items:center;justify-content:center;margin-bottom:1rem;">
-          <i class="material-icons" style="font-size:32px;color:#dc2626;">warning</i>
+          <i class="material-symbols-rounded" style="font-size:32px;color:#dc2626;">warning</i>
         </div>
         <p class="mb-1">Tem certeza que deseja excluir o cliente</p>
         <p><strong id="deleteClienteName"></strong>?</p>

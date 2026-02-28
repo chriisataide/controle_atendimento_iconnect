@@ -8,7 +8,7 @@
             data-bs-toggle="tooltip" 
             data-bs-placement="bottom" 
             title="Notificações">
-        <i class="material-icons">notifications</i>
+        <i class="material-symbols-rounded">notifications</i>
         <span class="notification-badge" id="notification-count" style="display: none;">0</span>
     </button>
     
@@ -21,7 +21,7 @@
                     Marcar todas como lidas
                 </button>
                 <button class="btn btn-sm btn-icon-only" onclick="toggleNotificationPanel()">
-                    <i class="material-icons">close</i>
+                    <i class="material-symbols-rounded">close</i>
                 </button>
             </div>
         </div>
@@ -288,7 +288,7 @@ function displayNotifications(notifications) {
             <div class="notification-item ${notification.is_read ? '' : 'unread'}" 
                  onclick="viewNotification(${notification.id}, '${notification.ticket_id || ''}')">
                 <div class="notification-icon ${iconClass}">
-                    <i class="material-icons">${getNotificationIcon(notification.type)}</i>
+                    <i class="material-symbols-rounded">${getNotificationIcon(notification.type)}</i>
                 </div>
                 <div class="notification-content">
                     <h6 class="notification-title">${notification.title}</h6>

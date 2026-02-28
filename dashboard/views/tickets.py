@@ -51,7 +51,7 @@ class KanbanBoardView(TemplateView):
         columns = [
             ('aberto', 'Aberto', 'info'),
             ('em_andamento', 'Em Andamento', 'warning'),
-            ('pendente', 'Pendente', 'secondary'),
+            ('aguardando_cliente', 'Aguardando Cliente', 'secondary'),
             ('resolvido', 'Resolvido', 'success'),
             ('fechado', 'Fechado', 'dark'),
         ]
