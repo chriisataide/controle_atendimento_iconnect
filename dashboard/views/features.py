@@ -402,10 +402,10 @@ def communication_center(request):
         ChatRoom = ChatMessage = ChatBot = None
 
     try:
-        from ..models import ChatbotConversation, ChatbotKnowledge
+        from ..models import ChatbotConversation, ChatbotKnowledgeBase
     except ImportError:
         ChatbotConversation = None
-        ChatbotKnowledge = None
+        ChatbotKnowledgeBase = None
 
     recent_conversations = []
     total_conversations = 0
@@ -439,9 +439,9 @@ def communication_center(request):
             pass
 
     recent_knowledge = []
-    if ChatbotKnowledge:
+    if ChatbotKnowledgeBase:
         try:
-            recent_knowledge = ChatbotKnowledge.objects.order_by('-created_at')[:3]
+            recent_knowledge = ChatbotKnowledgeBase.objects.order_by('-created_at')[:3]
         except Exception:
             pass
 
