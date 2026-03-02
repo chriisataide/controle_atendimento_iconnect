@@ -136,10 +136,21 @@ def create_chat_room(request):
         room_type = request.POST.get('room_type', 'private')
         ticket_id = request.POST.get('ticket_id')
         participants_ids = request.POST.getlist('participants')
+        description = request.POST.get('description', '').strip()
         
         if not name:
             messages.error(request, "Nome da sala é obrigatório.")
-            return redirect('dashboard:chat_dashboard')
+            # Re-render form preservando dados
+            users = User.objects.filter(is_active=True).exclude(id=request.user.id)
+            tickets = Ticket.objects.filter(status__in=['aberto', 'em_andamento'])
+            context = {
+                'title': 'Criar Sala de Chat',
+                'users': users,
+                'tickets': tickets,
+                'room_types': ChatRoom.ROOM_TYPES,
+                'form_data': request.POST,
+            }
+            return render(request, 'dashboard/chat/create_room.html', context)
         
         # Criar sala
         room = ChatRoom.objects.create(
@@ -157,6 +168,7 @@ def create_chat_room(request):
         )
         
         # Adicionar outros participantes
+        added_count = 0
         for user_id in participants_ids:
             try:
                 user = User.objects.get(id=user_id)
@@ -165,6 +177,7 @@ def create_chat_room(request):
                     user=user,
                     role='client' if not user.is_staff else 'agent'
                 )
+                added_count += 1
             except User.DoesNotExist:
                 continue
         
@@ -172,12 +185,12 @@ def create_chat_room(request):
         room.participant_count = room.participants.filter(is_active=True).count()
         room.save(update_fields=['participant_count'])
         
-        messages.success(request, f"Sala '{name}' criada com sucesso!")
+        messages.success(request, f"Sala '{name}' criada com sucesso! {added_count} participante(s) adicionado(s).")
         return redirect('dashboard:chat_room', room_id=room.id)
     
     # GET: Mostrar formulário
-    users = User.objects.filter(is_active=True).exclude(id=request.user.id)
-    tickets = Ticket.objects.filter(status__in=['aberto', 'em_andamento'])
+    users = User.objects.filter(is_active=True).exclude(id=request.user.id).select_related()
+    tickets = Ticket.objects.filter(status__in=['aberto', 'em_andamento']).select_related('cliente', 'agente')
     
     context = {
         'title': 'Criar Sala de Chat',

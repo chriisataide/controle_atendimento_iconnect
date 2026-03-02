@@ -5,133 +5,281 @@
 {% block page_title %}Nova Sala{% endblock %}
 {% block breadcrumb_title %}Criar Sala de Chat{% endblock %}
 
-{% block content %}
-<!-- ===== HEADER ===== -->
-<div class="row">
-    <div class="col-lg-8 col-md-7">
-        <div class="ms-3">
-            <h3 class="mb-0 h4 font-weight-bolder">Criar Sala de Chat</h3>
-            <p class="mb-0 text-sm">Configure uma nova sala de conversa e adicione participantes</p>
-        </div>
-    </div>
-    <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
-        <a href="{% url 'dashboard:chat_dashboard' %}" class="btn btn-outline-primary btn-sm mb-0">
-            <i class="material-symbols-rounded text-sm me-1">arrow_back</i> Voltar
-        </a>
-    </div>
-</div>
+{% block extra_css %}
+<style>
+.create-layout{display:flex;gap:1.25rem}
+.create-main{flex:1;min-width:0}
+.create-side{width:340px;flex-shrink:0;display:flex;flex-direction:column;gap:1rem}
+.cr-card{background:var(--ic-bg-card,#fff);border-radius:1rem;box-shadow:0 4px 24px rgba(0,0,0,.06);border:1px solid rgba(0,0,0,.05);overflow:hidden}
+.cr-card .cr-header{padding:1.25rem 1.5rem 1rem;border-bottom:1px solid var(--ic-bg-active,#e2e8f0);display:flex;align-items:center;gap:.75rem}
+.cr-card .cr-header .header-icon{width:40px;height:40px;border-radius:.75rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--ic-accent-glow,rgba(6,182,212,.15));color:var(--ic-accent,#06b6d4)}
+.cr-card .cr-header h6{margin:0;font-size:.95rem;font-weight:600;color:var(--ic-text-primary,#1e293b)}
+.cr-card .cr-header p{margin:0;font-size:.75rem;color:var(--ic-text-muted,#94a3b8)}
+.cr-card .cr-body{padding:1.25rem 1.5rem}
+.field-group{margin-bottom:1.25rem}
+.field-group label{display:block;font-size:.8rem;font-weight:600;color:var(--ic-text-primary,#1e293b);margin-bottom:.4rem}
+.field-group label .req{color:var(--ic-danger,#ef4444)}
+.field-group .field-hint{font-size:.7rem;color:var(--ic-text-muted,#94a3b8);margin-top:.25rem}
+.field-group input[type="text"],.field-group textarea,.field-group select{width:100%;padding:.6rem .85rem;border-radius:.6rem;font-size:.85rem;border:1.5px solid var(--ic-bg-active,#e2e8f0);background:var(--ic-bg-page,#f8fafc);color:var(--ic-text-primary,#1e293b);transition:border-color .2s,box-shadow .2s;outline:none;font-family:inherit}
+.field-group input[type="text"]:focus,.field-group textarea:focus,.field-group select:focus{border-color:var(--ic-accent,#06b6d4);box-shadow:0 0 0 3px var(--ic-accent-glow,rgba(6,182,212,.15))}
+.type-selector{display:flex;flex-wrap:wrap;gap:.5rem}
+.type-pill{display:flex;align-items:center;gap:.4rem;padding:.5rem .85rem;border-radius:.6rem;cursor:pointer;border:1.5px solid var(--ic-bg-active,#e2e8f0);background:var(--ic-bg-page,#f8fafc);transition:all .2s;font-size:.8rem;font-weight:500;color:var(--ic-text-secondary,#64748b)}
+.type-pill:hover{border-color:var(--ic-accent,#06b6d4);background:var(--ic-accent-glow)}
+.type-pill.active{border-color:var(--ic-accent,#06b6d4);background:var(--ic-accent,#06b6d4);color:#fff;box-shadow:0 2px 8px rgba(6,182,212,.3)}
+.type-pill.active .material-symbols-rounded{color:#fff}
+.type-pill .material-symbols-rounded{font-size:1rem}
+.type-pill input[type="radio"]{display:none}
+.participants-search{display:flex;align-items:center;gap:.5rem;padding:.5rem .75rem;border-radius:.6rem;margin-bottom:.75rem;border:1.5px solid var(--ic-bg-active,#e2e8f0);background:var(--ic-bg-page,#f8fafc)}
+.participants-search .material-symbols-rounded{font-size:1.1rem;color:var(--ic-text-muted,#94a3b8)}
+.participants-search input{flex:1;border:none;background:transparent;outline:none;font-size:.8rem;color:var(--ic-text-primary,#1e293b)}
+.participants-list{max-height:280px;overflow-y:auto;border-radius:.6rem;border:1px solid var(--ic-bg-active,#e2e8f0)}
+.participants-list::-webkit-scrollbar{width:5px}
+.participants-list::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:10px}
+.participant-item{display:flex;align-items:center;gap:.65rem;padding:.6rem .85rem;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--ic-bg-hover,#f1f5f9)}
+.participant-item:last-child{border-bottom:none}
+.participant-item:hover{background:var(--ic-bg-hover,#f1f5f9)}
+.participant-item.selected{background:var(--ic-accent-glow,rgba(6,182,212,.1))}
+.participant-item .p-avatar{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:#fff}
+.participant-item .p-info{flex:1;min-width:0}
+.participant-item .p-name{font-size:.82rem;font-weight:500;color:var(--ic-text-primary,#1e293b)}
+.participant-item .p-role{font-size:.68rem;color:var(--ic-text-muted,#94a3b8)}
+.participant-item .p-check{width:20px;height:20px;border-radius:.35rem;flex-shrink:0;border:2px solid var(--ic-bg-active,#e2e8f0);transition:all .2s;display:flex;align-items:center;justify-content:center}
+.participant-item.selected .p-check{background:var(--ic-accent,#06b6d4);border-color:var(--ic-accent,#06b6d4)}
+.participant-item.selected .p-check::after{content:'\2713';color:#fff;font-size:.7rem;font-weight:700}
+.participant-item input[type="checkbox"]{display:none}
+.selected-count{font-size:.75rem;color:var(--ic-text-muted,#94a3b8);padding:.4rem 0;text-align:right}
+.no-participants{text-align:center;padding:2rem 1rem;color:var(--ic-text-muted,#94a3b8)}
+.no-participants .material-symbols-rounded{font-size:2.5rem;display:block;margin-bottom:.5rem;opacity:.5}
+.form-actions{display:flex;justify-content:flex-end;gap:.75rem;padding-top:1.25rem;border-top:1px solid var(--ic-bg-active,#e2e8f0);margin-top:.5rem}
+.btn-cancel{padding:.55rem 1.25rem;border-radius:.6rem;font-size:.82rem;font-weight:500;border:1.5px solid var(--ic-bg-active,#e2e8f0);background:transparent;color:var(--ic-text-secondary,#64748b);cursor:pointer;transition:all .2s;text-decoration:none;display:flex;align-items:center;gap:.3rem}
+.btn-cancel:hover{border-color:var(--ic-text-muted);color:var(--ic-text-primary)}
+.btn-create{padding:.55rem 1.5rem;border-radius:.6rem;font-size:.82rem;font-weight:600;border:none;cursor:pointer;transition:all .2s;background:linear-gradient(135deg,var(--ic-accent,#06b6d4),var(--ic-accent-dark,#0891b2));color:#fff;display:flex;align-items:center;gap:.4rem;box-shadow:0 2px 8px rgba(6,182,212,.3)}
+.btn-create:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(6,182,212,.4)}
+.tip-card{background:var(--ic-bg-card,#fff);border-radius:1rem;box-shadow:0 2px 12px rgba(0,0,0,.04);border:1px solid rgba(0,0,0,.05)}
+.tip-card .tip-header{padding:.85rem 1rem .5rem;display:flex;align-items:center;gap:.5rem}
+.tip-card .tip-header .material-symbols-rounded{font-size:1.15rem;color:var(--ic-accent,#06b6d4)}
+.tip-card .tip-header h6{margin:0;font-size:.8rem;font-weight:600;color:var(--ic-text-primary,#1e293b)}
+.tip-card .tip-body{padding:.25rem 1rem .85rem}
+.tip-item{display:flex;align-items:flex-start;gap:.6rem;padding:.5rem 0;border-bottom:1px solid var(--ic-bg-hover,#f1f5f9)}
+.tip-item:last-child{border-bottom:none}
+.tip-item .tip-icon{width:30px;height:30px;border-radius:.5rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.9rem;margin-top:2px}
+.tip-item .tip-icon.cyan{background:rgba(6,182,212,.1);color:#06b6d4}
+.tip-item .tip-icon.green{background:rgba(34,197,94,.1);color:#22c55e}
+.tip-item .tip-icon.amber{background:rgba(245,158,11,.1);color:#f59e0b}
+.tip-item .tip-icon.slate{background:rgba(51,65,85,.1);color:#334155}
+.tip-item .tip-icon.purple{background:rgba(139,92,246,.1);color:#8b5cf6}
+.tip-item .tip-title{font-size:.78rem;font-weight:600;color:var(--ic-text-primary,#1e293b)}
+.tip-item .tip-desc{font-size:.7rem;color:var(--ic-text-muted,#94a3b8);line-height:1.4}
+.preview-card{background:var(--ic-bg-card,#fff);border-radius:1rem;box-shadow:0 2px 12px rgba(0,0,0,.04);border:1px solid rgba(0,0,0,.05);overflow:hidden}
+.preview-header{padding:.8rem 1rem;background:linear-gradient(135deg,var(--ic-primary,#334155),var(--ic-primary-dark,#1e293b));color:#fff;display:flex;align-items:center;gap:.5rem}
+.preview-header .material-symbols-rounded{font-size:1.1rem;opacity:.8}
+.preview-header span{font-size:.8rem;font-weight:600}
+.preview-body{padding:1rem;text-align:center}
+.preview-body .preview-name{font-size:.9rem;font-weight:700;color:var(--ic-text-primary,#1e293b);margin-bottom:.3rem}
+.preview-body .preview-type{font-size:.72rem;color:var(--ic-text-muted)}
+.preview-body .preview-members{display:flex;justify-content:center;margin-top:.75rem}
+.preview-body .preview-avatar{width:28px;height:28px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#fff;margin-left:-6px}
+.preview-body .preview-avatar:first-child{margin-left:0}
+@media(max-width:991px){.create-layout{flex-direction:column}.create-side{width:100%;flex-direction:row;flex-wrap:wrap}.create-side>*{flex:1;min-width:280px}}
+[data-bs-theme="dark"] .cr-card,[data-bs-theme="dark"] .tip-card,[data-bs-theme="dark"] .preview-card{background:#1e293b;border-color:rgba(255,255,255,.06)}
+[data-bs-theme="dark"] .field-group input,[data-bs-theme="dark"] .field-group textarea,[data-bs-theme="dark"] .field-group select{background:#0f172a;border-color:#334155;color:#e2e8f0}
+[data-bs-theme="dark"] .participants-search{background:#0f172a;border-color:#334155}
+[data-bs-theme="dark"] .participants-search input{color:#e2e8f0}
+[data-bs-theme="dark"] .type-pill{background:#0f172a;border-color:#334155;color:#94a3b8}
+</style>
+{% endblock %}
 
-<div class="row mt-4">
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header pb-0 pt-3 px-3">
-                <h6 class="mb-0">Informações da Sala</h6>
-                <p class="text-sm text-muted mb-0">Preencha os dados para criar a sala de chat</p>
+{% block content %}
+<div class="create-layout">
+    <div class="create-main">
+        <div class="cr-card">
+            <div class="cr-header">
+                <div class="header-icon">
+                    <i class="material-symbols-rounded">chat_add_on</i>
+                </div>
+                <div>
+                    <h6>Nova Sala de Chat</h6>
+                    <p>Configure os detalhes e adicione participantes</p>
+                </div>
+                <a href="{% url 'dashboard:chat_dashboard' %}" class="btn-cancel ms-auto" style="margin:0">
+                    <i class="material-symbols-rounded" style="font-size:1rem">arrow_back</i> Voltar
+                </a>
             </div>
-            <div class="card-body pt-3 px-3">
-                <form method="post">
+            <div class="cr-body">
+                <form method="post" id="createRoomForm">
                     {% csrf_token %}
-                    <div class="row">
-                        <div class="col-md-8 mb-3">
-                            <label class="form-label">Nome da Sala <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control" placeholder="Ex: Suporte - Cliente XYZ" required>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Tipo</label>
-                            <select name="room_type" class="form-select">
-                                {% for value, label in room_types %}
-                                    <option value="{{ value }}">{{ label }}</option>
-                                {% endfor %}
-                            </select>
+                    <div class="field-group">
+                        <label>Nome da Sala <span class="req">*</span></label>
+                        <input type="text" name="name" id="roomName" placeholder="Ex: Suporte - Cliente XYZ" required
+                               value="{{ form_data.name|default:'' }}" maxlength="255">
+                        <p class="field-hint">Escolha um nome descritivo para facilitar a identificação</p>
+                    </div>
+                    <div class="field-group">
+                        <label>Tipo da Sala</label>
+                        <div class="type-selector" id="typeSelector">
+                            {% for value, label in room_types %}
+                            <label class="type-pill{% if value == 'support' %} active{% endif %}" data-value="{{ value }}">
+                                <input type="radio" name="room_type" value="{{ value }}" {% if value == 'support' %}checked{% endif %}>
+                                <i class="material-symbols-rounded">{% if value == 'support' %}support_agent{% elif value == 'sales' %}storefront{% elif value == 'general' %}public{% elif value == 'group' %}groups{% elif value == 'private' %}lock{% else %}chat{% endif %}</i>
+                                {{ label }}
+                            </label>
+                            {% endfor %}
                         </div>
                     </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Vincular a Ticket (opcional)</label>
-                        <select name="ticket_id" class="form-select">
-                            <option value="">Sem vínculo</option>
+                    <div class="field-group">
+                        <label>Vincular a Ticket</label>
+                        <select name="ticket_id" id="ticketSelect">
+                            <option value="">Nenhum — sala sem vínculo a ticket</option>
                             {% for ticket in tickets %}
-                                <option value="{{ ticket.id }}">#{{ ticket.numero }} - {{ ticket.titulo|truncatechars:60 }}</option>
+                            <option value="{{ ticket.id }}">#{{ ticket.numero }} — {{ ticket.titulo|truncatechars:60 }}</option>
                             {% endfor %}
                         </select>
+                        <p class="field-hint">Opcional. Vincule a sala a um ticket aberto para contextualizar a conversa</p>
                     </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Participantes</label>
-                        <p class="text-xs text-muted mb-2">Selecione os usuários que farão parte desta sala</p>
-                        <div class="border rounded p-3" style="max-height:250px;overflow-y:auto">
+                    <div class="field-group">
+                        <label>Participantes</label>
+                        <div class="participants-search">
+                            <i class="material-symbols-rounded">search</i>
+                            <input type="text" id="searchParticipants" placeholder="Buscar por nome ou usuário...">
+                        </div>
+                        <div class="participants-list" id="participantsList">
                             {% for u in users %}
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" name="participants" value="{{ u.id }}" id="user_{{ u.id }}">
-                                <label class="form-check-label text-sm" for="user_{{ u.id }}">
-                                    {{ u.get_full_name|default:u.username }}
-                                    {% if u.is_staff %}
-                                        <span class="badge badge-sm bg-gradient-info ms-1">Staff</span>
-                                    {% endif %}
-                                </label>
+                            <div class="participant-item" data-id="{{ u.id }}" data-name="{{ u.get_full_name|default:u.username }}">
+                                <div class="p-avatar" style="background:hsl({{ u.id|add:'0' }}, 60%, 50%)">
+                                    {{ u.get_full_name|default:u.username|make_list|first|upper }}
+                                </div>
+                                <div class="p-info">
+                                    <div class="p-name">{{ u.get_full_name|default:u.username }}</div>
+                                    <div class="p-role">{% if u.is_superuser %}Administrador{% elif u.is_staff %}Agente{% else %}Usuário{% endif %} &bull; {{ u.username }}</div>
+                                </div>
+                                <div class="p-check"></div>
+                                <input type="checkbox" name="participants" value="{{ u.id }}">
                             </div>
                             {% empty %}
-                            <p class="text-sm text-muted mb-0">Nenhum usuário disponível</p>
+                            <div class="no-participants">
+                                <i class="material-symbols-rounded">group_off</i>
+                                <p style="font-size:.82rem;">Nenhum outro usuário disponível</p>
+                                <p style="font-size:.72rem;">Você será adicionado automaticamente como administrador</p>
+                            </div>
                             {% endfor %}
                         </div>
+                        <div class="selected-count"><span id="selectedCount">0</span> participante(s) selecionado(s) — você será incluído como administrador</div>
                     </div>
-
-                    <div class="text-end mt-4">
-                        <a href="{% url 'dashboard:chat_dashboard' %}" class="btn btn-outline-secondary btn-sm me-2">Cancelar</a>
-                        <button type="submit" class="btn bg-gradient-primary btn-sm">
-                            <i class="material-symbols-rounded text-sm me-1">add</i> Criar Sala
+                    <div class="form-actions">
+                        <a href="{% url 'dashboard:chat_dashboard' %}" class="btn-cancel">
+                            <i class="material-symbols-rounded" style="font-size:1rem">close</i> Cancelar
+                        </a>
+                        <button type="submit" class="btn-create">
+                            <i class="material-symbols-rounded" style="font-size:1.1rem">add</i> Criar Sala
                         </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-
-    <!-- Dicas -->
-    <div class="col-lg-4">
-        <div class="card">
-            <div class="card-header pb-0 pt-3 px-3">
-                <h6 class="mb-0">Dicas</h6>
+    <div class="create-side">
+        <div class="preview-card" id="previewCard">
+            <div class="preview-header">
+                <i class="material-symbols-rounded">visibility</i>
+                <span>Pré-visualização</span>
             </div>
-            <div class="card-body pt-2 px-3">
-                <div class="d-flex align-items-start mb-3">
-                    <div class="icon icon-sm icon-shape bg-gradient-info shadow text-center border-radius-md me-2 mt-1">
-                        <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">support_agent</i>
-                    </div>
-                    <div>
-                        <h6 class="text-sm mb-0">Suporte</h6>
-                        <p class="text-xs text-muted mb-0">Para atendimento de clientes com tickets vinculados</p>
-                    </div>
+            <div class="preview-body">
+                <div class="preview-name" id="previewName">Nome da sala...</div>
+                <div class="preview-type" id="previewType">Suporte Técnico</div>
+                <div class="preview-members" id="previewMembers">
+                    <div class="preview-avatar" style="background:var(--ic-accent,#06b6d4)">Eu</div>
                 </div>
-                <div class="d-flex align-items-start mb-3">
-                    <div class="icon icon-sm icon-shape bg-gradient-success shadow text-center border-radius-md me-2 mt-1">
-                        <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">storefront</i>
-                    </div>
-                    <div>
-                        <h6 class="text-sm mb-0">Vendas</h6>
-                        <p class="text-xs text-muted mb-0">Para conversas comerciais e negociações</p>
-                    </div>
+            </div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-header">
+                <i class="material-symbols-rounded">tips_and_updates</i>
+                <h6>Tipos de Sala</h6>
+            </div>
+            <div class="tip-body">
+                <div class="tip-item">
+                    <div class="tip-icon cyan"><i class="material-symbols-rounded" style="font-size:.95rem">support_agent</i></div>
+                    <div><div class="tip-title">Suporte Técnico</div><div class="tip-desc">Atendimento de clientes com tickets vinculados</div></div>
                 </div>
-                <div class="d-flex align-items-start mb-3">
-                    <div class="icon icon-sm icon-shape bg-gradient-warning shadow text-center border-radius-md me-2 mt-1">
-                        <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">groups</i>
-                    </div>
-                    <div>
-                        <h6 class="text-sm mb-0">Grupo</h6>
-                        <p class="text-xs text-muted mb-0">Para discussões em grupo com múltiplos participantes</p>
-                    </div>
+                <div class="tip-item">
+                    <div class="tip-icon green"><i class="material-symbols-rounded" style="font-size:.95rem">storefront</i></div>
+                    <div><div class="tip-title">Vendas</div><div class="tip-desc">Conversas comerciais e negociações</div></div>
                 </div>
-                <div class="d-flex align-items-start">
-                    <div class="icon icon-sm icon-shape bg-gradient-primary shadow text-center border-radius-md me-2 mt-1">
-                        <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">lock</i>
-                    </div>
-                    <div>
-                        <h6 class="text-sm mb-0">Privado</h6>
-                        <p class="text-xs text-muted mb-0">Para conversas diretas entre dois participantes</p>
-                    </div>
+                <div class="tip-item">
+                    <div class="tip-icon amber"><i class="material-symbols-rounded" style="font-size:.95rem">groups</i></div>
+                    <div><div class="tip-title">Grupo</div><div class="tip-desc">Discussões em grupo com múltiplos participantes</div></div>
+                </div>
+                <div class="tip-item">
+                    <div class="tip-icon slate"><i class="material-symbols-rounded" style="font-size:.95rem">lock</i></div>
+                    <div><div class="tip-title">Privado</div><div class="tip-desc">Conversas diretas entre dois participantes</div></div>
+                </div>
+                <div class="tip-item">
+                    <div class="tip-icon purple"><i class="material-symbols-rounded" style="font-size:.95rem">public</i></div>
+                    <div><div class="tip-title">Geral</div><div class="tip-desc">Canal aberto para comunicação geral da equipe</div></div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var nameInput = document.getElementById('roomName');
+    var previewName = document.getElementById('previewName');
+    var previewType = document.getElementById('previewType');
+    var previewMembers = document.getElementById('previewMembers');
+    var selectedCountEl = document.getElementById('selectedCount');
+    var searchInput = document.getElementById('searchParticipants');
+    var avatarColors = ['#06b6d4','#22c55e','#f59e0b','#ef4444','#8b5cf6','#ec4899','#334155','#14b8a6'];
+
+    document.querySelectorAll('.type-pill').forEach(function(pill) {
+        pill.addEventListener('click', function() {
+            document.querySelectorAll('.type-pill').forEach(function(p) { p.classList.remove('active'); });
+            this.classList.add('active');
+            this.querySelector('input[type="radio"]').checked = true;
+            var labels = { support:'Suporte Técnico', sales:'Vendas', general:'Geral', group:'Grupo', private:'Privado' };
+            previewType.textContent = labels[this.dataset.value] || this.dataset.value;
+        });
+    });
+
+    nameInput.addEventListener('input', function() {
+        previewName.textContent = this.value || 'Nome da sala...';
+    });
+
+    function updatePreview() {
+        var selected = document.querySelectorAll('.participant-item.selected');
+        var html = '<div class="preview-avatar" style="background:var(--ic-accent,#06b6d4)">Eu</div>';
+        selected.forEach(function(item, i) {
+            var initial = item.dataset.name.charAt(0).toUpperCase();
+            var color = avatarColors[i % avatarColors.length];
+            html += '<div class="preview-avatar" style="background:' + color + '">' + initial + '</div>';
+        });
+        previewMembers.innerHTML = html;
+        selectedCountEl.textContent = selected.length;
+    }
+
+    document.querySelectorAll('.participant-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+            this.classList.toggle('selected');
+            var cb = this.querySelector('input[type="checkbox"]');
+            cb.checked = this.classList.contains('selected');
+            updatePreview();
+        });
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            var q = this.value.toLowerCase();
+            document.querySelectorAll('.participant-item').forEach(function(item) {
+                var name = item.dataset.name.toLowerCase();
+                item.style.display = name.indexOf(q) >= 0 ? '' : 'none';
+            });
+        });
+    }
+
+    updatePreview();
+});
+</script>
 {% endblock %}
