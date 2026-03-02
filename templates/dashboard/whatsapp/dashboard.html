@@ -5,221 +5,305 @@
 {% block page_title %}WhatsApp{% endblock %}
 {% block breadcrumb_title %}WhatsApp Business{% endblock %}
 
+{% block extra_css %}
+<style>
+/* ── Layout ── */
+.wa-page{display:flex;flex-direction:column;gap:1.25rem}
+/* ── Hero banner ── */
+.wa-hero{background:linear-gradient(135deg,#25d366 0%,#128c7e 100%);border-radius:1rem;padding:1.75rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:1.5rem;position:relative;overflow:hidden}
+.wa-hero::before{content:'';position:absolute;right:-40px;top:-40px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.08)}
+.wa-hero::after{content:'';position:absolute;right:60px;bottom:-60px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.05)}
+.wa-hero-left{display:flex;align-items:center;gap:1rem;z-index:1}
+.wa-hero-icon{width:56px;height:56px;border-radius:1rem;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.wa-hero-icon .material-symbols-rounded{font-size:1.8rem;color:#fff}
+.wa-hero h2{margin:0;font-size:1.25rem;font-weight:700;color:#fff}
+.wa-hero p{margin:.15rem 0 0;font-size:.8rem;color:rgba(255,255,255,.85)}
+.wa-hero-actions{display:flex;gap:.6rem;z-index:1;flex-shrink:0}
+.wa-hero-actions a{padding:.5rem 1rem;border-radius:.6rem;font-size:.78rem;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:.35rem;transition:all .2s}
+.wa-btn-white{background:#fff;color:#128c7e}
+.wa-btn-white:hover{background:rgba(255,255,255,.9);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.wa-btn-outline{background:transparent;border:1.5px solid rgba(255,255,255,.5);color:#fff}
+.wa-btn-outline:hover{background:rgba(255,255,255,.15);border-color:#fff}
+/* ── KPI grid ── */
+.wa-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+.wa-kpi{background:var(--ic-bg-card,#fff);border-radius:1rem;padding:1.15rem 1.25rem;border:1px solid rgba(0,0,0,.05);box-shadow:0 2px 12px rgba(0,0,0,.04);display:flex;align-items:center;gap:1rem;transition:transform .2s,box-shadow .2s}
+.wa-kpi:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.08)}
+.wa-kpi-icon{width:44px;height:44px;border-radius:.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.wa-kpi-icon .material-symbols-rounded{font-size:1.3rem;color:#fff}
+.wa-kpi-icon.green{background:linear-gradient(135deg,#25d366,#128c7e)}
+.wa-kpi-icon.cyan{background:linear-gradient(135deg,#06b6d4,#0891b2)}
+.wa-kpi-icon.amber{background:linear-gradient(135deg,#f59e0b,#d97706)}
+.wa-kpi-icon.slate{background:linear-gradient(135deg,#334155,#1e293b)}
+.wa-kpi-info{flex:1;min-width:0}
+.wa-kpi-label{font-size:.72rem;font-weight:500;text-transform:uppercase;letter-spacing:.5px;color:var(--ic-text-muted,#94a3b8);margin-bottom:.15rem}
+.wa-kpi-value{font-size:1.5rem;font-weight:800;color:var(--ic-text-primary,#1e293b);line-height:1}
+.wa-kpi-sub{font-size:.68rem;color:var(--ic-text-muted,#94a3b8);margin-top:.2rem}
+/* ── Content grid ── */
+.wa-content{display:grid;grid-template-columns:1fr 340px;gap:1.25rem}
+/* ── Cards ── */
+.wa-card{background:var(--ic-bg-card,#fff);border-radius:1rem;box-shadow:0 4px 24px rgba(0,0,0,.06);border:1px solid rgba(0,0,0,.05);overflow:hidden}
+.wa-card-header{padding:1rem 1.25rem;border-bottom:1px solid var(--ic-bg-active,#e2e8f0);display:flex;align-items:center;justify-content:space-between}
+.wa-card-header-left{display:flex;align-items:center;gap:.6rem}
+.wa-card-header-left .header-dot{width:8px;height:8px;border-radius:50%;background:#25d366;flex-shrink:0}
+.wa-card-header-left h6{margin:0;font-size:.88rem;font-weight:600;color:var(--ic-text-primary,#1e293b)}
+.wa-card-header a{font-size:.75rem;font-weight:500;color:var(--ic-accent,#06b6d4);text-decoration:none;display:flex;align-items:center;gap:.25rem}
+.wa-card-header a:hover{text-decoration:underline}
+.wa-card-body{padding:1.25rem}
+/* ── Table ── */
+.wa-table{width:100%;border-collapse:separate;border-spacing:0}
+.wa-table th{font-size:.68rem;text-transform:uppercase;letter-spacing:.5px;font-weight:600;color:var(--ic-text-muted,#94a3b8);padding:.5rem .75rem;border-bottom:1px solid var(--ic-bg-active,#e2e8f0);text-align:left}
+.wa-table th.center{text-align:center}
+.wa-table td{padding:.65rem .75rem;font-size:.82rem;color:var(--ic-text-primary,#1e293b);border-bottom:1px solid var(--ic-bg-hover,#f1f5f9);vertical-align:middle}
+.wa-table tr:last-child td{border-bottom:none}
+.wa-table tr:hover td{background:var(--ic-bg-hover,#f1f5f9)}
+.wa-table td.center{text-align:center}
+.wa-account-cell{display:flex;align-items:center;gap:.65rem}
+.wa-account-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#25d366,#128c7e);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.wa-account-avatar .material-symbols-rounded{font-size:.95rem;color:#fff}
+.wa-account-name{font-weight:600;font-size:.82rem}
+.wa-account-id{font-size:.68rem;color:var(--ic-text-muted,#94a3b8)}
+.wa-metric{font-weight:600;font-size:.85rem;font-variant-numeric:tabular-nums}
+.wa-badge{display:inline-flex;padding:.2rem .55rem;border-radius:.4rem;font-size:.7rem;font-weight:600}
+.wa-badge-green{background:rgba(37,211,102,.12);color:#128c7e}
+/* ── Empty state ── */
+.wa-empty{text-align:center;padding:2.5rem 1rem}
+.wa-empty .material-symbols-rounded{font-size:3rem;color:var(--ic-text-muted,#94a3b8);opacity:.4;display:block;margin-bottom:.5rem}
+.wa-empty p{font-size:.82rem;color:var(--ic-text-muted,#94a3b8);margin:0}
+.wa-empty .wa-empty-sub{font-size:.72rem;margin-top:.25rem}
+/* ── Quick links ── */
+.wa-links{display:flex;flex-direction:column;gap:.6rem}
+.wa-link{display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem;border-radius:.75rem;text-decoration:none;border:1px solid rgba(0,0,0,.05);background:var(--ic-bg-card,#fff);transition:all .2s;box-shadow:0 1px 4px rgba(0,0,0,.03)}
+.wa-link:hover{transform:translateX(4px);box-shadow:0 4px 12px rgba(0,0,0,.08);border-color:var(--ic-accent,#06b6d4)}
+.wa-link-icon{width:38px;height:38px;border-radius:.6rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.wa-link-icon .material-symbols-rounded{font-size:1.1rem;color:#fff}
+.wa-link-icon.green{background:linear-gradient(135deg,#25d366,#128c7e)}
+.wa-link-icon.cyan{background:linear-gradient(135deg,#06b6d4,#0891b2)}
+.wa-link-icon.amber{background:linear-gradient(135deg,#f59e0b,#d97706)}
+.wa-link-icon.purple{background:linear-gradient(135deg,#8b5cf6,#7c3aed)}
+.wa-link-icon.rose{background:linear-gradient(135deg,#f43f5e,#e11d48)}
+.wa-link-text h6{margin:0;font-size:.8rem;font-weight:600;color:var(--ic-text-primary,#1e293b)}
+.wa-link-text p{margin:.1rem 0 0;font-size:.68rem;color:var(--ic-text-muted,#94a3b8)}
+.wa-link-arrow{margin-left:auto;color:var(--ic-text-muted,#94a3b8);font-size:1rem;transition:transform .2s}
+.wa-link:hover .wa-link-arrow{transform:translateX(3px);color:var(--ic-accent,#06b6d4)}
+/* ── Status card ── */
+.wa-status-card{background:var(--ic-bg-card,#fff);border-radius:1rem;padding:1.25rem;border:1px solid rgba(0,0,0,.05);box-shadow:0 2px 12px rgba(0,0,0,.04)}
+.wa-status-header{display:flex;align-items:center;gap:.5rem;margin-bottom:1rem}
+.wa-status-header .material-symbols-rounded{font-size:1.1rem;color:#25d366}
+.wa-status-header h6{margin:0;font-size:.82rem;font-weight:600;color:var(--ic-text-primary,#1e293b)}
+.wa-status-item{display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--ic-bg-hover,#f1f5f9)}
+.wa-status-item:last-child{border-bottom:none}
+.wa-status-item .label{font-size:.75rem;color:var(--ic-text-secondary,#64748b)}
+.wa-status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-right:.4rem}
+.wa-status-dot.online{background:#25d366}
+.wa-status-dot.offline{background:#94a3b8}
+.wa-status-item .value{font-size:.75rem;font-weight:600;color:var(--ic-text-primary,#1e293b);display:flex;align-items:center}
+/* ── Responsive ── */
+@media(max-width:1199px){.wa-kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:991px){.wa-content{grid-template-columns:1fr}.wa-hero{flex-direction:column;text-align:center}.wa-hero-actions{width:100%;justify-content:center}}
+@media(max-width:575px){.wa-kpis{grid-template-columns:1fr}.wa-hero-actions{flex-direction:column}.wa-hero-actions a{justify-content:center}}
+/* ── Dark ── */
+[data-bs-theme="dark"] .wa-hero{background:linear-gradient(135deg,#128c7e 0%,#075e54 100%)}
+[data-bs-theme="dark"] .wa-card,[data-bs-theme="dark"] .wa-kpi,[data-bs-theme="dark"] .wa-link,[data-bs-theme="dark"] .wa-status-card{background:#1e293b;border-color:rgba(255,255,255,.06)}
+[data-bs-theme="dark"] .wa-table tr:hover td{background:rgba(255,255,255,.03)}
+</style>
+{% endblock %}
+
 {% block content %}
-<!-- ===== HEADER + AÇÕES RÁPIDAS ===== -->
-<div class="row">
-    <div class="col-lg-8 col-md-7">
-        <div class="ms-3">
-            <h3 class="mb-0 h4 font-weight-bolder">WhatsApp Business</h3>
-            <p class="mb-0 text-sm">Gerencie conversas, contatos e templates de mensagens do WhatsApp</p>
+<div class="wa-page">
+    <!-- Hero Banner -->
+    <div class="wa-hero">
+        <div class="wa-hero-left">
+            <div class="wa-hero-icon">
+                <i class="material-symbols-rounded">chat</i>
+            </div>
+            <div>
+                <h2>WhatsApp Business</h2>
+                <p>Gerencie conversas, contatos e templates de mensagens</p>
+            </div>
+        </div>
+        <div class="wa-hero-actions">
+            <a href="{% url 'dashboard:whatsapp:conversations' %}" class="wa-btn-white">
+                <i class="material-symbols-rounded" style="font-size:1rem">forum</i> Conversas
+            </a>
+            <a href="{% url 'dashboard:whatsapp:contacts' %}" class="wa-btn-outline">
+                <i class="material-symbols-rounded" style="font-size:1rem">contacts</i> Contatos
+            </a>
         </div>
     </div>
-    <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
-        <a href="{% url 'dashboard:whatsapp:conversations' %}" class="btn bg-gradient-primary btn-sm mb-0 me-2">
-            <i class="material-symbols-rounded text-sm me-1">chat</i> Conversas
-        </a>
-        <a href="{% url 'dashboard:whatsapp:contacts' %}" class="btn btn-outline-primary btn-sm mb-0">
-            <i class="material-symbols-rounded text-sm me-1">contacts</i> Contatos
-        </a>
-    </div>
-</div>
 
-<!-- ===== KPI CARDS ===== -->
-<div class="row mt-4">
-    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
-        <div class="card">
-            <div class="card-header p-2 ps-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-sm mb-0 text-capitalize">Total Conversas</p>
-                        <h4 class="mb-0">{{ total_conversas|default:"0" }}</h4>
-                    </div>
-                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">question_answer</i>
-                    </div>
-                </div>
+    <!-- KPI Cards -->
+    <div class="wa-kpis">
+        <div class="wa-kpi">
+            <div class="wa-kpi-icon green">
+                <i class="material-symbols-rounded">question_answer</i>
             </div>
-            <hr class="dark horizontal my-0">
-            <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm"><span class="text-success font-weight-bolder">{{ total_conversas|default:"0" }}</span> total geral</p>
+            <div class="wa-kpi-info">
+                <div class="wa-kpi-label">Total Conversas</div>
+                <div class="wa-kpi-value">{{ total_conversas|default:"0" }}</div>
+                <div class="wa-kpi-sub">Histórico completo</div>
+            </div>
+        </div>
+        <div class="wa-kpi">
+            <div class="wa-kpi-icon cyan">
+                <i class="material-symbols-rounded">forum</i>
+            </div>
+            <div class="wa-kpi-info">
+                <div class="wa-kpi-label">Conversas Ativas</div>
+                <div class="wa-kpi-value">{{ conversas_ativas|default:"0" }}</div>
+                <div class="wa-kpi-sub">Em andamento agora</div>
+            </div>
+        </div>
+        <div class="wa-kpi">
+            <div class="wa-kpi-icon amber">
+                <i class="material-symbols-rounded">sms</i>
+            </div>
+            <div class="wa-kpi-info">
+                <div class="wa-kpi-label">Mensagens Hoje</div>
+                <div class="wa-kpi-value">{{ mensagens_hoje|default:"0" }}</div>
+                <div class="wa-kpi-sub">Enviadas e recebidas</div>
+            </div>
+        </div>
+        <div class="wa-kpi">
+            <div class="wa-kpi-icon slate">
+                <i class="material-symbols-rounded">smartphone</i>
+            </div>
+            <div class="wa-kpi-info">
+                <div class="wa-kpi-label">Contas Ativas</div>
+                <div class="wa-kpi-value">{{ accounts.count|default:"0" }}</div>
+                <div class="wa-kpi-sub">Integradas à plataforma</div>
             </div>
         </div>
     </div>
-    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
-        <div class="card">
-            <div class="card-header p-2 ps-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-sm mb-0 text-capitalize">Conversas Ativas</p>
-                        <h4 class="mb-0">{{ conversas_ativas|default:"0" }}</h4>
-                    </div>
-                    <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">forum</i>
-                    </div>
-                </div>
-            </div>
-            <hr class="dark horizontal my-0">
-            <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm"><span class="text-info font-weight-bolder">{{ conversas_ativas|default:"0" }}</span> em andamento</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl col-sm-6 mb-xl-0 mb-4">
-        <div class="card">
-            <div class="card-header p-2 ps-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-sm mb-0 text-capitalize">Mensagens Hoje</p>
-                        <h4 class="mb-0">{{ mensagens_hoje|default:"0" }}</h4>
-                    </div>
-                    <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">sms</i>
-                    </div>
-                </div>
-            </div>
-            <hr class="dark horizontal my-0">
-            <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm"><span class="text-warning font-weight-bolder">{{ mensagens_hoje|default:"0" }}</span> enviadas/recebidas</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl col-sm-6">
-        <div class="card">
-            <div class="card-header p-2 ps-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-sm mb-0 text-capitalize">Contas Ativas</p>
-                        <h4 class="mb-0">{{ accounts.count|default:"0" }}</h4>
-                    </div>
-                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">smartphone</i>
-                    </div>
-                </div>
-            </div>
-            <hr class="dark horizontal my-0">
-            <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm"><span class="text-primary font-weight-bolder">{{ accounts.count|default:"0" }}</span> integradas</p>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- ===== ANALYTICS POR CONTA ===== -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-                <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="text-white text-capitalize ps-3 mb-0">Desempenho por Conta (últimos 7 dias)</h6>
-                        <div class="me-3">
-                            <a href="{% url 'dashboard:whatsapp:analytics' %}" class="btn btn-outline-white btn-sm mb-0">
-                                <i class="material-symbols-rounded text-sm">analytics</i>&nbsp;&nbsp;Analytics Completo
-                            </a>
-                        </div>
-                    </div>
+    <!-- Content Grid: Table + Sidebar -->
+    <div class="wa-content">
+        <!-- Analytics Table -->
+        <div class="wa-card">
+            <div class="wa-card-header">
+                <div class="wa-card-header-left">
+                    <span class="header-dot"></span>
+                    <h6>Desempenho por Conta — últimos 7 dias</h6>
                 </div>
+                <a href="{% url 'dashboard:whatsapp:analytics' %}">
+                    Analytics Completo <i class="material-symbols-rounded" style="font-size:.9rem">arrow_forward</i>
+                </a>
             </div>
-            <div class="card-body px-0 pb-2">
-                <div class="table-responsive p-0">
-                    <table class="table align-items-center mb-0">
-                        <thead>
-                            <tr>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Conta</th>
-                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Enviadas</th>
-                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Recebidas</th>
-                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Conversas</th>
-                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tickets</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in analytics_data %}
-                            <tr>
-                                <td>
-                                    <div class="d-flex px-2 py-1">
-                                        <div class="icon icon-sm icon-shape bg-gradient-success shadow text-center border-radius-md me-2">
-                                            <i class="material-symbols-rounded opacity-10 text-white" style="font-size:14px">smartphone</i>
-                                        </div>
-                                        <div class="d-flex flex-column justify-content-center">
-                                            <h6 class="mb-0 text-sm">{{ item.account.nome|default:item.account.phone_number_id }}</h6>
-                                            <p class="text-xs text-secondary mb-0">{{ item.account.phone_number_id }}</p>
-                                        </div>
+            <div class="wa-card-body" style="padding:0">
+                <table class="wa-table">
+                    <thead>
+                        <tr>
+                            <th>Conta</th>
+                            <th class="center">Enviadas</th>
+                            <th class="center">Recebidas</th>
+                            <th class="center">Conversas</th>
+                            <th class="center">Tickets</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in analytics_data %}
+                        <tr>
+                            <td>
+                                <div class="wa-account-cell">
+                                    <div class="wa-account-avatar">
+                                        <i class="material-symbols-rounded">phone_android</i>
                                     </div>
-                                </td>
-                                <td class="align-middle text-center">
-                                    <span class="text-sm font-weight-bold">{{ item.mensagens_enviadas|default:"0" }}</span>
-                                </td>
-                                <td class="align-middle text-center">
-                                    <span class="text-sm font-weight-bold">{{ item.mensagens_recebidas|default:"0" }}</span>
-                                </td>
-                                <td class="align-middle text-center">
-                                    <span class="text-sm font-weight-bold">{{ item.conversas_iniciadas|default:"0" }}</span>
-                                </td>
-                                <td class="align-middle text-center">
-                                    <span class="badge badge-sm bg-gradient-info">{{ item.tickets_criados|default:"0" }}</span>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5" class="text-center py-4">
-                                    <i class="material-symbols-rounded opacity-5 d-block mb-2" style="font-size:48px">smartphone</i>
-                                    <p class="text-sm text-muted mb-0">Nenhuma conta WhatsApp Business configurada</p>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                                    <div>
+                                        <div class="wa-account-name">{{ item.account.nome|default:item.account.phone_number_id }}</div>
+                                        <div class="wa-account-id">{{ item.account.phone_number_id }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="center"><span class="wa-metric">{{ item.mensagens_enviadas|default:"0" }}</span></td>
+                            <td class="center"><span class="wa-metric">{{ item.mensagens_recebidas|default:"0" }}</span></td>
+                            <td class="center"><span class="wa-metric">{{ item.conversas_iniciadas|default:"0" }}</span></td>
+                            <td class="center"><span class="wa-badge wa-badge-green">{{ item.tickets_criados|default:"0" }}</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5">
+                                <div class="wa-empty">
+                                    <i class="material-symbols-rounded">phone_disabled</i>
+                                    <p>Nenhuma conta WhatsApp Business configurada</p>
+                                    <p class="wa-empty-sub">Adicione uma conta para começar a receber mensagens</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- ===== ATALHOS ===== -->
-<div class="row mt-4 mb-4">
-    <div class="col-xl-3 col-md-6 mb-3">
-        <a href="{% url 'dashboard:whatsapp:conversations' %}" class="card card-body border shadow-none p-3 d-flex flex-row align-items-center text-decoration-none">
-            <div class="icon icon-sm icon-shape bg-gradient-success shadow text-center border-radius-md me-3">
-                <i class="material-symbols-rounded opacity-10 text-white" style="font-size:16px">chat</i>
+        <!-- Sidebar -->
+        <div style="display:flex;flex-direction:column;gap:1rem">
+            <!-- Status -->
+            <div class="wa-status-card">
+                <div class="wa-status-header">
+                    <i class="material-symbols-rounded">monitor_heart</i>
+                    <h6>Status da Integração</h6>
+                </div>
+                <div class="wa-status-item">
+                    <span class="label">API WhatsApp</span>
+                    <span class="value">
+                        {% if accounts.count %}<span class="wa-status-dot online"></span> Conectado{% else %}<span class="wa-status-dot offline"></span> Não configurado{% endif %}
+                    </span>
+                </div>
+                <div class="wa-status-item">
+                    <span class="label">Webhook</span>
+                    <span class="value">
+                        {% if accounts.count %}<span class="wa-status-dot online"></span> Ativo{% else %}<span class="wa-status-dot offline"></span> Inativo{% endif %}
+                    </span>
+                </div>
+                <div class="wa-status-item">
+                    <span class="label">Contas</span>
+                    <span class="value">{{ accounts.count|default:"0" }} configurada{{ accounts.count|pluralize:"s" }}</span>
+                </div>
             </div>
-            <div>
-                <h6 class="mb-0 text-sm">Conversas</h6>
-                <p class="text-xs text-muted mb-0">Ver todas as conversas</p>
+
+            <!-- Quick Links -->
+            <div class="wa-links">
+                <a href="{% url 'dashboard:whatsapp:conversations' %}" class="wa-link">
+                    <div class="wa-link-icon green"><i class="material-symbols-rounded">chat</i></div>
+                    <div class="wa-link-text">
+                        <h6>Conversas</h6>
+                        <p>Ver todas as conversas ativas</p>
+                    </div>
+                    <i class="material-symbols-rounded wa-link-arrow">chevron_right</i>
+                </a>
+                <a href="{% url 'dashboard:whatsapp:contacts' %}" class="wa-link">
+                    <div class="wa-link-icon cyan"><i class="material-symbols-rounded">contacts</i></div>
+                    <div class="wa-link-text">
+                        <h6>Contatos</h6>
+                        <p>Gerenciar contatos WhatsApp</p>
+                    </div>
+                    <i class="material-symbols-rounded wa-link-arrow">chevron_right</i>
+                </a>
+                <a href="{% url 'dashboard:whatsapp:templates' %}" class="wa-link">
+                    <div class="wa-link-icon amber"><i class="material-symbols-rounded">description</i></div>
+                    <div class="wa-link-text">
+                        <h6>Templates</h6>
+                        <p>Modelos de mensagens prontas</p>
+                    </div>
+                    <i class="material-symbols-rounded wa-link-arrow">chevron_right</i>
+                </a>
+                <a href="{% url 'dashboard:whatsapp:auto_responses' %}" class="wa-link">
+                    <div class="wa-link-icon purple"><i class="material-symbols-rounded">auto_fix_high</i></div>
+                    <div class="wa-link-text">
+                        <h6>Respostas Automáticas</h6>
+                        <p>Automações de resposta</p>
+                    </div>
+                    <i class="material-symbols-rounded wa-link-arrow">chevron_right</i>
+                </a>
+                <a href="{% url 'dashboard:whatsapp:analytics' %}" class="wa-link">
+                    <div class="wa-link-icon rose"><i class="material-symbols-rounded">analytics</i></div>
+                    <div class="wa-link-text">
+                        <h6>Analytics</h6>
+                        <p>Relatórios e métricas completas</p>
+                    </div>
+                    <i class="material-symbols-rounded wa-link-arrow">chevron_right</i>
+                </a>
             </div>
-        </a>
-    </div>
-    <div class="col-xl-3 col-md-6 mb-3">
-        <a href="{% url 'dashboard:whatsapp:contacts' %}" class="card card-body border shadow-none p-3 d-flex flex-row align-items-center text-decoration-none">
-            <div class="icon icon-sm icon-shape bg-gradient-info shadow text-center border-radius-md me-3">
-                <i class="material-symbols-rounded opacity-10 text-white" style="font-size:16px">contacts</i>
-            </div>
-            <div>
-                <h6 class="mb-0 text-sm">Contatos</h6>
-                <p class="text-xs text-muted mb-0">Gerenciar contatos</p>
-            </div>
-        </a>
-    </div>
-    <div class="col-xl-3 col-md-6 mb-3">
-        <a href="{% url 'dashboard:whatsapp:templates' %}" class="card card-body border shadow-none p-3 d-flex flex-row align-items-center text-decoration-none">
-            <div class="icon icon-sm icon-shape bg-gradient-warning shadow text-center border-radius-md me-3">
-                <i class="material-symbols-rounded opacity-10 text-white" style="font-size:16px">description</i>
-            </div>
-            <div>
-                <h6 class="mb-0 text-sm">Templates</h6>
-                <p class="text-xs text-muted mb-0">Modelos de mensagens</p>
-            </div>
-        </a>
-    </div>
-    <div class="col-xl-3 col-md-6 mb-3">
-        <a href="{% url 'dashboard:whatsapp:auto_responses' %}" class="card card-body border shadow-none p-3 d-flex flex-row align-items-center text-decoration-none">
-            <div class="icon icon-sm icon-shape bg-gradient-primary shadow text-center border-radius-md me-3">
-                <i class="material-symbols-rounded opacity-10 text-white" style="font-size:16px">auto_fix_high</i>
-            </div>
-            <div>
-                <h6 class="mb-0 text-sm">Respostas Auto</h6>
-                <p class="text-xs text-muted mb-0">Automações de resposta</p>
-            </div>
-        </a>
+        </div>
     </div>
 </div>
 {% endblock %}
