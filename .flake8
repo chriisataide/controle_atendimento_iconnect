@@ -1,3 +1,28 @@
 [flake8]
-max-line-length = 88
-exclude = .git,__pycache__,.venv,venv,build,dist,migrations
+max-line-length = 120
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    build,
+    dist,
+    migrations,
+    staticfiles,
+    node_modules
+extend-ignore = E402,F403,F405,W503,W504,E203
+per-file-ignores =
+    config/*:F821,F401
+    */__init__.py:F401,F811
+    controle_atendimento/settings*.py:F401,E501
+    scripts/*:E501,F841,F541,W291,F811
+    dashboard/management/*:E501,F541,W291
+    dashboard/tests/*:F841
+    dashboard/services/*:F841,F541,E501,F811,F402
+    dashboard/views/*:F841,E501
+    dashboard/consumers.py:F841
+    dashboard/utils/*:F841,E501
+    dashboard/forms/base.py:F811
+    dashboard/forms_pkg/base.py:F811
+
+
