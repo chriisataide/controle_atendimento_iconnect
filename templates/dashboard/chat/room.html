@@ -49,8 +49,8 @@
     <!-- ===== ÁREA DE CHAT ===== -->
     <div class="col-lg-9 col-md-8 mb-4">
         <div class="card">
-            <div class="chat-container">
-                <div class="chat-messages" id="chatMessages">
+            <div class="chat-container" role="region" aria-label="Sala de chat {{ room.name }}">
+                <div class="chat-messages" id="chatMessages" role="log" aria-live="polite" aria-label="Mensagens do chat">
                     {% for message in messages %}
                     <div class="chat-message {% if message.sender == request.user %}sent{% elif message.message_type == 'system' %}system{% else %}received{% endif %}">
                         {% if message.message_type != 'system' and message.sender != request.user %}
@@ -87,9 +87,9 @@
                         {% csrf_token %}
                         <input type="hidden" name="room_id" value="{{ room.id }}">
                         <div class="flex-grow-1">
-                            <textarea id="messageInput" class="form-control border" rows="1" placeholder="Digite sua mensagem..." style="resize:none;max-height:120px"></textarea>
+                            <textarea id="messageInput" class="form-control border" rows="1" placeholder="Digite sua mensagem..." aria-label="Campo de mensagem" style="resize:none;max-height:120px"></textarea>
                         </div>
-                        <button type="submit" class="btn bg-gradient-primary mb-0 px-3">
+                        <button type="submit" class="btn bg-gradient-primary mb-0 px-3" aria-label="Enviar mensagem">
                             <i class="material-symbols-rounded">send</i>
                         </button>
                     </form>
@@ -151,6 +151,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageInput = document.getElementById('messageInput');
     const roomData = JSON.parse('{{ room_json|escapejs }}');
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const currentUserId = {{ request.user.id }};
+    let chatSocket = null;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT = 5;
+    let typingTimer = null;
 
     // Scroll para o final
     if (chatMessages) {
@@ -163,43 +168,206 @@ document.addEventListener('DOMContentLoaded', function() {
         this.style.height = Math.min(this.scrollHeight, 120) + 'px';
     });
 
-    // Enviar mensagem
+    // ===== WebSocket Connection =====
+    function connectWebSocket() {
+        const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const wsUrl = `${wsScheme}://${window.location.host}/ws/chat/${roomData.id}/`;
+        chatSocket = new WebSocket(wsUrl);
+
+        chatSocket.onopen = function() {
+            reconnectAttempts = 0;
+            console.log('Chat WebSocket connected');
+            updateConnectionStatus(true);
+        };
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            handleWebSocketMessage(data);
+        };
+
+        chatSocket.onclose = function(e) {
+            console.log('Chat WebSocket closed:', e.code);
+            updateConnectionStatus(false);
+            if (reconnectAttempts < MAX_RECONNECT) {
+                reconnectAttempts++;
+                const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+                setTimeout(connectWebSocket, delay);
+            }
+        };
+
+        chatSocket.onerror = function(e) {
+            console.error('Chat WebSocket error:', e);
+        };
+    }
+
+    function handleWebSocketMessage(data) {
+        switch (data.type) {
+            case 'chat_message':
+                const msg = data.message;
+                if (msg.sender_id !== currentUserId) {
+                    appendMessage(msg.content, msg.sender_name, msg.timestamp, false);
+                }
+                break;
+            case 'typing_start':
+                if (data.user_id !== currentUserId) showTypingIndicator(data.username);
+                break;
+            case 'typing_stop':
+                if (data.user_id !== currentUserId) hideTypingIndicator(data.username);
+                break;
+            case 'user_joined':
+                if (data.user_id !== currentUserId) appendSystemMessage(`${data.full_name || data.username} entrou na sala`);
+                break;
+            case 'user_left':
+                if (data.user_id !== currentUserId) appendSystemMessage(`${data.username} saiu da sala`);
+                break;
+        }
+    }
+
+    function sendViaWebSocket(content) {
+        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            chatSocket.send(JSON.stringify({
+                type: 'chat_message',
+                content: content,
+                message_type: 'text'
+            }));
+            return true;
+        }
+        return false;
+    }
+
+    function sendTypingEvent(isTyping) {
+        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            chatSocket.send(JSON.stringify({type: isTyping ? 'typing_start' : 'typing_stop'}));
+        }
+    }
+
+    // ===== Message Rendering =====
+    function appendMessage(content, senderName, timestamp, isSent) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'chat-message ' + (isSent ? 'sent' : 'received');
+
+        if (!isSent && senderName) {
+            const nameP = document.createElement('p');
+            nameP.className = 'text-xs text-secondary mb-1';
+            nameP.textContent = senderName;
+            msgDiv.appendChild(nameP);
+        }
+
+        const bubble = document.createElement('div');
+        bubble.className = 'msg-bubble';
+        const span = document.createElement('span');
+        span.className = 'text-sm';
+        span.textContent = content;
+        bubble.appendChild(span);
+
+        const timeP = document.createElement('p');
+        timeP.className = 'text-xs text-muted mt-1' + (isSent ? ' text-end' : '');
+        const date = timestamp ? new Date(timestamp) : new Date();
+        timeP.textContent = date.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+
+        msgDiv.appendChild(bubble);
+        msgDiv.appendChild(timeP);
+        chatMessages.appendChild(msgDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function appendSystemMessage(text) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'chat-message system';
+        const bubble = document.createElement('div');
+        bubble.className = 'msg-bubble';
+        bubble.textContent = text;
+        msgDiv.appendChild(bubble);
+        chatMessages.appendChild(msgDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // ===== Typing Indicator =====
+    let typingUsers = new Set();
+    function showTypingIndicator(username) {
+        typingUsers.add(username);
+        updateTypingUI();
+    }
+    function hideTypingIndicator(username) {
+        typingUsers.delete(username);
+        updateTypingUI();
+    }
+    function updateTypingUI() {
+        let indicator = document.getElementById('typingIndicator');
+        if (typingUsers.size === 0) {
+            if (indicator) indicator.remove();
+            return;
+        }
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'typingIndicator';
+            indicator.className = 'text-xs text-muted px-3 pb-1';
+            indicator.setAttribute('aria-live', 'polite');
+            chatMessages.parentElement.insertBefore(indicator, chatMessages.nextSibling);
+        }
+        const names = Array.from(typingUsers).join(', ');
+        indicator.textContent = `${names} está digitando...`;
+    }
+
+    function updateConnectionStatus(connected) {
+        let badge = document.getElementById('wsBadge');
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.id = 'wsBadge';
+            badge.className = 'badge badge-sm ms-2';
+            badge.style.fontSize = '0.6rem';
+            const header = document.querySelector('.h4.font-weight-bolder');
+            if (header) header.appendChild(badge);
+        }
+        badge.textContent = connected ? 'Ao vivo' : 'Reconectando...';
+        badge.className = 'badge badge-sm ms-2 bg-gradient-' + (connected ? 'success' : 'warning');
+    }
+
+    // ===== Send Message =====
     messageForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const content = messageInput.value.trim();
         if (!content) return;
 
-        fetch('{% url "dashboard:api_send_message" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({
-                room_id: roomData.id,
-                content: content,
-                message_type: 'text'
+        // Try WebSocket first, fallback to AJAX
+        const sentViaWs = sendViaWebSocket(content);
+
+        if (sentViaWs) {
+            appendMessage(content, null, null, true);
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            sendTypingEvent(false);
+        } else {
+            // AJAX fallback
+            fetch('{% url "dashboard:api_send_message" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    room_id: roomData.id,
+                    content: content,
+                    message_type: 'text'
+                })
             })
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.status === 'success') {
-                // Adicionar mensagem na tela
-                const msgDiv = document.createElement('div');
-                msgDiv.className = 'chat-message sent';
-                msgDiv.innerHTML = `
-                    <div class="msg-bubble">
-                        <span class="text-sm">${content}</span>
-                    </div>
-                    <p class="text-xs text-muted mt-1 text-end">${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</p>
-                `;
-                chatMessages.appendChild(msgDiv);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-                messageInput.value = '';
-                messageInput.style.height = 'auto';
-            }
-        })
-        .catch(err => console.error('Erro ao enviar:', err));
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    appendMessage(content, null, null, true);
+                    messageInput.value = '';
+                    messageInput.style.height = 'auto';
+                }
+            })
+            .catch(err => console.error('Erro ao enviar:', err));
+        }
+    });
+
+    // Typing events
+    messageInput.addEventListener('input', function() {
+        sendTypingEvent(true);
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => sendTypingEvent(false), 2000);
     });
 
     // Enter para enviar (Shift+Enter para nova linha)
@@ -209,6 +377,9 @@ document.addEventListener('DOMContentLoaded', function() {
             messageForm.dispatchEvent(new Event('submit'));
         }
     });
+
+    // Start WebSocket connection
+    connectWebSocket();
 });
 </script>
 {% endblock %}

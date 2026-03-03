@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static dashboard_extras %}
 
 {% block title %}Ticket #{{ ticket.numero }} — iConnect{% endblock %}
 {% block page_title %}Ticket #{{ ticket.numero }}{% endblock %}
@@ -40,26 +40,8 @@
               <p class="text-sm text-muted mb-0">Criado em {{ ticket.criado_em|date:"d/m/Y \à\s H:i" }}</p>
             </div>
             <div class="d-flex gap-2">
-              {% if ticket.status == 'aberto' %}
-                <span class="badge bg-gradient-danger">{{ ticket.get_status_display }}</span>
-              {% elif ticket.status == 'em_andamento' %}
-                <span class="badge bg-gradient-warning">{{ ticket.get_status_display }}</span>
-              {% elif ticket.status == 'aguardando_cliente' %}
-                <span class="badge" style="background: linear-gradient(195deg, #f59e0b, #d97706); color: #fff;">{{ ticket.get_status_display }}</span>
-              {% elif ticket.status == 'resolvido' %}
-                <span class="badge bg-gradient-info">{{ ticket.get_status_display }}</span>
-              {% else %}
-                <span class="badge bg-gradient-success">{{ ticket.get_status_display }}</span>
-              {% endif %}
-              {% if ticket.prioridade == 'critica' %}
-                <span class="badge bg-gradient-danger">{{ ticket.get_prioridade_display }}</span>
-              {% elif ticket.prioridade == 'alta' %}
-                <span class="badge bg-gradient-warning">{{ ticket.get_prioridade_display }}</span>
-              {% elif ticket.prioridade == 'media' %}
-                <span class="badge" style="background: linear-gradient(195deg, #06b6d4, #0891b2); color: #fff;">{{ ticket.get_prioridade_display }}</span>
-              {% else %}
-                <span class="badge bg-gradient-secondary">{{ ticket.get_prioridade_display }}</span>
-              {% endif %}
+              {% status_badge ticket.status %}
+              {% priority_badge ticket.prioridade %}
             </div>
           </div>
         </div>

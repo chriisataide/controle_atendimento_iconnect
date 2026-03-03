@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
-{% block title %}Criar Usuário - iConnect{% endblock %}
+{% block title %}{% if editing %}Editar Usuário{% else %}Criar Usuário{% endif %} - iConnect{% endblock %}
 
-{% block page_title %}Criar Usuário{% endblock %}
-{% block breadcrumb_title %}Criar Usuário{% endblock %}
+{% block page_title %}{% if editing %}Editar Usuário{% else %}Criar Usuário{% endif %}{% endblock %}
+{% block breadcrumb_title %}{% if editing %}Editar Usuário{% else %}Criar Usuário{% endif %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -237,8 +237,8 @@
     <!-- Page Header -->
     <div class="d-flex align-items-center justify-content-between mb-4 px-2">
         <div>
-            <h4 class="mb-0 fw-bold" style="color: #1e293b;">Novo Usuário</h4>
-            <p class="mb-0 text-sm" style="color: #94a3b8;">Preencha os dados abaixo para criar uma nova conta de acesso</p>
+            <h4 class="mb-0 fw-bold" style="color: #1e293b;">{% if editing %}Editar Usuário{% else %}Novo Usuário{% endif %}</h4>
+            <p class="mb-0 text-sm" style="color: #94a3b8;">{% if editing %}Atualize os dados do usuário{% else %}Preencha os dados abaixo para criar uma nova conta de acesso{% endif %}</p>
         </div>
         <a href="{% url 'dashboard:user_list' %}" class="btn btn-uc-secondary btn-sm">
             <i class="material-symbols-rounded text-sm me-1" style="font-size: 16px;">arrow_back</i> Voltar
@@ -318,6 +318,7 @@
                                     <label class="form-label" for="id_email">Email <span class="text-danger">*</span></label>
                                     {{ form.email }}
                                 </div>
+                                {% if not editing %}
                                 <div class="col-md-6">
                                     <label class="form-label" for="id_password1">Senha <span class="text-danger">*</span></label>
                                     {{ form.password1 }}
@@ -326,6 +327,23 @@
                                     <label class="form-label" for="id_password2">Confirmar Senha <span class="text-danger">*</span></label>
                                     {{ form.password2 }}
                                 </div>
+                                {% else %}
+                                <div class="col-12 mt-2">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <i class="material-symbols-rounded" style="font-size: 18px; color: #f59e0b;">lock_reset</i>
+                                        <span class="form-label mb-0" style="font-size: .78rem;">Alterar Senha <span class="text-muted fw-normal">(opcional)</span></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="id_new_password1">Nova Senha</label>
+                                    {{ form.new_password1 }}
+                                    <div class="uc-hint">Deixe em branco para manter a senha atual</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="id_new_password2">Confirmar Nova Senha</label>
+                                    {{ form.new_password2 }}
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
 
@@ -406,7 +424,11 @@
                                         <i class="material-symbols-rounded text-sm me-1" style="font-size: 16px;">close</i> Cancelar
                                     </a>
                                     <button type="submit" class="btn btn-uc-primary">
+                                        {% if editing %}
+                                        <i class="material-symbols-rounded text-sm me-1" style="font-size: 16px;">save</i> Salvar Alterações
+                                        {% else %}
                                         <i class="material-symbols-rounded text-sm me-1" style="font-size: 16px;">person_add</i> Criar Usuário
+                                        {% endif %}
                                     </button>
                                 </div>
                             </div>

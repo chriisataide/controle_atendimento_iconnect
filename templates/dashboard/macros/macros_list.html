@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Respostas Rápidas (Macros) — iConnect{% endblock %}
+{% block page_title %}Respostas Rápidas{% endblock %}
+{% block breadcrumb_title %}Macros{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h5 class="font-weight-bold mb-0" style="color:var(--ic-text-primary);">
+        <span class="material-symbols-rounded me-1" style="vertical-align:-4px;">bolt</span>
+        Respostas Rápidas
+      </h5>
+      <p class="text-sm text-muted mb-0">Gerencie templates de respostas para agilizar o atendimento</p>
+    </div>
+    <button class="btn ic-btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalCriarMacro">
+      <span class="material-symbols-rounded me-1" style="font-size:18px;vertical-align:-3px;">add</span>
+      Nova Macro
+    </button>
+  </div>
+
+  <!-- Filtros -->
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <form method="get" class="ic-search-box">
+        <span class="material-symbols-rounded search-icon">search</span>
+        <input type="text" name="q" class="form-control form-control-sm" placeholder="Buscar macros..." value="{{ request.GET.q|default:'' }}" style="padding-left:36px;border-radius:10px;">
+      </form>
+    </div>
+    <div class="col-md-3">
+      <form method="get">
+        {% if request.GET.q %}<input type="hidden" name="q" value="{{ request.GET.q }}">{% endif %}
+        <select name="cat" class="form-select form-select-sm" onchange="this.form.submit()" style="border-radius:10px;">
+          <option value="">Todas as categorias</option>
+          {% for cat in categorias %}
+          <option value="{{ cat }}" {% if request.GET.cat == cat %}selected{% endif %}>{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+  </div>
+
+  <!-- Lista de Macros -->
+  <div class="row">
+    {% for macro in macros %}
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="card ic-card h-100">
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <h6 class="text-sm font-weight-bold mb-0" style="color:var(--ic-text-primary);">{{ macro.titulo }}</h6>
+            {% if macro.criado_por == request.user or request.user.is_staff %}
+            <div class="dropdown">
+              <button class="btn btn-link text-muted p-0" data-bs-toggle="dropdown" aria-label="Opções">
+                <span class="material-symbols-rounded" style="font-size:18px;">more_vert</span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                  <button class="dropdown-item text-danger text-xs" onclick="deleteMacro({{ macro.pk }}, '{{ macro.titulo|escapejs }}')">
+                    <span class="material-symbols-rounded me-1" style="font-size:16px;vertical-align:-3px;">delete</span>
+                    Excluir
+                  </button>
+                </li>
+              </ul>
+            </div>
+            {% endif %}
+          </div>
+          {% if macro.categoria %}
+          <span class="ic-badge" style="background:var(--ic-bg-hover);color:var(--ic-text-secondary);font-size:0.65rem;">
+            {{ macro.categoria }}
+          </span>
+          {% endif %}
+          <p class="text-xs text-muted mt-2 mb-2" style="max-height:60px;overflow:hidden;">{{ macro.corpo|truncatechars:120 }}</p>
+
+          <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-auto">
+            <div class="d-flex align-items-center">
+              {% if macro.atalho %}
+              <code class="text-xs me-2" style="background:var(--ic-bg-hover);padding:2px 6px;border-radius:4px;">/{{ macro.atalho }}</code>
+              {% endif %}
+              {% if macro.compartilhado %}
+              <span class="material-symbols-rounded text-muted" style="font-size:14px;" title="Compartilhada">group</span>
+              {% else %}
+              <span class="material-symbols-rounded text-muted" style="font-size:14px;" title="Pessoal">person</span>
+              {% endif %}
+            </div>
+            <div class="d-flex align-items-center">
+              <span class="material-symbols-rounded text-muted" style="font-size:14px;">content_copy</span>
+              <span class="text-xs text-muted ms-1">{{ macro.uso_count }}x</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+      <div class="ic-empty-state">
+        <span class="material-symbols-rounded">bolt</span>
+        <h6>Nenhuma macro encontrada</h6>
+        <p>Crie sua primeira resposta rápida para agilizar o atendimento.</p>
+        <button class="btn ic-btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalCriarMacro">
+          <span class="material-symbols-rounded me-1" style="font-size:18px;vertical-align:-3px;">add</span>
+          Criar Macro
+        </button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Modal Criar Macro -->
+<div class="modal fade" id="modalCriarMacro" tabindex="-1" aria-labelledby="lblCriarMacro" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content" style="border-radius:16px;">
+      <div class="modal-header border-0 pb-0">
+        <h6 class="modal-title font-weight-bold" id="lblCriarMacro">
+          <span class="material-symbols-rounded me-1" style="vertical-align:-4px;">add_circle</span>
+          Nova Resposta Rápida
+        </h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formCriarMacro">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label text-sm font-weight-bold">Título *</label>
+            <input type="text" name="titulo" class="form-control form-control-sm" required placeholder="Ex: Boas-vindas ao cliente" style="border-radius:10px;">
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-sm font-weight-bold">Conteúdo *</label>
+            <textarea name="corpo" class="form-control form-control-sm" rows="5" required placeholder="Olá {nome}, obrigado por entrar em contato..." style="border-radius:10px;"></textarea>
+          </div>
+          <div class="row">
+            <div class="col-6">
+              <div class="mb-3">
+                <label class="form-label text-sm font-weight-bold">Atalho</label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text">/</span>
+                  <input type="text" name="atalho" class="form-control" placeholder="boasvindas" style="border-radius:0 10px 10px 0;">
+                </div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="mb-3">
+                <label class="form-label text-sm font-weight-bold">Categoria</label>
+                <input type="text" name="categoria" class="form-control form-control-sm" placeholder="Geral" style="border-radius:10px;">
+              </div>
+            </div>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="compartilhado" id="chkCompartilhado">
+            <label class="form-check-label text-sm" for="chkCompartilhado">
+              <span class="material-symbols-rounded me-1" style="font-size:16px;vertical-align:-3px;">group</span>
+              Compartilhar com a equipe
+            </label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn ic-btn-primary btn-sm" onclick="criarMacro()">
+          <span class="material-symbols-rounded me-1" style="font-size:18px;vertical-align:-3px;">save</span>
+          Salvar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function criarMacro() {
+  const form = document.getElementById('formCriarMacro');
+  const formData = new FormData(form);
+  const data = Object.fromEntries(formData.entries());
+  data.compartilhado = !!data.compartilhado;
+
+  fetch("{% url 'dashboard:macro_create' %}", {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': data.csrfmiddlewaretoken,
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: JSON.stringify(data)
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) {
+      window.location.reload();
+    } else {
+      alert(d.error || 'Erro ao criar macro.');
+    }
+  })
+  .catch(err => {
+    console.error('Create macro error:', err);
+    alert('Erro de rede. Tente novamente.');
+  });
+}
+
+function deleteMacro(pk, titulo) {
+  if (!confirm('Excluir a macro "' + titulo + '"?')) return;
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value
+    || '{{ csrf_token }}';
+  fetch('/dashboard/macros/' + pk + '/delete/', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': csrfToken,
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) window.location.reload();
+    else alert(d.error || 'Erro ao excluir.');
+  })
+  .catch(err => {
+    console.error('Delete macro error:', err);
+    alert('Erro de rede.');
+  });
+}
+</script>
+{% endblock %}

@@ -271,23 +271,23 @@
 
     <!-- Search Hero -->
     <div class="search-hero">
-        <h2><i class="material-icons" style="vertical-align:-3px; margin-right:6px;">search</i> Busca Avançada</h2>
+        <h2><i class="material-symbols-rounded" style="vertical-align:-3px; margin-right:6px;">search</i> Busca Avançada</h2>
         <p>Pesquise tickets, clientes e dados do sistema</p>
         <form method="GET" action="" id="searchForm">
             <div class="search-input-wrapper">
                 <div class="search-input-box">
-                    <i class="material-icons">search</i>
+                    <i class="material-symbols-rounded">search</i>
                     <input type="text" name="q" value="{{ query }}"
                            placeholder="Digite número do ticket, nome do cliente, título..."
                            autofocus autocomplete="off">
                     {% if query %}
                     <a href="{% url 'dashboard:search' %}" style="color:#94a3b8; text-decoration:none;">
-                        <i class="material-icons" style="font-size:18px;">close</i>
+                        <i class="material-symbols-rounded" style="font-size:18px;">close</i>
                     </a>
                     {% endif %}
                 </div>
                 <button type="submit" class="search-btn">
-                    <i class="material-icons" style="font-size:18px;">search</i> Buscar
+                    <i class="material-symbols-rounded" style="font-size:18px;">search</i> Buscar
                 </button>
             </div>
             <!-- Filtros hidden -->
@@ -301,16 +301,16 @@
     <!-- Filter chips -->
     <div class="filter-bar">
         <span style="font-size:11px; color:#94a3b8; font-weight:600; display:flex; align-items:center; gap:4px; margin-right:4px;">
-            <i class="material-icons" style="font-size:14px;">filter_list</i> Tipo:
+            <i class="material-symbols-rounded" style="font-size:14px;">filter_list</i> Tipo:
         </span>
         <a href="?q={{ query }}&type=all" class="filter-chip {% if filter_type == 'all' %}active{% endif %}">
-            <i class="material-icons">select_all</i> Todos
+            <i class="material-symbols-rounded">select_all</i> Todos
         </a>
         <a href="?q={{ query }}&type=tickets" class="filter-chip {% if filter_type == 'tickets' %}active{% endif %}">
-            <i class="material-icons">confirmation_number</i> Tickets
+            <i class="material-symbols-rounded">confirmation_number</i> Tickets
         </a>
         <a href="?q={{ query }}&type=clientes" class="filter-chip {% if filter_type == 'clientes' %}active{% endif %}">
-            <i class="material-icons">people</i> Clientes
+            <i class="material-symbols-rounded">people</i> Clientes
         </a>
 
         {% if filter_type != 'clientes' %}
@@ -336,21 +336,21 @@
     <!-- TICKET RESULTS -->
     {% if tickets %}
     <div class="section-title">
-        <i class="material-icons" style="font-size:14px;">confirmation_number</i>
+        <i class="material-symbols-rounded" style="font-size:14px;">confirmation_number</i>
         Tickets ({{ tickets|length }})
     </div>
     {% for t in tickets %}
     <a href="{% url 'dashboard:ticket_detail' t.id %}" class="result-card">
         <div class="result-icon" style="background: {% if t.prioridade == 'critica' %}#ef4444{% elif t.prioridade == 'alta' %}#f97316{% elif t.prioridade == 'media' %}#eab308{% else %}#22c55e{% endif %}">
-            <i class="material-icons">confirmation_number</i>
+            <i class="material-symbols-rounded">confirmation_number</i>
         </div>
         <div class="result-info">
             <p class="result-title">#{{ t.numero }} — {{ t.titulo }}</p>
             <div class="result-meta">
-                <span><i class="material-icons">person</i> {{ t.cliente.nome }}</span>
-                {% if t.agente %}<span><i class="material-icons">support_agent</i> {{ t.agente.get_full_name|default:t.agente.username }}</span>{% endif %}
-                {% if t.categoria %}<span><i class="material-icons">label</i> {{ t.categoria.nome }}</span>{% endif %}
-                <span><i class="material-icons">schedule</i> {{ t.criado_em|timesince }} atrás</span>
+                <span><i class="material-symbols-rounded">person</i> {{ t.cliente.nome }}</span>
+                {% if t.agente %}<span><i class="material-symbols-rounded">support_agent</i> {{ t.agente.get_full_name|default:t.agente.username }}</span>{% endif %}
+                {% if t.categoria %}<span><i class="material-symbols-rounded">label</i> {{ t.categoria.nome }}</span>{% endif %}
+                <span><i class="material-symbols-rounded">schedule</i> {{ t.criado_em|timesince }} atrás</span>
             </div>
         </div>
         <div class="result-badges">
@@ -365,20 +365,20 @@
     <!-- CLIENT RESULTS -->
     {% if clientes %}
     <div class="section-title" {% if tickets %}style="margin-top:20px;"{% endif %}>
-        <i class="material-icons" style="font-size:14px;">people</i>
+        <i class="material-symbols-rounded" style="font-size:14px;">people</i>
         Clientes ({{ clientes|length }})
     </div>
     {% for c in clientes %}
     <a href="{% url 'dashboard:cliente_detail' c.id %}" class="result-card">
         <div class="result-icon" style="background: #22c55e">
-            <i class="material-icons">person</i>
+            <i class="material-symbols-rounded">person</i>
         </div>
         <div class="result-info">
             <p class="result-title">{{ c.nome }}</p>
             <div class="result-meta">
-                {% if c.empresa %}<span><i class="material-icons">business</i> {{ c.empresa }}</span>{% endif %}
-                <span><i class="material-icons">email</i> {{ c.email }}</span>
-                <span><i class="material-icons">calendar_today</i> Cliente desde {{ c.criado_em|date:"d/m/Y" }}</span>
+                {% if c.empresa %}<span><i class="material-symbols-rounded">business</i> {{ c.empresa }}</span>{% endif %}
+                <span><i class="material-symbols-rounded">email</i> {{ c.email }}</span>
+                <span><i class="material-symbols-rounded">calendar_today</i> Cliente desde {{ c.criado_em|date:"d/m/Y" }}</span>
             </div>
         </div>
         <div class="result-badges">
@@ -392,7 +392,7 @@
     <!-- Empty states -->
     {% if query and not tickets and not clientes %}
     <div class="empty-state">
-        <i class="material-icons">search_off</i>
+        <i class="material-symbols-rounded">search_off</i>
         <h5>Nenhum resultado para "{{ query }}"</h5>
         <p>Tente palavras diferentes ou remova os filtros aplicados</p>
         <div class="empty-tips">
@@ -403,14 +403,14 @@
     </div>
     {% elif not query %}
     <div class="empty-state">
-        <i class="material-icons">manage_search</i>
+        <i class="material-symbols-rounded">manage_search</i>
         <h5>O que você está procurando?</h5>
         <p>Digite um termo acima para buscar tickets, clientes e dados do sistema</p>
         <div class="empty-tips">
-            <div class="empty-tip"><i class="material-icons" style="font-size:14px; vertical-align:-2px;">confirmation_number</i> Nº do ticket</div>
-            <div class="empty-tip"><i class="material-icons" style="font-size:14px; vertical-align:-2px;">person</i> Nome do cliente</div>
-            <div class="empty-tip"><i class="material-icons" style="font-size:14px; vertical-align:-2px;">business</i> Nome da empresa</div>
-            <div class="empty-tip"><i class="material-icons" style="font-size:14px; vertical-align:-2px;">description</i> Título ou descrição</div>
+            <div class="empty-tip"><i class="material-symbols-rounded" style="font-size:14px; vertical-align:-2px;">confirmation_number</i> Nº do ticket</div>
+            <div class="empty-tip"><i class="material-symbols-rounded" style="font-size:14px; vertical-align:-2px;">person</i> Nome do cliente</div>
+            <div class="empty-tip"><i class="material-symbols-rounded" style="font-size:14px; vertical-align:-2px;">business</i> Nome da empresa</div>
+            <div class="empty-tip"><i class="material-symbols-rounded" style="font-size:14px; vertical-align:-2px;">description</i> Título ou descrição</div>
         </div>
     </div>
     {% endif %}

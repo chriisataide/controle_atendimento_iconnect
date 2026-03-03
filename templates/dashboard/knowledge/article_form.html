@@ -1,0 +1,675 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if editing %}Editar Artigo{% else %}Novo Artigo{% endif %} — Base de Conhecimento{% endblock %}
+{% block page_title %}{% if editing %}Editar Artigo{% else %}Novo Artigo{% endif %}{% endblock %}
+{% block breadcrumb_title %}{% if editing %}Editar{% else %}Novo{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── Card principal ── */
+    .kb-card {
+        border-radius: 16px;
+        border: none;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 6px 16px rgba(0,0,0,.04);
+    }
+    .kb-header {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        padding: 2rem 2rem 3rem;
+        position: relative;
+    }
+    .kb-header::after {
+        content: '';
+        position: absolute;
+        bottom: -1px; left: 0; right: 0;
+        height: 24px;
+        background: #fff;
+        border-radius: 24px 24px 0 0;
+    }
+    .kb-header-icon {
+        width: 72px; height: 72px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.8rem;
+        color: #1e293b;
+        background: rgba(255,255,255,.95);
+        border: 3px solid rgba(255,255,255,.35);
+        margin: 0 auto;
+    }
+
+    /* ── Seções ── */
+    .kb-section { padding: 0 1.75rem; }
+    .kb-section-title {
+        font-size: .68rem;
+        text-transform: uppercase;
+        letter-spacing: .9px;
+        font-weight: 700;
+        color: #06b6d4;
+        margin-bottom: .85rem;
+        display: flex; align-items: center; gap: 7px;
+        padding-bottom: .5rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .kb-section-title i { font-size: 17px; }
+
+    /* ── Form controls ── */
+    .kb-card .form-label {
+        font-size: .78rem; font-weight: 600;
+        color: #334155; margin-bottom: .3rem;
+    }
+    .kb-card .form-control,
+    .kb-card .form-select {
+        border-radius: 10px;
+        border: 1.5px solid #e2e8f0;
+        padding: .55rem .9rem;
+        font-size: .84rem;
+        transition: border-color .2s, box-shadow .2s;
+        background-color: #fff;
+    }
+    .kb-card .form-control:focus,
+    .kb-card .form-select:focus {
+        border-color: #06b6d4;
+        box-shadow: 0 0 0 3px rgba(6,182,212,.1);
+    }
+    .kb-card .form-check-input:checked {
+        background-color: #06b6d4;
+        border-color: #06b6d4;
+    }
+    .kb-hint {
+        font-size: .7rem; color: #94a3b8; margin-top: 3px; line-height: 1.4;
+    }
+
+    /* ── Editor toolbar ── */
+    .kb-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        padding: .4rem;
+        background: #f8fafc;
+        border: 1.5px solid #e2e8f0;
+        border-bottom: none;
+        border-radius: 10px 10px 0 0;
+    }
+    .kb-toolbar-btn {
+        width: 32px; height: 32px;
+        display: flex; align-items: center; justify-content: center;
+        border: none;
+        background: transparent;
+        color: #64748b;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: .8rem;
+        transition: all .15s;
+    }
+    .kb-toolbar-btn:hover {
+        background: #e2e8f0;
+        color: #1e293b;
+    }
+    .kb-editor {
+        border-radius: 0 0 10px 10px !important;
+        border-top: 1px solid #e2e8f0 !important;
+        font-family: 'Fira Code', 'Cascadia Code', monospace, sans-serif;
+        font-size: .84rem;
+        line-height: 1.7;
+        min-height: 320px;
+        resize: vertical;
+    }
+
+    /* ── Botões ── */
+    .btn-kb-primary {
+        background: linear-gradient(135deg, #06b6d4, #0891b2);
+        border: none; color: #fff;
+        padding: .6rem 1.75rem;
+        border-radius: 10px;
+        font-weight: 600; font-size: .84rem;
+        transition: all .2s;
+    }
+    .btn-kb-primary:hover {
+        background: linear-gradient(135deg, #0891b2, #0e7490);
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(6,182,212,.3);
+    }
+    .btn-kb-secondary {
+        border: 1.5px solid #e2e8f0;
+        color: #64748b;
+        padding: .6rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600; font-size: .84rem;
+        background: #fff;
+        transition: all .2s;
+    }
+    .btn-kb-secondary:hover {
+        background: #f8fafc; color: #334155;
+        border-color: #cbd5e1;
+    }
+
+    /* ── Erros ── */
+    .kb-errors {
+        background: #fef2f2;
+        border: 1.5px solid #fecaca;
+        border-radius: 10px;
+        padding: .85rem 1.1rem;
+    }
+    .kb-errors li {
+        color: #dc2626; font-size: .8rem; margin-bottom: 2px;
+    }
+
+    /* ── Sidebar ── */
+    .kb-sidebar-card {
+        background: #fff;
+        border-radius: 14px;
+        border: 1.5px solid #e2e8f0;
+        box-shadow: 0 1px 2px rgba(0,0,0,.04);
+        overflow: hidden;
+    }
+    .kb-sidebar-header {
+        padding: .9rem 1.15rem;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .kb-sidebar-header h6 {
+        font-size: .78rem; font-weight: 700;
+        color: #334155; margin: 0;
+    }
+    .kb-sidebar-body { padding: .75rem 1rem; }
+
+    .kb-switch-group {
+        background: #f8fafc;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 10px;
+        padding: .7rem 1rem;
+        margin-bottom: .5rem;
+        transition: border-color .2s;
+    }
+    .kb-switch-group:has(.form-check-input:checked) {
+        border-color: #06b6d4;
+        background: #f0fdfa;
+    }
+
+    /* ── Preview ── */
+    .kb-preview-content {
+        line-height: 1.8;
+        font-size: .88rem;
+        color: #334155;
+        max-height: 350px;
+        overflow-y: auto;
+    }
+    .kb-preview-content h1, .kb-preview-content h2, .kb-preview-content h3 {
+        font-weight: 700; color: #1e293b;
+    }
+    .kb-preview-content code {
+        background: #f1f5f9; padding: 2px 6px; border-radius: 4px;
+        font-size: .82em; color: #e91e63;
+    }
+
+    /* ── Tip items (sidebar) ── */
+    .kb-tip-item {
+        display: flex; align-items: flex-start; gap: 8px;
+        margin-bottom: .6rem;
+    }
+    .kb-tip-item:last-child { margin-bottom: 0; }
+    .kb-tip-icon { flex-shrink: 0; margin-top: 1px; font-size: 15px; }
+    .kb-tip-text { font-size: .74rem; color: #64748b; line-height: 1.45; }
+
+    /* ── Modal ── */
+    .kb-modal .modal-content {
+        border-radius: 16px; border: none;
+        box-shadow: 0 20px 60px rgba(0,0,0,.15);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 991px) {
+        .kb-section { padding: 0 1.25rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+
+    <!-- Page Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4 px-2">
+        <div>
+            <h4 class="mb-0 fw-bold" style="color: #1e293b;">
+                {% if editing %}Editar Artigo{% else %}Novo Artigo{% endif %}
+            </h4>
+            <p class="text-sm mb-0" style="color: #94a3b8;">
+                {% if editing %}Atualize as informações do artigo{% else %}Preencha os dados para criar um novo artigo{% endif %}
+            </p>
+        </div>
+        <a href="{% url 'dashboard:knowledge_base' %}" class="btn btn-kb-secondary btn-sm d-flex align-items-center gap-1">
+            <span class="material-symbols-rounded" style="font-size:18px;">arrow_back</span>
+            Voltar
+        </a>
+    </div>
+
+    <!-- Erros -->
+    {% if errors %}
+    <div class="kb-errors mb-3 mx-2">
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="material-symbols-rounded" style="font-size:18px;color:#dc2626;">error</span>
+            <strong style="font-size:.8rem;color:#dc2626;">Corrija os seguintes erros:</strong>
+        </div>
+        <ul class="mb-0 ps-4">
+            {% for error in errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- Messages -->
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mx-2" role="alert" style="border-radius:10px;border:none;font-size:.84rem;">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+
+    <form method="post" id="articleForm">
+        {% csrf_token %}
+        <div class="row g-4 px-1">
+            <!-- Coluna principal -->
+            <div class="col-lg-8 col-12">
+                <div class="card kb-card">
+                    <!-- Header -->
+                    <div class="kb-header text-center">
+                        <div class="kb-header-icon mb-2">
+                            <span class="material-symbols-rounded">{% if editing %}edit_note{% else %}post_add{% endif %}</span>
+                        </div>
+                        <h5 class="text-white mb-1 fw-bold" style="font-size:1.05rem;">
+                            {% if editing %}Editar "{{ artigo.titulo|truncatechars:40 }}"{% else %}Criar Artigo{% endif %}
+                        </h5>
+                        <p class="mb-0" style="color:rgba(255,255,255,.6);font-size:.78rem;">
+                            {% if editing %}Última atualização: {{ artigo.atualizado_em|date:"d/m/Y H:i" }}{% else %}Base de Conhecimento{% endif %}
+                        </p>
+                    </div>
+
+                    <div class="card-body pt-1 pb-4">
+                        <!-- Seção: Informações Básicas -->
+                        <div class="kb-section mb-4">
+                            <div class="kb-section-title">
+                                <span class="material-symbols-rounded" style="font-size:17px;">info</span>
+                                Informações Básicas
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label">Título <span class="text-danger">*</span></label>
+                                    <input type="text" name="titulo" class="form-control"
+                                           placeholder="Ex: Como abrir um ticket de suporte"
+                                           value="{% if form_data %}{{ form_data.titulo }}{% elif editing and artigo %}{{ artigo.titulo }}{% endif %}"
+                                           required>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Resumo</label>
+                                    <textarea name="resumo" class="form-control" rows="2"
+                                              placeholder="Breve descrição do artigo (exibida na listagem)">{% if form_data %}{{ form_data.resumo }}{% elif editing and artigo %}{{ artigo.resumo }}{% endif %}</textarea>
+                                    <div class="kb-hint">Texto curto que aparece nos cards de listagem</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Seção: Conteúdo -->
+                        <div class="kb-section mb-4">
+                            <div class="kb-section-title">
+                                <span class="material-symbols-rounded" style="font-size:17px;">article</span>
+                                Conteúdo
+                            </div>
+                            <div class="kb-toolbar">
+                                <button type="button" class="kb-toolbar-btn" onclick="insertFormat('<strong>', '</strong>')" title="Negrito">
+                                    <strong>B</strong>
+                                </button>
+                                <button type="button" class="kb-toolbar-btn" onclick="insertFormat('<em>', '</em>')" title="Itálico">
+                                    <em>I</em>
+                                </button>
+                                <button type="button" class="kb-toolbar-btn" onclick="insertFormat('<h2>', '</h2>')" title="Título">
+                                    H2
+                                </button>
+                                <button type="button" class="kb-toolbar-btn" onclick="insertFormat('<h3>', '</h3>')" title="Subtítulo">
+                                    H3
+                                </button>
+                                <button type="button" class="kb-toolbar-btn" onclick="insertFormat('<ul>\n  <li>', '</li>\n</ul>')" title="Lista">
+                                    <span class="material-symbols-rounded" style="font-size:16px;">format_list_bulleted</span>
+                                </button>
+                                <button type="button" class="kb-toolbar-btn" onclick="insertFormat('<ol>\n  <li>', '</li>\n</ol>')" title="Lista numerada">
+                                    <span class="material-symbols-rounded" style="font-size:16px;">format_list_numbered</span>
+                                </button>
+                                <button type="button" class="kb-toolbar-btn" onclick="insertFormat('<code>', '</code>')" title="Código inline">
+                                    <span class="material-symbols-rounded" style="font-size:16px;">code</span>
+                                </button>
+                                <button type="button" class="kb-toolbar-btn" onclick="insertFormat('<a href=&quot;#&quot;>', '</a>')" title="Link">
+                                    <span class="material-symbols-rounded" style="font-size:16px;">link</span>
+                                </button>
+                                <button type="button" class="kb-toolbar-btn" onclick="insertFormat('<blockquote>\n', '\n</blockquote>')" title="Citação">
+                                    <span class="material-symbols-rounded" style="font-size:16px;">format_quote</span>
+                                </button>
+                                <button type="button" class="kb-toolbar-btn" onclick="insertFormat('<div class=&quot;alert alert-info&quot;>\n  <strong>💡 Dica:</strong> ', '\n</div>')" title="Nota/Dica">
+                                    <span class="material-symbols-rounded" style="font-size:16px;">tips_and_updates</span>
+                                </button>
+                                <div style="flex:1;"></div>
+                                <button type="button" class="kb-toolbar-btn" onclick="togglePreview()" title="Pré-visualizar" id="btnPreview">
+                                    <span class="material-symbols-rounded" style="font-size:16px;">visibility</span>
+                                </button>
+                            </div>
+                            <textarea name="conteudo" id="conteudoEditor" class="form-control kb-editor"
+                                      placeholder="Escreva o conteúdo do artigo (suporta HTML)..."
+                                      required>{% if form_data %}{{ form_data.conteudo }}{% elif editing and artigo %}{{ artigo.conteudo }}{% endif %}</textarea>
+                            <div class="kb-hint">
+                                <span class="material-symbols-rounded" style="font-size:13px;vertical-align:-2px;">info</span>
+                                Suporta HTML. Use a toolbar para formatação rápida.
+                            </div>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="kb-section mb-4" id="previewSection" style="display:none;">
+                            <div class="kb-section-title">
+                                <span class="material-symbols-rounded" style="font-size:17px;">preview</span>
+                                Pré-visualização
+                            </div>
+                            <div class="kb-preview-content p-3" id="previewContent"
+                                 style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;">
+                            </div>
+                        </div>
+
+                        <!-- Ações -->
+                        <div class="kb-section">
+                            <hr style="border:none;border-top:1px solid #f1f5f9;margin:.25rem 0 1rem;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{% if editing and artigo %}{% url 'dashboard:knowledge_article' artigo.pk %}{% else %}{% url 'dashboard:knowledge_base' %}{% endif %}"
+                                   class="btn btn-kb-secondary d-flex align-items-center gap-1">
+                                    <span class="material-symbols-rounded" style="font-size:18px;">close</span>
+                                    Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-kb-primary d-flex align-items-center gap-1">
+                                    <span class="material-symbols-rounded" style="font-size:18px;">{% if editing %}save{% else %}publish{% endif %}</span>
+                                    {% if editing %}Salvar Alterações{% else %}Publicar Artigo{% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4 col-12">
+                <!-- Configurações -->
+                <div class="kb-sidebar-card mb-3">
+                    <div class="kb-sidebar-header">
+                        <span class="material-symbols-rounded" style="font-size:18px;color:#06b6d4;">tune</span>
+                        <h6>Configurações</h6>
+                    </div>
+                    <div class="kb-sidebar-body">
+                        <!-- Categoria -->
+                        <div class="mb-3">
+                            <label class="form-label" style="font-size:.78rem;font-weight:600;color:#334155;">
+                                Categoria <span class="text-danger">*</span>
+                            </label>
+                            <div class="d-flex gap-2">
+                                <select name="categoria" class="form-select" style="border-radius:10px;border:1.5px solid #e2e8f0;padding:.55rem .9rem;font-size:.84rem;" required>
+                                    <option value="">Selecione...</option>
+                                    {% for cat in categorias %}
+                                    <option value="{{ cat.pk }}"
+                                        {% if form_data.categoria == cat.pk|stringformat:'d' %}selected
+                                        {% elif editing and artigo and artigo.categoria_id == cat.pk %}selected{% endif %}>
+                                        {{ cat.nome }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn btn-kb-primary btn-sm" onclick="showCategoryModal()"
+                                        title="Nova Categoria" style="padding:.45rem .65rem;">
+                                    <span class="material-symbols-rounded" style="font-size:18px;">add</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Tags -->
+                        <div class="mb-3">
+                            <label class="form-label" style="font-size:.78rem;font-weight:600;color:#334155;">Tags</label>
+                            <input type="text" name="tags" class="form-control"
+                                   placeholder="suporte, ticket, ajuda"
+                                   value="{% if form_data %}{{ form_data.tags }}{% elif editing and artigo %}{{ artigo.tags }}{% endif %}"
+                                   style="border-radius:10px;border:1.5px solid #e2e8f0;padding:.55rem .9rem;font-size:.84rem;">
+                            <div class="kb-hint">Separe por vírgula</div>
+                        </div>
+
+                        <!-- Switches -->
+                        <div class="kb-switch-group">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="publico" id="switchPublico"
+                                       {% if form_data.publico == 'on' %}checked{% elif editing and artigo and artigo.publico %}checked{% elif not editing %}checked{% endif %}>
+                                <label class="form-check-label" for="switchPublico" style="font-size:.78rem;font-weight:600;color:#334155;">
+                                    <span class="material-symbols-rounded me-1" style="font-size:15px;vertical-align:-3px;">public</span>
+                                    Público
+                                </label>
+                            </div>
+                        </div>
+                        <div class="kb-switch-group">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="destaque" id="switchDestaque"
+                                       {% if form_data.destaque == 'on' %}checked{% elif editing and artigo and artigo.destaque %}checked{% endif %}>
+                                <label class="form-check-label" for="switchDestaque" style="font-size:.78rem;font-weight:600;color:#334155;">
+                                    <span class="material-symbols-rounded me-1" style="font-size:15px;vertical-align:-3px;">star</span>
+                                    Destaque
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dicas -->
+                <div class="kb-sidebar-card mb-3">
+                    <div class="kb-sidebar-header">
+                        <span class="material-symbols-rounded" style="font-size:18px;color:#f59e0b;">tips_and_updates</span>
+                        <h6>Dicas</h6>
+                    </div>
+                    <div class="kb-sidebar-body">
+                        <div class="kb-tip-item">
+                            <span class="material-symbols-rounded kb-tip-icon" style="color:#06b6d4;">title</span>
+                            <span class="kb-tip-text">Use títulos claros e descritivos para facilitar a busca</span>
+                        </div>
+                        <div class="kb-tip-item">
+                            <span class="material-symbols-rounded kb-tip-icon" style="color:#10b981;">description</span>
+                            <span class="kb-tip-text">Preencha o resumo — ele aparece na listagem e ajuda na busca</span>
+                        </div>
+                        <div class="kb-tip-item">
+                            <span class="material-symbols-rounded kb-tip-icon" style="color:#8b5cf6;">label</span>
+                            <span class="kb-tip-text">Adicione tags relevantes para melhorar a descoberta do artigo</span>
+                        </div>
+                        <div class="kb-tip-item">
+                            <span class="material-symbols-rounded kb-tip-icon" style="color:#f59e0b;">star</span>
+                            <span class="kb-tip-text">Artigos em destaque aparecem na seção principal da base</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HTML Tags Rápidas -->
+                <div class="kb-sidebar-card">
+                    <div class="kb-sidebar-header">
+                        <span class="material-symbols-rounded" style="font-size:18px;color:#8b5cf6;">code</span>
+                        <h6>Tags HTML</h6>
+                    </div>
+                    <div class="kb-sidebar-body">
+                        <div class="kb-tip-item">
+                            <code style="font-size:.7rem;color:#e91e63;background:#fef2f2;padding:2px 6px;border-radius:4px;">&lt;h2&gt;</code>
+                            <span class="kb-tip-text">Títulos de seção</span>
+                        </div>
+                        <div class="kb-tip-item">
+                            <code style="font-size:.7rem;color:#e91e63;background:#fef2f2;padding:2px 6px;border-radius:4px;">&lt;ul&gt;</code>
+                            <span class="kb-tip-text">Listas não ordenadas</span>
+                        </div>
+                        <div class="kb-tip-item">
+                            <code style="font-size:.7rem;color:#e91e63;background:#fef2f2;padding:2px 6px;border-radius:4px;">&lt;code&gt;</code>
+                            <span class="kb-tip-text">Código inline</span>
+                        </div>
+                        <div class="kb-tip-item">
+                            <code style="font-size:.7rem;color:#e91e63;background:#fef2f2;padding:2px 6px;border-radius:4px;">&lt;img&gt;</code>
+                            <span class="kb-tip-text">Imagem (src="url")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Modal: Nova Categoria -->
+<div class="modal fade kb-modal" id="categoryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0 px-4 pt-4">
+                <h6 class="modal-title fw-bold" style="color:#1e293b;">
+                    <span class="material-symbols-rounded me-1" style="vertical-align:-4px;color:#06b6d4;">create_new_folder</span>
+                    Nova Categoria
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4">
+                <div class="mb-3">
+                    <label class="form-label" style="font-size:.78rem;font-weight:600;color:#334155;">
+                        Nome <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" id="catNome" class="form-control" placeholder="Nome da categoria"
+                           style="border-radius:10px;border:1.5px solid #e2e8f0;padding:.55rem .9rem;font-size:.84rem;">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" style="font-size:.78rem;font-weight:600;color:#334155;">Descrição</label>
+                    <textarea id="catDescricao" class="form-control" rows="2" placeholder="Descrição opcional"
+                              style="border-radius:10px;border:1.5px solid #e2e8f0;padding:.55rem .9rem;font-size:.84rem;"></textarea>
+                </div>
+                <div class="row g-3">
+                    <div class="col-8">
+                        <label class="form-label" style="font-size:.78rem;font-weight:600;color:#334155;">Ícone</label>
+                        <select id="catIcone" class="form-select" style="border-radius:10px;border:1.5px solid #e2e8f0;padding:.55rem .9rem;font-size:.84rem;">
+                            <option value="help">help — Ajuda</option>
+                            <option value="school">school — Aprendizado</option>
+                            <option value="build">build — Configuração</option>
+                            <option value="settings">settings — Configurações</option>
+                            <option value="support_agent">support_agent — Suporte</option>
+                            <option value="bug_report">bug_report — Bugs</option>
+                            <option value="tips_and_updates">tips_and_updates — Dicas</option>
+                            <option value="rocket_launch">rocket_launch — Novidades</option>
+                            <option value="security">security — Segurança</option>
+                            <option value="code">code — Desenvolvimento</option>
+                            <option value="menu_book">menu_book — Manual</option>
+                            <option value="payments">payments — Financeiro</option>
+                            <option value="inventory_2">inventory_2 — Estoque</option>
+                            <option value="integration_instructions">integration_instructions — Integração</option>
+                        </select>
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label" style="font-size:.78rem;font-weight:600;color:#334155;">Cor</label>
+                        <input type="color" id="catCor" class="form-control form-control-color w-100" value="#e91e63"
+                               style="border-radius:10px;height:40px;border:1.5px solid #e2e8f0;">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4">
+                <button type="button" class="btn btn-kb-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-kb-primary d-flex align-items-center gap-1" onclick="createCategory()">
+                    <span class="material-symbols-rounded" style="font-size:18px;">add</span>
+                    Criar Categoria
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ===== Formatação =====
+function insertFormat(before, after) {
+    const el = document.getElementById('conteudoEditor');
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const selected = el.value.substring(start, end) || 'texto';
+    el.value = el.value.substring(0, start) + before + selected + after + el.value.substring(end);
+    el.focus();
+    el.setSelectionRange(start + before.length, start + before.length + selected.length);
+}
+
+// ===== Preview =====
+let previewVisible = false;
+function togglePreview() {
+    previewVisible = !previewVisible;
+    const section = document.getElementById('previewSection');
+    const btn = document.getElementById('btnPreview');
+    if (previewVisible) {
+        section.style.display = 'block';
+        updatePreview();
+        btn.style.background = '#06b6d4';
+        btn.style.color = '#fff';
+    } else {
+        section.style.display = 'none';
+        btn.style.background = 'transparent';
+        btn.style.color = '#64748b';
+    }
+}
+function updatePreview() {
+    const conteudo = document.getElementById('conteudoEditor').value;
+    document.getElementById('previewContent').innerHTML = conteudo || '<span style="color:#94a3b8;font-size:.84rem;">Nada para visualizar ainda...</span>';
+}
+document.getElementById('conteudoEditor')?.addEventListener('input', function() {
+    if (previewVisible) updatePreview();
+});
+
+// ===== Nova Categoria (AJAX) =====
+function showCategoryModal() {
+    const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
+    modal.show();
+}
+
+function createCategory() {
+    const nome = document.getElementById('catNome').value.trim();
+    const descricao = document.getElementById('catDescricao').value.trim();
+    const icone = document.getElementById('catIcone').value;
+    const cor = document.getElementById('catCor').value;
+
+    if (!nome) {
+        document.getElementById('catNome').style.borderColor = '#fecaca';
+        document.getElementById('catNome').focus();
+        return;
+    }
+
+    const fd = new FormData();
+    fd.append('nome', nome);
+    fd.append('descricao', descricao);
+    fd.append('icone', icone);
+    fd.append('cor', cor);
+
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    fetch("{% url 'dashboard:knowledge_category_create' %}", {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken },
+        body: fd,
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const select = document.querySelector('select[name="categoria"]');
+            const opt = document.createElement('option');
+            opt.value = data.id;
+            opt.textContent = data.nome;
+            opt.selected = true;
+            select.appendChild(opt);
+            bootstrap.Modal.getInstance(document.getElementById('categoryModal')).hide();
+            document.getElementById('catNome').value = '';
+            document.getElementById('catDescricao').value = '';
+        } else {
+            alert(data.error || 'Erro ao criar categoria.');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Erro ao criar categoria.');
+    });
+}
+
+// Reset border on category input
+document.getElementById('catNome')?.addEventListener('input', function() {
+    this.style.borderColor = '#e2e8f0';
+});
+</script>
+{% endblock %}

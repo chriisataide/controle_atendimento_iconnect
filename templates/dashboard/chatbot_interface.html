@@ -108,8 +108,38 @@
 
 .message-text {
     margin: 0;
-    line-height: 1.4;
-    white-space: pre-line;
+    line-height: 1.5;
+    white-space: normal;
+}
+
+.message-text p {
+    margin: 0 0 8px 0;
+}
+
+.message-text p:last-child {
+    margin-bottom: 0;
+}
+
+.message-text strong {
+    color: #1e3a5f;
+    font-weight: 600;
+}
+
+.message-text code {
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: #e11d48;
+}
+
+.message-text .guide-step {
+    background: #f8fafc;
+    border-left: 3px solid #6366f1;
+    padding: 8px 12px;
+    margin: 6px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.95em;
 }
 
 .message-confidence {
@@ -302,18 +332,26 @@
 <div class="chatbot-container">
     <div class="chatbot-header">
         <h1>🤖 Assistente Virtual iConnect</h1>
-        <p class="chatbot-subtitle">Seu suporte inteligente 24/7</p>
+        <p class="chatbot-subtitle">Tire dúvidas e aprenda a usar o sistema — pergunte qualquer coisa!</p>
     </div>
     
     <div class="chatbot-messages" id="chatMessages">
         <div class="message bot">
             <div class="message-avatar">🤖</div>
             <div class="message-content">
-                <p class="message-text">Olá! 👋 Sou o assistente virtual da iConnect. Como posso ajudá-lo hoje?</p>
+                <div class="message-text">
+                    <p>Olá! 👋 Sou o assistente virtual da iConnect. Posso te ensinar a usar qualquer funcionalidade do sistema!</p>
+                    <p>Pergunte, por exemplo:</p>
+                    <p>• <em>"Como crio um ticket?"</em><br>
+                    • <em>"Onde gerencio clientes?"</em><br>
+                    • <em>"Como funciona o SLA?"</em></p>
+                    <p>Ou escolha uma opção abaixo:</p>
+                </div>
                 <div class="suggestions">
-                    <button class="suggestion-btn" onclick="sendSuggestion('Verificar status do meu ticket')">📋 Status do Ticket</button>
-                    <button class="suggestion-btn" onclick="sendSuggestion('Criar um novo chamado')">📝 Novo Chamado</button>
-                    <button class="suggestion-btn" onclick="sendSuggestion('Falar com um atendente')">👨‍💼 Atendente</button>
+                    <button class="suggestion-btn" onclick="sendSuggestion('O que o sistema faz?')">🗺️ Visão geral</button>
+                    <button class="suggestion-btn" onclick="sendSuggestion('Como criar um ticket?')">📝 Criar Ticket</button>
+                    <button class="suggestion-btn" onclick="sendSuggestion('Como gerenciar clientes?')">👥 Clientes</button>
+                    <button class="suggestion-btn" onclick="sendSuggestion('Como gerenciar usuários?')">👤 Usuários</button>
                 </div>
             </div>
         </div>
@@ -445,6 +483,32 @@ class ChatbotInterface {
         this.messageInput.focus();
     }
     
+    formatMarkdown(text) {
+        // Converte markdown simplificado para HTML
+        let html = text;
+        // Escapar HTML perigoso
+        html = html.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        // Negrito: **texto**
+        html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        // Itálico: *texto* (mas não dentro de strong)
+        html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+        // Código inline: `texto`
+        html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+        // Linhas em branco = parágrafo
+        html = html.replace(/\n\n/g, '</p><p>');
+        // Quebra de linha simples
+        html = html.replace(/\n/g, '<br>');
+        // Listas numeradas: linhas que começam com "1." etc
+        html = html.replace(/((?:^|\<br\>)\d+\.\s.+(?:\<br\>\s{2,}.+)*)/g, function(match) {
+            return '<div class="guide-step">' + match + '</div>';
+        });
+        // Wrap em parágrafo
+        html = '<p>' + html + '</p>';
+        // Limpar parágrafos vazios
+        html = html.replace(/<p>\s*<\/p>/g, '');
+        return html;
+    }
+
     addMessage(type, text, options = {}) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${type}`;
@@ -456,9 +520,13 @@ class ChatbotInterface {
         const content = document.createElement('div');
         content.className = 'message-content';
         
-        const messageText = document.createElement('p');
+        const messageText = document.createElement('div');
         messageText.className = 'message-text';
-        messageText.textContent = text;
+        if (type === 'bot') {
+            messageText.innerHTML = this.formatMarkdown(text);
+        } else {
+            messageText.textContent = text;
+        }
         content.appendChild(messageText);
         
         // Mostrar confiança para mensagens do bot

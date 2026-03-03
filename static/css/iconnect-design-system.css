@@ -1,0 +1,442 @@
+/* ============================================================
+   iCONNECT DESIGN SYSTEM — Variáveis Padronizadas
+   Paleta: Slate (#334155) + Cyan (#06b6d4)
+   Autor: iCodev Tecnologia
+   ============================================================ */
+
+/* ====== CSS Custom Properties (Light Mode) ====== */
+:root {
+    /* Brand Colors */
+    --ic-primary: #334155;
+    --ic-primary-dark: #1e293b;
+    --ic-primary-darker: #0f172a;
+    --ic-accent: #06b6d4;
+    --ic-accent-dark: #0891b2;
+    --ic-accent-glow: rgba(6, 182, 212, 0.15);
+
+    /* Status Colors — Padrão único em todo o sistema */
+    --ic-status-aberto: #ef4444;
+    --ic-status-aberto-bg: rgba(239, 68, 68, 0.1);
+    --ic-status-andamento: #f59e0b;
+    --ic-status-andamento-bg: rgba(245, 158, 11, 0.1);
+    --ic-status-aguardando: #64748b;
+    --ic-status-aguardando-bg: rgba(100, 116, 139, 0.1);
+    --ic-status-resolvido: #22c55e;
+    --ic-status-resolvido-bg: rgba(34, 197, 94, 0.1);
+    --ic-status-fechado: #334155;
+    --ic-status-fechado-bg: rgba(51, 65, 85, 0.1);
+
+    /* Priority Colors */
+    --ic-prio-baixa: #64748b;
+    --ic-prio-baixa-bg: rgba(100, 116, 139, 0.1);
+    --ic-prio-media: #06b6d4;
+    --ic-prio-media-bg: rgba(6, 182, 212, 0.1);
+    --ic-prio-alta: #f59e0b;
+    --ic-prio-alta-bg: rgba(245, 158, 11, 0.1);
+    --ic-prio-critica: #ef4444;
+    --ic-prio-critica-bg: rgba(239, 68, 68, 0.1);
+
+    /* Semantic Colors */
+    --ic-success: #22c55e;
+    --ic-success-bg: rgba(34, 197, 94, 0.1);
+    --ic-danger: #ef4444;
+    --ic-danger-bg: rgba(239, 68, 68, 0.1);
+    --ic-warning: #f59e0b;
+    --ic-warning-bg: rgba(245, 158, 11, 0.1);
+    --ic-info: #06b6d4;
+    --ic-info-bg: rgba(6, 182, 212, 0.1);
+
+    /* Surfaces */
+    --ic-bg-page: #f8fafc;
+    --ic-bg-card: #ffffff;
+    --ic-bg-hover: #f1f5f9;
+    --ic-bg-active: #e2e8f0;
+
+    /* Text */
+    --ic-text-primary: #1e293b;
+    --ic-text-secondary: #64748b;
+    --ic-text-muted: #94a3b8;
+    --ic-text-white: #ffffff;
+
+    /* Borders */
+    --ic-border: #e2e8f0;
+    --ic-border-light: #f1f5f9;
+
+    /* Shadows */
+    --ic-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+    --ic-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --ic-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+
+    /* Radius */
+    --ic-radius-sm: 8px;
+    --ic-radius-md: 12px;
+    --ic-radius-lg: 16px;
+    --ic-radius-full: 9999px;
+
+    /* Transitions */
+    --ic-transition: 0.2s ease;
+    --ic-transition-fast: 0.15s ease;
+}
+
+/* ====== Dark Mode Variables ====== */
+.dark-version {
+    --ic-bg-page: #0f172a;
+    --ic-bg-card: #1e293b;
+    --ic-bg-hover: rgba(6, 182, 212, 0.08);
+    --ic-bg-active: rgba(6, 182, 212, 0.15);
+    --ic-text-primary: #e2e8f0;
+    --ic-text-secondary: #94a3b8;
+    --ic-text-muted: #64748b;
+    --ic-border: #334155;
+    --ic-border-light: #1e293b;
+    --ic-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+    --ic-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --ic-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* ====== Status Badge — Padrão unificado ====== */
+.ic-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    line-height: 1.2;
+}
+
+/* Status */
+.ic-badge-aberto { background: var(--ic-status-aberto-bg); color: var(--ic-status-aberto); }
+.ic-badge-em_andamento { background: var(--ic-status-andamento-bg); color: var(--ic-status-andamento); }
+.ic-badge-aguardando_cliente { background: var(--ic-status-aguardando-bg); color: var(--ic-status-aguardando); }
+.ic-badge-resolvido { background: var(--ic-status-resolvido-bg); color: var(--ic-status-resolvido); }
+.ic-badge-fechado { background: var(--ic-status-fechado-bg); color: var(--ic-status-fechado); }
+
+/* Prioridade */
+.ic-badge-baixa { background: var(--ic-prio-baixa-bg); color: var(--ic-prio-baixa); }
+.ic-badge-media { background: var(--ic-prio-media-bg); color: var(--ic-prio-media); }
+.ic-badge-alta { background: var(--ic-prio-alta-bg); color: var(--ic-prio-alta); }
+.ic-badge-critica { background: var(--ic-prio-critica-bg); color: var(--ic-prio-critica); }
+
+/* Status com ícone indicador (acessibilidade — não depende só de cor) */
+.ic-badge-aberto::before { content: "●"; font-size: 0.5rem; }
+.ic-badge-em_andamento::before { content: "◐"; font-size: 0.6rem; }
+.ic-badge-aguardando_cliente::before { content: "◷"; font-size: 0.6rem; }
+.ic-badge-resolvido::before { content: "✓"; font-size: 0.6rem; }
+.ic-badge-fechado::before { content: "✕"; font-size: 0.55rem; }
+
+/* ====== KPI Card Padrão ====== */
+.ic-kpi-card {
+    border-radius: var(--ic-radius-md);
+    border: none;
+    background: var(--ic-bg-card);
+    box-shadow: var(--ic-shadow-sm);
+    transition: transform var(--ic-transition), box-shadow var(--ic-transition);
+    overflow: hidden;
+}
+.ic-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--ic-shadow-md);
+}
+.ic-kpi-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--ic-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ic-kpi-icon .material-symbols-rounded {
+    font-size: 24px;
+    color: var(--ic-text-white);
+}
+.ic-kpi-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--ic-text-muted);
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+.ic-kpi-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--ic-text-primary);
+    line-height: 1.2;
+}
+
+/* ====== Data Table Padrão ====== */
+.ic-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.ic-table th {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--ic-text-muted);
+    font-weight: 700;
+    padding: 12px 16px;
+    border-bottom: 2px solid var(--ic-border);
+    white-space: nowrap;
+}
+.ic-table td {
+    padding: 12px 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--ic-border-light);
+    font-size: 0.875rem;
+    color: var(--ic-text-primary);
+}
+.ic-table tbody tr {
+    transition: background var(--ic-transition-fast);
+}
+.ic-table tbody tr:hover {
+    background: var(--ic-bg-hover);
+}
+
+/* ====== Page Header Padrão ====== */
+.ic-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+.ic-page-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--ic-text-primary);
+    margin: 0;
+}
+.ic-page-subtitle {
+    font-size: 0.875rem;
+    color: var(--ic-text-secondary);
+    margin: 0;
+}
+
+/* ====== Buttons Padronizados ====== */
+.ic-btn-primary {
+    background: linear-gradient(195deg, var(--ic-accent), var(--ic-accent-dark));
+    color: var(--ic-text-white);
+    border: none;
+    border-radius: var(--ic-radius-sm);
+    padding: 8px 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--ic-transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+}
+.ic-btn-primary:hover {
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.35);
+    transform: translateY(-1px);
+    color: var(--ic-text-white);
+}
+
+.ic-btn-slate {
+    background: linear-gradient(195deg, var(--ic-primary), var(--ic-primary-dark));
+    color: var(--ic-text-white);
+    border: none;
+    border-radius: var(--ic-radius-sm);
+    padding: 8px 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--ic-transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+}
+.ic-btn-slate:hover {
+    box-shadow: 0 4px 12px rgba(51, 65, 85, 0.35);
+    transform: translateY(-1px);
+    color: var(--ic-text-white);
+}
+
+/* ====== Empty State ====== */
+.ic-empty-state {
+    text-align: center;
+    padding: 3rem 1.5rem;
+}
+.ic-empty-state .material-symbols-rounded {
+    font-size: 56px;
+    color: var(--ic-text-muted);
+    opacity: 0.5;
+    margin-bottom: 0.75rem;
+}
+.ic-empty-state h6 {
+    color: var(--ic-text-secondary);
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+.ic-empty-state p {
+    color: var(--ic-text-muted);
+    font-size: 0.875rem;
+}
+
+/* ====== Search Box ====== */
+.ic-search-box {
+    position: relative;
+}
+.ic-search-box input {
+    padding-left: 2.5rem;
+    border-radius: var(--ic-radius-sm);
+    border: 1px solid var(--ic-border);
+    background: var(--ic-bg-page);
+    transition: all var(--ic-transition);
+    font-size: 0.875rem;
+}
+.ic-search-box input:focus {
+    background: var(--ic-bg-card);
+    border-color: var(--ic-accent);
+    box-shadow: 0 0 0 3px var(--ic-accent-glow);
+}
+.ic-search-box .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ic-text-muted);
+    font-size: 18px;
+    pointer-events: none;
+}
+
+/* ====== Accessibility — Skip Navigation ====== */
+.ic-skip-nav {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--ic-accent);
+    color: var(--ic-text-white);
+    padding: 8px 16px;
+    z-index: 100000;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 0 0 var(--ic-radius-sm) 0;
+    transition: top var(--ic-transition);
+    text-decoration: none;
+}
+.ic-skip-nav:focus {
+    top: 0;
+    color: var(--ic-text-white);
+}
+
+/* ====== Accessibility — Focus Visible ====== */
+:focus-visible {
+    outline: 2px solid var(--ic-accent);
+    outline-offset: 2px;
+}
+
+/* ====== Filter Chips ====== */
+.ic-filter-chip {
+    padding: 5px 14px;
+    border-radius: var(--ic-radius-full);
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px solid var(--ic-border);
+    background: var(--ic-bg-card);
+    color: var(--ic-text-secondary);
+    cursor: pointer;
+    transition: all var(--ic-transition);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.ic-filter-chip:hover,
+.ic-filter-chip.active {
+    background: var(--ic-primary);
+    color: var(--ic-text-white);
+    border-color: var(--ic-primary);
+}
+
+/* ====== Card ====== */
+.ic-card {
+    background: var(--ic-bg-card);
+    border: none;
+    border-radius: var(--ic-radius-md);
+    box-shadow: var(--ic-shadow-sm);
+    overflow: hidden;
+}
+.ic-card-header {
+    padding: 1rem 1.25rem 0.5rem;
+    background: transparent;
+    border-bottom: none;
+}
+.ic-card-body {
+    padding: 1rem 1.25rem;
+}
+
+/* ====== Avatar ====== */
+.ic-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: 700;
+    color: var(--ic-text-white);
+    flex-shrink: 0;
+}
+.ic-avatar-sm { width: 32px; height: 32px; font-size: 0.75rem; }
+.ic-avatar-md { width: 40px; height: 40px; font-size: 0.85rem; }
+.ic-avatar-lg { width: 56px; height: 56px; font-size: 1.1rem; }
+.ic-avatar-primary { background: linear-gradient(135deg, var(--ic-primary), var(--ic-primary-dark)); }
+.ic-avatar-accent { background: linear-gradient(135deg, var(--ic-accent), var(--ic-accent-dark)); }
+
+/* ====== Tipo ITIL Badges ====== */
+.ic-badge-incidente { background: var(--ic-danger-bg); color: var(--ic-danger); }
+.ic-badge-requisicao { background: var(--ic-info-bg); color: var(--ic-info); }
+.ic-badge-problema { background: var(--ic-warning-bg); color: var(--ic-warning); }
+.ic-badge-mudanca { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+
+/* ====== Pagination ====== */
+.ic-pagination .page-item.active .page-link {
+    background: var(--ic-primary);
+    border-color: var(--ic-primary);
+}
+.ic-pagination .page-link {
+    color: var(--ic-text-secondary);
+    border-radius: var(--ic-radius-sm);
+    margin: 0 2px;
+    border-color: var(--ic-border);
+}
+.ic-pagination .page-link:hover {
+    background: var(--ic-bg-hover);
+    color: var(--ic-text-primary);
+}
+
+/* ====== Loading Spinner ====== */
+@keyframes ic-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.ic-spinner {
+    animation: ic-spin 0.7s linear infinite;
+}
+
+/* ====== Banking/Enterprise Specific ====== */
+.ic-compliance-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.ic-compliance-lgpd { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+.ic-compliance-bacen { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+.ic-compliance-pci { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+
+/* ====== Print Styles ====== */
+@media print {
+    .sidebar, .navbar, .ic-skip-nav { display: none !important; }
+    .main-content { margin-left: 0 !important; }
+    .ic-card { box-shadow: none; border: 1px solid #ddd; }
+}
