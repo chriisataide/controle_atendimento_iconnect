@@ -1,8 +1,10 @@
 import json
+
 from django import template
 from django.utils.safestring import mark_safe
 
 register = template.Library()
+
 
 @register.filter
 def json_script(value):
@@ -12,7 +14,8 @@ def json_script(value):
     try:
         return mark_safe(json.dumps(value))
     except (ValueError, TypeError):
-        return mark_safe('null')
+        return mark_safe("null")
+
 
 @register.filter
 def json_serialize(value):
@@ -22,4 +25,4 @@ def json_serialize(value):
     try:
         return json.dumps(value)
     except (ValueError, TypeError):
-        return 'null'
+        return "null"

@@ -2,11 +2,12 @@
 Modelos de Auditoria e Seguranca para iConnect
 Armazena eventos, alertas, compliance e logs de acesso a dados sensiveis
 """
-from django.db import models
+
 from django.contrib.auth.models import User
-from django.utils import timezone
-from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+from django.db import models
+from django.utils import timezone
 
 
 class AuditEvent(models.Model):
@@ -100,7 +101,9 @@ class SecurityAlert(models.Model):
     evidence = models.JSONField(default=dict)
 
     related_events = models.ManyToManyField(AuditEvent, blank=True, related_name="alerts")
-    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="assigned_security_alerts")
+    assigned_to = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="assigned_security_alerts"
+    )
 
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)

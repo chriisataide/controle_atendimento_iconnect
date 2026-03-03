@@ -1,6 +1,7 @@
 """
 Webhook Service — Entrega de webhooks outbound com retry via Celery
 """
+
 import hashlib
 import hmac
 import json
@@ -21,17 +22,15 @@ class WebhookService:
         """Dispara webhook para todos os endpoints inscritos neste evento"""
         from dashboard.models import WebhookEndpoint
 
-        endpoints = WebhookEndpoint.objects.filter(
-            is_active=True,
-            failure_count__lt=10
-        )
+        endpoints = WebhookEndpoint.objects.filter(is_active=True, failure_count__lt=10)
 
         for endpoint in endpoints:
             events = endpoint.events or []
-            if event_type in events or '*' in events:
+            if event_type in events or "*" in events:
                 # Despachar via Celery se disponível
                 try:
                     from dashboard.tasks import deliver_webhook
+
                     deliver_webhook.delay(endpoint.id, event_type, payload)
                 except Exception:
                     # Fallback síncrono
@@ -42,11 +41,14 @@ class WebhookService:
         """Entrega síncrona de webhook com log"""
         from dashboard.models import WebhookDelivery
 
-        body = json.dumps({
-            "event": event_type,
-            "timestamp": timezone.now().isoformat(),
-            "data": payload,
-        }, default=str)
+        body = json.dumps(
+            {
+                "event": event_type,
+                "timestamp": timezone.now().isoformat(),
+                "data": payload,
+            },
+            default=str,
+        )
 
         headers = {
             "Content-Type": "application/json",
@@ -56,11 +58,7 @@ class WebhookService:
 
         # HMAC signature
         if endpoint.secret:
-            signature = hmac.new(
-                endpoint.secret.encode(),
-                body.encode(),
-                hashlib.sha256
-            ).hexdigest()
+            signature = hmac.new(endpoint.secret.encode(), body.encode(), hashlib.sha256).hexdigest()
             headers["X-Webhook-Signature"] = f"sha256={signature}"
 
         # Custom headers
@@ -101,12 +99,12 @@ class WebhookService:
             logger.error(f"Webhook delivery failed for {endpoint.nome}: {e}")
 
         delivery.save()
-        endpoint.save(update_fields=['failure_count', 'last_triggered'])
+        endpoint.save(update_fields=["failure_count", "last_triggered"])
 
         # Desativar após muitas falhas
         if endpoint.failure_count >= 10:
             endpoint.is_active = False
-            endpoint.save(update_fields=['is_active'])
+            endpoint.save(update_fields=["is_active"])
             logger.warning(f"Webhook {endpoint.nome} desativado após {endpoint.failure_count} falhas")
 
         return delivery
