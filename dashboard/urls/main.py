@@ -213,8 +213,14 @@ urlpatterns = [
     
     # Base de Conhecimento
     path('knowledge/', banking_views.KnowledgeBaseView.as_view(), name='knowledge_base'),
+    path('knowledge/create/', banking_views.knowledge_create, name='knowledge_create'),
     path('knowledge/<int:pk>/', banking_views.knowledge_article_detail, name='knowledge_article'),
+    path('knowledge/<int:pk>/edit/', banking_views.knowledge_edit, name='knowledge_edit'),
+    path('knowledge/<int:pk>/delete/', banking_views.knowledge_delete, name='knowledge_delete'),
     path('knowledge/<int:pk>/vote/', banking_views.knowledge_vote, name='knowledge_vote'),
+    path('api/knowledge/categories/', banking_views.knowledge_category_list, name='knowledge_category_list'),
+    path('api/knowledge/categories/create/', banking_views.knowledge_category_create, name='knowledge_category_create'),
+    path('api/knowledge/categories/<int:pk>/delete/', banking_views.knowledge_category_delete, name='knowledge_category_delete'),
 
     # Respostas Rápidas (Macros)
     path('macros/', banking_views.macros_list, name='macros_list'),

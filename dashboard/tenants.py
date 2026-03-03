@@ -215,6 +215,18 @@ class TenantMiddleware(MiddlewareMixin):
         slug = request.META.get('HTTP_X_TENANT_SLUG')
         if slug:
             tenant = Tenant.objects.filter(slug=slug, is_active=True).first()
+            # Segurança: validar que o usuário é membro do tenant solicitado via header
+            if tenant and hasattr(request, 'user') and request.user.is_authenticated:
+                if not request.user.is_superuser:
+                    is_member = TenantMembership.objects.filter(
+                        tenant=tenant, user=request.user, is_active=True
+                    ).exists()
+                    if not is_member:
+                        logger.warning(
+                            f"Tenant spoofing attempt: user={request.user.username} "
+                            f"tried to access tenant={slug}"
+                        )
+                        tenant = None  # Recusar acesso ao tenant
 
         # 2. Try subdomain
         if not tenant:

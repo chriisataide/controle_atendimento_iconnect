@@ -7,6 +7,7 @@
 
 from .base import (  # noqa: F401
     DashboardUserCreationForm,
+    DashboardUserEditForm,
     CustomLoginForm,
     QuickTicketForm,
     MobileCommentForm,

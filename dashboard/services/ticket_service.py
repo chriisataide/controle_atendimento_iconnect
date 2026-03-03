@@ -152,7 +152,7 @@ class TicketService:
             # Buscar agentes disponíveis com menor carga de trabalho
             agentes = PerfilAgente.objects.filter(
                 status='online',
-                especializacoes__icontains=categoria
+                especialidades__nome__icontains=categoria
             ).annotate(
                 ticket_count=Count('user__assigned_tickets', 
                                  filter=Q(user__assigned_tickets__status__in=['aberto', 'em_andamento']))

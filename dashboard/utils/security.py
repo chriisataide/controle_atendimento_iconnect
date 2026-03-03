@@ -121,7 +121,8 @@ def log_suspicious_activity_func(request, description, activity_type='suspicious
 
 def log_suspicious_activity(description="Suspicious activity detected"):
     """
-    Decorator para log automático de atividades suspeitas
+    Decorator para log automático de atividades suspeitas.
+    Registra apenas erros/exceções, não requests normais bem-sucedidos.
     
     Args:
         description: Descrição da atividade suspeita
@@ -132,10 +133,16 @@ def log_suspicious_activity(description="Suspicious activity detected"):
             try:
                 # Executar a view
                 response = view_func(request, *args, **kwargs)
-                
-                # Log da atividade (opcional - pode ser condicionado)
-                log_suspicious_activity_func(request, f"{description} - {view_func.__name__}")
-                
+
+                # Logar apenas responses com status de erro (4xx/5xx)
+                status_code = getattr(response, 'status_code', 200)
+                if status_code >= 400:
+                    log_suspicious_activity_func(
+                        request,
+                        f"{description} - {view_func.__name__} returned {status_code}",
+                        'suspicious' if status_code >= 403 else 'client_error',
+                    )
+
                 return response
             except Exception as e:
                 # Log do erro como atividade suspeita

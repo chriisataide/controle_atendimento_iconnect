@@ -5,6 +5,7 @@ import json
 import logging
 
 from django.contrib.auth.decorators import login_required
+from ..utils.rbac import role_required
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_POST, require_GET
@@ -15,6 +16,7 @@ logger = logging.getLogger('dashboard')
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def merge_tickets_view(request):
     """Página de UI para mesclar tickets."""
     return render(request, 'dashboard/tickets/merge.html')

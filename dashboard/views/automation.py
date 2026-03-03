@@ -8,11 +8,13 @@ from django.utils import timezone
 from datetime import timedelta
 import json
 import logging
+from dashboard.utils.rbac import role_required
 
 logger = logging.getLogger('dashboard')
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def automation_dashboard(request):
     """Dashboard do Sistema de Automação"""
     from ..models import WorkflowRule, WorkflowExecution
@@ -135,6 +137,7 @@ def automation_dashboard(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def automation_rules(request):
     """Gerenciamento de Regras de Automação"""
     from ..models import WorkflowRule, WorkflowExecution
@@ -198,6 +201,7 @@ def automation_rules(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def automation_workflows(request):
     """Gerenciamento de Workflows"""
     from ..models import WorkflowRule, WorkflowExecution

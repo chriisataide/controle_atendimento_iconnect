@@ -161,18 +161,23 @@ def get_dashboard_metrics():
             'heatmap_data': json.dumps(analytics_data.get('heatmap_data', [])),
         }
         
-    except ImportError:
-        # Se os models não existirem, retornar dados de exemplo
+    except ImportError as e:
+        # Log do erro e retornar zeros — NUNCA dados falsos
+        logger.error(f"ImportError em get_dashboard_metrics: {e}")
         return {
-            'atendimentos_hoje': 47,
-            'variacao_atendimentos': 12.5,
-            'usuarios_ativos': 15,
-            'tickets_abertos': 8,
-            'taxa_resolucao': 94.2,
+            'atendimentos_hoje': 0,
+            'variacao_atendimentos': 0,
+            'usuarios_ativos': 0,
+            'tickets_abertos': 0,
+            'taxa_resolucao': 0,
             'tickets_recentes': [],
             'agentes_status': [],
-            'atendimentos_por_hora': [12, 19, 15, 23, 18, 25, 10],
-            'tickets_por_mes': [50, 40, 300, 320, 500, 350, 200, 230, 500],
+            'atendimentos_por_hora': json.dumps([]),
+            'tickets_por_mes': json.dumps([]),
+            'status_data': json.dumps({}),
+            'agent_performance': json.dumps([]),
+            'heatmap_data': json.dumps([]),
+            '_error': 'Dados indisponíveis — verifique os logs.',
         }
 
 

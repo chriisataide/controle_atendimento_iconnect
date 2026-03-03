@@ -15,8 +15,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip setuptools
-RUN pip install --no-cache-dir --user -r requirements.txt
+RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org setuptools
+RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org --user -r requirements.txt
 
 # Stage 2: Runtime
 FROM python:3.13-slim
@@ -38,7 +38,7 @@ COPY --from=builder /root/.local /usr/local
 
 # setuptools é necessário em runtime (drf-yasg usa pkg_resources)
 # pkg_resources foi removido no setuptools 82+, pinnar versão compatível
-RUN pip install --no-cache-dir "setuptools<81"
+RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org "setuptools<81"
 
 # Variaveis de ambiente
 ENV PYTHONUNBUFFERED=1

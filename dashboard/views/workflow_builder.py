@@ -14,6 +14,7 @@ from django.views.decorators.http import require_POST, require_GET, require_http
 
 from ..models import WorkflowRule, WorkflowExecution
 from ..services.workflows import workflow_engine, workflow_builder
+from dashboard.utils.rbac import role_required
 
 logger = logging.getLogger('dashboard')
 
@@ -157,6 +158,7 @@ TEMPLATE_CATALOG = [
 # ======================== VIEWS ========================
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def workflow_builder_view(request):
     """Página principal do Visual Workflow Builder."""
     rules = WorkflowRule.objects.all()
@@ -172,6 +174,7 @@ def workflow_builder_view(request):
 # ======================== API CRUD ========================
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @require_GET
 def api_workflow_catalog(request):
     """GET — catálogo completo (triggers, conditions, actions, templates)."""
@@ -184,6 +187,7 @@ def api_workflow_catalog(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @require_GET
 def api_workflow_list(request):
     """GET — lista todas as regras."""
@@ -206,6 +210,7 @@ def api_workflow_list(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @require_POST
 def api_workflow_create(request):
     """
@@ -248,6 +253,7 @@ def api_workflow_create(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @require_http_methods(['PUT', 'PATCH'])
 def api_workflow_update(request, pk):
     """PUT/PATCH — atualiza regra."""
@@ -282,6 +288,7 @@ def api_workflow_update(request, pk):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @require_http_methods(['DELETE'])
 def api_workflow_delete(request, pk):
     """DELETE — exclui regra."""
@@ -296,6 +303,7 @@ def api_workflow_delete(request, pk):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @require_POST
 def api_workflow_toggle(request, pk):
     """POST — ativa/desativa regra."""
@@ -309,6 +317,7 @@ def api_workflow_toggle(request, pk):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @require_POST
 def api_workflow_duplicate(request, pk):
     """POST — duplica regra."""
@@ -332,6 +341,7 @@ def api_workflow_duplicate(request, pk):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @require_POST
 def api_workflow_from_template(request):
     """
@@ -364,6 +374,7 @@ def api_workflow_from_template(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @require_POST
 def api_workflow_validate(request):
     """
@@ -408,6 +419,7 @@ def api_workflow_validate(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @require_GET
 def api_workflow_metrics(request):
     """GET — métricas de execução de workflows."""

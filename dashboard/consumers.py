@@ -646,6 +646,9 @@ class DashboardConsumer(AsyncWebsocketConsumer):
                 'type': 'error',
                 'message': 'Erro ao atualizar dashboard'
             }))
+
+    async def dashboard_update(self, event):
+        """Handler para mensagens do channel layer (group_send)"""
         await self.send(text_data=json.dumps({
             'type': 'dashboard_update',
             'data': event['data']

@@ -12,8 +12,10 @@ import json
 from ..models import Ticket, Cliente, PerfilAgente, CategoriaTicket
 from ..models import ExecutiveDashboardKPI, DashboardWidget, MetricaTempoReal, AlertaKPI
 from ..models import AvaliacaoSatisfacao
+from dashboard.utils.rbac import role_required
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def executive_dashboard(request):
     """Dashboard Executivo Principal"""
     
@@ -87,6 +89,7 @@ def executive_dashboard(request):
     return render(request, 'dashboard/executive_dashboard.html', context)
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def executive_kpis_api(request):
     """API para dados dos KPIs em tempo real"""
     
@@ -184,6 +187,7 @@ def executive_kpis_api(request):
     return JsonResponse(kpis_data)
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def executive_charts_api(request):
     """API para dados dos gráficos executivos"""
     
@@ -257,6 +261,7 @@ def executive_charts_api(request):
     return JsonResponse(charts_data)
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def executive_alerts_api(request):
     """API para alertas executivos"""
     
@@ -317,6 +322,7 @@ def executive_alerts_api(request):
     return JsonResponse({'alerts': alerts})
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def executive_widget_config(request):
     """Configuração de widgets do dashboard"""
     

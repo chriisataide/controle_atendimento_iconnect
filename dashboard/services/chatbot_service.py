@@ -42,6 +42,7 @@ class IntentType(Enum):
     DAILY_SUMMARY = "daily_summary"
     AGENT_PERFORMANCE = "agent_performance"
     CLIENT_ATTENTION = "client_attention"
+    SYSTEM_GUIDE = "system_guide"
     UNKNOWN = "unknown"
 
 @dataclass
@@ -132,8 +133,410 @@ class IntentClassifier:
                 r'\b(quais|quem).*(precis|necessit).*(aten[çc][ãa]o|ajuda|suporte)\b',
                 r'\b(clientes?|chamados?)\s+(urgentes?|críticos?|prioritários?)\b',
             ],
+            # Guia de uso do sistema
+            IntentType.SYSTEM_GUIDE: [
+                r'\b(como|onde|aonde)\b.*(faço|faz|fazer|acessar|acessor|criar|editar|ver|listar|configurar|usar|mexer|navegar|abrir|encontrar|pesquisar|buscar|exportar|gerenciar|cadastrar|alterar|excluir|deletar)',
+                r'\b(onde fica|como faço|como eu|como faz|me ensina|me mostra|me ajuda|me explica|me diz)\b',
+                r'\b(tutorial|passo a passo|roteiro|instruções|instrucoes)\b',
+                r'\b(quero|preciso|gostaria de?)\b.*(criar|editar|ver|listar|acessar|abrir|cadastrar|exportar|gerar|configurar)',
+                r'\b(funcionalidade|função|módulo|seção|página|menu|tela)\b',
+                r'\bpara que serve\b',
+                r'\bcomo funciona\b',
+                r'\bo que (o sistema|ele|isso) faz\b',
+                r'\b(acessar?|ir para|entrar em|abrir)\b.*(tela|page|pagina|página|módulo|seção|menu)',
+            ],
         }
     
+    # Mapa completo de funcionalidades do sistema com roteiros passo a passo
+    SYSTEM_GUIDES = {
+        'dashboard': {
+            'keywords': ['dashboard', 'painel', 'início', 'home', 'tela inicial', 'página inicial', 'visão geral'],
+            'title': '📊 Dashboard Principal',
+            'path': '/dashboard/',
+            'guide': (
+                '📊 **Dashboard Principal**\n\n'
+                '**Como acessar o Dashboard:**\n\n'
+                '1. Faça login no sistema\n'
+                '2. Você será redirecionado automaticamente para o **Dashboard**\n'
+                '3. Ou acesse pelo menu lateral clicando em **"Dashboard"**\n\n'
+                '**O que você encontra no Dashboard:**\n'
+                '• Resumo de tickets abertos, em andamento e resolvidos\n'
+                '• Gráficos de desempenho\n'
+                '• Alertas de SLA\n'
+                '• Atividades recentes\n\n'
+                '📍 Acesse em: /dashboard/'
+            ),
+        },
+        'criar_ticket': {
+            'keywords': ['criar ticket', 'novo ticket', 'abrir ticket', 'novo chamado', 'abrir chamado', 'criar chamado', 'registrar chamado', 'registrar ticket', 'tela de abertura de ticket', 'abertura de ticket'],
+            'title': '📝 Criar Novo Ticket',
+            'path': '/dashboard/tickets/novo/',
+            'guide': (
+                '📝 **Criar Novo Ticket**\n\n'
+                '**Como criar um novo ticket:**\n\n'
+                '1. No menu lateral, clique em **"Tickets"**\n'
+                '2. Clique no botão **"+ Novo Ticket"** (canto superior direito)\n'
+                '3. Preencha os campos obrigatórios:\n'
+                '   • **Título** — Descreva brevemente o problema\n'
+                '   • **Descrição** — Detalhe o que está acontecendo\n'
+                '   • **Cliente** — Selecione o cliente\n'
+                '   • **Prioridade** — Baixa, Média, Alta ou Urgente\n'
+                '   • **Categoria** — Tipo do atendimento\n'
+                '4. Clique em **"Salvar"**\n\n'
+                '💡 Dica: Quanto mais detalhes na descrição, mais rápido será o atendimento!\n\n'
+                '📍 Acesse em: /dashboard/tickets/novo/'
+            ),
+        },
+        'listar_tickets': {
+            'keywords': ['listar tickets', 'ver tickets', 'meus tickets', 'todos tickets', 'lista de tickets', 'lista de chamados', 'pesquisar ticket', 'buscar ticket', 'encontrar ticket'],
+            'title': '📋 Listar e Pesquisar Tickets',
+            'path': '/dashboard/tickets/',
+            'guide': (
+                '📋 **Listar e Pesquisar Tickets**\n\n'
+                '**Como ver e pesquisar tickets:**\n\n'
+                '1. No menu lateral, clique em **"Tickets"**\n'
+                '2. Você verá a lista de todos os tickets\n'
+                '3. Use os **filtros** no topo para refinar:\n'
+                '   • Por status (Aberto, Em andamento, Resolvido, Fechado)\n'
+                '   • Por prioridade\n'
+                '   • Por agente responsável\n'
+                '   • Por data\n'
+                '4. Use a **barra de pesquisa** para buscar por título ou descrição\n'
+                '5. Clique em um ticket para ver os detalhes\n\n'
+                '📍 Acesse em: /dashboard/tickets/'
+            ),
+        },
+        'kanban': {
+            'keywords': ['kanban', 'quadro kanban', 'board', 'arrastar ticket', 'mover ticket', 'visualização kanban'],
+            'title': '📌 Quadro Kanban',
+            'path': '/dashboard/tickets/kanban/',
+            'guide': (
+                '📌 **Quadro Kanban**\n\n'
+                '**Como usar o Quadro Kanban:**\n\n'
+                '1. No menu lateral, clique em **"Tickets"** → **"Kanban"**\n'
+                '2. Os tickets são organizados em colunas por status:\n'
+                '   • **Aberto** → **Em Andamento** → **Aguardando** → **Resolvido**\n'
+                '3. **Arraste e solte** os cards para mudar o status\n'
+                '4. Clique em um card para ver detalhes completos\n\n'
+                '💡 Dica: O Kanban é ideal para ter uma visão rápida do fluxo de trabalho!\n\n'
+                '📍 Acesse em: /dashboard/tickets/kanban/'
+            ),
+        },
+        'editar_ticket': {
+            'keywords': ['editar ticket', 'alterar ticket', 'modificar ticket', 'atualizar ticket', 'mudar status', 'alterar chamado', 'editar chamado'],
+            'title': '✏️ Editar Ticket',
+            'path': '/dashboard/tickets/{id}/editar/',
+            'guide': (
+                '✏️ **Editar Ticket**\n\n'
+                '**Como editar um ticket:**\n\n'
+                '1. Acesse a lista de tickets (/dashboard/tickets/)\n'
+                '2. Clique no ticket que deseja editar\n'
+                '3. Na página de detalhes, clique em **"Editar"**\n'
+                '4. Modifique os campos desejados:\n'
+                '   • Status, prioridade, categoria\n'
+                '   • Descrição, agente responsável\n'
+                '5. Clique em **"Salvar"** para aplicar as alterações\n\n'
+                '💡 Dica: Você também pode alterar o status rapidamente pelo Kanban!'
+            ),
+        },
+        'clientes': {
+            'keywords': ['cliente', 'clientes', 'cadastrar cliente', 'novo cliente', 'listar clientes', 'gestão de clientes', 'gerenciar clientes'],
+            'title': '👥 Gestão de Clientes',
+            'path': '/dashboard/clientes/',
+            'guide': (
+                '👥 **Gestão de Clientes**\n\n'
+                '**Listar clientes:**\n'
+                '1. No menu lateral, clique em **"Clientes"**\n'
+                '2. Veja todos os clientes cadastrados\n\n'
+                '**Cadastrar novo cliente:**\n'
+                '1. Clique em **"+ Novo Cliente"**\n'
+                '2. Preencha: Razão Social, CNPJ, e-mail, telefone\n'
+                '3. Clique em **"Salvar"**\n\n'
+                '**Editar cliente:**\n'
+                '1. Clique no cliente na lista\n'
+                '2. Clique em **"Editar"**\n'
+                '3. Altere os dados e salve\n\n'
+                '📍 Acesse em: /dashboard/clientes/'
+            ),
+        },
+        'pontos_de_venda': {
+            'keywords': ['ponto de venda', 'pontos de venda', 'pdv', 'unidade', 'filial', 'cadastrar pdv', 'uniorg'],
+            'title': '🏪 Pontos de Venda',
+            'path': '/dashboard/pontosdevenda/',
+            'guide': (
+                '🏪 **Pontos de Venda**\n\n'
+                '**Como gerenciar pontos de venda:**\n\n'
+                '1. No menu lateral, clique em **"Pontos de Venda"**\n'
+                '2. Veja todas as unidades cadastradas\n\n'
+                '**Cadastrar novo PDV:**\n'
+                '1. Clique em **"+ Novo Ponto de Venda"**\n'
+                '2. Preencha os dados:\n'
+                '   • Razão Social, Nome Fantasia, CNPJ\n'
+                '   • Endereço completo\n'
+                '   • Dados do responsável\n'
+                '   • Vincule a um **cliente** (empresa)\n'
+                '3. Clique em **"Salvar"**\n\n'
+                '📍 Acesse em: /dashboard/pontosdevenda/'
+            ),
+        },
+        'usuarios': {
+            'keywords': ['usuário', 'usuarios', 'criar usuário', 'novo usuário', 'editar usuário', 'gerenciar usuários', 'listar usuários', 'permissões', 'nível de acesso', 'role'],
+            'title': '👤 Gestão de Usuários',
+            'path': '/dashboard/users/',
+            'guide': (
+                '👤 **Gestão de Usuários**\n\n'
+                '**Listar usuários:**\n'
+                '1. No menu lateral, clique em **"Usuários"**\n\n'
+                '**Criar novo usuário:**\n'
+                '1. Clique em **"+ Novo Usuário"**\n'
+                '2. Preencha: Usuário, E-mail, Senha\n'
+                '3. Primeiro Nome e Sobrenome\n'
+                '4. Selecione o **Nível de Acesso**:\n'
+                '   • Administrador, Gerente, Supervisor\n'
+                '   • Técnico Sênior, Agente, Financeiro\n'
+                '   • Visualizador, Cliente\n'
+                '5. Clique em **"Criar Usuário"**\n\n'
+                '**Editar usuário:**\n'
+                '1. Na lista, clique em **"Editar"** ao lado do usuário\n'
+                '2. Altere dados, nível de acesso ou senha\n'
+                '3. Clique em **"Salvar Alterações"**\n\n'
+                '📍 Acesse em: /dashboard/users/'
+            ),
+        },
+        'perfil': {
+            'keywords': ['meu perfil', 'perfil', 'minha conta', 'alterar minha senha', 'trocar senha', 'meus dados', 'configurar perfil'],
+            'title': '⚙️ Meu Perfil',
+            'path': '/dashboard/profile/',
+            'guide': (
+                '⚙️ **Meu Perfil**\n\n'
+                '**Como editar seu perfil:**\n\n'
+                '1. Clique no seu **nome/avatar** no canto superior direito\n'
+                '2. Selecione **"Perfil"**\n'
+                '3. Edite suas informações pessoais\n'
+                '4. Clique em **"Salvar"**\n\n'
+                '📍 Acesse em: /dashboard/profile/'
+            ),
+        },
+        'sla': {
+            'keywords': ['sla', 'acordo de nível', 'tempo de resposta', 'tempo de resolução', 'prazo', 'políticas sla', 'alertas sla'],
+            'title': '⏱️ Gestão de SLA',
+            'path': '/dashboard/sla/',
+            'guide': (
+                '⏱️ **Gestão de SLA**\n\n'
+                '**Dashboard SLA:**\n'
+                '1. No menu lateral, clique em **"SLA"**\n'
+                '2. Veja o painel com métricas de cumprimento\n\n'
+                '**Criar política de SLA:**\n'
+                '1. Acesse **"SLA"** → **"Políticas"**\n'
+                '2. Defina tempos de resposta e resolução por prioridade\n\n'
+                '**Alertas de SLA:**\n'
+                '1. Acesse **"SLA"** → **"Alertas"**\n'
+                '2. Veja tickets que estão próximos ou além do prazo\n\n'
+                '📍 Acesse em: /dashboard/sla/'
+            ),
+        },
+        'chat': {
+            'keywords': ['chat', 'conversa', 'mensagem', 'conversar', 'chat interno', 'sala de chat'],
+            'title': '💬 Chat Interno',
+            'path': '/dashboard/chat/',
+            'guide': (
+                '💬 **Chat Interno**\n\n'
+                '**Como usar o Chat:**\n\n'
+                '1. No menu lateral, clique em **"Chat"**\n'
+                '2. Veja suas salas de conversa ativas\n\n'
+                '**Criar nova conversa:**\n'
+                '1. Clique em **"Nova Conversa"**\n'
+                '2. Selecione os participantes\n'
+                '3. Comece a trocar mensagens em tempo real\n\n'
+                '**Criar ticket a partir do chat:**\n'
+                '1. Dentro de uma conversa, clique em **"Criar Ticket"**\n'
+                '2. O histórico da conversa será vinculado ao ticket\n\n'
+                '📍 Acesse em: /dashboard/chat/'
+            ),
+        },
+        'relatorios': {
+            'keywords': ['relatório', 'relatorios', 'exportar', 'gerar relatório', 'report', 'analytics', 'análise', 'estatísticas', 'métricas'],
+            'title': '📈 Relatórios e Analytics',
+            'path': '/dashboard/reports/',
+            'guide': (
+                '📈 **Relatórios e Analytics**\n\n'
+                '**Como gerar relatórios:**\n\n'
+                '1. No menu lateral, clique em **"Relatórios"**\n'
+                '2. Escolha o tipo de relatório:\n'
+                '   • Tickets por período\n'
+                '   • Desempenho por agente\n'
+                '   • SLA por cliente\n'
+                '   • Itens de atendimento\n'
+                '3. Selecione os **filtros** (data, status, agente)\n'
+                '4. Clique em **"Gerar"**\n'
+                '5. Exporte em **CSV** ou **PDF**\n\n'
+                '📍 Acesse em: /dashboard/reports/'
+            ),
+        },
+        'notificacoes': {
+            'keywords': ['notificação', 'notificações', 'alerta', 'alertas', 'avisos', 'push'],
+            'title': '🔔 Notificações',
+            'path': '/dashboard/notifications/',
+            'guide': (
+                '🔔 **Notificações**\n\n'
+                '**Como gerenciar notificações:**\n\n'
+                '1. Clique no **ícone do sino** 🔔 no topo da página\n'
+                '2. Veja notificações recentes\n'
+                '3. Clique em **"Ver todas"** para a lista completa\n\n'
+                '**Tipos de notificação:**\n'
+                '• Novo ticket atribuído a você\n'
+                '• Atualização de status de ticket\n'
+                '• Alertas de SLA\n'
+                '• Mensagens no chat\n\n'
+                '📍 Acesse em: /dashboard/notifications/'
+            ),
+        },
+        'automacao': {
+            'keywords': ['automação', 'automatizar', 'regra', 'regras', 'workflow', 'fluxo', 'automático'],
+            'title': '🤖 Automação e Workflows',
+            'path': '/dashboard/automation/',
+            'guide': (
+                '🤖 **Automação e Workflows**\n\n'
+                '**Regras de automação:**\n'
+                '1. No menu, acesse **"Automação"** → **"Regras"**\n'
+                '2. Crie regras como: "Se ticket urgente, atribuir ao supervisor"\n\n'
+                '**Workflow Builder (Visual):**\n'
+                '1. Acesse **"Automação"** → **"Workflows"**\n'
+                '2. Use o editor visual para criar fluxos\n'
+                '3. Arraste e conecte blocos de ação\n'
+                '4. Ative o workflow quando pronto\n\n'
+                '📍 Acesse em: /dashboard/automation/'
+            ),
+        },
+        'whatsapp': {
+            'keywords': ['whatsapp', 'wpp', 'zap', 'mensagem whatsapp', 'integração whatsapp'],
+            'title': '📱 WhatsApp Business',
+            'path': '/dashboard/whatsapp/',
+            'guide': (
+                '📱 **WhatsApp Business**\n\n'
+                '**Como usar o WhatsApp Business:**\n\n'
+                '1. No menu lateral, clique em **"WhatsApp"**\n'
+                '2. Configure sua conta Business\n'
+                '3. Gerencie contatos e conversas\n'
+                '4. Configure respostas automáticas\n'
+                '5. Envie e receba mensagens pelo sistema\n\n'
+                '📍 Acesse em: /dashboard/whatsapp/'
+            ),
+        },
+        'base_conhecimento': {
+            'keywords': ['base de conhecimento', 'knowledge', 'artigo', 'artigos', 'documentação', 'faq', 'perguntas frequentes', 'manual'],
+            'title': '📚 Base de Conhecimento',
+            'path': '/dashboard/knowledge/',
+            'guide': (
+                '📚 **Base de Conhecimento**\n\n'
+                '**Como usar a Base de Conhecimento:**\n\n'
+                '1. No menu lateral, clique em **"Base de Conhecimento"**\n'
+                '2. Pesquise artigos por palavra-chave\n'
+                '3. Navegue por categorias\n'
+                '4. Vote em artigos úteis (👍/👎)\n\n'
+                '📍 Acesse em: /dashboard/knowledge/'
+            ),
+        },
+        'macros': {
+            'keywords': ['macro', 'macros', 'resposta rápida', 'respostas rápidas', 'template de resposta', 'modelo de resposta'],
+            'title': '⚡ Respostas Rápidas (Macros)',
+            'path': '/dashboard/macros/',
+            'guide': (
+                '⚡ **Respostas Rápidas (Macros)**\n\n'
+                '**Como usar Respostas Rápidas:**\n\n'
+                '1. No menu lateral, clique em **"Macros"**\n'
+                '2. Veja as respostas prontas disponíveis\n\n'
+                '**Criar nova macro:**\n'
+                '1. Clique em **"+ Nova Macro"**\n'
+                '2. Defina um título e o texto da resposta\n'
+                '3. Salve para usar em tickets\n\n'
+                '💡 Dica: Use macros nos tickets para responder mais rápido!\n\n'
+                '📍 Acesse em: /dashboard/macros/'
+            ),
+        },
+        'compliance': {
+            'keywords': ['compliance', 'auditoria', 'lgpd', 'dados pessoais', 'privacidade', 'audit trail', 'trilha de auditoria'],
+            'title': '🔒 Compliance e LGPD',
+            'path': '/dashboard/compliance/audit/',
+            'guide': (
+                '🔒 **Compliance e LGPD**\n\n'
+                '**Trilha de Auditoria:**\n'
+                '1. No menu, acesse **"Compliance"** → **"Auditoria"**\n'
+                '2. Veja o log de todas as ações no sistema\n'
+                '3. Exporte para CSV se necessário\n\n'
+                '**Painel LGPD:**\n'
+                '1. Acesse **"Compliance"** → **"LGPD"**\n'
+                '2. Gerencie solicitações de dados pessoais\n'
+                '3. Processe pedidos de exclusão/portabilidade\n\n'
+                '📍 Auditoria: /dashboard/compliance/audit/\n'
+                '📍 LGPD: /dashboard/compliance/lgpd/'
+            ),
+        },
+        'pesquisa': {
+            'keywords': ['pesquisar', 'buscar', 'procurar', 'search', 'encontrar'],
+            'title': '🔍 Pesquisa Avançada',
+            'path': '/dashboard/search/',
+            'guide': (
+                '🔍 **Pesquisa Avançada**\n\n'
+                '**Como pesquisar no sistema:**\n\n'
+                '1. Use a **barra de pesquisa** no topo da página\n'
+                '2. Ou acesse **"Pesquisa Avançada"** no menu\n'
+                '3. Pesquise por:\n'
+                '   • Tickets (título, descrição, número)\n'
+                '   • Clientes (nome, CNPJ, e-mail)\n'
+                '   • Usuários\n'
+                '4. Use filtros para refinar os resultados\n\n'
+                '📍 Acesse em: /dashboard/search/'
+            ),
+        },
+        'exportar': {
+            'keywords': ['exportar', 'export', 'download', 'baixar', 'csv', 'excel', 'pdf'],
+            'title': '📥 Exportar Dados',
+            'path': '/dashboard/export/tickets/',
+            'guide': (
+                '📥 **Exportar Dados**\n\n'
+                '**Exportar tickets:**\n'
+                '1. Acesse a lista de tickets\n'
+                '2. Aplique os filtros desejados\n'
+                '3. Clique em **"Exportar"** (ícone de download)\n'
+                '4. Escolha o formato (CSV)\n\n'
+                '**Exportar relatórios:**\n'
+                '1. Acesse **"Relatórios"**\n'
+                '2. Gere o relatório desejado\n'
+                '3. Clique em **"Download"**\n\n'
+                '📍 Acesse em: /dashboard/export/tickets/'
+            ),
+        },
+        'agente_dashboard': {
+            'keywords': ['dashboard agente', 'painel do agente', 'meus atendimentos', 'fila de atendimento', 'agente'],
+            'title': '🎧 Dashboard do Agente',
+            'path': '/dashboard/agente/',
+            'guide': (
+                '🎧 **Dashboard do Agente**\n\n'
+                '**Como usar o Dashboard do Agente:**\n\n'
+                '1. No menu lateral, clique em **"Agente"**\n'
+                '2. Veja seus tickets atribuídos\n'
+                '3. Acompanhe sua fila de atendimento\n'
+                '4. Altere seu status (Online, Ausente, Ocupado)\n\n'
+                '📍 Acesse em: /dashboard/agente/'
+            ),
+        },
+        'portal_cliente': {
+            'keywords': ['portal do cliente', 'portal cliente', 'área do cliente', 'meus chamados como cliente'],
+            'title': '🏠 Portal do Cliente',
+            'path': '/dashboard/cliente/',
+            'guide': (
+                '🏠 **Portal do Cliente**\n\n'
+                '**Como usar o Portal do Cliente:**\n\n'
+                '1. Faça login com sua conta de cliente\n'
+                '2. Veja o painel com seus tickets\n'
+                '3. Acompanhe o status dos chamados\n'
+                '4. Abra novos chamados\n\n'
+                '📍 Acesse em: /dashboard/cliente/'
+            ),
+        },
+    }
+
     def classify(self, message: str) -> Tuple[IntentType, float]:
         """Classifica a intenção da mensagem"""
         
@@ -152,6 +555,14 @@ class IntentClassifier:
             # Bonus por comprimento da mensagem
             if confidence > 0:
                 confidence += min(len(message_lower) / 100, 0.2)
+            
+            # Bonus para SYSTEM_GUIDE se keywords diretas matcharem
+            if intent == IntentType.SYSTEM_GUIDE and confidence > 0:
+                for guide_data in self.SYSTEM_GUIDES.values():
+                    for keyword in guide_data['keywords']:
+                        if keyword in message_lower:
+                            confidence += 0.4
+                            break
             
             if confidence > best_confidence:
                 best_confidence = confidence
@@ -297,7 +708,15 @@ class ChatbotService:
             elif intent == IntentType.CLIENT_ATTENTION:
                 return await self._handle_client_attention(user_id, message)
             
+            elif intent == IntentType.SYSTEM_GUIDE:
+                return self._handle_system_guide(message)
+            
             else:
+                # Tentar encontrar guia do sistema antes de dar resposta padrão
+                guide_response = self._handle_system_guide(message)
+                if guide_response.confidence >= 0.5:
+                    return guide_response
+                
                 # Resposta padrão via knowledge base
                 response_text, quick_replies = self.knowledge_base.get_response(intent)
                 
@@ -762,6 +1181,109 @@ class ChatbotService:
             context={'escalation_requested': True}
         )
     
+    # ====================================
+    # HANDLER DE GUIA DO SISTEMA
+    # ====================================
+
+    def _handle_system_guide(self, message: str) -> ChatbotResponse:
+        """Busca o guia mais adequado para a pergunta do usuário"""
+        import difflib
+        message_lower = message.lower().strip()
+        
+        best_match = None
+        best_score = 0
+        
+        for guide_key, guide_data in self.intent_classifier.SYSTEM_GUIDES.items():
+            score = 0
+            
+            # Verificar keywords diretas
+            for keyword in guide_data['keywords']:
+                if keyword in message_lower:
+                    keyword_score = len(keyword.split()) * 0.3 + 0.4
+                    score = max(score, keyword_score)
+            
+            # Verificar similaridade com título
+            title_clean = re.sub(r'[^\w\s]', '', guide_data['title'].lower())
+            title_similarity = difflib.SequenceMatcher(None, message_lower, title_clean).ratio()
+            score = max(score, title_similarity)
+            
+            if score > best_score:
+                best_score = score
+                best_match = guide_data
+        
+        if best_match and best_score >= 0.3:
+            # Sugestões contextuais
+            related = self._get_related_suggestions(best_match)
+            
+            return ChatbotResponse(
+                message=best_match['guide'],
+                intent=IntentType.SYSTEM_GUIDE,
+                confidence=min(best_score + 0.3, 1.0),
+                quick_replies=related,
+                context={'guide_key': best_match['title']}
+            )
+        
+        # Se não encontrou match específico, retorna help geral
+        return self._handle_system_help()
+
+    def _handle_system_help(self) -> ChatbotResponse:
+        """Retorna visão geral de todas as funcionalidades do sistema"""
+        features_text = (
+            '🗺️ **Guia Completo do Sistema iConnect**\n\n'
+            'Posso te ensinar a usar qualquer funcionalidade! Aqui está tudo o que o sistema oferece:\n\n'
+            '📋 **Tickets** — Criar, listar, editar, Kanban\n'
+            '👥 **Clientes** — Cadastrar e gerenciar empresas\n'
+            '🏪 **Pontos de Venda** — Unidades/filiais\n'
+            '👤 **Usuários** — Criar, editar, permissões\n'
+            '⏱️ **SLA** — Políticas e alertas de prazo\n'
+            '💬 **Chat** — Comunicação interna em tempo real\n'
+            '📈 **Relatórios** — Analytics e exportações\n'
+            '🤖 **Automação** — Regras e workflows visuais\n'
+            '📱 **WhatsApp** — Integração Business\n'
+            '📚 **Base de Conhecimento** — Artigos e FAQ\n'
+            '⚡ **Macros** — Respostas rápidas\n'
+            '🔔 **Notificações** — Alertas em tempo real\n'
+            '🔒 **Compliance** — Auditoria e LGPD\n'
+            '🔍 **Pesquisa** — Busca avançada\n\n'
+            'Pergunte sobre qualquer item acima! Exemplo: "Como criar um ticket?"'
+        )
+        return ChatbotResponse(
+            message=features_text,
+            intent=IntentType.SYSTEM_GUIDE,
+            confidence=1.0,
+            quick_replies=['Como criar um ticket?', 'Como gerenciar clientes?', 'Como usar o Kanban?'],
+        )
+
+    def _get_related_suggestions(self, current_guide: Dict) -> List[str]:
+        """Retorna sugestões de guias relacionados"""
+        related_map = {
+            '📊 Dashboard Principal': ['Como criar um ticket?', 'Como ver relatórios?', 'O que o sistema faz?'],
+            '📝 Criar Novo Ticket': ['Como ver meus tickets?', 'Como usar o Kanban?', 'Como editar um ticket?'],
+            '📋 Listar e Pesquisar Tickets': ['Como criar um ticket?', 'Como usar o Kanban?', 'Como exportar dados?'],
+            '📌 Quadro Kanban': ['Como criar um ticket?', 'Como ver meus tickets?', 'Como editar um ticket?'],
+            '✏️ Editar Ticket': ['Como ver meus tickets?', 'Como usar o Kanban?', 'Como criar um ticket?'],
+            '👥 Gestão de Clientes': ['Como cadastrar um PDV?', 'Como criar um ticket?', 'Como gerenciar usuários?'],
+            '🏪 Pontos de Venda': ['Como gerenciar clientes?', 'Como criar um ticket?', 'O que o sistema faz?'],
+            '👤 Gestão de Usuários': ['Como gerenciar clientes?', 'O que o sistema faz?', 'Como usar compliance?'],
+            '⚙️ Meu Perfil': ['Como gerenciar usuários?', 'Como criar um ticket?', 'O que o sistema faz?'],
+            '⏱️ Gestão de SLA': ['Como ver relatórios?', 'Como criar um ticket?', 'Como usar notificações?'],
+            '💬 Chat Interno': ['Como criar um ticket?', 'Como usar o WhatsApp?', 'O que o sistema faz?'],
+            '📈 Relatórios e Analytics': ['Como exportar dados?', 'Como gerenciar SLA?', 'O que o sistema faz?'],
+            '🔔 Notificações': ['Como gerenciar SLA?', 'Como ver meus tickets?', 'O que o sistema faz?'],
+            '🤖 Automação e Workflows': ['Como gerenciar SLA?', 'Como criar um ticket?', 'O que o sistema faz?'],
+            '📱 WhatsApp Business': ['Como usar o chat?', 'Como criar um ticket?', 'O que o sistema faz?'],
+            '📚 Base de Conhecimento': ['Como usar macros?', 'O que o sistema faz?', 'Como criar um ticket?'],
+            '⚡ Respostas Rápidas (Macros)': ['Como usar a base de conhecimento?', 'Como criar um ticket?', 'O que o sistema faz?'],
+            '🔒 Compliance e LGPD': ['Como gerenciar usuários?', 'O que o sistema faz?', 'Como ver relatórios?'],
+            '🔍 Pesquisa Avançada': ['Como ver meus tickets?', 'Como gerenciar clientes?', 'O que o sistema faz?'],
+            '📥 Exportar Dados': ['Como ver relatórios?', 'Como ver meus tickets?', 'O que o sistema faz?'],
+            '🎧 Dashboard do Agente': ['Como ver meus tickets?', 'Como criar um ticket?', 'O que o sistema faz?'],
+            '🏠 Portal do Cliente': ['Como criar um ticket?', 'Como ver meus tickets?', 'O que o sistema faz?'],
+        }
+        
+        title = current_guide.get('title', '')
+        return related_map.get(title, ['O que o sistema faz?', 'Como criar um ticket?', 'Como gerenciar clientes?'])
+
     # ====================================
     # MÉTODOS AUXILIARES
     # ====================================

@@ -5,6 +5,7 @@ import json
 from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
+from ..utils.rbac import role_required
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
@@ -67,9 +68,13 @@ def knowledge_article_detail(request, pk):
         categoria=artigo.categoria, publico=True
     ).exclude(pk=pk).order_by('-visualizacoes')[:4]
 
+    # Parse tags string into list
+    tags_list = [t.strip() for t in artigo.tags.split(',') if t.strip()] if artigo.tags else []
+
     return render(request, 'dashboard/knowledge/article_detail.html', {
         'artigo': artigo,
         'relacionados': relacionados,
+        'tags_list': tags_list,
     })
 
 
@@ -79,7 +84,15 @@ def knowledge_vote(request, pk):
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
-    vote = request.POST.get('vote')  # 'yes' or 'no'
+    # Support both form POST and JSON body
+    vote = request.POST.get('vote')
+    if not vote and request.content_type and 'json' in request.content_type:
+        try:
+            body = json.loads(request.body)
+            vote = body.get('vote')
+        except (json.JSONDecodeError, ValueError):
+            pass
+
     artigo = get_object_or_404(ArtigoConhecimento, pk=pk)
 
     if vote == 'yes':
@@ -89,15 +102,214 @@ def knowledge_vote(request, pk):
 
     artigo.refresh_from_db()
     return JsonResponse({
+        'success': True,
         'util_sim': artigo.util_sim,
         'util_nao': artigo.util_nao,
         'taxa': round(artigo.taxa_utilidade(), 1),
     })
 
 
+# ========== CRUD — ARTIGOS ==========
+
+@login_required
+@role_required('admin', 'gerente', 'supervisor')
+def knowledge_create(request):
+    """Criar novo artigo na base de conhecimento."""
+    categorias = CategoriaConhecimento.objects.filter(ativo=True).order_by('ordem', 'nome')
+
+    if request.method == 'POST':
+        titulo = request.POST.get('titulo', '').strip()
+        conteudo = request.POST.get('conteudo', '').strip()
+        resumo = request.POST.get('resumo', '').strip()
+        categoria_id = request.POST.get('categoria')
+        tags = request.POST.get('tags', '').strip()
+        publico = request.POST.get('publico') == 'on'
+        destaque = request.POST.get('destaque') == 'on'
+
+        errors = []
+        if not titulo:
+            errors.append('O título é obrigatório.')
+        if not conteudo:
+            errors.append('O conteúdo é obrigatório.')
+        if not categoria_id:
+            errors.append('Selecione uma categoria.')
+
+        if errors:
+            return render(request, 'dashboard/knowledge/article_form.html', {
+                'categorias': categorias,
+                'errors': errors,
+                'form_data': request.POST,
+                'editing': False,
+            })
+
+        categoria = get_object_or_404(CategoriaConhecimento, pk=categoria_id)
+        artigo = ArtigoConhecimento.objects.create(
+            titulo=titulo,
+            conteudo=conteudo,
+            resumo=resumo,
+            categoria=categoria,
+            autor=request.user,
+            tags=tags,
+            publico=publico,
+            destaque=destaque,
+            slug=slugify(titulo)[:220],
+        )
+        messages.success(request, f'Artigo "{titulo}" criado com sucesso.')
+        return redirect('dashboard:knowledge_article', pk=artigo.pk)
+
+    return render(request, 'dashboard/knowledge/article_form.html', {
+        'categorias': categorias,
+        'editing': False,
+    })
+
+
+@login_required
+@role_required('admin', 'gerente', 'supervisor')
+def knowledge_edit(request, pk):
+    """Editar artigo existente."""
+    artigo = get_object_or_404(ArtigoConhecimento, pk=pk)
+    categorias = CategoriaConhecimento.objects.filter(ativo=True).order_by('ordem', 'nome')
+
+    if request.method == 'POST':
+        titulo = request.POST.get('titulo', '').strip()
+        conteudo = request.POST.get('conteudo', '').strip()
+        resumo = request.POST.get('resumo', '').strip()
+        categoria_id = request.POST.get('categoria')
+        tags = request.POST.get('tags', '').strip()
+        publico = request.POST.get('publico') == 'on'
+        destaque = request.POST.get('destaque') == 'on'
+
+        errors = []
+        if not titulo:
+            errors.append('O título é obrigatório.')
+        if not conteudo:
+            errors.append('O conteúdo é obrigatório.')
+        if not categoria_id:
+            errors.append('Selecione uma categoria.')
+
+        if errors:
+            return render(request, 'dashboard/knowledge/article_form.html', {
+                'categorias': categorias,
+                'artigo': artigo,
+                'errors': errors,
+                'form_data': request.POST,
+                'editing': True,
+            })
+
+        categoria = get_object_or_404(CategoriaConhecimento, pk=categoria_id)
+        artigo.titulo = titulo
+        artigo.conteudo = conteudo
+        artigo.resumo = resumo
+        artigo.categoria = categoria
+        artigo.tags = tags
+        artigo.publico = publico
+        artigo.destaque = destaque
+        artigo.slug = slugify(titulo)[:220]
+        artigo.save()
+
+        messages.success(request, f'Artigo "{titulo}" atualizado com sucesso.')
+        return redirect('dashboard:knowledge_article', pk=artigo.pk)
+
+    return render(request, 'dashboard/knowledge/article_form.html', {
+        'categorias': categorias,
+        'artigo': artigo,
+        'editing': True,
+    })
+
+
+@login_required
+@role_required('admin', 'gerente', 'supervisor')
+def knowledge_delete(request, pk):
+    """Excluir artigo da base de conhecimento."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    artigo = get_object_or_404(ArtigoConhecimento, pk=pk)
+    titulo = artigo.titulo
+    artigo.delete()
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'success': True, 'message': f'Artigo "{titulo}" excluído.'})
+
+    messages.success(request, f'Artigo "{titulo}" excluído com sucesso.')
+    return redirect('dashboard:knowledge_base')
+
+
+# ========== CRUD — CATEGORIAS ==========
+
+@login_required
+@role_required('admin', 'gerente', 'supervisor')
+def knowledge_category_create(request):
+    """Criar nova categoria de conhecimento via AJAX."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    nome = request.POST.get('nome', '').strip()
+    descricao = request.POST.get('descricao', '').strip()
+    icone = request.POST.get('icone', 'help').strip()
+    cor = request.POST.get('cor', '#e91e63').strip()
+
+    if not nome:
+        return JsonResponse({'error': 'O nome é obrigatório.'}, status=400)
+
+    if CategoriaConhecimento.objects.filter(nome__iexact=nome).exists():
+        return JsonResponse({'error': 'Já existe uma categoria com esse nome.'}, status=400)
+
+    cat = CategoriaConhecimento.objects.create(
+        nome=nome,
+        descricao=descricao,
+        icone=icone,
+        cor=cor,
+    )
+    return JsonResponse({
+        'success': True,
+        'id': cat.pk,
+        'nome': cat.nome,
+        'icone': cat.icone,
+        'cor': cat.cor,
+        'message': f'Categoria "{nome}" criada.',
+    })
+
+
+@login_required
+def knowledge_category_list(request):
+    """Lista categorias via AJAX."""
+    categorias = CategoriaConhecimento.objects.filter(ativo=True).annotate(
+        total_artigos=Count('artigos', filter=Q(artigos__publico=True))
+    ).order_by('ordem', 'nome')
+    data = [{
+        'id': c.pk,
+        'nome': c.nome,
+        'descricao': c.descricao,
+        'icone': c.icone,
+        'cor': c.cor,
+        'total_artigos': c.total_artigos,
+    } for c in categorias]
+    return JsonResponse({'categorias': data})
+
+
+@login_required
+@role_required('admin', 'gerente', 'supervisor')
+def knowledge_category_delete(request, pk):
+    """Excluir categoria via AJAX (só se sem artigos)."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    cat = get_object_or_404(CategoriaConhecimento, pk=pk)
+    if cat.artigos.filter(publico=True).exists():
+        return JsonResponse(
+            {'error': 'Não é possível excluir: existem artigos vinculados a esta categoria.'},
+            status=400,
+        )
+    nome = cat.nome
+    cat.delete()
+    return JsonResponse({'success': True, 'message': f'Categoria "{nome}" excluída.'})
+
+
 # ========== MACROS / RESPOSTAS RÁPIDAS ==========
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'agente')
 def macros_list(request):
     """Lista de macros/respostas rápidas."""
     macros = CannedResponse.objects.all()
@@ -124,6 +336,7 @@ def macros_list(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'agente')
 def macro_create(request):
     """Cria nova macro via AJAX."""
     if request.method != 'POST':
@@ -152,6 +365,7 @@ def macro_create(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'agente')
 def macro_delete(request, pk):
     """Exclui macro via AJAX."""
     if request.method != 'POST':
@@ -165,6 +379,7 @@ def macro_delete(request, pk):
 # ========== TIME TRACKING ==========
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def ticket_timetrack(request, pk):
     """Registra tempo de trabalho em ticket via AJAX."""
     if request.method != 'POST':

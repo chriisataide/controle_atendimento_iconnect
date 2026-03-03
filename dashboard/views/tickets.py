@@ -3,6 +3,7 @@ Views de tickets: CRUD, Kanban, interações e dashboard do agente.
 """
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from ..utils.rbac import role_required
 from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.utils.decorators import method_decorator
@@ -28,7 +29,7 @@ User = get_user_model()
 
 # ========== KANBAN BOARD ==========
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')], name='dispatch')
 class KanbanBoardView(TemplateView):
     """Visualização Kanban do pipeline de tickets"""
     template_name = 'dashboard/tickets/kanban.html'
@@ -74,7 +75,7 @@ class KanbanBoardView(TemplateView):
 
 # ========== SISTEMA DE TICKETS ==========
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')], name='dispatch')
 class TicketListView(ListView):
     model = Ticket
     template_name = 'dashboard/tickets/list.html'
@@ -282,7 +283,7 @@ class TicketCreateView(CreateView):
         return response
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')], name='dispatch')
 class TicketUpdateView(UpdateView):
     model = Ticket
     template_name = 'dashboard/tickets/update.html'
@@ -336,6 +337,7 @@ def add_interaction(request, ticket_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def update_ticket_status(request):
     """API para atualizar status do ticket via AJAX"""
     if request.method == 'POST':
@@ -396,7 +398,7 @@ def update_ticket_status(request):
 
 # ========== DASHBOARD DO AGENTE ==========
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')], name='dispatch')
 class AgenteDashboardView(TemplateView):
     template_name = 'dashboard/agente/dashboard.html'
 
@@ -423,7 +425,7 @@ class AgenteDashboardView(TemplateView):
         return context
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')], name='dispatch')
 class AgenteTicketsView(ListView):
     model = Ticket
     template_name = 'dashboard/agente/tickets.html'

@@ -5,8 +5,10 @@ from django.db.models import Avg, Count, Q, F
 from django.utils import timezone
 from datetime import datetime, timedelta
 from ..models import Ticket, Cliente
+from dashboard.utils.rbac import role_required
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def analytics_dashboard(request):
     """Dashboard executivo com métricas avançadas"""
     
@@ -140,6 +142,7 @@ def analytics_dashboard(request):
     return render(request, 'dashboard/analytics/dashboard.html', context)
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def relatorio_detalhado(request):
     """Relatório detalhado personalizável"""
     

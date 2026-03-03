@@ -264,12 +264,13 @@
                         <i class="material-symbols-rounded">psychology</i>
                     </div>
                     <h5>Olá! Sou o assistente iConnect</h5>
-                    <p>Posso consultar tickets, mostrar estatísticas, ajudar com suporte técnico e muito mais.</p>
+                    <p>Posso consultar tickets, mostrar estatísticas, e te ensinar a usar qualquer funcionalidade do sistema! Pergunte como quiser.</p>
                     <div class="welcome-chips">
+                        <span class="chip welcome-chip" data-text="O que o sistema faz?">🗺️ Visão geral</span>
+                        <span class="chip welcome-chip" data-text="Como criar um ticket?">📝 Criar Ticket</span>
+                        <span class="chip welcome-chip" data-text="Como gerenciar clientes?">👥 Clientes</span>
                         <span class="chip welcome-chip" data-text="Quantos tickets abertos temos hoje?">📊 Tickets abertos</span>
                         <span class="chip welcome-chip" data-text="Mostre um resumo do atendimento de hoje">📋 Resumo do dia</span>
-                        <span class="chip welcome-chip" data-text="Qual o tempo médio de resposta dos agentes?">⏱️ Performance</span>
-                        <span class="chip welcome-chip" data-text="Quais clientes precisam de atenção imediata?">🚨 Urgentes</span>
                         <span class="chip welcome-chip" data-text="oi">👋 Começar</span>
                     </div>
                 </div>
@@ -306,25 +307,29 @@
                 <h6>Sugestões Rápidas</h6>
             </div>
             <div class="side-body">
+                <button class="sug-btn suggestion-btn" data-text="O que o sistema faz?">
+                    <div class="sug-icon blue"><i class="material-symbols-rounded">map</i></div>
+                    <div><div class="sug-label">Guia do sistema</div><div class="sug-desc">Visão geral das funcionalidades</div></div>
+                </button>
+                <button class="sug-btn suggestion-btn" data-text="Como criar um ticket?">
+                    <div class="sug-icon green"><i class="material-symbols-rounded">note_add</i></div>
+                    <div><div class="sug-label">Como criar ticket</div><div class="sug-desc">Passo a passo</div></div>
+                </button>
+                <button class="sug-btn suggestion-btn" data-text="Como gerenciar clientes?">
+                    <div class="sug-icon amber"><i class="material-symbols-rounded">groups</i></div>
+                    <div><div class="sug-label">Gerenciar clientes</div><div class="sug-desc">Cadastro e gestão</div></div>
+                </button>
                 <button class="sug-btn suggestion-btn" data-text="Quantos tickets abertos temos hoje?">
                     <div class="sug-icon blue"><i class="material-symbols-rounded">confirmation_number</i></div>
                     <div><div class="sug-label">Tickets abertos</div><div class="sug-desc">Estatísticas em tempo real</div></div>
-                </button>
-                <button class="sug-btn suggestion-btn" data-text="Qual o tempo médio de resposta dos agentes?">
-                    <div class="sug-icon amber"><i class="material-symbols-rounded">timer</i></div>
-                    <div><div class="sug-label">Tempo de resposta</div><div class="sug-desc">Performance dos agentes</div></div>
-                </button>
-                <button class="sug-btn suggestion-btn" data-text="Mostre um resumo do atendimento de hoje">
-                    <div class="sug-icon green"><i class="material-symbols-rounded">bar_chart</i></div>
-                    <div><div class="sug-label">Resumo do dia</div><div class="sug-desc">Overview completo</div></div>
                 </button>
                 <button class="sug-btn suggestion-btn" data-text="Quais clientes precisam de atenção imediata?">
                     <div class="sug-icon red"><i class="material-symbols-rounded">priority_high</i></div>
                     <div><div class="sug-label">Clientes urgentes</div><div class="sug-desc">Atenção imediata</div></div>
                 </button>
-                <button class="sug-btn suggestion-btn" data-text="Quero criar um novo ticket">
-                    <div class="sug-icon blue"><i class="material-symbols-rounded">add_circle</i></div>
-                    <div><div class="sug-label">Criar ticket</div><div class="sug-desc">Nova solicitação</div></div>
+                <button class="sug-btn suggestion-btn" data-text="Como gerenciar usuários?">
+                    <div class="sug-icon blue"><i class="material-symbols-rounded">manage_accounts</i></div>
+                    <div><div class="sug-label">Gerenciar usuários</div><div class="sug-desc">Criar e editar contas</div></div>
                 </button>
                 <button class="sug-btn suggestion-btn" data-text="Preciso falar com um atendente humano">
                     <div class="sug-icon amber"><i class="material-symbols-rounded">support_agent</i></div>
@@ -371,6 +376,10 @@
                 <h6>Atalhos</h6>
             </div>
             <div class="side-body">
+                <div class="d-flex justify-content-between align-items-center py-1">
+                    <span class="text-xs" style="color:var(--ic-text-secondary)">Guia do sistema</span>
+                    <span class="text-xs" style="color:var(--ic-text-muted)">digite <kbd style="font-size:.6rem;padding:1px 4px;border-radius:3px;background:#e2e8f0;color:#64748b">/guia</kbd></span>
+                </div>
                 <div class="d-flex justify-content-between align-items-center py-1">
                     <span class="text-xs" style="color:var(--ic-text-secondary)">Tickets abertos</span>
                     <span class="text-xs" style="color:var(--ic-text-muted)">digite <kbd style="font-size:.6rem;padding:1px 4px;border-radius:3px;background:#e2e8f0;color:#64748b">/tickets</kbd></span>
@@ -423,8 +432,13 @@ document.addEventListener('DOMContentLoaded', function() {
         '/performance': 'Qual o tempo médio de resposta dos agentes?',
         '/urgentes': 'Quais clientes precisam de atenção imediata?',
         '/humano': 'Preciso falar com um atendente humano',
-        '/criar': 'Quero criar um novo ticket',
-        '/ajuda': 'O que você pode fazer? Me ajude!',
+        '/criar': 'Como criar um ticket?',
+        '/ajuda': 'O que o sistema faz?',
+        '/guia': 'O que o sistema faz?',
+        '/clientes': 'Como gerenciar clientes?',
+        '/usuarios': 'Como gerenciar usuários?',
+        '/kanban': 'Como usar o Kanban?',
+        '/sla': 'Como funciona o SLA?',
     };
 
     // ===== Format markdown to HTML =====

@@ -334,10 +334,18 @@ class Ticket(models.Model):
             if not self.numero:
                 # Gerar número do ticket sequencial com lock para evitar race condition
                 from django.db.models import Max
-                ultimo = Ticket.objects.select_for_update().aggregate(
-                    max_num=Max('id')
-                )['max_num'] or 0
-                self.numero = f'TK-{ultimo + 1:05d}'
+                ultimo_numero = Ticket.objects.select_for_update().aggregate(
+                    max_num=Max('numero')
+                )['max_num']
+                if ultimo_numero:
+                    # Parsear o número: TK-00042 → 42
+                    try:
+                        seq = int(ultimo_numero.replace('TK-', ''))
+                    except (ValueError, AttributeError):
+                        seq = Ticket.objects.count()
+                else:
+                    seq = 0
+                self.numero = f'TK-{seq + 1:05d}'
             
             # Atualizar timestamps baseado no status
             if self.status == StatusTicket.RESOLVIDO and not self.resolvido_em:
@@ -694,7 +702,7 @@ class SLAViolation(models.Model):
     severity = models.CharField(max_length=10, choices=SEVERITY_LEVELS, default='medium', db_index=True)
     expected_deadline = models.DateTimeField()
     actual_time = models.DateTimeField()
-    time_exceeded = models.DurationField()
+    time_exceeded = models.DurationField(null=True, blank=True)
     description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     

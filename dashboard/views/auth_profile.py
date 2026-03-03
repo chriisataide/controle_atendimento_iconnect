@@ -3,6 +3,7 @@ Views de autenticação, perfil de usuário, gestão de usuários e pontos de ve
 """
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from ..utils.rbac import role_required
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib import messages
 from django.utils.decorators import method_decorator
@@ -16,7 +17,7 @@ import logging
 from ..models import (
     Ticket, PerfilUsuario, InteracaoTicket, PerfilAgente, PontoDeVenda,
 )
-from ..forms import DashboardUserCreationForm
+from ..forms import DashboardUserCreationForm, DashboardUserEditForm
 from ..utils.security import rate_limit, log_suspicious_activity
 from ..api.versioning import api_version, APIResponseTransformer
 
@@ -287,7 +288,7 @@ class UserEditView(UpdateView):
     """View para edição de usuários existentes"""
     model = User
     template_name = 'dashboard/user_form.html'
-    fields = ['username', 'email', 'first_name', 'last_name', 'is_active']
+    form_class = DashboardUserEditForm
     success_url = reverse_lazy('dashboard:user_list')
 
     def dispatch(self, request, *args, **kwargs):
@@ -296,14 +297,10 @@ class UserEditView(UpdateView):
             return redirect('dashboard:index')
         return super().dispatch(request, *args, **kwargs)
 
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        for field_name, field in form.fields.items():
-            if isinstance(field.widget, forms.CheckboxInput):
-                field.widget.attrs.update({'class': 'form-check-input'})
-            else:
-                field.widget.attrs.update({'class': 'form-control'})
-        return form
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request_user'] = self.request.user
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

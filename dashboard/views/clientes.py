@@ -3,6 +3,7 @@ Views de clientes: portal, listagem, CRUD e estatísticas AJAX.
 """
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from ..utils.rbac import role_required
 from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.utils.decorators import method_decorator
@@ -204,7 +205,7 @@ class ClienteTicketsView(ListView):
 
 # ========== CRUD DE CLIENTES (Admin) ==========
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')], name='dispatch')
 class ClienteListView(ListView):
     model = Cliente
     template_name = 'dashboard/cliente/cliente_list.html'
@@ -266,7 +267,7 @@ class ClienteListView(ListView):
         return context
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')], name='dispatch')
 class ClienteCreateView(CreateView):
     model = Cliente
     form_class = ClienteForm
@@ -290,7 +291,7 @@ class ClienteCreateView(CreateView):
         return context
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')], name='dispatch')
 class ClienteUpdateView(UpdateView):
     model = Cliente
     form_class = ClienteForm
@@ -315,6 +316,7 @@ class ClienteUpdateView(UpdateView):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def cliente_detail_view(request, pk):
     """Detalhe de um cliente com seus tickets"""
     if not (request.user.is_staff or request.user.is_superuser):
@@ -339,6 +341,7 @@ def cliente_detail_view(request, pk):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def cliente_delete_view(request, pk):
     """Excluir um cliente"""
     if not (request.user.is_staff or request.user.is_superuser):

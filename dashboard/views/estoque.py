@@ -4,6 +4,7 @@ Integrado ao Sistema iConnect
 """
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from ..utils.rbac import role_required
 from django.contrib import messages
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
@@ -30,6 +31,7 @@ logger = logging.getLogger('dashboard')
 # ========== DASHBOARD PRINCIPAL DE ESTOQUE ==========
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def estoque_dashboard(request):
     """Dashboard principal do módulo de estoque"""
     from ..models import ItemAtendimento
@@ -154,7 +156,7 @@ def estoque_dashboard(request):
 
 # ========== PRODUTOS ==========
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')], name='dispatch')
 class ProdutoListView(ListView):
     model = Produto
     template_name = 'estoque/produto_list.html'
@@ -203,7 +205,7 @@ class ProdutoListView(ListView):
         return context
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')], name='dispatch')
 class ProdutoDetailView(DetailView):
     model = Produto
     template_name = 'estoque/produto_detail.html'
@@ -227,7 +229,7 @@ class ProdutoDetailView(DetailView):
         return context
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')], name='dispatch')
 class ProdutoCreateView(CreateView):
     model = Produto
     template_name = 'estoque/produto_form.html'
@@ -250,7 +252,7 @@ class ProdutoCreateView(CreateView):
         return context
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')], name='dispatch')
 class ProdutoUpdateView(UpdateView):
     model = Produto
     template_name = 'estoque/produto_form.html'
@@ -276,7 +278,7 @@ class ProdutoUpdateView(UpdateView):
 
 # ========== MOVIMENTAÇÕES ==========
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')], name='dispatch')
 class MovimentacaoListView(ListView):
     model = MovimentacaoEstoque
     template_name = 'estoque/movimentacao_list.html'
@@ -327,6 +329,7 @@ class MovimentacaoListView(ListView):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def movimentacao_create(request):
     """Criar nova movimentação de estoque"""
     if request.method == 'POST':
@@ -398,6 +401,7 @@ def movimentacao_create(request):
 # ========== RELATÓRIOS ==========
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def relatorios_index(request):
     """Página unificada de relatórios"""
     
@@ -485,6 +489,7 @@ def relatorios_index(request):
     return render(request, 'estoque/relatorios.html', context)
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def relatorio_estoque(request):
     """Relatório de posição de estoque"""
     
@@ -524,6 +529,7 @@ def relatorio_estoque(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def relatorio_movimentacoes(request):
     """Relatório de movimentações por período"""
     
@@ -574,6 +580,7 @@ def relatorio_movimentacoes(request):
 # ========== APIS AJAX ==========
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def api_produto_info(request, produto_id):
     """API para obter informações de um produto"""
     try:
@@ -594,6 +601,7 @@ def api_produto_info(request, produto_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def api_alertas_estoque(request):
     """API para obter alertas de estoque não resolvidos"""
     alertas = EstoqueAlerta.objects.filter(resolvido=False).select_related('produto')
@@ -611,6 +619,7 @@ def api_alertas_estoque(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def api_resolver_alerta(request, alerta_id):
     """API para resolver um alerta de estoque"""
     if request.method == 'POST':

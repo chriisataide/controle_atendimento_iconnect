@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
+from ..utils.rbac import role_required
 from django.utils import timezone
 from django.db.models import Count, Q, Avg
 from django.core.paginator import Paginator
@@ -105,6 +106,7 @@ def chatbot_feedback(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def chatbot_dashboard(request):
     """Dashboard administrativo do chatbot"""
     if not request.user.is_staff:
@@ -136,6 +138,7 @@ def chatbot_dashboard(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def chatbot_knowledge_base(request):
     """Gerenciamento da base de conhecimento"""
     if not request.user.is_staff:
@@ -158,6 +161,7 @@ def chatbot_knowledge_base(request):
 
 @require_http_methods(["POST"])
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def chatbot_add_knowledge(request):
     """Adicionar item à base de conhecimento"""
     if not request.user.is_staff:
@@ -195,6 +199,7 @@ def chatbot_add_knowledge(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def chatbot_conversations(request):
     """Lista de conversas do chatbot"""
     if not request.user.is_staff:
@@ -225,6 +230,7 @@ def chatbot_conversations(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def chatbot_conversation_detail(request, conversation_id):
     """Detalhes de uma conversa específica"""
     if not request.user.is_staff:
@@ -243,6 +249,7 @@ def chatbot_conversation_detail(request, conversation_id):
 
 @require_http_methods(["POST"])
 @login_required  
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def chatbot_create_ticket_from_conversation(request):
     """Criar ticket a partir de uma conversa do chatbot"""
     try:
@@ -290,6 +297,7 @@ def chatbot_create_ticket_from_conversation(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def chatbot_analytics_api(request):
     """API para analytics do chatbot"""
     if not request.user.is_staff:
@@ -326,6 +334,7 @@ def chatbot_analytics_api(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def chatbot_settings(request):
     """Configurações do chatbot"""
     if not request.user.is_staff:

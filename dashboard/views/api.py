@@ -51,6 +51,18 @@ def _is_admin_or_supervisor(user):
     return role in (ROLE_ADMIN, ROLE_SUPERVISOR) or user.is_superuser
 
 
+def _user_can_access_ticket(user, ticket):
+    """IDOR protection: verifica se usuario pode acessar o ticket."""
+    role = _get_user_role(user)
+    if role in (ROLE_ADMIN, ROLE_SUPERVISOR) or user.is_superuser:
+        return True
+    if role == ROLE_AGENTE and ticket.agente_id == user.id:
+        return True
+    if role == ROLE_CLIENTE and ticket.cliente and ticket.cliente.user_id == user.id:
+        return True
+    return False
+
+
 class IsAdminOrSupervisor(permissions.BasePermission):
     """Only allow admin or supervisor users."""
     def has_permission(self, request, view):
@@ -179,6 +191,8 @@ class ClienteDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 @permission_classes([IsAuthenticated])
 def analytics_overview(request):
     """Visao geral de metricas"""
+    if not _is_admin_or_supervisor(request.user):
+        return Response({"error": "Acesso restrito a admin/supervisor"}, status=403)
     now = timezone.now()
     period = _safe_period_days(request)
     since = now - timedelta(days=period)
@@ -210,6 +224,8 @@ def analytics_overview(request):
 @permission_classes([IsAuthenticated])
 def analytics_time_series(request):
     """Tickets ao longo do tempo (agrupados por dia)"""
+    if not _is_admin_or_supervisor(request.user):
+        return Response({"error": "Acesso restrito a admin/supervisor"}, status=403)
     period = _safe_period_days(request)
     since = timezone.now() - timedelta(days=period)
 
@@ -228,6 +244,8 @@ def analytics_time_series(request):
 @permission_classes([IsAuthenticated])
 def analytics_satisfaction(request):
     """Metricas de satisfacao"""
+    if not _is_admin_or_supervisor(request.user):
+        return Response({"error": "Acesso restrito a admin/supervisor"}, status=403)
     try:
         from ..models import AvaliacaoSatisfacao
         period = _safe_period_days(request)
@@ -251,6 +269,8 @@ def analytics_satisfaction(request):
 @permission_classes([IsAuthenticated])
 def analytics_sla_metrics(request):
     """Metricas de SLA"""
+    if not _is_admin_or_supervisor(request.user):
+        return Response({"error": "Acesso restrito a admin/supervisor"}, status=403)
     period = _safe_period_days(request)
     since = timezone.now() - timedelta(days=period)
     violations = SLAViolation.objects.filter(created_at__gte=since)
@@ -435,6 +455,8 @@ class CannedResponseDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 @permission_classes([IsAuthenticated])
 def export_tickets_excel(request):
     """Exportar tickets para Excel"""
+    if not _is_admin_or_supervisor(request.user):
+        return Response({"error": "Acesso restrito a admin/supervisor"}, status=403)
     from openpyxl import Workbook
     from django.http import HttpResponse
 
@@ -501,6 +523,9 @@ def bulk_action_tickets(request):
     elif action == "change_priority":
         tickets.update(prioridade=value)
     elif action == "assign":
+        from django.contrib.auth.models import User
+        if not User.objects.filter(pk=value, is_staff=True, is_active=True).exists():
+            return Response({"error": "Agente invalido ou inativo"}, status=400)
         tickets.update(agente_id=value)
     else:
         return Response({"error": f"Acao '{action}' desconhecida"}, status=400)
@@ -524,9 +549,12 @@ class TimeEntrySerializer(serializers.ModelSerializer):
 def ticket_time_entries(request, pk):
     """GET: listar registros de tempo; POST: adicionar registro"""
     try:
-        ticket = Ticket.objects.get(pk=pk)
+        ticket = Ticket.objects.select_related('cliente').get(pk=pk)
     except Ticket.DoesNotExist:
         return Response({"error": "Ticket nao encontrado"}, status=404)
+
+    if not _user_can_access_ticket(request.user, ticket):
+        return Response({"error": "Sem permissao para acessar este ticket"}, status=403)
 
     if request.method == "GET":
         entries = TimeEntry.objects.filter(ticket=ticket).order_by("-data")
@@ -572,6 +600,8 @@ class WebhookDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 @permission_classes([IsAuthenticated])
 def webhook_external_trigger(request):
     """Trigger externo para disparar workflows"""
+    if not _is_admin_or_supervisor(request.user):
+        return Response({"error": "Acesso restrito a admin/supervisor"}, status=403)
     event = request.data.get("event")
     payload = request.data.get("data", {})
 
@@ -646,9 +676,12 @@ def api_key_revoke(request, pk):
 def ai_triage_ticket(request, pk):
     """Auto-triagem de ticket: categorizar + priorizar + duplicatas + KB"""
     try:
-        ticket = Ticket.objects.get(pk=pk)
+        ticket = Ticket.objects.select_related('cliente').get(pk=pk)
     except Ticket.DoesNotExist:
         return Response({"error": "Ticket nao encontrado"}, status=404)
+
+    if not _user_can_access_ticket(request.user, ticket):
+        return Response({"error": "Sem permissao para acessar este ticket"}, status=403)
 
     from ..services.ai_service import ai_service
     result = ai_service.auto_triage(ticket.titulo, ticket.descricao)
@@ -664,6 +697,9 @@ def ai_suggest_response(request, pk):
     except Ticket.DoesNotExist:
         return Response({"error": "Ticket nao encontrado"}, status=404)
 
+    if not _user_can_access_ticket(request.user, ticket):
+        return Response({"error": "Sem permissao para acessar este ticket"}, status=403)
+
     from ..services.ai_service import ai_service
     result = ai_service.suggest_response(ticket)
     return Response(result)
@@ -674,9 +710,12 @@ def ai_suggest_response(request, pk):
 def ai_summarize_ticket(request, pk):
     """Resumir conversa do ticket"""
     try:
-        ticket = Ticket.objects.get(pk=pk)
+        ticket = Ticket.objects.select_related('cliente').get(pk=pk)
     except Ticket.DoesNotExist:
         return Response({"error": "Ticket nao encontrado"}, status=404)
+
+    if not _user_can_access_ticket(request.user, ticket):
+        return Response({"error": "Sem permissao para acessar este ticket"}, status=403)
 
     from ..services.ai_service import ai_service
     result = ai_service.summarize_conversation(ticket)
@@ -756,6 +795,8 @@ def analytics_agent_performance(request):
 @permission_classes([IsAuthenticated])
 def analytics_period_comparison(request):
     """Comparacao entre dois periodos"""
+    if not _is_admin_or_supervisor(request.user):
+        return Response({"error": "Acesso restrito a admin/supervisor"}, status=403)
     days = _safe_period_days(request)
     now = timezone.now()
     current_start = now - timedelta(days=days)
@@ -794,6 +835,8 @@ def analytics_period_comparison(request):
 @permission_classes([IsAuthenticated])
 def client_health_score(request, pk):
     """Obter ou recalcular health score de um cliente"""
+    if not _is_admin_or_supervisor(request.user):
+        return Response({"error": "Acesso restrito a admin/supervisor"}, status=403)
     try:
         cliente = Cliente.objects.get(pk=pk)
     except Cliente.DoesNotExist:

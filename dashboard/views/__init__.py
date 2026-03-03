@@ -121,6 +121,12 @@ from .banking_features import (
     KnowledgeBaseView,
     knowledge_article_detail,
     knowledge_vote,
+    knowledge_create,
+    knowledge_edit,
+    knowledge_delete,
+    knowledge_category_create,
+    knowledge_category_list,
+    knowledge_category_delete,
     macros_list,
     macro_create,
     macro_delete,
@@ -175,5 +181,7 @@ __all__ = [
     'relatorio_itens_atendimento', 'api_estatisticas_financeiras_ticket',
     # Banking Features
     'KnowledgeBaseView', 'knowledge_article_detail', 'knowledge_vote',
+    'knowledge_create', 'knowledge_edit', 'knowledge_delete',
+    'knowledge_category_create', 'knowledge_category_list', 'knowledge_category_delete',
     'macros_list', 'macro_create', 'macro_delete', 'ticket_timetrack',
 ]

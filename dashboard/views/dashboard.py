@@ -3,6 +3,7 @@ Views do dashboard principal, admin dashboard e métricas AJAX.
 """
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from ..utils.rbac import role_required
 from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.utils.decorators import method_decorator
@@ -45,6 +46,7 @@ def home_redirect(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def admin_dashboard(request):
     """
     Dashboard administrativo com acesso total ao sistema
@@ -141,7 +143,7 @@ def admin_dashboard(request):
     return render(request, 'dashboard/admin/dashboard.html', context)
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')], name='dispatch')
 class DashboardView(TemplateView):
     template_name = 'dashboard/index.html'
 

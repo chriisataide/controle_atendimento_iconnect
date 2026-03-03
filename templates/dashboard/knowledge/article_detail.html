@@ -25,25 +25,46 @@
     </ol>
   </nav>
 
+  <!-- Messages -->
+  {% for message in messages %}
+  <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="border-radius:12px;border:none;">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
+
   <div class="row">
     <!-- Artigo principal -->
     <div class="col-lg-8">
       <div class="card ic-card">
         <div class="card-body p-4">
           <!-- Header -->
-          <div class="d-flex align-items-center mb-3">
-            {% if artigo.categoria %}
-            <span class="ic-badge me-2" style="background:{{ artigo.categoria.cor }}15;color:{{ artigo.categoria.cor }};">
-              <span class="material-symbols-rounded" style="font-size:14px;vertical-align:-2px;">{{ artigo.categoria.icone }}</span>
-              {{ artigo.categoria.nome }}
-            </span>
-            {% endif %}
-            {% if artigo.destaque %}
-            <span class="ic-badge ic-badge-warning">
-              <span class="material-symbols-rounded" style="font-size:14px;vertical-align:-2px;">star</span>
-              Destaque
-            </span>
-            {% endif %}
+          <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+              {% if artigo.categoria %}
+              <span class="ic-badge" style="background:{{ artigo.categoria.cor }}15;color:{{ artigo.categoria.cor }};">
+                <span class="material-symbols-rounded" style="font-size:14px;vertical-align:-2px;">{{ artigo.categoria.icone }}</span>
+                {{ artigo.categoria.nome }}
+              </span>
+              {% endif %}
+              {% if artigo.destaque %}
+              <span class="ic-badge ic-badge-warning">
+                <span class="material-symbols-rounded" style="font-size:14px;vertical-align:-2px;">star</span>
+                Destaque
+              </span>
+              {% endif %}
+            </div>
+            <!-- Ações: Editar / Excluir -->
+            <div class="d-flex gap-2">
+              <a href="{% url 'dashboard:knowledge_edit' artigo.pk %}" class="btn btn-outline-secondary btn-sm" style="border-radius:8px;">
+                <span class="material-symbols-rounded" style="font-size:16px;vertical-align:-3px;">edit</span>
+                Editar
+              </a>
+              <button class="btn btn-outline-danger btn-sm" style="border-radius:8px;" onclick="confirmDelete()">
+                <span class="material-symbols-rounded" style="font-size:16px;vertical-align:-3px;">delete</span>
+                Excluir
+              </button>
+            </div>
           </div>
 
           <h4 class="font-weight-bold mb-2" style="color:var(--ic-text-primary);">{{ artigo.titulo }}</h4>
@@ -87,7 +108,7 @@
           </div>
 
           <!-- Tags -->
-          {% if artigo.tags %}
+          {% if tags_list %}
           <div class="mt-4 pt-3 border-top">
             <span class="material-symbols-rounded text-muted me-1" style="font-size:16px;vertical-align:-3px;">label</span>
             {% for tag in tags_list %}
@@ -99,19 +120,19 @@
           <!-- Feedback -->
           <div class="mt-4 pt-3 border-top text-center" id="feedback-section">
             <p class="text-sm text-muted mb-2">Este artigo foi útil?</p>
-            <div class="d-flex justify-content-center gap-2">
-              <button class="btn ic-btn-primary btn-sm" onclick="voteArticle(true)" id="btn-vote-yes">
+            <div class="d-flex justify-content-center gap-2" id="vote-buttons">
+              <button class="btn ic-btn-primary btn-sm" onclick="voteArticle('yes')" id="btn-vote-yes" style="border-radius:10px;padding:8px 20px;">
                 <span class="material-symbols-rounded" style="font-size:18px;vertical-align:-3px;">thumb_up</span>
                 Sim <span class="badge bg-white text-dark ms-1">{{ artigo.util_sim }}</span>
               </button>
-              <button class="btn btn-outline-secondary btn-sm" onclick="voteArticle(false)" id="btn-vote-no">
+              <button class="btn btn-outline-secondary btn-sm" onclick="voteArticle('no')" id="btn-vote-no" style="border-radius:10px;padding:8px 20px;">
                 <span class="material-symbols-rounded" style="font-size:18px;vertical-align:-3px;">thumb_down</span>
                 Não <span class="badge bg-light text-dark ms-1">{{ artigo.util_nao }}</span>
               </button>
             </div>
             <div id="feedback-thanks" class="d-none mt-2">
-              <span class="material-symbols-rounded text-success" style="font-size:24px;">check_circle</span>
-              <p class="text-sm text-muted">Obrigado pelo seu feedback!</p>
+              <span class="material-symbols-rounded text-success" style="font-size:32px;">check_circle</span>
+              <p class="text-sm text-muted mt-1">Obrigado pelo seu feedback!</p>
             </div>
           </div>
         </div>
@@ -133,7 +154,7 @@
           <ul class="list-group list-group-flush">
             {% for rel in relacionados %}
             <li class="list-group-item px-0 py-2 border-0">
-              <a href="{% url 'dashboard:knowledge_article' rel.pk %}" class="text-decoration-none">
+              <a href="{% url 'dashboard:knowledge_article' rel.pk %}" class="text-decoration-none d-block knowledge-sidebar-link">
                 <p class="text-xs font-weight-bold mb-0" style="color:var(--ic-text-primary);">{{ rel.titulo|truncatechars:60 }}</p>
                 <div class="d-flex align-items-center mt-1">
                   <span class="ic-badge" style="font-size:0.6rem;padding:2px 6px;background:{{ rel.categoria.cor }}15;color:{{ rel.categoria.cor }};">{{ rel.categoria.nome }}</span>
@@ -151,7 +172,7 @@
       {% endif %}
 
       <!-- Estatísticas do artigo -->
-      <div class="card ic-card">
+      <div class="card ic-card mb-4">
         <div class="card-header pb-0 p-3">
           <h6 class="text-sm mb-0">
             <span class="material-symbols-rounded me-1" style="font-size:18px;vertical-align:-3px;">analytics</span>
@@ -183,30 +204,158 @@
           {% endif %}
         </div>
       </div>
+
+      <!-- Ações rápidas -->
+      <div class="card ic-card">
+        <div class="card-header pb-0 p-3">
+          <h6 class="text-sm mb-0">
+            <span class="material-symbols-rounded me-1" style="font-size:18px;vertical-align:-3px;">bolt</span>
+            Ações
+          </h6>
+        </div>
+        <div class="card-body p-3 pt-2">
+          <a href="{% url 'dashboard:knowledge_edit' artigo.pk %}" class="btn btn-outline-secondary btn-sm w-100 mb-2 text-start" style="border-radius:8px;">
+            <span class="material-symbols-rounded me-1" style="font-size:16px;vertical-align:-3px;">edit</span>
+            Editar Artigo
+          </a>
+          <a href="{% url 'dashboard:knowledge_create' %}" class="btn btn-outline-secondary btn-sm w-100 mb-2 text-start" style="border-radius:8px;">
+            <span class="material-symbols-rounded me-1" style="font-size:16px;vertical-align:-3px;">add</span>
+            Novo Artigo
+          </a>
+          <a href="{% url 'dashboard:knowledge_base' %}" class="btn btn-outline-secondary btn-sm w-100 text-start" style="border-radius:8px;">
+            <span class="material-symbols-rounded me-1" style="font-size:16px;vertical-align:-3px;">arrow_back</span>
+            Voltar à Base
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 </div>
+
+<!-- Modal Confirmação de Exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content" style="border-radius:16px;border:none;">
+      <div class="modal-body text-center p-4">
+        <span class="material-symbols-rounded text-danger mb-3" style="font-size:48px;">warning</span>
+        <h6 class="mb-2">Excluir Artigo?</h6>
+        <p class="text-sm text-muted mb-3">Esta ação não pode ser desfeita. O artigo "<strong>{{ artigo.titulo|truncatechars:30 }}</strong>" será excluído permanentemente.</p>
+        <form method="post" action="{% url 'dashboard:knowledge_delete' artigo.pk %}">
+          {% csrf_token %}
+          <div class="d-flex gap-2 justify-content-center">
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" style="border-radius:10px;padding:8px 16px;">Cancelar</button>
+            <button type="submit" class="btn btn-danger btn-sm" style="border-radius:10px;padding:8px 16px;">
+              <span class="material-symbols-rounded me-1" style="font-size:16px;vertical-align:-3px;">delete</span>
+              Excluir
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.knowledge-sidebar-link {
+  transition: all 0.2s ease;
+  border-radius: 6px;
+  padding: 4px 6px;
+  margin: -4px -6px;
+}
+.knowledge-sidebar-link:hover {
+  background: var(--ic-bg-hover, #f1f5f9);
+}
+.article-content h1, .article-content h2, .article-content h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  font-weight: 700;
+  color: var(--ic-text-primary);
+}
+.article-content h1 { font-size: 1.5rem; }
+.article-content h2 { font-size: 1.3rem; }
+.article-content h3 { font-size: 1.1rem; }
+.article-content p { margin-bottom: 1rem; }
+.article-content ul, .article-content ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+.article-content li { margin-bottom: 0.3rem; }
+.article-content code {
+  background: var(--ic-bg-hover, #f1f5f9);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  color: #e91e63;
+}
+.article-content pre {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 16px;
+  border-radius: 10px;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+.article-content pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+}
+.article-content blockquote {
+  border-left: 4px solid var(--ic-primary, #e91e63);
+  padding: 12px 16px;
+  margin: 1rem 0;
+  background: var(--ic-bg-hover, #f8fafc);
+  border-radius: 0 8px 8px 0;
+}
+.article-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+.article-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+.article-content th, .article-content td {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  text-align: left;
+}
+.article-content th {
+  background: var(--ic-bg-hover, #f1f5f9);
+  font-weight: 600;
+}
+</style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-function voteArticle(isPositive) {
+function confirmDelete() {
+  const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+  modal.show();
+}
+
+function voteArticle(vote) {
   const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value
     || '{{ csrf_token }}';
+
+  const fd = new FormData();
+  fd.append('vote', vote);
+
   fetch("{% url 'dashboard:knowledge_vote' artigo.pk %}", {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
       'X-CSRFToken': csrfToken,
       'X-Requested-With': 'XMLHttpRequest'
     },
-    body: JSON.stringify({vote: isPositive ? 'yes' : 'no'})
+    body: fd,
   })
   .then(r => r.json())
   .then(data => {
     if (data.success) {
-      document.getElementById('btn-vote-yes').classList.add('d-none');
-      document.getElementById('btn-vote-no').classList.add('d-none');
+      document.getElementById('vote-buttons').classList.add('d-none');
       document.getElementById('feedback-thanks').classList.remove('d-none');
     }
   })

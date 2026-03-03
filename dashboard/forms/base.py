@@ -61,6 +61,92 @@ class DashboardUserCreationForm(UserCreationForm):
             role = self.cleaned_data.get('role', ROLE_AGENTE)
             assign_role(user, role)
         return user
+
+
+class DashboardUserEditForm(forms.ModelForm):
+    """Formulário para edição de usuários existentes com seleção de nível de acesso.
+    Inclui alteração opcional de senha.
+    SEGURANÇA: is_staff e is_superuser são definidos automaticamente pelo RBAC.
+    """
+    email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'}))
+    first_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Primeiro nome'}))
+    last_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Último nome'}))
+    is_active = forms.BooleanField(required=False, initial=True, widget=forms.CheckboxInput())
+    role = forms.ChoiceField(
+        choices=UserRole.ROLE_CHOICES,
+        initial=ROLE_AGENTE,
+        required=True,
+        label='Nível de Acesso',
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+    new_password1 = forms.CharField(
+        required=False,
+        label='Nova Senha',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Deixe em branco para manter a atual'}),
+        help_text='Preencha apenas se deseja alterar a senha.',
+    )
+    new_password2 = forms.CharField(
+        required=False,
+        label='Confirmar Nova Senha',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirme a nova senha'}),
+    )
+
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'first_name', 'last_name', 'is_active')
+
+    def __init__(self, *args, **kwargs):
+        self.request_user = kwargs.pop('request_user', None)
+        super().__init__(*args, **kwargs)
+        self.fields['username'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Nome de usuário'})
+
+        # Apenas admin pode atribuir role de admin
+        if self.request_user and not self.request_user.is_superuser:
+            self.fields['role'].choices = [
+                (val, label) for val, label in UserRole.ROLE_CHOICES
+                if val != ROLE_ADMIN
+            ]
+
+        # Preencher role atual do usuário
+        if self.instance and self.instance.pk:
+            from ..utils.rbac import get_user_role
+            current_role = get_user_role(self.instance)
+            self.fields['role'].initial = current_role
+
+    def clean_role(self):
+        role = self.cleaned_data.get('role')
+        if role not in ALL_ROLES:
+            raise forms.ValidationError('Nível de acesso inválido.')
+        # Apenas superuser pode definir admin
+        if role == ROLE_ADMIN and self.request_user and not self.request_user.is_superuser:
+            raise forms.ValidationError('Apenas administradores podem definir o nível Administrador.')
+        return role
+
+    def clean(self):
+        cleaned_data = super().clean()
+        p1 = cleaned_data.get('new_password1')
+        p2 = cleaned_data.get('new_password2')
+        if p1 or p2:
+            if p1 != p2:
+                self.add_error('new_password2', 'As senhas não coincidem.')
+            elif len(p1) < 8:
+                self.add_error('new_password1', 'A senha deve ter no mínimo 8 caracteres.')
+        return cleaned_data
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        # Alterar senha se informada
+        new_password = self.cleaned_data.get('new_password1')
+        if new_password:
+            user.set_password(new_password)
+        if commit:
+            user.save()
+            # Atribuir nível de acesso via RBAC
+            role = self.cleaned_data.get('role', ROLE_AGENTE)
+            assign_role(user, role)
+        return user
+
+
 """
 Formulários para iConnect
 Formulários otimizados para web e mobile

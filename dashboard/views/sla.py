@@ -19,12 +19,14 @@ from ..models import (
 )
 from ..services.sla_monitor import sla_monitor
 from ..services.sla_calculator import sla_calculator
+from dashboard.utils.rbac import role_required
 
 logger = logging.getLogger(__name__)
 
 
 # Endpoint de teste SLA — requer autenticação
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def sla_test(request):
     """Teste SLA com autenticação"""
     return JsonResponse({
@@ -35,6 +37,7 @@ def sla_test(request):
 
 # Dashboard SLA — requer autenticação
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def sla_dashboard_public(request):
     """Dashboard SLA público temporário para demonstração"""
     try:
@@ -60,6 +63,7 @@ def sla_dashboard_public(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def sla_dashboard(request):
     """Dashboard principal de SLA"""
     context = {
@@ -73,6 +77,7 @@ def sla_dashboard(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def sla_policies(request):
     """Página de gerenciamento de políticas de SLA"""
     # Tratar criação de nova política via POST
@@ -140,6 +145,7 @@ def sla_policies(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def sla_alerts(request):
     """Página de alertas de SLA"""
     alert_type = request.GET.get('type', 'all')
@@ -183,6 +189,7 @@ def sla_alerts(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def sla_reports(request):
     """Página de relatórios de SLA"""
     # Período de análise
@@ -322,6 +329,7 @@ def sla_reports(request):
 # ====== APIs ======
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @require_http_methods(["GET"])
 def api_sla_dashboard_data(request):
     """API para dados do dashboard SLA"""
@@ -368,6 +376,7 @@ def api_sla_dashboard_data(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @require_http_methods(["POST"])
 def api_create_sla_policy(request):
     """API para criar política de SLA"""
@@ -448,6 +457,7 @@ def api_create_sla_policy(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @require_http_methods(["POST"])
 def api_resolve_sla_alert(request, alert_id):
     """API para resolver alerta de SLA"""
@@ -477,6 +487,7 @@ def api_resolve_sla_alert(request, alert_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @require_http_methods(["POST"])
 def api_run_sla_monitor(request):
     """API para executar monitoramento de SLA manualmente"""
@@ -498,6 +509,7 @@ def api_run_sla_monitor(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @require_http_methods(["GET"])
 def api_ticket_sla_details(request, ticket_id):
     """API para detalhes de SLA de um ticket específico"""

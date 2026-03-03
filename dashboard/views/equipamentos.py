@@ -4,6 +4,7 @@ Controle de equipamentos instalados, histórico de trocas e alertas.
 """
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from ..utils.rbac import role_required
 from django.contrib import messages
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
@@ -28,6 +29,7 @@ logger = logging.getLogger('dashboard')
 # ========== DASHBOARD DE EQUIPAMENTOS ==========
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def equipamento_dashboard(request):
     """Dashboard principal do módulo de equipamentos."""
     agora = timezone.now()
@@ -124,7 +126,7 @@ def equipamento_dashboard(request):
 
 # ========== CRUD DE EQUIPAMENTOS ==========
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')], name='dispatch')
 class EquipamentoListView(ListView):
     """Listagem de equipamentos com filtros."""
     model = Equipamento
@@ -186,7 +188,7 @@ class EquipamentoListView(ListView):
         return ctx
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator([login_required, role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')], name='dispatch')
 class EquipamentoDetailView(DetailView):
     """Detalhe de um equipamento com histórico e chamados."""
     model = Equipamento
@@ -234,6 +236,7 @@ class EquipamentoDetailView(DetailView):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def equipamento_create(request):
     """Criar novo equipamento."""
     if request.method == 'POST':
@@ -301,6 +304,7 @@ def equipamento_create(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def equipamento_update(request, pk):
     """Editar equipamento existente."""
     equip = get_object_or_404(Equipamento, pk=pk)
@@ -355,6 +359,7 @@ def equipamento_update(request, pk):
 # ========== MOVIMENTAÇÕES / HISTÓRICO ==========
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def registrar_movimentacao(request, pk):
     """Registrar instalação, troca, retirada ou manutenção."""
     equip = get_object_or_404(Equipamento, pk=pk)
@@ -459,6 +464,7 @@ def registrar_movimentacao(request, pk):
 # ========== ALERTAS ==========
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def alerta_list(request):
     """Lista de alertas de equipamentos."""
     filtro = request.GET.get('filtro', 'pendentes')
@@ -488,6 +494,7 @@ def alerta_list(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def alerta_resolver(request, pk):
     """Resolver um alerta de equipamento."""
     alerta = get_object_or_404(AlertaEquipamento, pk=pk)
@@ -506,6 +513,7 @@ def alerta_resolver(request, pk):
 # ========== RELATÓRIO POR PONTO DE VENDA ==========
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def equipamentos_por_cliente(request, cliente_id):
     """Equipamentos instalados nos PdVs de um cliente específico."""
     cliente = get_object_or_404(Cliente, pk=cliente_id)
@@ -537,6 +545,7 @@ def equipamentos_por_cliente(request, cliente_id):
 # ========== APIs AJAX ==========
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def api_equipamentos_cliente(request, cliente_id):
     """API ajax: retorna equipamentos dos PdVs de um cliente."""
     equipamentos = Equipamento.objects.filter(
@@ -547,6 +556,7 @@ def api_equipamentos_cliente(request, cliente_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def api_dashboard_stats(request):
     """API ajax: métricas resumidas para badges e cards dinâmicos."""
     alertas = AlertaEquipamento.objects.filter(resolvido=False).count()
