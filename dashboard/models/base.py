@@ -70,7 +70,7 @@ class PontoDeVenda(models.Model):
         return f"{self.nome_fantasia} ({self.cnpj})"
 
     def save(self, *args, **kwargs):
-        from ..crypto import encrypt_value
+        from ..utils.crypto import encrypt_value
         if self.responsavel_cpf and not self.responsavel_cpf.startswith('enc::'):
             self.responsavel_cpf = encrypt_value(self.responsavel_cpf)
         if self.celular and not self.celular.startswith('enc::'):
@@ -81,17 +81,17 @@ class PontoDeVenda(models.Model):
 
     def get_responsavel_cpf(self):
         """Retorna CPF do responsável descriptografado."""
-        from ..crypto import decrypt_value
+        from ..utils.crypto import decrypt_value
         return decrypt_value(self.responsavel_cpf)
 
     def get_celular(self):
         """Retorna celular descriptografado."""
-        from ..crypto import decrypt_value
+        from ..utils.crypto import decrypt_value
         return decrypt_value(self.celular)
 
     def get_responsavel_telefone(self):
         """Retorna telefone do responsável descriptografado."""
-        from ..crypto import decrypt_value
+        from ..utils.crypto import decrypt_value
         return decrypt_value(self.responsavel_telefone)
 
 
@@ -119,14 +119,14 @@ class Cliente(models.Model):
         return self.nome
 
     def save(self, *args, **kwargs):
-        from ..crypto import encrypt_value
+        from ..utils.crypto import encrypt_value
         if self.telefone and not self.telefone.startswith('enc::'):
             self.telefone = encrypt_value(self.telefone)
         super().save(*args, **kwargs)
 
     def get_telefone(self):
         """Retorna telefone descriptografado."""
-        from ..crypto import decrypt_value
+        from ..utils.crypto import decrypt_value
         return decrypt_value(self.telefone)
 
 
@@ -624,7 +624,7 @@ class PerfilUsuario(models.Model):
         return f"Perfil de {self.user.get_full_name() or self.user.username}"
 
     def save(self, *args, **kwargs):
-        from ..crypto import encrypt_value
+        from ..utils.crypto import encrypt_value
         if self.telefone and not self.telefone.startswith('enc::'):
             self.telefone = encrypt_value(self.telefone)
         if self.telefone_alternativo and not self.telefone_alternativo.startswith('enc::'):
@@ -637,22 +637,22 @@ class PerfilUsuario(models.Model):
 
     def get_telefone(self):
         """Retorna telefone descriptografado."""
-        from ..crypto import decrypt_value
+        from ..utils.crypto import decrypt_value
         return decrypt_value(self.telefone)
 
     def get_telefone_alternativo(self):
         """Retorna telefone alternativo descriptografado."""
-        from ..crypto import decrypt_value
+        from ..utils.crypto import decrypt_value
         return decrypt_value(self.telefone_alternativo)
 
     def get_endereco(self):
         """Retorna endereço descriptografado."""
-        from ..crypto import decrypt_value
+        from ..utils.crypto import decrypt_value
         return decrypt_value(self.endereco)
 
     def get_cep(self):
         """Retorna CEP descriptografado."""
-        from ..crypto import decrypt_value
+        from ..utils.crypto import decrypt_value
         return decrypt_value(self.cep)
 
     @property
@@ -1381,14 +1381,14 @@ class WebhookEndpoint(models.Model):
         ]
 
     def save(self, *args, **kwargs):
-        from ..crypto import encrypt_value
+        from ..utils.crypto import encrypt_value
         if self.secret and not self.secret.startswith('enc::'):
             self.secret = encrypt_value(self.secret)
         super().save(*args, **kwargs)
 
     def get_secret(self):
         """Retorna o secret descriptografado."""
-        from ..crypto import decrypt_value
+        from ..utils.crypto import decrypt_value
         return decrypt_value(self.secret)
 
     def __str__(self):
@@ -1560,14 +1560,14 @@ class AIConfiguration(models.Model):
         verbose_name_plural = "Configuracoes de IA"
 
     def save(self, *args, **kwargs):
-        from ..crypto import encrypt_value
+        from ..utils.crypto import encrypt_value
         if self.api_key and not self.api_key.startswith('enc::'):
             self.api_key = encrypt_value(self.api_key)
         super().save(*args, **kwargs)
 
     def get_api_key(self):
         """Retorna a chave de API descriptografada."""
-        from ..crypto import decrypt_value
+        from ..utils.crypto import decrypt_value
         return decrypt_value(self.api_key)
 
     def __str__(self):
@@ -1756,14 +1756,14 @@ class EmailAccount(models.Model):
         verbose_name_plural = "Contas de Email"
 
     def save(self, *args, **kwargs):
-        from ..crypto import encrypt_value
+        from ..utils.crypto import encrypt_value
         if self.password and not self.password.startswith('enc::'):
             self.password = encrypt_value(self.password)
         super().save(*args, **kwargs)
 
     def get_password(self):
         """Retorna a senha descriptografada."""
-        from ..crypto import decrypt_value
+        from ..utils.crypto import decrypt_value
         return decrypt_value(self.password)
 
     def __str__(self):

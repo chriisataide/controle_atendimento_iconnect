@@ -1,4 +1,4 @@
-<!-- CSS corrigido para sidebar dentro da tag <style> -->
+﻿<!-- CSS corrigido para sidebar dentro da tag <style> -->
 <!DOCTYPE html>
 {% load static %}
 {% load csp_tags %}
@@ -1041,8 +1041,19 @@
             letter-spacing: 0.3px;
         }
         
-        .sidebar-dropdown-header .material-icons.opacity-5.me-2 {
+        /* Ícones e títulos dos headers da sidebar (sem opacity-5/8) */
+        .sidebar-section-icon {
             font-size: 18px;
+            opacity: 0.6;
+            color: #344767;
+        }
+        .sidebar-section-title {
+            color: #344767;
+            opacity: 0.75;
+        }
+        .sidebar-dropdown-header .dropdown-arrow {
+            opacity: 0.6;
+            color: #344767;
         }
         
         /* Sidebar badge */
@@ -1215,12 +1226,16 @@
     
     <!-- Sidebar -->
     <aside class="sidenav navbar navbar-vertical navbar-expand-xs border-radius-lg fixed-start ms-2 bg-white my-2" id="sidenav-main">
-        <div class="sidenav-header">
+        <div class="sidenav-header" style="position:relative;">
             <i class="fas fa-times p-3 cursor-pointer text-dark opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
             <a class="navbar-brand px-4 py-3 m-0" href="{% url 'dashboard:index' %}">
                 <img src="{% static 'img/icodev-logo.png' %}" class="navbar-brand-img" width="26" height="26" alt="main_logo" style="border-radius: 6px; background: #fff; padding: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
                 <span class="ms-1 text-sm text-dark">iConnect</span>
             </a>
+            <!-- Botão de colapsar sidebar -->
+            <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" onclick="toggleSidebar()" title="Recolher menu">
+                <i class="material-icons" id="sidebar-collapse-icon">chevron_left</i>
+            </button>
         </div>
         <hr class="horizontal dark mt-0 mb-2">
         
@@ -1252,10 +1267,10 @@
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="tickets" onclick="toggleSidebarDropdown(event,this,'tickets')">
                         <div class="d-flex align-items-center justify-content-between w-100">
                             <span class="d-flex align-items-center">
-                                <i class="material-icons opacity-5 me-2">confirmation_number</i>
-                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Tickets</h6>
+                                <i class="material-icons sidebar-section-icon me-2">confirmation_number</i>
+                                <h6 class="text-uppercase text-xs font-weight-bolder mb-0 sidebar-section-title">Tickets</h6>
                             </span>
-                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                            <i class="material-icons dropdown-arrow ms-2">keyboard_arrow_down</i>
                         </div>
                     </div>
                     <div class="sidebar-dropdown-menu" id="dropdown-tickets">
@@ -1292,10 +1307,10 @@
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="sla" onclick="toggleSidebarDropdown(event,this,'sla')">
                         <div class="d-flex align-items-center justify-content-between w-100">
                             <span class="d-flex align-items-center">
-                                <i class="material-icons opacity-5 me-2">verified</i>
-                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">SLA & Qualidade</h6>
+                                <i class="material-icons sidebar-section-icon me-2">verified</i>
+                                <h6 class="text-uppercase text-xs font-weight-bolder mb-0 sidebar-section-title">SLA & Qualidade</h6>
                             </span>
-                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                            <i class="material-icons dropdown-arrow ms-2">keyboard_arrow_down</i>
                         </div>
                     </div>
                     <div class="sidebar-dropdown-menu" id="dropdown-sla">
@@ -1340,10 +1355,10 @@
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="clientes" onclick="toggleSidebarDropdown(event,this,'clientes')">
                         <div class="d-flex align-items-center justify-content-between w-100">
                             <span class="d-flex align-items-center">
-                                <i class="material-icons opacity-5 me-2">people_alt</i>
-                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Clientes & PDV</h6>
+                                <i class="material-icons sidebar-section-icon me-2">people_alt</i>
+                                <h6 class="text-uppercase text-xs font-weight-bolder mb-0 sidebar-section-title">Clientes & PDV</h6>
                             </span>
-                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                            <i class="material-icons dropdown-arrow ms-2">keyboard_arrow_down</i>
                         </div>
                     </div>
                     <div class="sidebar-dropdown-menu" id="dropdown-clientes">
@@ -1393,17 +1408,17 @@
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="financeiro" onclick="toggleSidebarDropdown(event,this,'financeiro')">
                         <div class="d-flex align-items-center justify-content-between w-100">
                             <span class="d-flex align-items-center">
-                                <i class="material-icons opacity-5 me-2">account_balance_wallet</i>
-                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Financeiro</h6>
+                                <i class="material-icons sidebar-section-icon me-2">account_balance_wallet</i>
+                                <h6 class="text-uppercase text-xs font-weight-bolder mb-0 sidebar-section-title">Financeiro</h6>
                             </span>
-                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                            <i class="material-icons dropdown-arrow ms-2">keyboard_arrow_down</i>
                         </div>
                     </div>
                     <div class="sidebar-dropdown-menu" id="dropdown-financeiro">
                         <ul class="navbar-nav">
                             <li class="nav-item">
                                 <a class="nav-link {% if 'dashboard_financeiro' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'financeiro:dashboard_financeiro' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">monitoring</i>
+                                    <i class="material-icons">dashboard</i>
                                     <span class="nav-link-text ms-1">Dashboard</span>
                                 </a>
                             </li>
@@ -1445,17 +1460,17 @@
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="estoque" onclick="toggleSidebarDropdown(event,this,'estoque')">
                         <div class="d-flex align-items-center justify-content-between w-100">
                             <span class="d-flex align-items-center">
-                                <i class="material-icons opacity-5 me-2">inventory_2</i>
-                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Estoque & Equipamentos</h6>
+                                <i class="material-icons sidebar-section-icon me-2">inventory_2</i>
+                                <h6 class="text-uppercase text-xs font-weight-bolder mb-0 sidebar-section-title">Estoque & Equipamentos</h6>
                             </span>
-                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                            <i class="material-icons dropdown-arrow ms-2">keyboard_arrow_down</i>
                         </div>
                     </div>
                     <div class="sidebar-dropdown-menu" id="dropdown-estoque">
                         <ul class="navbar-nav">
                             <li class="nav-item">
                                 <a class="nav-link {% if 'estoque_dashboard' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'estoque:dashboard' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">monitoring</i>
+                                    <i class="material-icons">dashboard</i>
                                     <span class="nav-link-text ms-1">Dashboard</span>
                                 </a>
                             </li>
@@ -1510,10 +1525,10 @@
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="comunicacao" onclick="toggleSidebarDropdown(event,this,'comunicacao')">
                         <div class="d-flex align-items-center justify-content-between w-100">
                             <span class="d-flex align-items-center">
-                                <i class="material-icons opacity-5 me-2">forum</i>
-                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Chat & Mensagens</h6>
+                                <i class="material-icons sidebar-section-icon me-2">forum</i>
+                                <h6 class="text-uppercase text-xs font-weight-bolder mb-0 sidebar-section-title">Chat & Mensagens</h6>
                             </span>
-                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                            <i class="material-icons dropdown-arrow ms-2">keyboard_arrow_down</i>
                         </div>
                     </div>
                     <div class="sidebar-dropdown-menu" id="dropdown-comunicacao">
@@ -1558,10 +1573,10 @@
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="analise" onclick="toggleSidebarDropdown(event,this,'analise')">
                         <div class="d-flex align-items-center justify-content-between w-100">
                             <span class="d-flex align-items-center">
-                                <i class="material-icons opacity-5 me-2">insights</i>
-                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Dashboards & Relatórios</h6>
+                                <i class="material-icons sidebar-section-icon me-2">insights</i>
+                                <h6 class="text-uppercase text-xs font-weight-bolder mb-0 sidebar-section-title">Dashboards & Relatórios</h6>
                             </span>
-                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                            <i class="material-icons dropdown-arrow ms-2">keyboard_arrow_down</i>
                         </div>
                     </div>
                     <div class="sidebar-dropdown-menu" id="dropdown-analise">
@@ -1605,10 +1620,10 @@
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="calculos" onclick="toggleSidebarDropdown(event,this,'calculos')">
                         <div class="d-flex align-items-center justify-content-between w-100">
                             <span class="d-flex align-items-center">
-                                <i class="material-icons opacity-5 me-2">calculate</i>
-                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Cálculos</h6>
+                                <i class="material-icons sidebar-section-icon me-2">calculate</i>
+                                <h6 class="text-uppercase text-xs font-weight-bolder mb-0 sidebar-section-title">Cálculos</h6>
                             </span>
-                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                            <i class="material-icons dropdown-arrow ms-2">keyboard_arrow_down</i>
                         </div>
                     </div>
                     <div class="sidebar-dropdown-menu" id="dropdown-calculos">
@@ -1632,10 +1647,10 @@
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="automacao" onclick="toggleSidebarDropdown(event,this,'automacao')">
                         <div class="d-flex align-items-center justify-content-between w-100">
                             <span class="d-flex align-items-center">
-                                <i class="material-icons opacity-5 me-2">precision_manufacturing</i>
-                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Automação</h6>
+                                <i class="material-icons sidebar-section-icon me-2">precision_manufacturing</i>
+                                <h6 class="text-uppercase text-xs font-weight-bolder mb-0 sidebar-section-title">Automação</h6>
                             </span>
-                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                            <i class="material-icons dropdown-arrow ms-2">keyboard_arrow_down</i>
                         </div>
                     </div>
                     <div class="sidebar-dropdown-menu" id="dropdown-automacao">
@@ -1661,10 +1676,10 @@
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="sistema" onclick="toggleSidebarDropdown(event,this,'sistema')">
                         <div class="d-flex align-items-center justify-content-between w-100">
                             <span class="d-flex align-items-center">
-                                <i class="material-icons opacity-5 me-2">settings</i>
-                                <h6 class="text-uppercase text-xs text-dark font-weight-bolder opacity-8 mb-0">Sistema & Usuários</h6>
+                                <i class="material-icons sidebar-section-icon me-2">settings</i>
+                                <h6 class="text-uppercase text-xs font-weight-bolder mb-0 sidebar-section-title">Sistema & Usuários</h6>
                             </span>
-                            <i class="material-icons dropdown-arrow opacity-5 ms-2">keyboard_arrow_down</i>
+                            <i class="material-icons dropdown-arrow ms-2">keyboard_arrow_down</i>
                         </div>
                     </div>
                     <div class="sidebar-dropdown-menu" id="dropdown-sistema">
@@ -1837,18 +1852,7 @@
                                             <input type="checkbox" class="settings-toggle" id="theme-toggle" onclick="event.stopPropagation(); toggleTheme();">
                                         </div>
                                     </div>
-                                    <div class="settings-item" onclick="toggleSidebar()" style="cursor:pointer;">
-                                        <div class="item-icon icon-sidebar">
-                                            <i class="material-icons" id="sidebar-icon">menu_open</i>
-                                        </div>
-                                        <div class="item-info">
-                                            <p class="item-title" id="sidebar-text">Colapsar Menu</p>
-                                            <p class="item-desc" id="sidebar-desc">Recolher barra lateral</p>
-                                        </div>
-                                        <div class="item-action">
-                                            <input type="checkbox" class="settings-toggle" id="sidebar-toggle" onclick="event.stopPropagation(); toggleSidebar();">
-                                        </div>
-                                    </div>
+
                                 </div>
                                 <div class="settings-divider"></div>
 
@@ -2126,6 +2130,75 @@
         }
 
         // Função para alternar tema (modo escuro/claro)
+        // ===== FORÇA ESTILOS INLINE NA SIDEBAR PARA DARK MODE =====
+        // (CSS externo do Material Dashboard aplica opacity/color inline via JS,
+        //  portanto inline styles via JS também são necessários para sobrescrever)
+        function applySidebarTheme(dark) {
+            const sidenav = document.getElementById('sidenav-main');
+            if (!sidenav) return;
+
+            // Toggle bg-white: Material Dashboard CSS tem regras de alta
+            // especificidade (.dark-version .sidenav.bg-white) que forçam
+            // background branco e texto escuro. Removemos a classe no dark mode.
+            if (dark) {
+                sidenav.classList.remove('bg-white');
+                sidenav.classList.add('bg-dark-sidebar');
+            } else {
+                sidenav.classList.add('bg-white');
+                sidenav.classList.remove('bg-dark-sidebar');
+            }
+
+            // Ícones de seção (ex: confirmation_number, verified, etc.)
+            sidenav.querySelectorAll('.sidebar-section-icon').forEach(el => {
+                el.style.color = dark ? '#94a3b8' : '#344767';
+                el.style.opacity = '1';
+            });
+            // Títulos h6 das seções
+            sidenav.querySelectorAll('.sidebar-section-title').forEach(el => {
+                el.style.color = dark ? '#94a3b8' : '#344767';
+                el.style.opacity = dark ? '1' : '0.75';
+            });
+            // Setas dropdown
+            sidenav.querySelectorAll('.dropdown-arrow').forEach(el => {
+                el.style.color = dark ? '#94a3b8' : '#344767';
+                el.style.opacity = '1';
+            });
+            // Links dos sub-itens (nav-link text-dark)
+            sidenav.querySelectorAll('.nav-link.text-dark').forEach(el => {
+                el.style.color = dark ? '#94a3b8' : '';
+            });
+            sidenav.querySelectorAll('.nav-link.text-dark .material-icons').forEach(el => {
+                el.style.color = dark ? '#94a3b8' : '';
+            });
+            // Links dentro de dropdown-menu (sem classe text-dark)
+            sidenav.querySelectorAll('.sidebar-dropdown-menu .nav-link:not(.active)').forEach(el => {
+                el.style.color = dark ? '#94a3b8' : '';
+            });
+            sidenav.querySelectorAll('.sidebar-dropdown-menu .nav-link:not(.active) .material-icons').forEach(el => {
+                el.style.color = dark ? '#94a3b8' : '';
+                el.style.opacity = dark ? '0.8' : '';
+            });
+            // Brand text (iConnect)
+            sidenav.querySelectorAll('.navbar-brand .text-dark, .navbar-brand .text-sm').forEach(el => {
+                el.style.color = dark ? '#e2e8f0' : '';
+            });
+            // Quick links (não ativos)
+            sidenav.querySelectorAll('.sidebar-quick-link:not(.active)').forEach(el => {
+                el.style.color = dark ? '#e2e8f0' : '';
+            });
+            // Ícones com opacity-5 dentro da sidebar
+            sidenav.querySelectorAll('.opacity-5').forEach(el => {
+                el.style.opacity = dark ? '1' : '';
+                if (dark) el.style.color = '#94a3b8';
+                else el.style.color = '';
+            });
+            // HR separadores
+            sidenav.querySelectorAll('hr').forEach(el => {
+                if (dark) el.style.borderColor = '#334155';
+                else el.style.borderColor = '';
+            });
+        }
+
         function toggleTheme() {
             const body = document.body;
             const themeIcon = document.getElementById('theme-icon');
@@ -2139,12 +2212,14 @@
                 if (themeText) themeText.textContent = 'Modo Escuro';
                 if (themeToggle) themeToggle.checked = false;
                 localStorage.setItem('theme', 'light');
+                applySidebarTheme(false);
             } else {
                 body.classList.add('dark-version');
                 if (themeIcon) themeIcon.textContent = 'light_mode';
                 if (themeText) themeText.textContent = 'Modo Claro';
                 if (themeToggle) themeToggle.checked = true;
                 localStorage.setItem('theme', 'dark');
+                applySidebarTheme(true);
             }
         }
         
@@ -2152,23 +2227,14 @@
         function toggleSidebar() {
             const sidenav = document.getElementById('sidenav-main');
             const main = document.querySelector('.main-content');
-            const sidebarIcon = document.getElementById('sidebar-icon');
-            const sidebarText = document.getElementById('sidebar-text');
-            const sidebarToggle = document.getElementById('sidebar-toggle');
-            
+
             if (sidenav.classList.contains('collapsed')) {
                 sidenav.classList.remove('collapsed');
                 main.classList.remove('sidebar-collapsed');
-                if (sidebarIcon) sidebarIcon.textContent = 'menu_open';
-                if (sidebarText) sidebarText.textContent = 'Colapsar Menu';
-                if (sidebarToggle) sidebarToggle.checked = false;
                 localStorage.setItem('sidebar', 'expanded');
             } else {
                 sidenav.classList.add('collapsed');
                 main.classList.add('sidebar-collapsed');
-                if (sidebarIcon) sidebarIcon.textContent = 'menu';
-                if (sidebarText) sidebarText.textContent = 'Expandir Menu';
-                if (sidebarToggle) sidebarToggle.checked = true;
                 localStorage.setItem('sidebar', 'collapsed');
             }
         }
@@ -2354,20 +2420,16 @@
             } else {
                 if (themeToggle) themeToggle.checked = false;
             }
+            // Aplica estilos inline na sidebar imediatamente e após 300ms
+            // (300ms garante que rodamos DEPOIS do Material Dashboard JS inicializar)
+            applySidebarTheme(savedTheme === 'dark');
+            setTimeout(() => applySidebarTheme(savedTheme === 'dark'), 300);
             
             // Carrega estado do sidebar
             const savedSidebar = localStorage.getItem('sidebar');
-            const sidebarToggle = document.getElementById('sidebar-toggle');
-            const sidebarIcon = document.getElementById('sidebar-icon');
-            const sidebarText = document.getElementById('sidebar-text');
             if (savedSidebar === 'collapsed') {
                 document.getElementById('sidenav-main').classList.add('collapsed');
                 document.querySelector('.main-content').classList.add('sidebar-collapsed');
-                if (sidebarIcon) sidebarIcon.textContent = 'menu';
-                if (sidebarText) sidebarText.textContent = 'Expandir Menu';
-                if (sidebarToggle) sidebarToggle.checked = true;
-            } else {
-                if (sidebarToggle) sidebarToggle.checked = false;
             }
 
             // Remove blur da navbar quando dropdown abre (blur cria stacking context que prende o dropdown)
@@ -2444,9 +2506,34 @@
             color: var(--text-primary) !important;
         }
 
-        .dark-version .sidenav {
+        .dark-version .sidenav,
+        .dark-version .sidenav.bg-white,
+        .dark-version .sidenav.bg-dark-sidebar {
             background: linear-gradient(195deg, #0f172a 0%, #1e293b 100%) !important;
             border-right: 1px solid var(--border-color) !important;
+        }
+
+        /* Override Material Dashboard's .bg-white high-specificity rules for dark mode */
+        .dark-version .sidenav.bg-white .collapse .nav-item h6,
+        .dark-version .sidenav.bg-white .collapse .nav-item .h6,
+        .dark-version .sidenav.bg-dark-sidebar .collapse .nav-item h6,
+        .dark-version .sidenav.bg-dark-sidebar .collapse .nav-item .h6 {
+            color: var(--text-secondary) !important;
+        }
+        .dark-version .sidenav.bg-white .collapse .nav-item .nav-link:not(.active) i,
+        .dark-version .sidenav.bg-dark-sidebar .collapse .nav-item .nav-link:not(.active) i {
+            color: var(--text-secondary) !important;
+        }
+        .dark-version .sidenav.bg-white .collapse .nav-item .nav-link i,
+        .dark-version .sidenav.bg-dark-sidebar .collapse .nav-item .nav-link i {
+            color: var(--text-secondary) !important;
+            opacity: 1 !important;
+        }
+        .dark-version .sidenav.bg-white .collapse .nav-item .nav-link.active i,
+        .dark-version .sidenav.bg-white .collapse .nav-item .nav-link.active .nav-link-text,
+        .dark-version .sidenav.bg-dark-sidebar .collapse .nav-item .nav-link.active i,
+        .dark-version .sidenav.bg-dark-sidebar .collapse .nav-item .nav-link.active .nav-link-text {
+            color: #fff !important;
         }
 
         .dark-version .sidenav .nav-link.active {
@@ -2527,6 +2614,14 @@
         .dark-version a.text-dark:hover { color: var(--accent) !important; }
 
         /* ====== DARK MODE — Sidebar customizado ====== */
+        .dark-version .sidenav .navbar-brand .text-dark,
+        .dark-version .sidenav .navbar-brand .text-sm {
+            color: var(--text-primary) !important;
+        }
+        .dark-version .sidenav #iconSidenav {
+            color: var(--text-secondary) !important;
+            opacity: 1 !important;
+        }
         .dark-version .sidebar-quick-link {
             color: var(--text-primary);
         }
@@ -2631,26 +2726,6 @@
         }
 
         /* ====== DARK MODE — Catch-all Global Overrides ====== */
-
-        /* Inline color overrides (textos escuros que ficam invisíveis) */
-        .dark-version [style*="color:#334155"],
-        .dark-version [style*="color: #334155"] { color: var(--text-primary) !important; }
-        .dark-version [style*="color:#1e293b"],
-        .dark-version [style*="color: #1e293b"] { color: var(--text-primary) !important; }
-        .dark-version [style*="color:#344767"],
-        .dark-version [style*="color: #344767"] { color: var(--text-primary) !important; }
-
-        /* Inline backgrounds claros */
-        .dark-version [style*="background: #f8fafc"],
-        .dark-version [style*="background:#f8fafc"],
-        .dark-version [style*="background-color: #f8fafc"],
-        .dark-version [style*="background: #f1f5f9"],
-        .dark-version [style*="background:#f1f5f9"],
-        .dark-version [style*="background-color: #f8f9fa"],
-        .dark-version [style*="background: #f8f9fa"],
-        .dark-version [style*="background:#f8f9fa"] {
-            background: var(--bg-primary) !important;
-        }
 
         /* Bootstrap utility overrides */
         .dark-version .bg-white { background-color: var(--bg-card) !important; }
@@ -2905,10 +2980,131 @@
         .dark-version .pwa-info-box { background: var(--bg-primary) !important; border-left-color: var(--accent) !important; }
         .dark-version .notification-center-card { background: var(--bg-card) !important; }
 
+        /* ====== DARK MODE — Sidebar: forçar visibilidade de textos e ícones ====== */
+        .dark-version .sidenav .opacity-5,
+        .dark-version .sidenav .opacity-8 { opacity: 1 !important; }
+        .dark-version .sidenav .text-dark { color: var(--text-primary) !important; }
+        .dark-version .sidenav h6.text-dark { color: var(--text-secondary) !important; }
+        .dark-version .sidenav .material-icons.opacity-5 { color: var(--text-secondary) !important; opacity: 1 !important; }
+        .dark-version .sidenav .nav-link.text-dark { color: var(--text-secondary) !important; }
+        .dark-version .sidenav .nav-link.text-dark:hover { color: var(--text-primary) !important; }
+        .dark-version .sidenav .nav-link.text-dark i.material-icons { color: var(--text-secondary) !important; }
+        .dark-version .sidenav .nav-link-text { color: inherit !important; }
+        .dark-version .sidenav .sidebar-dropdown-header h6 { color: var(--text-secondary) !important; opacity: 1 !important; }
+        .dark-version .sidenav .sidebar-dropdown-header .material-icons { color: var(--text-secondary) !important; opacity: 1 !important; }
+        .dark-version .sidenav .dropdown-arrow { color: var(--text-secondary) !important; opacity: 1 !important; }
+        /* Novas classes BEM para headers da sidebar — dark mode */
+        .dark-version .sidenav .sidebar-section-icon {
+            color: var(--text-secondary) !important;
+            opacity: 1 !important;
+        }
+        .dark-version .sidenav .sidebar-section-title {
+            color: var(--text-secondary) !important;
+            opacity: 1 !important;
+        }
+        .dark-version .sidenav .dropdown-arrow {
+            color: var(--text-secondary) !important;
+            opacity: 1 !important;
+        }
+
+        /* ====== DARK MODE — Cores inline hard-coded que somem ====== */
+        .dark-version [style*="color:#334155"],
+        .dark-version [style*="color: #334155"],
+        .dark-version [style*="color:#1e293b"],
+        .dark-version [style*="color: #1e293b"],
+        .dark-version [style*="color:#344767"],
+        .dark-version [style*="color: #344767"],
+        .dark-version [style*="color:#475569"],
+        .dark-version [style*="color: #475569"],
+        .dark-version [style*="color:#333"],
+        .dark-version [style*="color: #333"] { color: var(--text-primary) !important; }
+
+        /* ====== DARK MODE — Backgrounds claros inline hard-coded ====== */
+        .dark-version [style*="background: #fff"],
+        .dark-version [style*="background:#fff"],
+        .dark-version [style*="background-color: #fff"],
+        .dark-version [style*="background-color:#fff"],
+        .dark-version [style*="background: white"],
+        .dark-version [style*="background:white"],
+        .dark-version [style*="background: #f8fafc"],
+        .dark-version [style*="background:#f8fafc"],
+        .dark-version [style*="background-color: #f8fafc"],
+        .dark-version [style*="background-color:#f8fafc"],
+        .dark-version [style*="background: #f1f5f9"],
+        .dark-version [style*="background:#f1f5f9"],
+        .dark-version [style*="background-color: #f1f5f9"],
+        .dark-version [style*="background: #f8f9fa"],
+        .dark-version [style*="background:#f8f9fa"],
+        .dark-version [style*="background-color: #f8f9fa"] { background: var(--bg-primary) !important; }
+
+        /* ====== DARK MODE — Botão colapsar sidebar ====== */
+        .dark-version .sidebar-collapse-btn {
+            background: var(--bg-secondary) !important;
+            border-color: var(--border-color) !important;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.3) !important;
+        }
+        .dark-version .sidebar-collapse-btn:hover {
+            background: var(--bg-primary) !important;
+        }
+        .dark-version .sidebar-collapse-btn .material-icons {
+            color: var(--text-secondary) !important;
+            opacity: 1 !important;
+        }
+
+        /* ====== DARK MODE — Breadcrumb ====== */
+        .dark-version .breadcrumb-item.text-dark,
+        .dark-version .breadcrumb-item span.opacity-5.text-dark { color: var(--text-secondary) !important; opacity: 1 !important; }
+
+        /* ====== DARK MODE — Navbar title/icons ====== */
+        .dark-version .navbar-main h6.text-dark,
+        .dark-version .navbar-main .text-dark { color: var(--text-primary) !important; }
+        .dark-version .navbar-main .sidenav-toggler-line { background: var(--text-secondary) !important; }
+        .dark-version .navbar-main .material-icons.opacity-5 { color: var(--text-secondary) !important; opacity: 1 !important; }
+
+        /* ====== DARK MODE — Empty states (ícones fantasma) ====== */
+        .dark-version .text-center .material-icons.opacity-5,
+        .dark-version .empty-state .material-icons { color: var(--text-secondary) !important; opacity: 0.7 !important; }
+
         /* Transition suave */
         body, .sidenav, .navbar-main, .card, .card-header, .card-body,
         .form-control, .form-select, .table {
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        /* Permite que o botão de colapsar ultrapasse a borda da sidebar */
+        .sidenav { overflow: visible !important; }
+        #sidenav-collapse-main { overflow-y: auto !important; overflow-x: visible !important; }
+
+        /* ====== BOTÃO DE COLAPSAR SIDEBAR ====== */
+        .sidebar-collapse-btn {
+            position: absolute;
+            right: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 1.5px solid #e2e8f0;
+            background: #fff;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.13);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 9999;
+            padding: 0;
+            transition: background 0.2s;
+        }
+        .sidebar-collapse-btn:hover {
+            background: #f1f5f9;
+        }
+        .sidebar-collapse-btn .material-icons {
+            font-size: 16px;
+            color: #64748b;
+            transition: transform 0.3s ease;
+        }
+        .sidenav.collapsed .sidebar-collapse-btn .material-icons {
+            transform: rotate(180deg);
         }
 
         /* ====== SIDEBAR COLLAPSED ====== */

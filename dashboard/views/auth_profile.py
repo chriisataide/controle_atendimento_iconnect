@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib import messages
 from django.utils.decorators import method_decorator
-from django.views.generic import TemplateView, ListView, CreateView, DetailView, UpdateView
+from django.views.generic import TemplateView, ListView, CreateView, DetailView, UpdateView, DeleteView
 from django.db.models import Q
 from django.http import JsonResponse
 from django.urls import reverse_lazy
@@ -16,7 +16,8 @@ import logging
 from ..models import (
     Ticket, PerfilUsuario, InteracaoTicket, PerfilAgente, PontoDeVenda,
 )
-from ..forms import DashboardUserCreationForm
+from ..forms import DashboardUserCreationForm, DashboardUserChangeForm
+from ..utils.rbac import get_user_role
 from ..utils.security import rate_limit, log_suspicious_activity
 from ..api.versioning import api_version, APIResponseTransformer
 
@@ -282,6 +283,63 @@ class UserCreateView(CreateView):
         return super().form_valid(form)
 
 
+@method_decorator([login_required], name='dispatch')
+class UserUpdateView(UpdateView):
+    model = User
+    template_name = 'dashboard/user_edit.html'
+    form_class = DashboardUserChangeForm
+    success_url = reverse_lazy('dashboard:user_list')
+
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_staff or request.user.is_superuser):
+            messages.error(request, 'Acesso negado. Você não tem permissão para editar usuários.')
+            return redirect('dashboard:index')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request_user'] = self.request.user
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['current_role'] = get_user_role(self.object)
+        return context
+
+    def form_valid(self, form):
+        user = form.save()
+        role_display = dict(form.fields['role'].choices).get(form.cleaned_data['role'], '')
+        messages.success(self.request, f'Usuário {user.username} atualizado com sucesso ({role_display}).')
+        return super().form_valid(form)
+
+
+@method_decorator([login_required], name='dispatch')
+class UserDeleteView(DeleteView):
+    model = User
+    success_url = reverse_lazy('dashboard:user_list')
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            messages.error(request, 'Acesso negado. Apenas administradores podem excluir usuários.')
+            return redirect('dashboard:user_list')
+        target = self.get_object()
+        if target == request.user:
+            messages.error(request, 'Você não pode excluir sua própria conta.')
+            return redirect('dashboard:user_update', pk=target.pk)
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        user = self.get_object()
+        username = user.username
+        user.delete()
+        messages.success(request, f'Usuário "{username}" excluído com sucesso.')
+        return redirect(self.success_url)
+
+    # Bloqueie GET direto — só aceita POST via modal
+    def get(self, request, *args, **kwargs):
+        return redirect('dashboard:user_update', pk=kwargs['pk'])
+
+
 # ========== VIEWS DE AUTENTICAÇÃO ==========
 
 def custom_login(request):
@@ -368,6 +426,12 @@ class ProfileView(TemplateView):
             defaults={'telefone': ''}
         )
         context['perfil'] = perfil
+
+        # Descriptografar campos sensíveis para exibição no perfil do próprio usuário
+        context['perfil_telefone'] = perfil.get_telefone()
+        context['perfil_telefone_alternativo'] = perfil.get_telefone_alternativo()
+        context['perfil_endereco'] = perfil.get_endereco()
+        context['perfil_cep'] = perfil.get_cep()
 
         user_tickets = Ticket.objects.filter(
             Q(agente=user) | Q(cliente__user=user) if hasattr(user, 'cliente') else Q(agente=user)

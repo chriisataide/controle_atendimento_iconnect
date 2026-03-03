@@ -8,11 +8,12 @@ from django.contrib import messages
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from django.db.models import Count, Q, Avg, F, ExpressionWrapper, DurationField
-from django.db.models.functions import TruncMonth, ExtractWeekDay, ExtractHour
+from django.db.models.functions import TruncMonth, TruncDay, ExtractWeekDay, ExtractHour
 from django.http import JsonResponse
 from django.utils import timezone
 from datetime import timedelta, datetime
 import json
+import calendar
 import logging
 
 from ..models import (
@@ -154,24 +155,16 @@ class DashboardView(TemplateView):
         mes_atual = hoje.replace(day=1)
         doze_meses_atras = (now - timedelta(days=365)).replace(day=1)
 
-        # 1. Tickets por mês (últimos 12 meses) — UMA query com TruncMonth
+        # 1. Tickets por mês (ano atual Jan-Dez) — UMA query com TruncMonth
         tickets_por_mes_qs = (
-            Ticket.objects.filter(criado_em__gte=doze_meses_atras)
+            Ticket.objects.filter(criado_em__year=now.year)
             .annotate(mes=TruncMonth('criado_em'))
             .values('mes')
             .annotate(count=Count('id'))
             .order_by('mes')
         )
-        mes_dict = {item['mes'].date(): item['count'] for item in tickets_por_mes_qs}
-        tickets_por_mes = []
-        for i in range(12):
-            year = now.year
-            month = now.month - i
-            while month <= 0:
-                month += 12
-                year -= 1
-            dt = datetime(year, month, 1).date()
-            tickets_por_mes.insert(0, mes_dict.get(dt, 0))
+        mes_dict = {item['mes'].month: item['count'] for item in tickets_por_mes_qs}
+        tickets_por_mes = [mes_dict.get(m, 0) for m in range(1, 13)]
 
         # 2. Distribuição por status (UMA query com aggregate + conditional)
         status_data = Ticket.objects.aggregate(
@@ -222,12 +215,51 @@ class DashboardView(TemplateView):
         hora_dict = {item['hora']: item['count'] for item in hora_qs}
         atendimentos_por_hora = [hora_dict.get(h, 0) for h in range(24)]
 
+        # --- Mêses em Português ---
+        MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+
+        # --- Dados Semestral (6 meses do semestre atual) ---
+        sem_start_month = 1 if now.month <= 6 else 7
+        semestre_labels = []
+        tickets_por_semestre = []
+        for i in range(6):
+            s_month = sem_start_month + i
+            s_year = now.year
+            while s_month > 12:
+                s_month -= 12
+                s_year += 1
+            s_dt = datetime(s_year, s_month, 1).date()
+            semestre_labels.append(MESES_PT[s_month - 1])
+            tickets_por_semestre.append(mes_dict.get(s_dt, 0))
+
+        # --- Dados Mensal (dias do mês atual) ---
+        days_in_month = calendar.monthrange(hoje.year, hoje.month)[1]
+        tickets_por_dia_qs = (
+            Ticket.objects.filter(
+                criado_em__year=hoje.year,
+                criado_em__month=hoje.month
+            )
+            .annotate(dia=TruncDay('criado_em'))
+            .values('dia')
+            .annotate(count=Count('id'))
+        )
+        dia_dict = {item['dia'].date(): item['count'] for item in tickets_por_dia_qs}
+        mensal_labels = []
+        tickets_por_mes_atual = []
+        for day in range(1, days_in_month + 1):
+            mensal_labels.append(str(day))
+            tickets_por_mes_atual.append(dia_dict.get(hoje.replace(day=day), 0))
+
         context.update({
             'tickets_por_mes': json.dumps(tickets_por_mes),
             'status_data': json.dumps(status_data),
             'agent_performance': json.dumps(agent_performance),
             'heatmap_data': json.dumps(heatmap_data),
             'atendimentos_por_hora': json.dumps(atendimentos_por_hora),
+            'semestre_labels': json.dumps(semestre_labels),
+            'tickets_por_semestre': json.dumps(tickets_por_semestre),
+            'mensal_labels': json.dumps(mensal_labels),
+            'tickets_por_mes_atual': json.dumps(tickets_por_mes_atual),
         })
 
         # Atendimentos hoje vs ontem
@@ -361,16 +393,8 @@ class DashboardView(TemplateView):
             'cliente', 'agente'
         ).order_by('-criado_em')[:3]
 
-        # === Labels de meses dinâmicos para gráficos ===
-        meses_labels = []
-        for i in range(11, -1, -1):
-            year = now.year
-            month = now.month - i
-            while month <= 0:
-                month += 12
-                year -= 1
-            dt = datetime(year, month, 1)
-            meses_labels.append(dt.strftime('%b'))
+        # === Labels de meses (ano calendário atual: Jan-Dez) ===
+        meses_labels = MESES_PT[:]
         context['meses_labels'] = json.dumps(meses_labels)
 
         # === Tempo Médio de Resolução ===

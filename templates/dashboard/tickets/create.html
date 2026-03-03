@@ -1250,6 +1250,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const inputs = section.querySelectorAll('input:not([type=hidden]):not([type=file]), select, [contenteditable]');
             let filled = false;
             inputs.forEach(inp => {
+                // Ignora inputs dentro de contêineres ocultos (display:none)
+                if (inp.closest('[style*="display:none"]')) return;
                 if (inp.contentEditable === 'true') {
                     if (inp.textContent.trim()) filled = true;
                 } else if (inp.value && inp.value.trim()) {

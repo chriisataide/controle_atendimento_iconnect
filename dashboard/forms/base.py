@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
 from ..models import Ticket, Cliente, CategoriaTicket
-from ..utils.rbac import UserRole, ALL_ROLES, ROLE_ADMIN, ROLE_AGENTE, assign_role
+from ..utils.rbac import UserRole, ALL_ROLES, ROLE_ADMIN, ROLE_AGENTE, assign_role, get_user_role
 
 User = get_user_model()
 
@@ -58,6 +58,82 @@ class DashboardUserCreationForm(UserCreationForm):
         if commit:
             user.save()
             # Atribuir nível de acesso via RBAC
+            role = self.cleaned_data.get('role', ROLE_AGENTE)
+            assign_role(user, role)
+        return user
+
+
+class DashboardUserChangeForm(forms.ModelForm):
+    """Formulário para edição de usuários existentes (sem alterar senha).
+    A senha pode ser opcionalmente redefinida se preenchida.
+    """
+    email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'}))
+    first_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Primeiro nome'}))
+    last_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Último nome'}))
+    is_active = forms.BooleanField(required=False, widget=forms.CheckboxInput())
+    role = forms.ChoiceField(
+        choices=UserRole.ROLE_CHOICES,
+        required=True,
+        label='Nível de Acesso',
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+    new_password = forms.CharField(
+        required=False,
+        label='Nova Senha',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Deixe em branco para manter a senha atual'}),
+    )
+    new_password_confirm = forms.CharField(
+        required=False,
+        label='Confirmar Nova Senha',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirme a nova senha'}),
+    )
+
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'first_name', 'last_name', 'is_active')
+
+    def __init__(self, *args, **kwargs):
+        self.request_user = kwargs.pop('request_user', None)
+        super().__init__(*args, **kwargs)
+        self.fields['username'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Nome de usuário'})
+        # Pré-preencher a role atual do usuário
+        if self.instance and self.instance.pk:
+            self.fields['role'].initial = get_user_role(self.instance)
+        # Apenas admin pode atribuir role de admin
+        if self.request_user and not self.request_user.is_superuser:
+            self.fields['role'].choices = [
+                (val, label) for val, label in UserRole.ROLE_CHOICES
+                if val != ROLE_ADMIN
+            ]
+
+    def clean_role(self):
+        role = self.cleaned_data.get('role')
+        if role not in ALL_ROLES:
+            raise forms.ValidationError('Nível de acesso inválido.')
+        if role == ROLE_ADMIN and self.request_user and not self.request_user.is_superuser:
+            raise forms.ValidationError('Apenas administradores podem atribuir o papel de administrador.')
+        return role
+
+    def clean(self):
+        cleaned_data = super().clean()
+        pw = cleaned_data.get('new_password')
+        pw2 = cleaned_data.get('new_password_confirm')
+        if pw or pw2:
+            if pw != pw2:
+                self.add_error('new_password_confirm', 'As senhas não conferem.')
+            elif len(pw) < 8:
+                self.add_error('new_password', 'A senha deve ter pelo menos 8 caracteres.')
+        return cleaned_data
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.is_staff = False
+        user.is_superuser = False
+        new_pw = self.cleaned_data.get('new_password')
+        if new_pw:
+            user.set_password(new_pw)
+        if commit:
+            user.save()
             role = self.cleaned_data.get('role', ROLE_AGENTE)
             assign_role(user, role)
         return user

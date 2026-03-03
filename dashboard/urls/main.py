@@ -153,6 +153,8 @@ urlpatterns = [
     # User management (admin/staff)
     path('users/', views.UserListView.as_view(), name='user_list'),
     path('users/novo/', views.UserCreateView.as_view(), name='user_create'),
+    path('users/<int:pk>/editar/', views.UserUpdateView.as_view(), name='user_update'),
+    path('users/<int:pk>/excluir/', views.UserDeleteView.as_view(), name='user_delete'),
     
     # Advanced Reports
     path('reports/', views.reports_dashboard, name='reports'),

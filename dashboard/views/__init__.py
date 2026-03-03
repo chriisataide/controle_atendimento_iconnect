@@ -71,6 +71,8 @@ from .auth_profile import (
     api_pontos_de_venda_por_cliente,
     UserListView,
     UserCreateView,
+    UserUpdateView,
+    UserDeleteView,
     custom_login,
     custom_logout,
     get_user_info,
@@ -141,7 +143,7 @@ __all__ = [
     'PontoDeVendaForm', 'PontoDeVendaListView', 'PontoDeVendaCreateView',
     'PontoDeVendaDetailView', 'PontoDeVendaUpdateView',
     'api_pontos_de_venda_por_cliente',
-    'UserListView', 'UserCreateView',
+    'UserListView', 'UserCreateView', 'UserUpdateView', 'UserDeleteView',
     'custom_login', 'custom_logout', 'get_user_info',
     'ProfileView', 'update_agent_status',
     # Notifications
