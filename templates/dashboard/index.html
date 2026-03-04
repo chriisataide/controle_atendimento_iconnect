@@ -265,13 +265,13 @@
     </div>
   </div>
 
-  <!-- Usuarios Ativos -->
+  <!-- Usuarios Online -->
   <div class="col-xl col-sm-6 mb-xl-0 mb-3 px-2">
     <div class="card kpi-card">
       <div class="card-body p-3">
         <div class="d-flex justify-content-between align-items-start">
           <div>
-            <p class="kpi-label mb-1">Usu&aacute;rios Ativos</p>
+            <p class="kpi-label mb-1">Usu&aacute;rios Online</p>
             <h4 class="kpi-value mb-0" data-metric="usuarios_ativos">{{ usuarios_ativos|default:"0" }}</h4>
           </div>
           <div class="kpi-icon" style="background:linear-gradient(135deg,#06b6d4,#0891b2);">
@@ -303,7 +303,18 @@
             </span> vs per&iacute;odo anterior &bull; {{ total_tickets|default:"0" }} total
           </span>
         </div>
-        <span class="badge text-white" style="background:#334155;font-size:.7rem;">12 meses</span>
+        <div class="dropdown">
+          <button class="badge text-white border-0 dropdown-toggle" id="chartPeriodBtn"
+            style="background:#334155;font-size:.7rem;cursor:pointer;"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            Anual
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chartPeriodBtn" style="min-width:130px;font-size:.8rem;">
+            <li><a class="dropdown-item active" href="#" data-period="anual">Anual (12 meses)</a></li>
+            <li><a class="dropdown-item" href="#" data-period="semestral">Semestral</a></li>
+            <li><a class="dropdown-item" href="#" data-period="mensal">Mensal</a></li>
+          </ul>
+        </div>
       </div>
       <div class="card-body p-3" style="position:relative;min-height:280px">
         <canvas id="ticketsChart" height="260"></canvas>
@@ -570,21 +581,29 @@ var SL = { slate: '#334155', dark: '#1e293b', cyan: '#06b6d4', cyanL: '#22d3ee',
 (function() {
     var ctx = document.getElementById('ticketsChart');
     if (!ctx) return;
-    var labels = JSON.parse('{{ meses_labels|escapejs }}');
-    var data = JSON.parse('{{ tickets_por_mes|escapejs }}');
 
-    var g = ctx.getContext('2d').createLinearGradient(0, 0, 0, 260);
-    g.addColorStop(0, 'rgba(6,182,212,0.18)');
-    g.addColorStop(1, 'rgba(6,182,212,0.01)');
+    var datasets = {
+        anual:     { labels: JSON.parse('{{ meses_labels|escapejs }}'),    data: JSON.parse('{{ tickets_por_mes|escapejs }}') },
+        semestral: { labels: JSON.parse('{{ semestre_labels|escapejs }}'), data: JSON.parse('{{ tickets_por_semestre|escapejs }}') },
+        mensal:    { labels: JSON.parse('{{ mensal_labels|escapejs }}'),   data: JSON.parse('{{ tickets_por_mes_atual|escapejs }}') }
+    };
 
-    new Chart(ctx.getContext('2d'), {
+    function makeGradient() {
+        var g = ctx.getContext('2d').createLinearGradient(0, 0, 0, 260);
+        g.addColorStop(0, 'rgba(6,182,212,0.18)');
+        g.addColorStop(1, 'rgba(6,182,212,0.01)');
+        return g;
+    }
+
+    var ticketsChart = new Chart(ctx.getContext('2d'), {
         type: 'line',
         data: {
-            labels: labels,
+            labels: datasets.anual.labels,
             datasets: [{
-                label: 'Tickets', data: data,
-                borderColor: SL.cyan, backgroundColor: g, borderWidth: 2.5, fill: true, tension: 0.4,
-                pointRadius: 3, pointHoverRadius: 6, pointBackgroundColor: SL.cyan, pointBorderColor: document.body.classList.contains('dark-version') ? '#1e293b' : '#fff', pointBorderWidth: 2
+                label: 'Tickets', data: datasets.anual.data,
+                borderColor: SL.cyan, backgroundColor: makeGradient(), borderWidth: 2.5, fill: true, tension: 0.4,
+                pointRadius: 3, pointHoverRadius: 6, pointBackgroundColor: SL.cyan,
+                pointBorderColor: document.body.classList.contains('dark-version') ? '#1e293b' : '#fff', pointBorderWidth: 2
             }]
         },
         options: {
@@ -597,8 +616,32 @@ var SL = { slate: '#334155', dark: '#1e293b', cyan: '#06b6d4', cyanL: '#22d3ee',
                 y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)', drawBorder: false }, ticks: { font: { size: 11 }, color: '#94a3b8' } },
                 x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#94a3b8' } }
             },
-            animation: { duration: 1000, easing: 'easeOutQuart' }
+            animation: { duration: 800, easing: 'easeOutQuart' }
         }
+    });
+
+    // Dropdown period switch
+    document.querySelectorAll('[data-period]').forEach(function(item) {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            var period = this.getAttribute('data-period');
+            var set = datasets[period];
+            if (!set) return;
+
+            // Update active item
+            document.querySelectorAll('[data-period]').forEach(function(el) { el.classList.remove('active'); });
+            this.classList.add('active');
+
+            // Update button label
+            var labels_map = { anual: 'Anual', semestral: 'Semestral', mensal: 'Mensal' };
+            document.getElementById('chartPeriodBtn').textContent = labels_map[period];
+
+            // Update chart
+            ticketsChart.data.labels = set.labels;
+            ticketsChart.data.datasets[0].data = set.data;
+            ticketsChart.data.datasets[0].backgroundColor = makeGradient();
+            ticketsChart.update();
+        });
     });
 })();
 

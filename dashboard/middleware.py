@@ -1,6 +1,7 @@
 """
 Middleware customizado para iConnect.
 """
+
 import secrets
 
 from django.utils.deprecation import MiddlewareMixin

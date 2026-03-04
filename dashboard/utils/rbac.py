@@ -2,6 +2,7 @@
 RBAC - Role-Based Access Control para iConnect
 Roles: admin, supervisor, agente, cliente
 """
+
 import functools
 import logging
 
@@ -28,8 +29,14 @@ ROLE_VISUALIZADOR = "visualizador"
 ROLE_CLIENTE = "cliente"
 
 ALL_ROLES = [
-    ROLE_ADMIN, ROLE_GERENTE, ROLE_SUPERVISOR, ROLE_TECNICO_SENIOR,
-    ROLE_AGENTE, ROLE_FINANCEIRO, ROLE_VISUALIZADOR, ROLE_CLIENTE,
+    ROLE_ADMIN,
+    ROLE_GERENTE,
+    ROLE_SUPERVISOR,
+    ROLE_TECNICO_SENIOR,
+    ROLE_AGENTE,
+    ROLE_FINANCEIRO,
+    ROLE_VISUALIZADOR,
+    ROLE_CLIENTE,
 ]
 
 # Mapeamento de permissoes por role (app_label.codename)
@@ -133,6 +140,7 @@ ROLE_PERMISSIONS = {
 # Model UserRole
 # ---------------------------------------------------------------------------
 
+
 class UserRole(models.Model):
     """Vinculo explicito entre usuario e role"""
 
@@ -147,9 +155,7 @@ class UserRole(models.Model):
         (ROLE_CLIENTE, "Cliente"),
     ]
 
-    user = models.OneToOneField(
-        User, on_delete=models.CASCADE, related_name="role_profile"
-    )
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="role_profile")
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_AGENTE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -165,6 +171,7 @@ class UserRole(models.Model):
 # ---------------------------------------------------------------------------
 # Helper functions
 # ---------------------------------------------------------------------------
+
 
 def get_user_role(user) -> str:
     """Retorna a role do usuario. Fallback para 'agente' se nao definida."""
@@ -192,9 +199,7 @@ def assign_role(user: User, role: str):
     if role not in ALL_ROLES:
         raise ValueError(f"Role invalida: {role}")
 
-    obj, created = UserRole.objects.update_or_create(
-        user=user, defaults={"role": role}
-    )
+    obj, created = UserRole.objects.update_or_create(user=user, defaults={"role": role})
 
     # Sincronizar com Django Groups
     group, _ = Group.objects.get_or_create(name=role)
@@ -218,7 +223,6 @@ def assign_role(user: User, role: str):
 
 def setup_groups_and_permissions():
     """Cria Groups e atribui permissoes. Chamar via management command."""
-    from django.contrib.contenttypes.models import ContentType
 
     for role_name, perm_strings in ROLE_PERMISSIONS.items():
         group, _ = Group.objects.get_or_create(name=role_name)
@@ -227,9 +231,7 @@ def setup_groups_and_permissions():
         for perm_str in perm_strings:
             app_label, codename = perm_str.split(".")
             try:
-                perm = Permission.objects.get(
-                    content_type__app_label=app_label, codename=codename
-                )
+                perm = Permission.objects.get(content_type__app_label=app_label, codename=codename)
                 group.permissions.add(perm)
             except Permission.DoesNotExist:
                 logger.warning(f"Permissao nao encontrada: {perm_str}")
@@ -241,23 +243,28 @@ def setup_groups_and_permissions():
 # Decorator @role_required
 # ---------------------------------------------------------------------------
 
+
 def role_required(*allowed_roles, redirect_url=None):
     """
     Decorator para views baseadas em funcao.
     Uso: @role_required("admin", "supervisor")
     """
+
     def decorator(view_func):
         @functools.wraps(view_func)
         def wrapper(request, *args, **kwargs):
             if not request.user.is_authenticated:
                 from django.conf import settings
+
                 return redirect(settings.LOGIN_URL)
             if not user_has_role(request.user, *allowed_roles):
                 if redirect_url:
                     return redirect(redirect_url)
                 raise PermissionDenied("Voce nao tem permissao para acessar esta pagina.")
             return view_func(request, *args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -265,12 +272,14 @@ def role_required(*allowed_roles, redirect_url=None):
 # Mixin para CBVs
 # ---------------------------------------------------------------------------
 
+
 class RoleRequiredMixin(AccessMixin):
     """
     Mixin para class-based views.
     Uso: class MyView(RoleRequiredMixin, TemplateView):
              allowed_roles = ["admin", "supervisor"]
     """
+
     allowed_roles = []
 
     def dispatch(self, request, *args, **kwargs):
@@ -285,6 +294,7 @@ class RoleRequiredMixin(AccessMixin):
 # Template context processor
 # ---------------------------------------------------------------------------
 
+
 def rbac_context(request):
     """Adiciona role e helpers ao contexto de templates."""
     if hasattr(request, "user") and request.user.is_authenticated:
@@ -293,10 +303,8 @@ def rbac_context(request):
         user_perfil = None
         try:
             from dashboard.models import PerfilUsuario
-            user_perfil, _ = PerfilUsuario.objects.get_or_create(
-                user=request.user,
-                defaults={'telefone': ''}
-            )
+
+            user_perfil, _ = PerfilUsuario.objects.get_or_create(user=request.user, defaults={"telefone": ""})
         except Exception:
             pass
         return {
@@ -307,7 +315,16 @@ def rbac_context(request):
             "is_tecnico_senior": role in (ROLE_ADMIN, ROLE_GERENTE, ROLE_SUPERVISOR, ROLE_TECNICO_SENIOR),
             "is_agente": role in (ROLE_ADMIN, ROLE_GERENTE, ROLE_SUPERVISOR, ROLE_TECNICO_SENIOR, ROLE_AGENTE),
             "is_financeiro": role in (ROLE_ADMIN, ROLE_GERENTE, ROLE_FINANCEIRO),
-            "is_visualizador": role in (ROLE_ADMIN, ROLE_GERENTE, ROLE_SUPERVISOR, ROLE_TECNICO_SENIOR, ROLE_AGENTE, ROLE_FINANCEIRO, ROLE_VISUALIZADOR),
+            "is_visualizador": role
+            in (
+                ROLE_ADMIN,
+                ROLE_GERENTE,
+                ROLE_SUPERVISOR,
+                ROLE_TECNICO_SENIOR,
+                ROLE_AGENTE,
+                ROLE_FINANCEIRO,
+                ROLE_VISUALIZADOR,
+            ),
             "is_cliente": role == ROLE_CLIENTE,
             "user_perfil": user_perfil,
         }

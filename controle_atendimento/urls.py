@@ -14,46 +14,43 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
-from django.urls import path, include
-from dashboard.api.docs import urlpatterns as api_docs_urlpatterns
+
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import include, path
+
 from dashboard import views
+from dashboard.api.docs import urlpatterns as api_docs_urlpatterns
 from dashboard.utils.monitoring import HealthCheckView
-from dashboard.utils.sso import SSOProviderListView, SSOLoginView, SSOCallbackView
+from dashboard.utils.sso import SSOCallbackView, SSOLoginView, SSOProviderListView
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('i18n/', include('django.conf.urls.i18n')),  # Language switching
-    path('', views.home_redirect, name='home'),  # Página inicial inteligente
-    path('login/', views.custom_login, name='login'),
-    path('logout/', views.custom_logout, name='logout'),
-    path('health/', HealthCheckView.as_view(), name='health_check'),  # Health check na raiz
-    path('dashboard/', include('dashboard.urls')),
-    path('cliente/', include('dashboard.urls.clientes')),  # Portal Self-Service
-    path('financeiro/', include('dashboard.urls.financeiro')),  # Módulo Financeiro
-    path('estoque/', include('dashboard.urls.estoque')),  # Módulo de Estoque
-    path('equipamentos/', include('dashboard.urls.equipamentos')),  # Gestão de Equipamentos
-    
+    path("admin/", admin.site.urls),
+    path("i18n/", include("django.conf.urls.i18n")),  # Language switching
+    path("", views.home_redirect, name="home"),  # Página inicial inteligente
+    path("login/", views.custom_login, name="login"),
+    path("logout/", views.custom_logout, name="logout"),
+    path("health/", HealthCheckView.as_view(), name="health_check"),  # Health check na raiz
+    path("dashboard/", include("dashboard.urls")),
+    path("cliente/", include("dashboard.urls.clientes")),  # Portal Self-Service
+    path("financeiro/", include("dashboard.urls.financeiro")),  # Módulo Financeiro
+    path("estoque/", include("dashboard.urls.estoque")),  # Módulo de Estoque
+    path("equipamentos/", include("dashboard.urls.equipamentos")),  # Gestão de Equipamentos
     # SSO — Single Sign-On (SAML 2.0 + OIDC)
-    path('sso/providers/', SSOProviderListView.as_view(), name='sso_providers'),
-    path('sso/login/<slug:slug>/', SSOLoginView.as_view(), name='sso_login'),
-    path('sso/callback/<slug:slug>/', SSOCallbackView.as_view(), name='sso_callback'),
-    
+    path("sso/providers/", SSOProviderListView.as_view(), name="sso_providers"),
+    path("sso/login/<slug:slug>/", SSOLoginView.as_view(), name="sso_login"),
+    path("sso/callback/<slug:slug>/", SSOCallbackView.as_view(), name="sso_callback"),
     # APIs REST
-    path('api/v1/', include('dashboard.urls.api')),
-    path('api/user-info/', views.get_user_info, name='user_info'),
-    
+    path("api/v1/", include("dashboard.urls.api")),
+    path("api/user-info/", views.get_user_info, name="user_info"),
     # Mobile Interface
-    path('mobile/', include('dashboard.urls.mobile')),
-    
+    path("mobile/", include("dashboard.urls.mobile")),
     # Cálculo de Implantação de Vigilante
-    path('calculo-vigilante/', include('calculo_vigilante.urls')),
-    
+    path("calculo-vigilante/", include("calculo_vigilante.urls")),
     # PWA Files
-    path('manifest.json', views.manifest, name='manifest'),
-    path('service-worker.js', views.service_worker, name='service_worker'),
+    path("manifest.json", views.manifest, name="manifest"),
+    path("service-worker.js", views.service_worker, name="service_worker"),
     # Documentação automática das APIs (Swagger/Redoc)
     *api_docs_urlpatterns,
 ]

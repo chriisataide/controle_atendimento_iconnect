@@ -1,6 +1,6 @@
 """Template tags para Content Security Policy (CSP) nonces."""
+
 from django import template
-from django.utils.safestring import mark_safe
 
 register = template.Library()
 
@@ -19,7 +19,7 @@ def csp_nonce(context):
     string vazia (o script/style continua funcionando via 'unsafe-inline'
     como fallback no CSP).
     """
-    request = context.get('request')
-    if request and hasattr(request, 'csp_nonce'):
+    request = context.get("request")
+    if request and hasattr(request, "csp_nonce"):
         return request.csp_nonce
-    return ''
+    return ""

@@ -5,4 +5,4 @@
 # com includes como: include('dashboard.urls')
 # =============================================================================
 
-from .main import urlpatterns, app_name, mobile_urlpatterns  # noqa: F401
+from .main import app_name, mobile_urlpatterns, urlpatterns  # noqa: F401
