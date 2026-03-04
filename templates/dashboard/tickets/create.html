@@ -1640,6 +1640,10 @@
           <span class="tk-preview-value" id="prevCategoria"><em class="tk-preview-empty">—</em></span>
         </div>
         <div class="tk-preview-row">
+          <span class="tk-preview-label">Tipo (ITIL)</span>
+          <span class="tk-preview-value" id="prevTipo">Incidente</span>
+        </div>
+        <div class="tk-preview-row">
           <span class="tk-preview-label">Prioridade</span>
           <span class="tk-preview-value" id="prevPrioridade">Média</span>
         </div>
@@ -2850,6 +2854,8 @@ document.addEventListener('DOMContentLoaded', function() {
         prev('prevTitulo', document.getElementById('tituloInput')?.value);
         const catSel = document.getElementById('categoriaSelect');
         prev('prevCategoria', catSel && catSel.value ? catSel.options[catSel.selectedIndex]?.text : '');
+        const tipoSel = document.getElementById('tipoSelect');
+        prev('prevTipo', tipoSel && tipoSel.value ? tipoSel.options[tipoSel.selectedIndex]?.text : 'Incidente');
         const selectedPrio = document.querySelector('.tk-priority-opt.selected');
         prev('prevPrioridade', selectedPrio ? selectedPrio.textContent.trim() : 'Média');
         prev('prevAnexos', String(selectedFiles.length));

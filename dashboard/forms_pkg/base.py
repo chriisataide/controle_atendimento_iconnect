@@ -184,11 +184,12 @@ class TicketCreateForm(forms.ModelForm):
 
     class Meta:
         model = Ticket
-        fields = ["cliente", "ponto_de_venda", "categoria", "titulo", "descricao", "prioridade", "tags"]
+        fields = ["cliente", "ponto_de_venda", "categoria", "tipo", "titulo", "descricao", "prioridade", "tags"]
         widgets = {
             "cliente": forms.Select(attrs={"class": "form-control", "id": "clienteSelect"}),
             "ponto_de_venda": forms.Select(attrs={"class": "form-control", "id": "pdvSelect"}),
             "categoria": forms.Select(attrs={"class": "form-control", "id": "categoriaSelect"}),
+            "tipo": forms.Select(attrs={"class": "form-control", "id": "tipoSelect"}),
             "titulo": forms.TextInput(
                 attrs={"class": "form-control", "id": "tituloInput", "placeholder": "Título do ticket"}
             ),
