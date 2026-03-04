@@ -335,11 +335,17 @@
     padding: 1.25rem;
     margin-bottom: 1.25rem;
   }
+  .tk-templates-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: .85rem;
+  }
   .tk-templates h6 {
     color: #fff;
     font-weight: 600;
     font-size: .85rem;
-    margin-bottom: .85rem;
+    margin-bottom: 0;
     display: flex;
     align-items: center;
     gap: .4rem;
@@ -349,6 +355,94 @@
     opacity: .6;
     font-size: .72rem;
   }
+
+  /* Tabs das fornecedoras */
+  .tk-tpl-tabs {
+    display: flex;
+    gap: .35rem;
+    margin-bottom: .85rem;
+    flex-wrap: wrap;
+  }
+  .tk-tpl-tab {
+    padding: .4rem .85rem;
+    border-radius: 20px;
+    font-size: .72rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--tk-transition);
+    border: 1.5px solid rgba(255,255,255,.2);
+    color: rgba(255,255,255,.7);
+    background: rgba(255,255,255,.06);
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .tk-tpl-tab:hover {
+    background: rgba(255,255,255,.12);
+    color: #fff;
+    border-color: rgba(255,255,255,.35);
+  }
+  .tk-tpl-tab.active {
+    background: var(--tk-cyan-500);
+    color: #fff;
+    border-color: var(--tk-cyan-500);
+    box-shadow: 0 2px 8px rgba(6,182,212,.35);
+  }
+  .tk-tpl-tab i {
+    font-size: .9rem;
+  }
+  .tk-tpl-tab .tk-tab-count {
+    background: rgba(255,255,255,.2);
+    padding: .1rem .4rem;
+    border-radius: 10px;
+    font-size: .62rem;
+    font-weight: 700;
+    min-width: 18px;
+    text-align: center;
+  }
+  .tk-tpl-tab.active .tk-tab-count {
+    background: rgba(0,0,0,.15);
+  }
+
+  /* Painel de templates */
+  .tk-tpl-panel {
+    display: none;
+  }
+  .tk-tpl-panel.active {
+    display: block;
+    animation: tplFadeIn .25s ease;
+  }
+  @keyframes tplFadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Fornecedora label */
+  .tk-fornecedora-label {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .6rem;
+    padding: .35rem .65rem;
+    background: rgba(255,255,255,.08);
+    border-radius: 8px;
+    border-left: 3px solid var(--tk-cyan-500);
+  }
+  .tk-fornecedora-label span {
+    font-size: .7rem;
+    color: rgba(255,255,255,.5);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .tk-fornecedora-label strong {
+    font-size: .78rem;
+    color: #fff;
+    font-weight: 700;
+  }
+
   .tk-tpl-option {
     background: rgba(255,255,255,.95);
     border-radius: 10px;
@@ -849,45 +943,129 @@
 
         <!-- Templates Rápidos -->
         <div class="tk-templates">
-          <h6>
-            <i class="material-symbols-rounded">library_books</i>
-            Templates Rápidos <small>(clique para preencher automaticamente)</small>
-          </h6>
-          <div class="row g-2" id="templateOptions">
-            <div class="col-4 col-md-2">
-              <div class="tk-tpl-option" data-template="suporte-tecnico">
-                <i class="material-symbols-rounded">computer</i>
-                <small>Suporte Técnico</small>
+          <div class="tk-templates-header">
+            <h6>
+              <i class="material-symbols-rounded">library_books</i>
+              Templates Rápidos <small>(clique para preencher automaticamente)</small>
+            </h6>
+          </div>
+
+          <!-- Abas das fornecedoras -->
+          <div class="tk-tpl-tabs">
+            <div class="tk-tpl-tab active" data-tab="geral">
+              <i class="material-symbols-rounded">category</i>
+              Geral
+              <span class="tk-tab-count">6</span>
+            </div>
+            <div class="tk-tpl-tab" data-tab="autodefesa">
+              <i class="material-symbols-rounded">security</i>
+              Autodefesa Brasil
+              <span class="tk-tab-count">9</span>
+            </div>
+          </div>
+
+          <!-- Painel: Geral -->
+          <div class="tk-tpl-panel active" id="panel-geral">
+            <div class="row g-2" id="templateOptions">
+              <div class="col-4 col-md-2">
+                <div class="tk-tpl-option" data-template="suporte-tecnico">
+                  <i class="material-symbols-rounded">computer</i>
+                  <small>Suporte Técnico</small>
+                </div>
+              </div>
+              <div class="col-4 col-md-2">
+                <div class="tk-tpl-option" data-template="duvida">
+                  <i class="material-symbols-rounded">help</i>
+                  <small>Dúvida</small>
+                </div>
+              </div>
+              <div class="col-4 col-md-2">
+                <div class="tk-tpl-option" data-template="solicitacao">
+                  <i class="material-symbols-rounded">request_quote</i>
+                  <small>Solicitação</small>
+                </div>
+              </div>
+              <div class="col-4 col-md-2">
+                <div class="tk-tpl-option" data-template="bug">
+                  <i class="material-symbols-rounded">bug_report</i>
+                  <small>Bug Report</small>
+                </div>
+              </div>
+              <div class="col-4 col-md-2">
+                <div class="tk-tpl-option" data-template="melhoria">
+                  <i class="material-symbols-rounded">lightbulb</i>
+                  <small>Melhoria</small>
+                </div>
+              </div>
+              <div class="col-4 col-md-2">
+                <div class="tk-tpl-option" data-template="acesso">
+                  <i class="material-symbols-rounded">key</i>
+                  <small>Acesso</small>
+                </div>
               </div>
             </div>
-            <div class="col-4 col-md-2">
-              <div class="tk-tpl-option" data-template="duvida">
-                <i class="material-symbols-rounded">help</i>
-                <small>Dúvida</small>
-              </div>
+          </div>
+
+          <!-- Painel: Autodefesa Brasil -->
+          <div class="tk-tpl-panel" id="panel-autodefesa">
+            <div class="tk-fornecedora-label">
+              <span>Fornecedora:</span>
+              <strong>AUTODEFESA BRASIL</strong>
             </div>
-            <div class="col-4 col-md-2">
-              <div class="tk-tpl-option" data-template="solicitacao">
-                <i class="material-symbols-rounded">request_quote</i>
-                <small>Solicitação</small>
+            <div class="row g-2">
+              <div class="col-4 col-md-3 col-lg-2">
+                <div class="tk-tpl-option" data-template="ad-neblina">
+                  <i class="material-symbols-rounded">cloud</i>
+                  <small>Gerador de Neblina</small>
+                </div>
               </div>
-            </div>
-            <div class="col-4 col-md-2">
-              <div class="tk-tpl-option" data-template="bug">
-                <i class="material-symbols-rounded">bug_report</i>
-                <small>Bug Report</small>
+              <div class="col-4 col-md-3 col-lg-2">
+                <div class="tk-tpl-option" data-template="ad-alarme">
+                  <i class="material-symbols-rounded">crisis_alert</i>
+                  <small>Central de Alarme</small>
+                </div>
               </div>
-            </div>
-            <div class="col-4 col-md-2">
-              <div class="tk-tpl-option" data-template="melhoria">
-                <i class="material-symbols-rounded">lightbulb</i>
-                <small>Melhoria</small>
+              <div class="col-4 col-md-3 col-lg-2">
+                <div class="tk-tpl-option" data-template="ad-sensores">
+                  <i class="material-symbols-rounded">sensors</i>
+                  <small>Sensores</small>
+                </div>
               </div>
-            </div>
-            <div class="col-4 col-md-2">
-              <div class="tk-tpl-option" data-template="acesso">
-                <i class="material-symbols-rounded">key</i>
-                <small>Acesso</small>
+              <div class="col-4 col-md-3 col-lg-2">
+                <div class="tk-tpl-option" data-template="ad-dvr">
+                  <i class="material-symbols-rounded">video_settings</i>
+                  <small>DVR</small>
+                </div>
+              </div>
+              <div class="col-4 col-md-3 col-lg-2">
+                <div class="tk-tpl-option" data-template="ad-cameras">
+                  <i class="material-symbols-rounded">videocam</i>
+                  <small>Câmeras</small>
+                </div>
+              </div>
+              <div class="col-4 col-md-3 col-lg-2">
+                <div class="tk-tpl-option" data-template="ad-neutralizador">
+                  <i class="material-symbols-rounded">shield</i>
+                  <small>Neutralizador</small>
+                </div>
+              </div>
+              <div class="col-4 col-md-3 col-lg-2">
+                <div class="tk-tpl-option" data-template="ad-porta">
+                  <i class="material-symbols-rounded">door_sliding</i>
+                  <small>Porta Automática</small>
+                </div>
+              </div>
+              <div class="col-4 col-md-3 col-lg-2">
+                <div class="tk-tpl-option" data-template="ad-facial">
+                  <i class="material-symbols-rounded">face_retouching_natural</i>
+                  <small>Reconhecimento Facial</small>
+                </div>
+              </div>
+              <div class="col-4 col-md-3 col-lg-2">
+                <div class="tk-tpl-option" data-template="ad-predial">
+                  <i class="material-symbols-rounded">apartment</i>
+                  <small>Predial</small>
+                </div>
               </div>
             </div>
           </div>
@@ -1301,6 +1479,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // TEMPLATES RÁPIDOS
     // ============================================
     const templates = {
+        // ── Geral ──
         'suporte-tecnico': {
             titulo: 'Suporte Técnico — ',
             descricao: '<p><strong>Problema:</strong></p><p></p><p><strong>Passos para reproduzir:</strong></p><ol><li></li></ol><p><strong>Comportamento esperado:</strong></p><p></p>',
@@ -1336,9 +1515,76 @@ document.addEventListener('DOMContentLoaded', function() {
             descricao: '<p><strong>🔑 Tipo de acesso:</strong></p><p></p><p><strong>Usuário:</strong></p><p></p><p><strong>Sistema/Recurso:</strong></p><p></p><p><strong>Justificativa:</strong></p><p></p>',
             categoria: 'acesso',
             prioridade: 'media'
+        },
+        // ── Autodefesa Brasil ──
+        'ad-neblina': {
+            titulo: '[AUTODEFESA BRASIL] Gerador de Neblina — ',
+            descricao: '<p><strong>Equipamento:</strong> Gerador de Neblina</p><p><strong>Fornecedora:</strong> Autodefesa Brasil</p><hr><p><strong>Descrição do problema / solicitação:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p><p><strong>Modelo do equipamento:</strong></p><p></p><p><strong>Nº de série (se disponível):</strong></p><p></p>',
+            categoria: 'suporte',
+            prioridade: 'alta'
+        },
+        'ad-alarme': {
+            titulo: '[AUTODEFESA BRASIL] Central de Alarme — ',
+            descricao: '<p><strong>Equipamento:</strong> Central de Alarme</p><p><strong>Fornecedora:</strong> Autodefesa Brasil</p><hr><p><strong>Descrição do problema / solicitação:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p><p><strong>Modelo da central:</strong></p><p></p><p><strong>Zonas afetadas:</strong></p><p></p>',
+            categoria: 'suporte',
+            prioridade: 'alta'
+        },
+        'ad-sensores': {
+            titulo: '[AUTODEFESA BRASIL] Sensores — ',
+            descricao: '<p><strong>Equipamento:</strong> Sensores</p><p><strong>Fornecedora:</strong> Autodefesa Brasil</p><hr><p><strong>Tipo de sensor:</strong> (presença / abertura / barreira / outro)</p><p><strong>Descrição do problema / solicitação:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p><p><strong>Quantidade afetada:</strong></p><p></p>',
+            categoria: 'suporte',
+            prioridade: 'media'
+        },
+        'ad-dvr': {
+            titulo: '[AUTODEFESA BRASIL] DVR — ',
+            descricao: '<p><strong>Equipamento:</strong> DVR</p><p><strong>Fornecedora:</strong> Autodefesa Brasil</p><hr><p><strong>Descrição do problema / solicitação:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p><p><strong>Modelo / Capacidade:</strong></p><p></p><p><strong>Canais afetados:</strong></p><p></p>',
+            categoria: 'suporte',
+            prioridade: 'alta'
+        },
+        'ad-cameras': {
+            titulo: '[AUTODEFESA BRASIL] Câmeras — ',
+            descricao: '<p><strong>Equipamento:</strong> Câmeras</p><p><strong>Fornecedora:</strong> Autodefesa Brasil</p><hr><p><strong>Descrição do problema / solicitação:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p><p><strong>Tipo:</strong> (dome / bullet / PTZ / outro)</p><p><strong>Quantidade afetada:</strong></p><p></p>',
+            categoria: 'suporte',
+            prioridade: 'media'
+        },
+        'ad-neutralizador': {
+            titulo: '[AUTODEFESA BRASIL] Neutralizador — ',
+            descricao: '<p><strong>Equipamento:</strong> Neutralizador</p><p><strong>Fornecedora:</strong> Autodefesa Brasil</p><hr><p><strong>Descrição do problema / solicitação:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p><p><strong>Modelo:</strong></p><p></p><p><strong>Última manutenção:</strong></p><p></p>',
+            categoria: 'suporte',
+            prioridade: 'critica'
+        },
+        'ad-porta': {
+            titulo: '[AUTODEFESA BRASIL] Porta Automática — ',
+            descricao: '<p><strong>Equipamento:</strong> Porta Automática</p><p><strong>Fornecedora:</strong> Autodefesa Brasil</p><hr><p><strong>Descrição do problema / solicitação:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p><p><strong>Tipo:</strong> (eclusa / deslizante / giratória / outro)</p><p><strong>A agência está operando?</strong></p><p></p>',
+            categoria: 'suporte',
+            prioridade: 'alta'
+        },
+        'ad-facial': {
+            titulo: '[AUTODEFESA BRASIL] Reconhecimento Facial — ',
+            descricao: '<p><strong>Equipamento:</strong> Reconhecimento Facial</p><p><strong>Fornecedora:</strong> Autodefesa Brasil</p><hr><p><strong>Descrição do problema / solicitação:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p><p><strong>Modelo do terminal:</strong></p><p></p><p><strong>Quantidade de faces cadastradas:</strong></p><p></p>',
+            categoria: 'suporte',
+            prioridade: 'media'
+        },
+        'ad-predial': {
+            titulo: '[AUTODEFESA BRASIL] Predial — ',
+            descricao: '<p><strong>Equipamento:</strong> Sistema Predial</p><p><strong>Fornecedora:</strong> Autodefesa Brasil</p><hr><p><strong>Descrição do problema / solicitação:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p><p><strong>Tipo de serviço:</strong> (elétrica / hidráulica / civil / outro)</p><p><strong>Urgência:</strong></p><p></p>',
+            categoria: 'suporte',
+            prioridade: 'media'
         }
     };
 
+    // Tabs de fornecedoras
+    document.querySelectorAll('.tk-tpl-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.tk-tpl-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tk-tpl-panel').forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
+            const panel = document.getElementById('panel-' + this.dataset.tab);
+            if (panel) panel.classList.add('active');
+        });
+    });
+
+    // Click nos templates
     document.querySelectorAll('.tk-tpl-option').forEach(opt => {
         opt.addEventListener('click', function() {
             document.querySelectorAll('.tk-tpl-option').forEach(o => o.classList.remove('active'));
@@ -1354,7 +1600,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (tituloInput && tpl.titulo) {
                 tituloInput.value = tpl.titulo;
                 tituloInput.focus();
-                // Place cursor at end
                 const len = tituloInput.value.length;
                 tituloInput.setSelectionRange(len, len);
             }
@@ -1363,7 +1608,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateHiddenDescricao();
             }
             if (categoriaSelect && tpl.categoria) {
-                // Try to match option
                 Array.from(categoriaSelect.options).forEach(o => {
                     if (o.text.toLowerCase().includes(tpl.categoria)) {
                         categoriaSelect.value = o.value;
