@@ -1,7 +1,7 @@
 """
 Celery Tasks — Tarefas assincronas para o helpdesk iConnect
 """
-import json
+
 import logging
 
 from celery import shared_task
@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Webhook delivery
 # ---------------------------------------------------------------------------
+
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
 def deliver_webhook(self, endpoint_id: int, event_type: str, payload: dict):
@@ -36,10 +37,12 @@ def deliver_webhook(self, endpoint_id: int, event_type: str, payload: dict):
 # Email inbound polling
 # ---------------------------------------------------------------------------
 
+
 @shared_task
 def check_inbound_emails():
     """Verificar emails inbound de todas as contas configuradas"""
     from dashboard.services.email_inbound_service import email_inbound_service
+
     count = email_inbound_service.check_all_accounts()
     logger.info(f"Processados {count} emails inbound")
     return count
@@ -49,11 +52,11 @@ def check_inbound_emails():
 # Scheduled rules execution
 # ---------------------------------------------------------------------------
 
+
 @shared_task
 def execute_scheduled_rules():
     """Executar regras agendadas ativas"""
     from dashboard.models import ScheduledRule, Ticket
-    from django.db.models import Q
 
     rules = ScheduledRule.objects.filter(is_active=True)
     executed = 0
@@ -66,18 +69,18 @@ def execute_scheduled_rules():
             # Construir queryset baseado em conditions
             qs = Ticket.objects.all()
 
-            if 'status' in conditions:
-                qs = qs.filter(status=conditions['status'])
-            if 'prioridade' in conditions:
-                qs = qs.filter(prioridade=conditions['prioridade'])
-            if 'older_than_days' in conditions:
-                cutoff = timezone.now() - timezone.timedelta(days=conditions['older_than_days'])
+            if "status" in conditions:
+                qs = qs.filter(status=conditions["status"])
+            if "prioridade" in conditions:
+                qs = qs.filter(prioridade=conditions["prioridade"])
+            if "older_than_days" in conditions:
+                cutoff = timezone.now() - timezone.timedelta(days=conditions["older_than_days"])
                 qs = qs.filter(atualizado_em__lt=cutoff)
-            if 'no_response_hours' in conditions:
-                cutoff = timezone.now() - timezone.timedelta(hours=conditions['no_response_hours'])
-                qs = qs.filter(atualizado_em__lt=cutoff, status='aberto')
+            if "no_response_hours" in conditions:
+                cutoff = timezone.now() - timezone.timedelta(hours=conditions["no_response_hours"])
+                qs = qs.filter(atualizado_em__lt=cutoff, status="aberto")
 
-            tickets = qs[:rule.max_executions_per_hour]
+            tickets = qs[: rule.max_executions_per_hour]
 
             for ticket in tickets:
                 for action in actions:
@@ -85,7 +88,7 @@ def execute_scheduled_rules():
 
             rule.last_run = timezone.now()
             rule.run_count += tickets.count()
-            rule.save(update_fields=['last_run', 'run_count'])
+            rule.save(update_fields=["last_run", "run_count"])
             executed += 1
 
         except Exception as e:
@@ -96,52 +99,56 @@ def execute_scheduled_rules():
 
 def _apply_action(ticket, action: dict):
     """Aplicar uma acao a um ticket"""
-    action_type = action.get('type')
+    action_type = action.get("type")
 
-    if action_type == 'change_status':
-        ticket.status = action.get('value', ticket.status)
-        ticket.save(update_fields=['status', 'atualizado_em'])
+    if action_type == "change_status":
+        ticket.status = action.get("value", ticket.status)
+        ticket.save(update_fields=["status", "atualizado_em"])
 
-    elif action_type == 'change_priority':
-        ticket.prioridade = action.get('value', ticket.prioridade)
-        ticket.save(update_fields=['prioridade', 'atualizado_em'])
+    elif action_type == "change_priority":
+        ticket.prioridade = action.get("value", ticket.prioridade)
+        ticket.save(update_fields=["prioridade", "atualizado_em"])
 
-    elif action_type == 'assign':
+    elif action_type == "assign":
         from django.contrib.auth.models import User
+
         try:
-            user = User.objects.get(id=action.get('user_id'))
+            user = User.objects.get(id=action.get("user_id"))
             ticket.agente = user
-            ticket.save(update_fields=['agente', 'atualizado_em'])
+            ticket.save(update_fields=["agente", "atualizado_em"])
         except User.DoesNotExist:
             pass
 
-    elif action_type == 'add_comment':
+    elif action_type == "add_comment":
         from dashboard.models import InteracaoTicket
+
         InteracaoTicket.objects.create(
             ticket=ticket,
-            mensagem=action.get('message', 'Ação automática executada.'),
-            tipo='sistema',
-            canal='api',
+            mensagem=action.get("message", "Ação automática executada."),
+            tipo="sistema",
+            canal="api",
         )
 
-    elif action_type == 'notify':
+    elif action_type == "notify":
         logger.info(f"Notificação: {action.get('message')} para ticket {ticket.numero}")
 
-    elif action_type == 'close':
-        ticket.status = 'fechado'
+    elif action_type == "close":
+        ticket.status = "fechado"
         ticket.fechado_em = timezone.now()
-        ticket.save(update_fields=['status', 'fechado_em', 'atualizado_em'])
+        ticket.save(update_fields=["status", "fechado_em", "atualizado_em"])
 
 
 # ---------------------------------------------------------------------------
 # Scheduled reports
 # ---------------------------------------------------------------------------
 
+
 @shared_task
 def send_scheduled_reports():
     """Enviar relatorios agendados"""
-    from dashboard.models import ScheduledReport
     from django.core.mail import EmailMessage
+
+    from dashboard.models import ScheduledReport
 
     reports = ScheduledReport.objects.filter(is_active=True)
     sent = 0
@@ -163,26 +170,26 @@ def send_scheduled_reports():
                     to=recipients,
                 )
 
-                if report.output_format == 'excel':
+                if report.output_format == "excel":
                     email_msg.attach(
                         f"{report.nome}.xlsx",
                         content,
-                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     )
-                elif report.output_format == 'csv':
-                    email_msg.attach(f"{report.nome}.csv", content, 'text/csv')
-                elif report.output_format == 'pdf':
-                    email_msg.attach(f"{report.nome}.pdf", content, 'application/pdf')
+                elif report.output_format == "csv":
+                    email_msg.attach(f"{report.nome}.csv", content, "text/csv")
+                elif report.output_format == "pdf":
+                    email_msg.attach(f"{report.nome}.pdf", content, "application/pdf")
 
                 email_msg.send()
 
             report.last_sent = timezone.now()
             # Calcular próximo envio
-            if report.frequency == 'daily':
+            if report.frequency == "daily":
                 report.next_run = timezone.now() + timezone.timedelta(days=1)
-            elif report.frequency == 'weekly':
+            elif report.frequency == "weekly":
                 report.next_run = timezone.now() + timezone.timedelta(weeks=1)
-            elif report.frequency == 'monthly':
+            elif report.frequency == "monthly":
                 report.next_run = timezone.now() + timezone.timedelta(days=30)
             report.save()
             sent += 1
@@ -195,41 +202,38 @@ def send_scheduled_reports():
 
 def _generate_report(report):
     """Gerar conteudo do relatorio"""
-    from dashboard.models import Ticket
     from io import BytesIO
 
-    period_days = report.filters.get('days', 30)
+    from dashboard.models import Ticket
+
+    period_days = report.filters.get("days", 30)
     since = timezone.now() - timezone.timedelta(days=period_days)
     tickets = Ticket.objects.filter(criado_em__gte=since)
 
-    if report.output_format == 'excel':
+    if report.output_format == "excel":
         from openpyxl import Workbook
+
         wb = Workbook()
         ws = wb.active
         ws.title = "Tickets"
-        ws.append(['Numero', 'Titulo', 'Status', 'Prioridade', 'Criado em'])
+        ws.append(["Numero", "Titulo", "Status", "Prioridade", "Criado em"])
 
-        for t in tickets.order_by('-criado_em'):
-            ws.append([
-                t.numero, t.titulo, t.status, t.prioridade,
-                t.criado_em.strftime('%Y-%m-%d %H:%M')
-            ])
+        for t in tickets.order_by("-criado_em"):
+            ws.append([t.numero, t.titulo, t.status, t.prioridade, t.criado_em.strftime("%Y-%m-%d %H:%M")])
 
         output = BytesIO()
         wb.save(output)
         return output.getvalue()
 
-    elif report.output_format == 'csv':
+    elif report.output_format == "csv":
         import csv
         from io import StringIO
+
         output = StringIO()
         writer = csv.writer(output)
-        writer.writerow(['Numero', 'Titulo', 'Status', 'Prioridade', 'Criado em'])
-        for t in tickets.order_by('-criado_em'):
-            writer.writerow([
-                t.numero, t.titulo, t.status, t.prioridade,
-                t.criado_em.strftime('%Y-%m-%d %H:%M')
-            ])
+        writer.writerow(["Numero", "Titulo", "Status", "Prioridade", "Criado em"])
+        for t in tickets.order_by("-criado_em"):
+            writer.writerow([t.numero, t.titulo, t.status, t.prioridade, t.criado_em.strftime("%Y-%m-%d %H:%M")])
         return output.getvalue()
 
     return f"Relatório {report.nome}: {tickets.count()} tickets no período."
@@ -239,10 +243,12 @@ def _generate_report(report):
 # Customer Health Score
 # ---------------------------------------------------------------------------
 
+
 @shared_task
 def recalculate_customer_health():
     """Recalcular health scores de todos os clientes"""
     from dashboard.services.customer_health_service import customer_health_service
+
     return customer_health_service.calculate_all()
 
 
@@ -250,10 +256,12 @@ def recalculate_customer_health():
 # Gamification
 # ---------------------------------------------------------------------------
 
+
 @shared_task
 def update_agent_leaderboard():
     """Atualizar leaderboard de agentes"""
     from dashboard.services.gamification_service import gamification_service
+
     gamification_service.update_leaderboard()
 
 
@@ -261,12 +269,13 @@ def update_agent_leaderboard():
 # KPI Alerts
 # ---------------------------------------------------------------------------
 
+
 @shared_task
 def check_kpi_alerts():
     """Verificar alertas de KPI e notificar"""
-    from dashboard.models import KPIAlert, Ticket
     from django.core.mail import send_mail
-    from django.db.models import Avg, Count
+
+    from dashboard.models import KPIAlert, Ticket
 
     alerts = KPIAlert.objects.filter(is_active=True)
     triggered = 0
@@ -280,15 +289,14 @@ def check_kpi_alerts():
 
         value = None
 
-        if alert.metric == 'open_tickets_above':
-            value = Ticket.objects.filter(status='aberto').count()
-        elif alert.metric == 'queue_above':
-            value = Ticket.objects.filter(status='aberto', agente__isnull=True).count()
-        elif alert.metric == 'sla_compliance_below':
+        if alert.metric == "open_tickets_above":
+            value = Ticket.objects.filter(status="aberto").count()
+        elif alert.metric == "queue_above":
+            value = Ticket.objects.filter(status="aberto", agente__isnull=True).count()
+        elif alert.metric == "sla_compliance_below":
             from dashboard.models import SLAViolation
-            total = Ticket.objects.filter(
-                criado_em__gte=timezone.now() - timezone.timedelta(days=30)
-            ).count()
+
+            total = Ticket.objects.filter(criado_em__gte=timezone.now() - timezone.timedelta(days=30)).count()
             violations = SLAViolation.objects.filter(
                 created_at__gte=timezone.now() - timezone.timedelta(days=30)
             ).count()
@@ -296,9 +304,9 @@ def check_kpi_alerts():
 
         if value is not None:
             should_trigger = False
-            if 'above' in alert.metric:
+            if "above" in alert.metric:
                 should_trigger = value > alert.threshold
-            elif 'below' in alert.metric:
+            elif "below" in alert.metric:
                 should_trigger = value < alert.threshold
 
             if should_trigger:
@@ -315,7 +323,7 @@ def check_kpi_alerts():
 
                 alert.last_triggered = timezone.now()
                 alert.trigger_count += 1
-                alert.save(update_fields=['last_triggered', 'trigger_count'])
+                alert.save(update_fields=["last_triggered", "trigger_count"])
                 triggered += 1
 
     return triggered
@@ -325,35 +333,37 @@ def check_kpi_alerts():
 # SLA Monitor
 # ---------------------------------------------------------------------------
 
+
 @shared_task
 def monitor_sla_breaches():
     """Monitorar violacoes de SLA e disparar webhooks"""
-    from dashboard.models import Ticket, SLAViolation
+    from dashboard.models import SLAViolation, Ticket
     from dashboard.services.webhook_service import webhook_service
 
     now = timezone.now()
     at_risk = Ticket.objects.filter(
-        status__in=['aberto', 'em_andamento'],
+        status__in=["aberto", "em_andamento"],
         sla_deadline__isnull=False,
         sla_deadline__lt=now,
-    ).exclude(
-        id__in=SLAViolation.objects.values_list('ticket_id', flat=True)
-    )
+    ).exclude(id__in=SLAViolation.objects.values_list("ticket_id", flat=True))
 
     for ticket in at_risk:
         SLAViolation.objects.create(
             ticket=ticket,
             sla_policy=ticket.sla_policy,
-            violation_type='response_time',
+            violation_type="response_time",
             hours_exceeded=round((now - ticket.sla_deadline).total_seconds() / 3600, 1),
         )
 
-        webhook_service.trigger_event('sla_breach', {
-            'ticket_id': ticket.id,
-            'ticket_numero': ticket.numero,
-            'ticket_titulo': ticket.titulo,
-            'deadline': ticket.sla_deadline.isoformat(),
-        })
+        webhook_service.trigger_event(
+            "sla_breach",
+            {
+                "ticket_id": ticket.id,
+                "ticket_numero": ticket.numero,
+                "ticket_titulo": ticket.titulo,
+                "deadline": ticket.sla_deadline.isoformat(),
+            },
+        )
 
     return at_risk.count()
 
@@ -362,6 +372,7 @@ def monitor_sla_breaches():
 # Signal-offloaded tasks (pesados demais para execução síncrona)
 # ---------------------------------------------------------------------------
 
+
 @shared_task(ignore_result=True)
 def notify_agents_new_ticket(ticket_id: int):
     """Cria notificações em banco para todos os agentes ativos (bulk_create).
@@ -369,11 +380,12 @@ def notify_agents_new_ticket(ticket_id: int):
     Chamada a partir do signal ``ticket_created_or_updated`` para não
     bloquear o request que criou o ticket.
     """
-    from dashboard.models import Ticket, Notification, PerfilAgente
     from django.contrib.auth.models import User
 
+    from dashboard.models import Notification, Ticket
+
     try:
-        ticket = Ticket.objects.select_related('categoria').get(pk=ticket_id)
+        ticket = Ticket.objects.select_related("categoria").get(pk=ticket_id)
     except Ticket.DoesNotExist:
         return
 
@@ -381,24 +393,24 @@ def notify_agents_new_ticket(ticket_id: int):
     notifications = [
         Notification(
             user=agent,
-            title='Novo Ticket Criado',
-            message=f'Ticket #{ticket.numero}: {ticket.titulo}',
-            type='new_ticket',
+            title="Novo Ticket Criado",
+            message=f"Ticket #{ticket.numero}: {ticket.titulo}",
+            type="new_ticket",
             ticket=ticket,
         )
         for agent in agents
     ]
     if notifications:
         Notification.objects.bulk_create(notifications)
-    logger.info("notify_agents_new_ticket: %d notificações criadas para ticket #%s",
-                len(notifications), ticket.numero)
+    logger.info("notify_agents_new_ticket: %d notificações criadas para ticket #%s", len(notifications), ticket.numero)
 
 
 @shared_task(ignore_result=True)
 def notify_client_ticket_updated(ticket_id: int):
     """Notifica o cliente sobre atualização de status do ticket."""
-    from dashboard.models import Ticket, Notification
     from django.contrib.auth.models import User
+
+    from dashboard.models import Notification, Ticket
 
     try:
         ticket = Ticket.objects.get(pk=ticket_id)
@@ -412,9 +424,9 @@ def notify_client_ticket_updated(ticket_id: int):
         client_user = User.objects.get(email=ticket.cliente.email)
         Notification.objects.create(
             user=client_user,
-            title='Ticket Atualizado',
-            message=f'Seu ticket #{ticket.numero} foi atualizado: {ticket.get_status_display()}',
-            type='ticket_status_change',
+            title="Ticket Atualizado",
+            message=f"Seu ticket #{ticket.numero} foi atualizado: {ticket.get_status_display()}",
+            type="ticket_status_change",
             ticket=ticket,
         )
     except User.DoesNotExist:
@@ -424,8 +436,9 @@ def notify_client_ticket_updated(ticket_id: int):
 @shared_task(ignore_result=True)
 def notify_interaction(ticket_id: int, interaction_id: int, author_id: int):
     """Notifica agente e/ou cliente sobre nova interação."""
-    from dashboard.models import Ticket, InteracaoTicket, Notification
     from django.contrib.auth.models import User
+
+    from dashboard.models import InteracaoTicket, Notification, Ticket
 
     try:
         ticket = Ticket.objects.get(pk=ticket_id)
@@ -441,9 +454,9 @@ def notify_interaction(ticket_id: int, interaction_id: int, author_id: int):
             if client_user != author:
                 Notification.objects.create(
                     user=client_user,
-                    title='Nova Resposta no seu Ticket',
-                    message=f'Ticket #{ticket.numero}: Nova resposta disponível',
-                    type='new_interaction',
+                    title="Nova Resposta no seu Ticket",
+                    message=f"Ticket #{ticket.numero}: Nova resposta disponível",
+                    type="new_interaction",
                     ticket=ticket,
                 )
         except User.DoesNotExist:
@@ -453,9 +466,9 @@ def notify_interaction(ticket_id: int, interaction_id: int, author_id: int):
     if ticket.agente and ticket.agente != author:
         Notification.objects.create(
             user=ticket.agente,
-            title='Nova Mensagem no Ticket',
-            message=f'Ticket #{ticket.numero}: Nova mensagem adicionada',
-            type='new_interaction',
+            title="Nova Mensagem no Ticket",
+            message=f"Ticket #{ticket.numero}: Nova mensagem adicionada",
+            type="new_interaction",
             ticket=ticket,
         )
 
@@ -463,8 +476,9 @@ def notify_interaction(ticket_id: int, interaction_id: int, author_id: int):
 @shared_task(ignore_result=True)
 def send_sla_breach_notifications(ticket_id: int):
     """Notifica supervisores sobre violação de SLA."""
-    from dashboard.models import Ticket, Notification
     from django.contrib.auth.models import User
+
+    from dashboard.models import Notification, Ticket
 
     try:
         ticket = Ticket.objects.get(pk=ticket_id)
@@ -475,9 +489,9 @@ def send_sla_breach_notifications(ticket_id: int):
     notifications = [
         Notification(
             user=sup,
-            title='SLA VIOLADO',
-            message=f'Ticket #{ticket.numero} excedeu o prazo de atendimento!',
-            type='sla_breach',
+            title="SLA VIOLADO",
+            message=f"Ticket #{ticket.numero} excedeu o prazo de atendimento!",
+            type="sla_breach",
             ticket=ticket,
         )
         for sup in supervisors
@@ -490,6 +504,7 @@ def send_sla_breach_notifications(ticket_id: int):
 # Equipment alert checking (runs hourly)
 # ---------------------------------------------------------------------------
 
+
 @shared_task(ignore_result=True)
 def check_equipment_alerts():
     """
@@ -497,11 +512,9 @@ def check_equipment_alerts():
     de chamados, trocas ou garantia prestes a vencer.
     Roda de hora em hora via Celery Beat ou chamada manual.
     """
-    from dashboard.models import (
-        Equipamento, HistoricoEquipamento,
-        AlertaEquipamento, ConfiguracaoAlertaEquipamento
-    )
     from datetime import timedelta
+
+    from dashboard.models import AlertaEquipamento, ConfiguracaoAlertaEquipamento, Equipamento
 
     config = ConfiguracaoAlertaEquipamento.get_config()
     if not config.ativo:
@@ -513,27 +526,25 @@ def check_equipment_alerts():
 
     # 1. Excesso de chamados no período
     limite_chamados = agora - timedelta(days=config.chamados_periodo_dias)
-    equipamentos_ativos = Equipamento.objects.filter(status='ativo')
+    equipamentos_ativos = Equipamento.objects.filter(status="ativo")
 
     for equip in equipamentos_ativos:
         chamados_periodo = equip.tickets.filter(criado_em__gte=limite_chamados).count()
 
         if chamados_periodo >= config.chamados_limiar:
             ja_existe = AlertaEquipamento.objects.filter(
-                equipamento=equip,
-                tipo='excesso_chamados',
-                resolvido=False
+                equipamento=equip, tipo="excesso_chamados", resolvido=False
             ).exists()
             if not ja_existe:
                 AlertaEquipamento.objects.create(
                     equipamento=equip,
-                    tipo='excesso_chamados',
-                    severidade='critical' if chamados_periodo >= config.chamados_limiar * 2 else 'warning',
-                    titulo=f'Excesso de chamados: {equip.tipo} {equip.modelo}',
+                    tipo="excesso_chamados",
+                    severidade="critical" if chamados_periodo >= config.chamados_limiar * 2 else "warning",
+                    titulo=f"Excesso de chamados: {equip.tipo} {equip.modelo}",
                     descricao=(
-                        f'Equipamento {equip.numero_serie} ({equip.tipo} {equip.marca} {equip.modelo}) '
-                        f'tem {chamados_periodo} chamados nos últimos {config.chamados_periodo_dias} dias '
-                        f'(limiar: {config.chamados_limiar}).'
+                        f"Equipamento {equip.numero_serie} ({equip.tipo} {equip.marca} {equip.modelo}) "
+                        f"tem {chamados_periodo} chamados nos últimos {config.chamados_periodo_dias} dias "
+                        f"(limiar: {config.chamados_limiar})."
                     ),
                     valor_atual=chamados_periodo,
                     limiar=config.chamados_limiar,
@@ -544,27 +555,22 @@ def check_equipment_alerts():
     # 2. Troca frequente
     limite_trocas = agora - timedelta(days=config.trocas_periodo_dias)
     for equip in equipamentos_ativos:
-        trocas_periodo = equip.historico.filter(
-            tipo_movimentacao='troca',
-            realizado_em__gte=limite_trocas
-        ).count()
+        trocas_periodo = equip.historico.filter(tipo_movimentacao="troca", realizado_em__gte=limite_trocas).count()
 
         if trocas_periodo >= config.trocas_limiar:
             ja_existe = AlertaEquipamento.objects.filter(
-                equipamento=equip,
-                tipo='troca_frequente',
-                resolvido=False
+                equipamento=equip, tipo="troca_frequente", resolvido=False
             ).exists()
             if not ja_existe:
                 AlertaEquipamento.objects.create(
                     equipamento=equip,
-                    tipo='troca_frequente',
-                    severidade='warning',
-                    titulo=f'Troca frequente: {equip.tipo} {equip.modelo}',
+                    tipo="troca_frequente",
+                    severidade="warning",
+                    titulo=f"Troca frequente: {equip.tipo} {equip.modelo}",
                     descricao=(
-                        f'Equipamento {equip.numero_serie} foi trocado {trocas_periodo} vezes '
-                        f'nos últimos {config.trocas_periodo_dias} dias '
-                        f'(limiar: {config.trocas_limiar}).'
+                        f"Equipamento {equip.numero_serie} foi trocado {trocas_periodo} vezes "
+                        f"nos últimos {config.trocas_periodo_dias} dias "
+                        f"(limiar: {config.trocas_limiar})."
                     ),
                     valor_atual=trocas_periodo,
                     limiar=config.trocas_limiar,
@@ -575,27 +581,25 @@ def check_equipment_alerts():
     # 3. Garantia vencendo
     limite_garantia = (agora + timedelta(days=config.garantia_dias_aviso)).date()
     equips_garantia = Equipamento.objects.filter(
-        status='ativo',
+        status="ativo",
         data_garantia__isnull=False,
         data_garantia__lte=limite_garantia,
         data_garantia__gte=agora.date(),
     )
     for equip in equips_garantia:
         ja_existe = AlertaEquipamento.objects.filter(
-            equipamento=equip,
-            tipo='garantia_vencendo',
-            resolvido=False
+            equipamento=equip, tipo="garantia_vencendo", resolvido=False
         ).exists()
         if not ja_existe:
             dias_restantes = (equip.data_garantia - agora.date()).days
             AlertaEquipamento.objects.create(
                 equipamento=equip,
-                tipo='garantia_vencendo',
-                severidade='info' if dias_restantes > 15 else 'warning',
-                titulo=f'Garantia vencendo: {equip.tipo} {equip.modelo}',
+                tipo="garantia_vencendo",
+                severidade="info" if dias_restantes > 15 else "warning",
+                titulo=f"Garantia vencendo: {equip.tipo} {equip.modelo}",
                 descricao=(
-                    f'A garantia do equipamento {equip.numero_serie} '
-                    f'vence em {dias_restantes} dias ({equip.data_garantia:%d/%m/%Y}).'
+                    f"A garantia do equipamento {equip.numero_serie} "
+                    f"vence em {dias_restantes} dias ({equip.data_garantia:%d/%m/%Y})."
                 ),
                 valor_atual=dias_restantes,
                 limiar=config.garantia_dias_aviso,
@@ -604,7 +608,7 @@ def check_equipment_alerts():
             logger.info(f"Alerta garantia_vencendo criado para equipamento {equip.numero_serie}")
 
     # Atualizar contadores dos equipamentos
-    for equip in Equipamento.objects.filter(status='ativo'):
+    for equip in Equipamento.objects.filter(status="ativo"):
         equip.atualizar_contadores()
 
     logger.info(f"Verificação de alertas concluída: {alertas_criados} alertas criados.")
@@ -614,6 +618,7 @@ def check_equipment_alerts():
 # ---------------------------------------------------------------------------
 # LGPD Data Retention — exclusão automática de dados expirados
 # ---------------------------------------------------------------------------
+
 
 @shared_task
 def lgpd_data_retention():
@@ -640,9 +645,10 @@ def lgpd_data_retention():
 
     # 2. Processar solicitações de exclusão pendentes com prazo expirado (15 dias - Art. 18 §5)
     from datetime import timedelta
+
     overdue_requests = LGPDDataRequest.objects.filter(
-        request_type='exclusao',
-        status='pendente',
+        request_type="exclusao",
+        status="pendente",
         created_at__lt=now - timedelta(days=15),
     )
     for req in overdue_requests:
@@ -652,6 +658,7 @@ def lgpd_data_retention():
         )
         # Escalar para administradores
         from django.core.mail import mail_admins
+
         try:
             mail_admins(
                 f"[LGPD URGENTE] Solicitação de exclusão em atraso #{req.id}",
@@ -668,4 +675,3 @@ def lgpd_data_retention():
 
     logger.info(f"LGPD data retention: {processed} itens processados.")
     return processed
-

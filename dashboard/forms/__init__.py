@@ -6,30 +6,26 @@
 # =============================================================================
 
 from .base import (  # noqa: F401
-    DashboardUserCreationForm,
-    DashboardUserEditForm,
-    CustomLoginForm,
-    QuickTicketForm,
-    MobileCommentForm,
-    TicketForm,
-    TicketCreateForm,
     ClienteForm,
+    CustomLoginForm,
+    DashboardUserChangeForm,
+    DashboardUserCreationForm,
+    MobileCommentForm,
+    QuickTicketForm,
+    TicketCreateForm,
+    TicketForm,
 )
-
-from .simple import (  # noqa: F401
-    CustomLoginForm as SimpleLoginForm,
-    QuickTicketForm as SimpleQuickTicketForm,
-    MobileCommentForm as SimpleMobileCommentForm,
-    TicketForm as SimpleTicketForm,
-    ClienteForm as SimpleClienteForm,
-)
-
+from .simple import ClienteForm as SimpleClienteForm
+from .simple import CustomLoginForm as SimpleLoginForm  # noqa: F401
+from .simple import MobileCommentForm as SimpleMobileCommentForm
+from .simple import QuickTicketForm as SimpleQuickTicketForm
+from .simple import TicketForm as SimpleTicketForm
 from .whatsapp import (  # noqa: F401
     WhatsAppAccountForm,
-    WhatsAppTemplateForm,
+    WhatsAppAnalyticsFilterForm,
     WhatsAppAutoResponseForm,
+    WhatsAppBulkMessageForm,
     WhatsAppContactForm,
     WhatsAppMessageForm,
-    WhatsAppBulkMessageForm,
-    WhatsAppAnalyticsFilterForm,
+    WhatsAppTemplateForm,
 )

@@ -3,82 +3,76 @@
 
 # ========== AUDITORIA E LOGGING ==========
 
-import os
-from pathlib import Path
 
 # Diretório para logs
-LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR = BASE_DIR / "logs"
 LOGS_DIR.mkdir(exist_ok=True)
 
 # Configuração de logging avançada
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
         },
-        'simple': {
-            'format': '{levelname} {asctime} {message}',
-            'style': '{',
+        "simple": {
+            "format": "{levelname} {asctime} {message}",
+            "style": "{",
         },
-        'audit': {
-            'format': '{asctime} | {levelname} | {module} | {message}',
-            'style': '{',
-        },
-    },
-    'handlers': {
-        'console': {
-            'level': 'INFO',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple'
-        },
-        'audit_file': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOGS_DIR / 'audit.log',
-            'maxBytes': 1024*1024*50,  # 50MB
-            'backupCount': 10,
-            'formatter': 'audit',
-        },
-        'security_file': {
-            'level': 'WARNING',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOGS_DIR / 'security.log',
-            'maxBytes': 1024*1024*25,  # 25MB
-            'backupCount': 5,
-            'formatter': 'verbose',
-        },
-        'performance_file': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOGS_DIR / 'performance.log',
-            'maxBytes': 1024*1024*25,  # 25MB
-            'backupCount': 5,
-            'formatter': 'verbose',
+        "audit": {
+            "format": "{asctime} | {levelname} | {module} | {message}",
+            "style": "{",
         },
     },
-    'loggers': {
-        'dashboard.audit_system': {
-            'handlers': ['audit_file', 'console'],
-            'level': 'INFO',
-            'propagate': False,
+    "handlers": {
+        "console": {"level": "INFO", "class": "logging.StreamHandler", "formatter": "simple"},
+        "audit_file": {
+            "level": "INFO",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOGS_DIR / "audit.log",
+            "maxBytes": 1024 * 1024 * 50,  # 50MB
+            "backupCount": 10,
+            "formatter": "audit",
         },
-        'dashboard.security': {
-            'handlers': ['security_file', 'console'],
-            'level': 'WARNING',
-            'propagate': False,
+        "security_file": {
+            "level": "WARNING",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOGS_DIR / "security.log",
+            "maxBytes": 1024 * 1024 * 25,  # 25MB
+            "backupCount": 5,
+            "formatter": "verbose",
         },
-        'dashboard.performance': {
-            'handlers': ['performance_file'],
-            'level': 'INFO',
-            'propagate': False,
+        "performance_file": {
+            "level": "INFO",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOGS_DIR / "performance.log",
+            "maxBytes": 1024 * 1024 * 25,  # 25MB
+            "backupCount": 5,
+            "formatter": "verbose",
         },
-        'django.request': {
-            'handlers': ['security_file'],
-            'level': 'ERROR',
-            'propagate': True,
+    },
+    "loggers": {
+        "dashboard.audit_system": {
+            "handlers": ["audit_file", "console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "dashboard.security": {
+            "handlers": ["security_file", "console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "dashboard.performance": {
+            "handlers": ["performance_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["security_file"],
+            "level": "ERROR",
+            "propagate": True,
         },
     },
 }
@@ -86,10 +80,10 @@ LOGGING = {
 # ========== MIDDLEWARE DE AUDITORIA ==========
 # Adicione ao MIDDLEWARE (preferencialmente no início)
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'dashboard.security.SecurityHeadersMiddleware',  # Middleware de segurança
-    'dashboard.audit_system.AuditMiddleware',        # Middleware de auditoria
-    'dashboard.api_versioning.APIVersionMiddleware', # Middleware de versionamento
+    "django.middleware.security.SecurityMiddleware",
+    "dashboard.security.SecurityHeadersMiddleware",  # Middleware de segurança
+    "dashboard.audit_system.AuditMiddleware",  # Middleware de auditoria
+    "dashboard.api_versioning.APIVersionMiddleware",  # Middleware de versionamento
     # ... outros middlewares existentes
 ]
 
@@ -106,26 +100,26 @@ AUDIT_SENSITIVE_DATA = True
 
 # Tabelas consideradas sensíveis
 SENSITIVE_TABLES = [
-    'auth_user',
-    'dashboard_cliente',
-    'dashboard_ticket',
-    'dashboard_perfilusuario',
+    "auth_user",
+    "dashboard_cliente",
+    "dashboard_ticket",
+    "dashboard_perfilusuario",
 ]
 
 # Campos considerados sensíveis
 SENSITIVE_FIELDS = [
-    'password',
-    'email',
-    'telefone',
-    'cpf',
-    'cnpj',
-    'endereco',
+    "password",
+    "email",
+    "telefone",
+    "cpf",
+    "cnpj",
+    "endereco",
 ]
 
 # Retenção de logs de auditoria (em dias)
 AUDIT_RETENTION_DAYS = 365
 
-# Retenção de eventos de segurança (em dias)  
+# Retenção de eventos de segurança (em dias)
 SECURITY_RETENTION_DAYS = 90
 
 # Retenção de logs de acesso a dados (em dias)
@@ -135,9 +129,9 @@ DATA_ACCESS_RETENTION_DAYS = 180
 
 # Cache para rate limiting (usando Redis se disponível)
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
     }
 }
 
@@ -151,29 +145,29 @@ CACHES = {
 
 # Rate limiting padrão
 DEFAULT_RATE_LIMIT = {
-    'max_requests': 1000,
-    'window_seconds': 3600,
+    "max_requests": 1000,
+    "window_seconds": 3600,
 }
 
 # Rate limits específicos por endpoint
 RATE_LIMITS = {
-    'login': {'max_requests': 5, 'window_seconds': 300},
-    'password_reset': {'max_requests': 3, 'window_seconds': 3600},
-    'api_calls': {'max_requests': 100, 'window_seconds': 3600},
-    'file_upload': {'max_requests': 10, 'window_seconds': 600},
+    "login": {"max_requests": 5, "window_seconds": 300},
+    "password_reset": {"max_requests": 3, "window_seconds": 3600},
+    "api_calls": {"max_requests": 100, "window_seconds": 3600},
+    "file_upload": {"max_requests": 10, "window_seconds": 600},
 }
 
 # IPs confiáveis (não aplicar rate limiting)
 TRUSTED_IPS = [
-    '127.0.0.1',
-    '::1',
+    "127.0.0.1",
+    "::1",
     # Adicione IPs de servidores internos
 ]
 
 # ========== CONFIGURAÇÕES DE NOTIFICAÇÃO ==========
 
 # Email para alertas de segurança críticos
-SECURITY_ALERT_EMAIL = 'admin@exemplo.com'
+SECURITY_ALERT_EMAIL = "admin@exemplo.com"
 
 # Webhook para alertas (Slack, Teams, etc.)
 SECURITY_WEBHOOK_URL = None
@@ -185,14 +179,14 @@ EMAIL_SECURITY_ALERTS = True
 
 # Configurações para limpeza automática de logs antigos
 # Adicione ao crontab:
-# 
+#
 # # Limpeza de logs de auditoria (diário às 1:00)
 # 0 1 * * * cd /caminho/para/projeto && python manage.py audit_cleanup
-# 
+#
 # # Relatório semanal de auditoria (segundas às 8:00)
 # 0 8 * * 1 cd /caminho/para/projeto && python manage.py audit_report --days 7 --type summary
-# 
-# # Backup semanal (domingos às 2:00)  
+#
+# # Backup semanal (domingos às 2:00)
 # 0 2 * * 0 cd /caminho/para/projeto && python manage.py backup --full
 
 # ========== EXEMPLOS DE USO ==========
@@ -221,12 +215,12 @@ EMAIL_SECURITY_ALERTS = True
 # import sentry_sdk
 # from sentry_sdk.integrations.django import DjangoIntegration
 # from sentry_sdk.integrations.logging import LoggingIntegration
-# 
+#
 # sentry_logging = LoggingIntegration(
 #     level=logging.INFO,
 #     event_level=logging.ERROR
 # )
-# 
+#
 # sentry_sdk.init(
 #     dsn="YOUR_SENTRY_DSN",
 #     integrations=[DjangoIntegration(), sentry_logging],

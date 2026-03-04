@@ -2,9 +2,11 @@
 Management command para configurar RBAC (roles, groups, permissoes).
 Uso: python manage.py setup_rbac
 """
-from django.core.management.base import BaseCommand
-from dashboard.utils.rbac import setup_groups_and_permissions, assign_role, ROLE_ADMIN
+
 from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand
+
+from dashboard.utils.rbac import ROLE_ADMIN, assign_role, setup_groups_and_permissions
 
 
 class Command(BaseCommand):

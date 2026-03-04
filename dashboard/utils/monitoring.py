@@ -2,19 +2,22 @@
 Sistema de Monitoramento e Health Checks - iConnect
 Middleware e views para monitoramento de saúde da aplicação
 """
-import time
+
 import logging
-from django.http import JsonResponse
-from django.views import View
-from django.db import connections
-from django.core.cache import cache
+import time
+from datetime import timedelta
+
 from django.conf import settings
+from django.contrib.admin.views.decorators import staff_member_required
+from django.core.cache import cache
+from django.db import connections
+from django.http import JsonResponse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
-from django.contrib.admin.views.decorators import staff_member_required
-from datetime import datetime, timedelta
+from django.views import View
 
-logger = logging.getLogger('dashboard')
+logger = logging.getLogger("dashboard")
+
 
 class HealthCheckView(View):
     """
@@ -22,100 +25,89 @@ class HealthCheckView(View):
     GET /health/
     Aceita token via query param ?token=<HEALTH_CHECK_TOKEN> ou header Authorization.
     """
-    
+
     def _check_auth(self, request):
         """Verifica autenticação por token ou staff."""
         # Permitir acesso de staff logados
-        if hasattr(request, 'user') and request.user.is_authenticated and request.user.is_staff:
+        if hasattr(request, "user") and request.user.is_authenticated and request.user.is_staff:
             return True
         # Token de health check (para load balancers/monitoring externo)
-        expected_token = getattr(settings, 'HEALTH_CHECK_TOKEN', None)
+        expected_token = getattr(settings, "HEALTH_CHECK_TOKEN", None)
         if expected_token:
-            token = request.GET.get('token') or request.META.get('HTTP_AUTHORIZATION', '').replace('Bearer ', '')
+            token = request.GET.get("token") or request.META.get("HTTP_AUTHORIZATION", "").replace("Bearer ", "")
             return token == expected_token
         # Se nenhum token configurado, permitir health check básico (sem detalhes)
         return None
-    
+
     def get(self, request):
         auth = self._check_auth(request)
-        
+
         health_data = {
-            'status': 'healthy',
-            'timestamp': timezone.now().isoformat(),
+            "status": "healthy",
+            "timestamp": timezone.now().isoformat(),
         }
-        
+
         # Apenas retorna status básico para requisições não-autenticadas
         if auth is None:
             return JsonResponse(health_data)
         if auth is False:
-            return JsonResponse({'error': 'Unauthorized'}, status=401)
-        
+            return JsonResponse({"error": "Unauthorized"}, status=401)
+
         # Dados completos para requisições autenticadas
-        health_data['version'] = getattr(settings, 'VERSION', '1.0.0')
-        health_data['environment'] = getattr(settings, 'ENVIRONMENT', 'unknown')
-        health_data['checks'] = {}
-        
+        health_data["version"] = getattr(settings, "VERSION", "1.0.0")
+        health_data["environment"] = getattr(settings, "ENVIRONMENT", "unknown")
+        health_data["checks"] = {}
+
         # Check Database
         try:
-            db_conn = connections['default']
+            db_conn = connections["default"]
             db_conn.cursor()
-            health_data['checks']['database'] = {
-                'status': 'healthy',
-                'response_time': self._measure_db_response_time()
-            }
+            health_data["checks"]["database"] = {"status": "healthy", "response_time": self._measure_db_response_time()}
         except Exception as e:
-            health_data['checks']['database'] = {
-                'status': 'unhealthy',
-                'error': type(e).__name__
-            }
-            health_data['status'] = 'unhealthy'
-        
+            health_data["checks"]["database"] = {"status": "unhealthy", "error": type(e).__name__}
+            health_data["status"] = "unhealthy"
+
         # Check Cache/Redis
         try:
-            cache_key = f'health_check_{int(time.time())}'
-            cache.set(cache_key, 'test', 60)
+            cache_key = f"health_check_{int(time.time())}"
+            cache.set(cache_key, "test", 60)
             cached_value = cache.get(cache_key)
-            
-            if cached_value == 'test':
-                health_data['checks']['cache'] = {'status': 'healthy'}
+
+            if cached_value == "test":
+                health_data["checks"]["cache"] = {"status": "healthy"}
             else:
                 raise Exception("Cache test failed")
         except Exception as e:
-            health_data['checks']['cache'] = {
-                'status': 'unhealthy',
-                'error': type(e).__name__
-            }
-            health_data['status'] = 'unhealthy'
-        
+            health_data["checks"]["cache"] = {"status": "unhealthy", "error": type(e).__name__}
+            health_data["status"] = "unhealthy"
+
         # Check Disk Space
         import shutil
+
         try:
-            usage = shutil.disk_usage('/')
+            usage = shutil.disk_usage("/")
             free_percent = (usage.free / usage.total) * 100
-            
-            health_data['checks']['disk'] = {
-                'status': 'healthy' if free_percent > 10 else 'warning',
-                'free_percent': round(free_percent, 2),
-                'free_gb': round(usage.free / (1024**3), 2)
+
+            health_data["checks"]["disk"] = {
+                "status": "healthy" if free_percent > 10 else "warning",
+                "free_percent": round(free_percent, 2),
+                "free_gb": round(usage.free / (1024**3), 2),
             }
-            
+
             if free_percent < 5:
-                health_data['status'] = 'unhealthy'
+                health_data["status"] = "unhealthy"
         except Exception as e:
-            health_data['checks']['disk'] = {
-                'status': 'unhealthy',
-                'error': type(e).__name__
-            }
-        
+            health_data["checks"]["disk"] = {"status": "unhealthy", "error": type(e).__name__}
+
         # Determinar status code HTTP
-        status_code = 200 if health_data['status'] == 'healthy' else 503
-        
+        status_code = 200 if health_data["status"] == "healthy" else 503
+
         return JsonResponse(health_data, status=status_code)
-    
+
     def _measure_db_response_time(self):
         """Mede o tempo de resposta do banco de dados"""
         start_time = time.time()
-        db_conn = connections['default']
+        db_conn = connections["default"]
         cursor = db_conn.cursor()
         cursor.execute("SELECT 1")
         cursor.fetchone()
@@ -123,113 +115,108 @@ class HealthCheckView(View):
         return round((end_time - start_time) * 1000, 2)  # ms
 
 
-@method_decorator(staff_member_required, name='dispatch')
+@method_decorator(staff_member_required, name="dispatch")
 class MetricsView(View):
     """
     Endpoint para métricas da aplicação (SOMENTE STAFF).
     GET /metrics/
     """
-    
+
     def get(self, request):
         """
         Retorna métricas detalhadas da aplicação
         """
-        from dashboard.models import Ticket, Cliente, PerfilAgente
         from django.contrib.auth.models import User
-        
+
+        from dashboard.models import Cliente, PerfilAgente, Ticket
+
         # Métricas básicas
         now = timezone.now()
         today = now.date()
         week_ago = today - timedelta(days=7)
         month_ago = today - timedelta(days=30)
-        
+
         metrics = {
-            'timestamp': now.isoformat(),
-            'application': {
-                'name': 'iConnect Sistema de Atendimento',
-                'version': getattr(settings, 'VERSION', '1.0.0'),
-                'uptime_seconds': self._get_uptime()
+            "timestamp": now.isoformat(),
+            "application": {
+                "name": "iConnect Sistema de Atendimento",
+                "version": getattr(settings, "VERSION", "1.0.0"),
+                "uptime_seconds": self._get_uptime(),
             },
-            'business_metrics': {
-                'tickets': {
-                    'total': Ticket.objects.count(),
-                    'open': Ticket.objects.filter(status__in=['aberto', 'em_andamento']).count(),
-                    'closed_today': Ticket.objects.filter(
-                        status='fechado',
-                        atualizado_em__date=today
-                    ).count(),
-                    'created_this_week': Ticket.objects.filter(
-                        criado_em__date__gte=week_ago
-                    ).count()
+            "business_metrics": {
+                "tickets": {
+                    "total": Ticket.objects.count(),
+                    "open": Ticket.objects.filter(status__in=["aberto", "em_andamento"]).count(),
+                    "closed_today": Ticket.objects.filter(status="fechado", atualizado_em__date=today).count(),
+                    "created_this_week": Ticket.objects.filter(criado_em__date__gte=week_ago).count(),
                 },
-                'users': {
-                    'total_clients': Cliente.objects.count(),
-                    'active_agents': PerfilAgente.objects.filter(status='disponivel').count(),
-                    'total_users': User.objects.count(),
-                    'new_users_this_month': User.objects.filter(
-                        date_joined__date__gte=month_ago
-                    ).count()
-                }
+                "users": {
+                    "total_clients": Cliente.objects.count(),
+                    "active_agents": PerfilAgente.objects.filter(status="disponivel").count(),
+                    "total_users": User.objects.count(),
+                    "new_users_this_month": User.objects.filter(date_joined__date__gte=month_ago).count(),
+                },
             },
-            'system_metrics': self._get_system_metrics()
+            "system_metrics": self._get_system_metrics(),
         }
-        
+
         return JsonResponse(metrics)
-    
+
     def _get_uptime(self):
         """Calcula o uptime da aplicação"""
         try:
             import psutil
+
             boot_time = psutil.boot_time()
             return int(time.time() - boot_time)
         except (ImportError, AttributeError):
             return 0
-    
+
     def _get_system_metrics(self):
         """Coleta métricas do sistema"""
         try:
             import psutil
-            
+
             memory = psutil.virtual_memory()
-            disk = psutil.disk_usage('/')
-            
+            disk = psutil.disk_usage("/")
+
             return {
-                'cpu_percent': psutil.cpu_percent(interval=None),  # Non-blocking
-                'memory': {
-                    'total_gb': round(memory.total / (1024**3), 2),
-                    'used_gb': round(memory.used / (1024**3), 2),
-                    'percent': memory.percent
+                "cpu_percent": psutil.cpu_percent(interval=None),  # Non-blocking
+                "memory": {
+                    "total_gb": round(memory.total / (1024**3), 2),
+                    "used_gb": round(memory.used / (1024**3), 2),
+                    "percent": memory.percent,
                 },
-                'disk': {
-                    'total_gb': round(disk.total / (1024**3), 2),
-                    'used_gb': round(disk.used / (1024**3), 2),
-                    'free_gb': round(disk.free / (1024**3), 2),
-                    'percent': round((disk.used / disk.total) * 100, 2)
+                "disk": {
+                    "total_gb": round(disk.total / (1024**3), 2),
+                    "used_gb": round(disk.used / (1024**3), 2),
+                    "free_gb": round(disk.free / (1024**3), 2),
+                    "percent": round((disk.used / disk.total) * 100, 2),
                 },
-                'load_average': psutil.getloadavg()
+                "load_average": psutil.getloadavg(),
             }
         except ImportError:
-            return {'error': 'psutil not installed'}
+            return {"error": "psutil not installed"}
 
 
 class MonitoringMiddleware:
     """
     Middleware para coleta de métricas de request/response
     """
-    
+
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
         # Marca o início da request
         start_time = time.time()
-        
+
         # Processa a request
         response = self.get_response(request)
-        
+
         # Calcula o tempo de resposta
         duration = time.time() - start_time
-        
+
         # Log de métricas
         logger.info(
             f"REQUEST: {request.method} {request.path} "
@@ -238,21 +225,21 @@ class MonitoringMiddleware:
             f"| User: {getattr(request.user, 'username', 'anonymous')} "
             f"| IP: {self._get_client_ip(request)}"
         )
-        
+
         # Headers de resposta para debugging
         if settings.DEBUG:
-            response['X-Response-Time'] = f"{duration:.3f}s"
-            response['X-Process-Time'] = str(int(duration * 1000))
-        
+            response["X-Response-Time"] = f"{duration:.3f}s"
+            response["X-Process-Time"] = str(int(duration * 1000))
+
         return response
 
     def _get_client_ip(self, request):
         """Obtém o IP real do cliente"""
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
         if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
+            ip = x_forwarded_for.split(",")[0]
         else:
-            ip = request.META.get('REMOTE_ADDR')
+            ip = request.META.get("REMOTE_ADDR")
         return ip
 
     def process_exception(self, request, exception):
@@ -262,6 +249,6 @@ class MonitoringMiddleware:
             f"| Exception: {type(exception).__name__}: {str(exception)} "
             f"| User: {getattr(request.user, 'username', 'anonymous')} "
             f"| IP: {self._get_client_ip(request)}",
-            exc_info=True
+            exc_info=True,
         )
         return None

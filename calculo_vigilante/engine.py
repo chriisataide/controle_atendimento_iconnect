@@ -14,20 +14,21 @@ Uso standalone (sem Django):
     df = calcular_valor_implantacao(df)
     df.to_excel("resultado.xlsx", index=False)
 """
-import re
+
 import logging
+import re
+from datetime import time, timedelta
 
 import pandas as pd
 from unidecode import unidecode
-from datetime import timedelta, time
 
 logger = logging.getLogger(__name__)
 
 # ╔══════════════════════════════════════════════════════════════════╗
 # ║                  CONSTANTES DE JORNADA                          ║
 # ╚══════════════════════════════════════════════════════════════════╝
-JORNADA_8H48_MINUTOS = 508.8       # 8 horas e 48 minutos
-JORNADA_24H_MINUTOS = 1440         # 24 horas
+JORNADA_8H48_MINUTOS = 508.8  # 8 horas e 48 minutos
+JORNADA_24H_MINUTOS = 1440  # 24 horas
 TOLERANCIA_MINUTOS = 10
 
 # Períodos noturnos (22:00 – 04:59)
@@ -41,44 +42,268 @@ HORA_FIM_NOTURNO_2 = time(4, 59, 59)
 # ║              TABELA DE VALORES DE IMPLANTAÇÃO                   ║
 # ╚══════════════════════════════════════════════════════════════════╝
 VALORES_IMPLANTACAO = [
-    {"empresa": "AZUL",           "uf": "RJ", "hora_extra": 43.04, "8h48_diurno": 269.00, "8h48_noturno": 312.83, "24h": 793.89},
-    {"empresa": "AZUL",           "uf": "SP", "hora_extra": 46.10, "8h48_diurno": 288.82, "8h48_noturno": 317.43, "24h": 828.39},
-    {"empresa": "BELFORT",        "uf": "SP", "hora_extra": 46.30, "8h48_diurno": 289.38, "8h48_noturno": 319.01, "24h": 839.11},
-    {"empresa": "BELFORT",        "uf": "RJ", "hora_extra": 44.26, "8h48_diurno": 276.63, "8h48_noturno": 357.32, "24h": 848.89},
-    {"empresa": "CAMPSEG",        "uf": "MG", "hora_extra": 50.94, "8h48_diurno": 318.35, "8h48_noturno": 366.82, "24h": 1058.64},
-    {"empresa": "CAMPSEG",        "uf": "SP", "hora_extra": 47.64, "8h48_diurno": 297.77, "8h48_noturno": 365.19, "24h": 1026.29},
-    {"empresa": "DFA SEG",        "uf": "BA", "hora_extra": 39.05, "8h48_diurno": 244.04, "8h48_noturno": 323.51, "24h": 791.94},
-    {"empresa": "EPAVI",          "uf": "SP", "hora_extra": 45.74, "8h48_diurno": 285.91, "8h48_noturno": 330.39, "24h": 853.70},
-    {"empresa": "EPAVI",          "uf": "PR", "hora_extra": 48.55, "8h48_diurno": 303.43, "8h48_noturno": 353.98, "24h": 967.55},
-    {"empresa": "EPAVI",          "uf": "SC", "hora_extra": 39.99, "8h48_diurno": 249.94, "8h48_noturno": 309.10, "24h": 837.83},
-    {"empresa": "EPAVI",          "uf": "RS", "hora_extra": 40.42, "8h48_diurno": 252.62, "8h48_noturno": 311.76, "24h": 844.66},
-    {"empresa": "FORT KNOX",      "uf": "SP", "hora_extra": 47.01, "8h48_diurno": 293.77, "8h48_noturno": 334.98, "24h": 937.71},
-    {"empresa": "SEGURPRO",       "uf": "RR", "hora_extra": 33.33, "8h48_diurno": 208.36, "8h48_noturno": 261.28, "24h": 622.81},
-    {"empresa": "SEGURPRO",       "uf": "PI", "hora_extra": 39.55, "8h48_diurno": 247.19, "8h48_noturno": 309.32, "24h": 758.90},
-    {"empresa": "SEGURPRO",       "uf": "MT", "hora_extra": 38.35, "8h48_diurno": 251.37, "8h48_noturno": 287.24, "24h": 732.59},
-    {"empresa": "SEGURPRO",       "uf": "MS", "hora_extra": 42.09, "8h48_diurno": 263.03, "8h48_noturno": 324.91, "24h": 789.04},
-    {"empresa": "SEGURPRO",       "uf": "ES", "hora_extra": 45.51, "8h48_diurno": 284.43, "8h48_noturno": 353.95, "24h": 867.75},
-    {"empresa": "SEGURPRO",       "uf": "AC", "hora_extra": 44.25, "8h48_diurno": 276.61, "8h48_noturno": 341.45, "24h": 827.55},
-    {"empresa": "SEGURPRO",       "uf": "AL", "hora_extra": 37.54, "8h48_diurno": 234.61, "8h48_noturno": 274.87, "24h": 715.55},
-    {"empresa": "SEGURPRO",       "uf": "AM", "hora_extra": 40.79, "8h48_diurno": 254.90, "8h48_noturno": 330.29, "24h": 806.02},
-    {"empresa": "SEGURPRO",       "uf": "AP", "hora_extra": 48.79, "8h48_diurno": 304.21, "8h48_noturno": 379.33, "24h": 920.34},
-    {"empresa": "SEGURPRO",       "uf": "BA", "hora_extra": 33.16, "8h48_diurno": 207.20, "8h48_noturno": 270.15, "24h": 645.77},
-    {"empresa": "SEGURPRO",       "uf": "SE", "hora_extra": 35.00, "8h48_diurno": 218.73, "8h48_noturno": 276.02, "24h": 671.42},
-    {"empresa": "SEGURPRO",       "uf": "TO", "hora_extra": 44.23, "8h48_diurno": 276.47, "8h48_noturno": 341.34, "24h": 832.54},
-    {"empresa": "GLOBAL SEG",     "uf": "DF", "hora_extra": 66.11, "8h48_diurno": 413.20, "8h48_noturno": 461.65, "24h": 1234.89},
-    {"empresa": "GOIAS F",        "uf": "GO", "hora_extra": 41.59, "8h48_diurno": 259.91, "8h48_noturno": 295.55, "24h": 868.92},
-    {"empresa": "GOIAS F",        "uf": "MG", "hora_extra": 50.94, "8h48_diurno": 318.36, "8h48_noturno": 366.82, "24h": 1058.64},
-    {"empresa": "GUARDED PLACE",  "uf": "SP", "hora_extra": 47.91, "8h48_diurno": 299.47, "8h48_noturno": 325.51, "24h": 950.14},
-    {"empresa": "GUARDED PLACE",  "uf": "RS", "hora_extra": 42.04, "8h48_diurno": 262.73, "8h48_noturno": 324.23, "24h": 878.45},
-    {"empresa": "INTERFORT",      "uf": "PE", "hora_extra": 38.50, "8h48_diurno": 240.66, "8h48_noturno": 280.03, "24h": 700.67},
-    {"empresa": "INTERFORT",      "uf": "PB", "hora_extra": 33.04, "8h48_diurno": 206.47, "8h48_noturno": 243.43, "24h": 624.19},
-    {"empresa": "INTERFORT",      "uf": "RN", "hora_extra": 40.77, "8h48_diurno": 254.83, "8h48_noturno": 300.90, "24h": 764.72},
-    {"empresa": "LISERVE",        "uf": "PE", "hora_extra": 928.70, "8h48_diurno": 0.0,    "8h48_noturno": 6463.56, "24h": 88707.08},
-    {"empresa": "RG SEG",         "uf": "MA", "hora_extra": 37.81, "8h48_diurno": 236.33, "8h48_noturno": 292.01, "24h": 687.71},
-    {"empresa": "CEARA SEGUR",    "uf": "CE", "hora_extra": 39.87, "8h48_diurno": 249.18, "8h48_noturno": 293.41, "24h": 679.34},
-    {"empresa": "FIEL VIG",       "uf": "PA", "hora_extra": 42.79, "8h48_diurno": 267.43, "8h48_noturno": 361.02, "24h": 852.20},
-    {"empresa": "FIEL VIG",       "uf": "RO", "hora_extra": 42.80, "8h48_diurno": 267.47, "8h48_noturno": 331.20, "24h": 820.29},
-    {"empresa": "SUNSET",         "uf": "RJ", "hora_extra": 47.46, "8h48_diurno": 296.58, "8h48_noturno": 355.39, "24h": 902.57},
+    {"empresa": "AZUL", "uf": "RJ", "hora_extra": 43.04, "8h48_diurno": 269.00, "8h48_noturno": 312.83, "24h": 793.89},
+    {"empresa": "AZUL", "uf": "SP", "hora_extra": 46.10, "8h48_diurno": 288.82, "8h48_noturno": 317.43, "24h": 828.39},
+    {
+        "empresa": "BELFORT",
+        "uf": "SP",
+        "hora_extra": 46.30,
+        "8h48_diurno": 289.38,
+        "8h48_noturno": 319.01,
+        "24h": 839.11,
+    },
+    {
+        "empresa": "BELFORT",
+        "uf": "RJ",
+        "hora_extra": 44.26,
+        "8h48_diurno": 276.63,
+        "8h48_noturno": 357.32,
+        "24h": 848.89,
+    },
+    {
+        "empresa": "CAMPSEG",
+        "uf": "MG",
+        "hora_extra": 50.94,
+        "8h48_diurno": 318.35,
+        "8h48_noturno": 366.82,
+        "24h": 1058.64,
+    },
+    {
+        "empresa": "CAMPSEG",
+        "uf": "SP",
+        "hora_extra": 47.64,
+        "8h48_diurno": 297.77,
+        "8h48_noturno": 365.19,
+        "24h": 1026.29,
+    },
+    {
+        "empresa": "DFA SEG",
+        "uf": "BA",
+        "hora_extra": 39.05,
+        "8h48_diurno": 244.04,
+        "8h48_noturno": 323.51,
+        "24h": 791.94,
+    },
+    {"empresa": "EPAVI", "uf": "SP", "hora_extra": 45.74, "8h48_diurno": 285.91, "8h48_noturno": 330.39, "24h": 853.70},
+    {"empresa": "EPAVI", "uf": "PR", "hora_extra": 48.55, "8h48_diurno": 303.43, "8h48_noturno": 353.98, "24h": 967.55},
+    {"empresa": "EPAVI", "uf": "SC", "hora_extra": 39.99, "8h48_diurno": 249.94, "8h48_noturno": 309.10, "24h": 837.83},
+    {"empresa": "EPAVI", "uf": "RS", "hora_extra": 40.42, "8h48_diurno": 252.62, "8h48_noturno": 311.76, "24h": 844.66},
+    {
+        "empresa": "FORT KNOX",
+        "uf": "SP",
+        "hora_extra": 47.01,
+        "8h48_diurno": 293.77,
+        "8h48_noturno": 334.98,
+        "24h": 937.71,
+    },
+    {
+        "empresa": "SEGURPRO",
+        "uf": "RR",
+        "hora_extra": 33.33,
+        "8h48_diurno": 208.36,
+        "8h48_noturno": 261.28,
+        "24h": 622.81,
+    },
+    {
+        "empresa": "SEGURPRO",
+        "uf": "PI",
+        "hora_extra": 39.55,
+        "8h48_diurno": 247.19,
+        "8h48_noturno": 309.32,
+        "24h": 758.90,
+    },
+    {
+        "empresa": "SEGURPRO",
+        "uf": "MT",
+        "hora_extra": 38.35,
+        "8h48_diurno": 251.37,
+        "8h48_noturno": 287.24,
+        "24h": 732.59,
+    },
+    {
+        "empresa": "SEGURPRO",
+        "uf": "MS",
+        "hora_extra": 42.09,
+        "8h48_diurno": 263.03,
+        "8h48_noturno": 324.91,
+        "24h": 789.04,
+    },
+    {
+        "empresa": "SEGURPRO",
+        "uf": "ES",
+        "hora_extra": 45.51,
+        "8h48_diurno": 284.43,
+        "8h48_noturno": 353.95,
+        "24h": 867.75,
+    },
+    {
+        "empresa": "SEGURPRO",
+        "uf": "AC",
+        "hora_extra": 44.25,
+        "8h48_diurno": 276.61,
+        "8h48_noturno": 341.45,
+        "24h": 827.55,
+    },
+    {
+        "empresa": "SEGURPRO",
+        "uf": "AL",
+        "hora_extra": 37.54,
+        "8h48_diurno": 234.61,
+        "8h48_noturno": 274.87,
+        "24h": 715.55,
+    },
+    {
+        "empresa": "SEGURPRO",
+        "uf": "AM",
+        "hora_extra": 40.79,
+        "8h48_diurno": 254.90,
+        "8h48_noturno": 330.29,
+        "24h": 806.02,
+    },
+    {
+        "empresa": "SEGURPRO",
+        "uf": "AP",
+        "hora_extra": 48.79,
+        "8h48_diurno": 304.21,
+        "8h48_noturno": 379.33,
+        "24h": 920.34,
+    },
+    {
+        "empresa": "SEGURPRO",
+        "uf": "BA",
+        "hora_extra": 33.16,
+        "8h48_diurno": 207.20,
+        "8h48_noturno": 270.15,
+        "24h": 645.77,
+    },
+    {
+        "empresa": "SEGURPRO",
+        "uf": "SE",
+        "hora_extra": 35.00,
+        "8h48_diurno": 218.73,
+        "8h48_noturno": 276.02,
+        "24h": 671.42,
+    },
+    {
+        "empresa": "SEGURPRO",
+        "uf": "TO",
+        "hora_extra": 44.23,
+        "8h48_diurno": 276.47,
+        "8h48_noturno": 341.34,
+        "24h": 832.54,
+    },
+    {
+        "empresa": "GLOBAL SEG",
+        "uf": "DF",
+        "hora_extra": 66.11,
+        "8h48_diurno": 413.20,
+        "8h48_noturno": 461.65,
+        "24h": 1234.89,
+    },
+    {
+        "empresa": "GOIAS F",
+        "uf": "GO",
+        "hora_extra": 41.59,
+        "8h48_diurno": 259.91,
+        "8h48_noturno": 295.55,
+        "24h": 868.92,
+    },
+    {
+        "empresa": "GOIAS F",
+        "uf": "MG",
+        "hora_extra": 50.94,
+        "8h48_diurno": 318.36,
+        "8h48_noturno": 366.82,
+        "24h": 1058.64,
+    },
+    {
+        "empresa": "GUARDED PLACE",
+        "uf": "SP",
+        "hora_extra": 47.91,
+        "8h48_diurno": 299.47,
+        "8h48_noturno": 325.51,
+        "24h": 950.14,
+    },
+    {
+        "empresa": "GUARDED PLACE",
+        "uf": "RS",
+        "hora_extra": 42.04,
+        "8h48_diurno": 262.73,
+        "8h48_noturno": 324.23,
+        "24h": 878.45,
+    },
+    {
+        "empresa": "INTERFORT",
+        "uf": "PE",
+        "hora_extra": 38.50,
+        "8h48_diurno": 240.66,
+        "8h48_noturno": 280.03,
+        "24h": 700.67,
+    },
+    {
+        "empresa": "INTERFORT",
+        "uf": "PB",
+        "hora_extra": 33.04,
+        "8h48_diurno": 206.47,
+        "8h48_noturno": 243.43,
+        "24h": 624.19,
+    },
+    {
+        "empresa": "INTERFORT",
+        "uf": "RN",
+        "hora_extra": 40.77,
+        "8h48_diurno": 254.83,
+        "8h48_noturno": 300.90,
+        "24h": 764.72,
+    },
+    {
+        "empresa": "LISERVE",
+        "uf": "PE",
+        "hora_extra": 928.70,
+        "8h48_diurno": 0.0,
+        "8h48_noturno": 6463.56,
+        "24h": 88707.08,
+    },
+    {
+        "empresa": "RG SEG",
+        "uf": "MA",
+        "hora_extra": 37.81,
+        "8h48_diurno": 236.33,
+        "8h48_noturno": 292.01,
+        "24h": 687.71,
+    },
+    {
+        "empresa": "CEARA SEGUR",
+        "uf": "CE",
+        "hora_extra": 39.87,
+        "8h48_diurno": 249.18,
+        "8h48_noturno": 293.41,
+        "24h": 679.34,
+    },
+    {
+        "empresa": "FIEL VIG",
+        "uf": "PA",
+        "hora_extra": 42.79,
+        "8h48_diurno": 267.43,
+        "8h48_noturno": 361.02,
+        "24h": 852.20,
+    },
+    {
+        "empresa": "FIEL VIG",
+        "uf": "RO",
+        "hora_extra": 42.80,
+        "8h48_diurno": 267.47,
+        "8h48_noturno": 331.20,
+        "24h": 820.29,
+    },
+    {
+        "empresa": "SUNSET",
+        "uf": "RJ",
+        "hora_extra": 47.46,
+        "8h48_diurno": 296.58,
+        "8h48_noturno": 355.39,
+        "24h": 902.57,
+    },
 ]
 
 # ╔══════════════════════════════════════════════════════════════════╗
@@ -86,9 +311,9 @@ VALORES_IMPLANTACAO = [
 # ╚══════════════════════════════════════════════════════════════════╝
 VALORES_LOOKUP = {}
 for _row in VALORES_IMPLANTACAO:
-    _empresa = unidecode(_row['empresa']).strip().upper()
-    _uf = unidecode(_row['uf']).strip().upper()
-    for _tipo in ['hora_extra', '8h48_diurno', '8h48_noturno', '24h']:
+    _empresa = unidecode(_row["empresa"]).strip().upper()
+    _uf = unidecode(_row["uf"]).strip().upper()
+    for _tipo in ["hora_extra", "8h48_diurno", "8h48_noturno", "24h"]:
         VALORES_LOOKUP[(_empresa, _uf, _tipo)] = _row[_tipo]
 
 logger.info(f"Lookup de valores criado com {len(VALORES_LOOKUP)} entradas.")
@@ -101,30 +326,54 @@ logger.info(f"Lookup de valores criado com {len(VALORES_LOOKUP)} entradas.")
 # Mapeia fragmentos do nome completo da empresa para a sigla usada na tabela.
 # Basta que o nome completo CONTENHA o fragmento para fazer match.
 EMPRESA_NOME_PARA_SIGLA = {
-    "AZUL":           "AZUL",
-    "BELFORT":        "BELFORT",
-    "CAMPSEG":        "CAMPSEG",
-    "DFA SEG":        "DFA SEG",
-    "DFA":            "DFA SEG",
-    "EPAVI":          "EPAVI",
-    "FORT KNOX":      "FORT KNOX",
-    "SEGURPRO":       "SEGURPRO",
-    "GLOBAL SEG":     "GLOBAL SEG",
-    "GOIAS F":        "GOIAS F",
-    "GUARDED PLACE":  "GUARDED PLACE",
-    "INTERFORT":      "INTERFORT",
-    "LISERVE":        "LISERVE",
-    "RG SEG":         "RG SEG",
-    "CEARA SEGUR":    "CEARA SEGUR",
-    "FIEL VIG":       "FIEL VIG",
-    "SUNSET":         "SUNSET",
+    "AZUL": "AZUL",
+    "BELFORT": "BELFORT",
+    "CAMPSEG": "CAMPSEG",
+    "DFA SEG": "DFA SEG",
+    "DFA": "DFA SEG",
+    "EPAVI": "EPAVI",
+    "FORT KNOX": "FORT KNOX",
+    "SEGURPRO": "SEGURPRO",
+    "GLOBAL SEG": "GLOBAL SEG",
+    "GOIAS F": "GOIAS F",
+    "GUARDED PLACE": "GUARDED PLACE",
+    "INTERFORT": "INTERFORT",
+    "LISERVE": "LISERVE",
+    "RG SEG": "RG SEG",
+    "CEARA SEGUR": "CEARA SEGUR",
+    "FIEL VIG": "FIEL VIG",
+    "SUNSET": "SUNSET",
 }
 
 # Siglas de UF válidas para extração do nome da empresa
 UFS_VALIDAS = {
-    "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS",
-    "MT", "PA", "PB", "PE", "PI", "PR", "RJ", "RN", "RO", "RR", "RS", "SC",
-    "SE", "SP", "TO",
+    "AC",
+    "AL",
+    "AM",
+    "AP",
+    "BA",
+    "CE",
+    "DF",
+    "ES",
+    "GO",
+    "MA",
+    "MG",
+    "MS",
+    "MT",
+    "PA",
+    "PB",
+    "PE",
+    "PI",
+    "PR",
+    "RJ",
+    "RN",
+    "RO",
+    "RR",
+    "RS",
+    "SC",
+    "SE",
+    "SP",
+    "TO",
 }
 
 
@@ -141,7 +390,7 @@ def normalizar_nome_empresa(nome_completo):
     uf_extraida = None
 
     # Tentar extrair UF do final: "... - PE" ou "... -PE" ou ".../ SP"
-    match_uf = re.search(r'[-/]\s*([A-Z]{2})\s*$', nome)
+    match_uf = re.search(r"[-/]\s*([A-Z]{2})\s*$", nome)
     if match_uf:
         candidata = match_uf.group(1)
         if candidata in UFS_VALIDAS:
@@ -154,8 +403,8 @@ def normalizar_nome_empresa(nome_completo):
 
     # Se não encontrou no mapeamento, retornar nome limpo
     # Remove sufixos comuns: LTDA, S/A, S.A., EIRELI, etc.
-    nome_limpo = re.sub(r'\s*(LTDA|S/?A\.?|EIRELI|ME|EPP|SEGURANCA.*|VIGILANCIA.*|DE VALORES.*)\s*', ' ', nome)
-    nome_limpo = re.sub(r'\s*[-/]\s*[A-Z]{2}\s*$', '', nome_limpo).strip()
+    nome_limpo = re.sub(r"\s*(LTDA|S/?A\.?|EIRELI|ME|EPP|SEGURANCA.*|VIGILANCIA.*|DE VALORES.*)\s*", " ", nome)
+    nome_limpo = re.sub(r"\s*[-/]\s*[A-Z]{2}\s*$", "", nome_limpo).strip()
     return nome_limpo, uf_extraida
 
 
@@ -180,12 +429,23 @@ def classificar_falhas(df):
     df["Classificação"] = "Alerta - Atendimento em até 4 dias"
 
     criticas = (
-        ((df["Evento"] == "CONEXAO") & (df["Status"] == "OFFLINE")) |
-        ((df["Evento"].isin([
-            "PORTA ACESSIBILIDADE", "SENSOR DE PORTA", "SENSOR SISMICO",
-            "SENSOR QUEBRA-VIDRO", "SENSOR DE PRESENÇA"
-        ]) & df["Status"].isin(["MANUTENÇÃO", "AUSÊNCIA"]) & (df["Dias Indisponível"] > 3))) |
-        ((df["Evento"] == "FALHA DE AC") & (df["Status"] == "ALARME"))
+        ((df["Evento"] == "CONEXAO") & (df["Status"] == "OFFLINE"))
+        | (
+            (
+                df["Evento"].isin(
+                    [
+                        "PORTA ACESSIBILIDADE",
+                        "SENSOR DE PORTA",
+                        "SENSOR SISMICO",
+                        "SENSOR QUEBRA-VIDRO",
+                        "SENSOR DE PRESENÇA",
+                    ]
+                )
+                & df["Status"].isin(["MANUTENÇÃO", "AUSÊNCIA"])
+                & (df["Dias Indisponível"] > 3)
+            )
+        )
+        | ((df["Evento"] == "FALHA DE AC") & (df["Status"] == "ALARME"))
     )
     df.loc[criticas, "Classificação"] = "Crítica - Atendimento em 1 dia útil"
     logger.info(f"Falhas classificadas: {criticas.sum()} críticas, {len(df) - criticas.sum()} alertas")
@@ -196,12 +456,13 @@ def classificar_falhas(df):
 # ║                    FUNÇÕES AUXILIARES                            ║
 # ╚══════════════════════════════════════════════════════════════════╝
 
+
 def limpar_valor(valor_str):
     """Converte string monetária ('R$ 1.234,56') para float."""
     if pd.isna(valor_str):
         return None
     texto = str(valor_str).strip()
-    texto = texto.replace('R$', '').replace(' ', '').replace('.', '').replace(',', '.')
+    texto = texto.replace("R$", "").replace(" ", "").replace(".", "").replace(",", ".")
     try:
         return float(texto)
     except (ValueError, Exception) as e:
@@ -214,7 +475,7 @@ def formatar_valor_real(valor):
     try:
         if pd.isna(valor):
             return "R$ 0,00"
-        return f"R$ {valor:,.2f}".replace('.', 'X').replace(',', '.').replace('X', ',')
+        return f"R$ {valor:,.2f}".replace(".", "X").replace(",", ".").replace("X", ",")
     except Exception:
         return "R$ 0,00"
 
@@ -239,7 +500,7 @@ def calcular_minutos_noturnos(entrada, saida):
 def obter_tipo_jornada_8h48(entrada, saida):
     """Determina se jornada 8h48 é diurna ou noturna."""
     noturnos = calcular_minutos_noturnos(entrada, saida)
-    return '8h48_noturno' if noturnos >= (JORNADA_8H48_MINUTOS / 2) else '8h48_diurno'
+    return "8h48_noturno" if noturnos >= (JORNADA_8H48_MINUTOS / 2) else "8h48_diurno"
 
 
 def normalizar_colunas_tempo(df):
@@ -248,10 +509,10 @@ def normalizar_colunas_tempo(df):
     para colunas padronizadas 'ENTRADA' e 'SAIDA' (datetime).
     """
     colunas_map = {
-        'entrada':      ['entrada', 'chegada', 'datachegada', 'dataentrada'],
-        'hora_entrada': ['horaentrada', 'horachegada', 'hr_entrada', 'hr_chegada'],
-        'saida':        ['saida', 'partida', 'datasaida', 'datapartida'],
-        'hora_saida':   ['horasaida', 'horapartida', 'hr_saida', 'hr_partida'],
+        "entrada": ["entrada", "chegada", "datachegada", "dataentrada"],
+        "hora_entrada": ["horaentrada", "horachegada", "hr_entrada", "hr_chegada"],
+        "saida": ["saida", "partida", "datasaida", "datapartida"],
+        "hora_saida": ["horasaida", "horapartida", "hr_saida", "hr_partida"],
     }
 
     df_cols = {unidecode(c.lower().replace(" ", "")): c for c in df.columns}
@@ -259,29 +520,31 @@ def normalizar_colunas_tempo(df):
     entrada_data_col = entrada_hora_col = saida_data_col = saida_hora_col = None
 
     for norm, orig in df_cols.items():
-        if any(k in norm for k in colunas_map['entrada']) and not entrada_data_col:
+        if any(k in norm for k in colunas_map["entrada"]) and not entrada_data_col:
             entrada_data_col = orig
-        if any(k in norm for k in colunas_map['hora_entrada']) and not entrada_hora_col:
+        if any(k in norm for k in colunas_map["hora_entrada"]) and not entrada_hora_col:
             entrada_hora_col = orig
-        if any(k in norm for k in colunas_map['saida']) and not saida_data_col:
+        if any(k in norm for k in colunas_map["saida"]) and not saida_data_col:
             saida_data_col = orig
-        if any(k in norm for k in colunas_map['hora_saida']) and not saida_hora_col:
+        if any(k in norm for k in colunas_map["hora_saida"]) and not saida_hora_col:
             saida_hora_col = orig
 
     try:
         if entrada_data_col and entrada_hora_col:
             df["ENTRADA"] = pd.to_datetime(
-                df[entrada_data_col].astype(str) + " " + df[entrada_hora_col].astype(str), errors='coerce')
+                df[entrada_data_col].astype(str) + " " + df[entrada_hora_col].astype(str), errors="coerce"
+            )
         elif entrada_data_col:
-            df["ENTRADA"] = pd.to_datetime(df[entrada_data_col], errors='coerce')
+            df["ENTRADA"] = pd.to_datetime(df[entrada_data_col], errors="coerce")
         else:
             df["ENTRADA"] = pd.NaT
 
         if saida_data_col and saida_hora_col:
             df["SAIDA"] = pd.to_datetime(
-                df[saida_data_col].astype(str) + " " + df[saida_hora_col].astype(str), errors='coerce')
+                df[saida_data_col].astype(str) + " " + df[saida_hora_col].astype(str), errors="coerce"
+            )
         elif saida_data_col:
-            df["SAIDA"] = pd.to_datetime(df[saida_data_col], errors='coerce')
+            df["SAIDA"] = pd.to_datetime(df[saida_data_col], errors="coerce")
         else:
             df["SAIDA"] = pd.NaT
     except Exception as e:
@@ -296,17 +559,18 @@ def normalizar_colunas_tempo(df):
 # ║                CÁLCULO PRINCIPAL POR LINHA                      ║
 # ╚══════════════════════════════════════════════════════════════════╝
 
+
 def _resolver_uf_empresa(empresa, uf):
     """
     Se a UF está vazia/desconhecida mas a empresa só tem UMA UF na tabela, usa essa.
     Retorna a UF resolvida (ou a original se já era válida).
     """
-    if uf and VALORES_LOOKUP.get((empresa, uf, 'hora_extra')) is not None:
+    if uf and VALORES_LOOKUP.get((empresa, uf, "hora_extra")) is not None:
         return uf  # UF válida, retornar como está
 
     # UF vazia ou não encontrada no lookup — buscar UFs disponíveis para essa empresa
     ufs_disponiveis = set()
-    for (emp, u, _) in VALORES_LOOKUP:
+    for emp, u, _ in VALORES_LOOKUP:
         if emp == empresa:
             ufs_disponiveis.add(u)
 
@@ -321,11 +585,11 @@ def _resolver_uf_empresa(empresa, uf):
 
 def calcular_valor_linha(row):
     """Calcula o valor total de implantação para uma linha do DataFrame."""
-    empresa = unidecode(str(row.get('empresa', ''))).strip().upper()
-    uf = unidecode(str(row.get('uf', ''))).strip().upper()
+    empresa = unidecode(str(row.get("empresa", ""))).strip().upper()
+    uf = unidecode(str(row.get("uf", ""))).strip().upper()
     entrada = row.get("ENTRADA")
     saida = row.get("SAIDA")
-    duracao = row.get('DURACAO_MINUTOS')
+    duracao = row.get("DURACAO_MINUTOS")
 
     if not empresa or pd.isna(duracao):
         return 0
@@ -337,10 +601,10 @@ def calcular_valor_linha(row):
         return 0
 
     # Buscar valores no lookup
-    he  = VALORES_LOOKUP.get((empresa, uf, 'hora_extra'))
-    d88 = VALORES_LOOKUP.get((empresa, uf, '8h48_diurno'))
-    n88 = VALORES_LOOKUP.get((empresa, uf, '8h48_noturno'))
-    v24 = VALORES_LOOKUP.get((empresa, uf, '24h'))
+    he = VALORES_LOOKUP.get((empresa, uf, "hora_extra"))
+    d88 = VALORES_LOOKUP.get((empresa, uf, "8h48_diurno"))
+    n88 = VALORES_LOOKUP.get((empresa, uf, "8h48_noturno"))
+    v24 = VALORES_LOOKUP.get((empresa, uf, "24h"))
 
     if any(v is None for v in [he, d88, n88, v24]):
         logger.warning(f"Valores não encontrados para ({empresa}, {uf})")
@@ -358,7 +622,7 @@ def calcular_valor_linha(row):
     if restante > TOLERANCIA_MINUTOS:
         if restante >= JORNADA_8H48_MINUTOS - TOLERANCIA_MINUTOS:
             tipo = obter_tipo_jornada_8h48(entrada, saida)
-            total += n88 if tipo == '8h48_noturno' else d88
+            total += n88 if tipo == "8h48_noturno" else d88
             restante -= JORNADA_8H48_MINUTOS
 
         # Hora extra residual
@@ -371,6 +635,7 @@ def calcular_valor_linha(row):
 # ╔══════════════════════════════════════════════════════════════════╗
 # ║              FUNÇÃO PRINCIPAL — PONTO DE ENTRADA                ║
 # ╚══════════════════════════════════════════════════════════════════╝
+
 
 def normalizar_colunas_empresa_uf(df):
     """
@@ -431,7 +696,7 @@ def normalizar_colunas_empresa_uf(df):
                 uf_resolvida = _resolver_uf_empresa(emp, "")
                 if uf_resolvida:
                     df.at[idx, "uf"] = uf_resolvida
-    
+
     return df
 
 
@@ -451,10 +716,10 @@ def calcular_valor_implantacao(df):
     """
     df = normalizar_colunas_empresa_uf(df)
     df = normalizar_colunas_tempo(df)
-    df['DURACAO_MINUTOS'] = (df['SAIDA'] - df['ENTRADA']).dt.total_seconds() / 60
-    df['DURACAO_MINUTOS'] = df['DURACAO_MINUTOS'].apply(lambda x: abs(x) if pd.notna(x) else x)
-    df['VALOR_NUM'] = df.apply(calcular_valor_linha, axis=1)
-    df['VALOR_TOTAL'] = df['VALOR_NUM'].apply(formatar_valor_real)
+    df["DURACAO_MINUTOS"] = (df["SAIDA"] - df["ENTRADA"]).dt.total_seconds() / 60
+    df["DURACAO_MINUTOS"] = df["DURACAO_MINUTOS"].apply(lambda x: abs(x) if pd.notna(x) else x)
+    df["VALOR_NUM"] = df.apply(calcular_valor_linha, axis=1)
+    df["VALOR_TOTAL"] = df["VALOR_NUM"].apply(formatar_valor_real)
     return df
 
 

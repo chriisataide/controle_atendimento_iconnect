@@ -2,17 +2,18 @@
 Advanced Audit Service - Enhanced security monitoring
 Models moved to dashboard/audit_models.py
 """
+
 import logging
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 from django.contrib.auth.models import User
 from django.utils import timezone
 
 from dashboard.models.audit import (
     AuditEvent,
-    SecurityAlert,
     ComplianceReport,
     DataAccessLog,
+    SecurityAlert,
 )
 
 logger = logging.getLogger(__name__)
@@ -116,15 +117,9 @@ class AdvancedAuditService:
     ) -> ComplianceReport:
         """Gerar relatorio de compliance"""
         try:
-            events = AuditEvent.objects.filter(
-                timestamp__range=[start_date, end_date]
-            )
-            data_accesses = DataAccessLog.objects.filter(
-                timestamp__range=[start_date, end_date]
-            )
-            security_alerts = SecurityAlert.objects.filter(
-                created_at__range=[start_date, end_date]
-            )
+            events = AuditEvent.objects.filter(timestamp__range=[start_date, end_date])
+            data_accesses = DataAccessLog.objects.filter(timestamp__range=[start_date, end_date])
+            security_alerts = SecurityAlert.objects.filter(created_at__range=[start_date, end_date])
 
             report_data = {
                 "total_events": events.count(),

@@ -6,27 +6,35 @@ Cria: Categorias, Clientes, Agentes, Tickets (vários status/prioridades),
 """
 
 import os
-import sys
-import django
 import random
+import sys
 from datetime import timedelta
-from decimal import Decimal
+
+import django
 
 # Setup Django
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'controle_atendimento.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "controle_atendimento.settings")
 django.setup()
 
-from django.utils import timezone
 from django.contrib.auth.models import User
-from dashboard.models import (
-    Cliente, Ticket, CategoriaTicket, InteracaoTicket,
-    StatusTicket, PrioridadeTicket, PerfilAgente, PerfilUsuario,
-    SLAPolicy, Notification,
-)
 
 # Desconectar signals que dependem de WebSocket/Channels durante o seed
 from django.db.models.signals import post_save, pre_save
+from django.utils import timezone
+
+from dashboard.models import (
+    CategoriaTicket,
+    Cliente,
+    InteracaoTicket,
+    Notification,
+    PerfilAgente,
+    PrioridadeTicket,
+    SLAPolicy,
+    StatusTicket,
+    Ticket,
+)
+
 receivers_backup = []
 for signal in [post_save, pre_save]:
     for receiver in signal.receivers[:]:
@@ -68,21 +76,96 @@ for cat_data in categorias_data:
 # ─────────────────────────────────────────────────
 print("\n[2/7] Criando clientes...")
 clientes_data = [
-    {"nome": "Maria Silva", "email": "maria.silva@techcorp.com.br", "telefone": "(11) 98765-4321", "empresa": "TechCorp"},
-    {"nome": "João Santos", "email": "joao.santos@innovatech.com.br", "telefone": "(21) 97654-3210", "empresa": "InnovaTech"},
-    {"nome": "Ana Oliveira", "email": "ana.oliveira@megastore.com.br", "telefone": "(31) 96543-2109", "empresa": "MegaStore"},
-    {"nome": "Carlos Mendes", "email": "carlos.mendes@startupx.com.br", "telefone": "(41) 95432-1098", "empresa": "StartupX"},
-    {"nome": "Fernanda Lima", "email": "fernanda.lima@globalnet.com.br", "telefone": "(51) 94321-0987", "empresa": "GlobalNet"},
-    {"nome": "Roberto Alves", "email": "roberto.alves@dataflow.com.br", "telefone": "(61) 93210-9876", "empresa": "DataFlow"},
-    {"nome": "Juliana Costa", "email": "juliana.costa@webprime.com.br", "telefone": "(71) 92109-8765", "empresa": "WebPrime"},
-    {"nome": "Pedro Nunes", "email": "pedro.nunes@cloudbase.com.br", "telefone": "(81) 91098-7654", "empresa": "CloudBase"},
-    {"nome": "Luciana Ferreira", "email": "luciana.ferreira@nexusit.com.br", "telefone": "(91) 90987-6543", "empresa": "NexusIT"},
-    {"nome": "Ricardo Souza", "email": "ricardo.souza@alphatech.com.br", "telefone": "(11) 99876-5432", "empresa": "AlphaTech"},
-    {"nome": "Camila Rocha", "email": "camila.rocha@bitwise.com.br", "telefone": "(21) 98765-4320", "empresa": "Bitwise"},
-    {"nome": "Bruno Martins", "email": "bruno.martins@techcorp.com.br", "telefone": "(31) 97654-3211", "empresa": "TechCorp"},
-    {"nome": "Patrícia Gomes", "email": "patricia.gomes@innovatech.com.br", "telefone": "(41) 96543-2100", "empresa": "InnovaTech"},
-    {"nome": "Diego Carvalho", "email": "diego.carvalho@megastore.com.br", "telefone": "(51) 95432-1099", "empresa": "MegaStore"},
-    {"nome": "Tatiana Ribeiro", "email": "tatiana.ribeiro@globalnet.com.br", "telefone": "(61) 94321-0988", "empresa": "GlobalNet"},
+    {
+        "nome": "Maria Silva",
+        "email": "maria.silva@techcorp.com.br",
+        "telefone": "(11) 98765-4321",
+        "empresa": "TechCorp",
+    },
+    {
+        "nome": "João Santos",
+        "email": "joao.santos@innovatech.com.br",
+        "telefone": "(21) 97654-3210",
+        "empresa": "InnovaTech",
+    },
+    {
+        "nome": "Ana Oliveira",
+        "email": "ana.oliveira@megastore.com.br",
+        "telefone": "(31) 96543-2109",
+        "empresa": "MegaStore",
+    },
+    {
+        "nome": "Carlos Mendes",
+        "email": "carlos.mendes@startupx.com.br",
+        "telefone": "(41) 95432-1098",
+        "empresa": "StartupX",
+    },
+    {
+        "nome": "Fernanda Lima",
+        "email": "fernanda.lima@globalnet.com.br",
+        "telefone": "(51) 94321-0987",
+        "empresa": "GlobalNet",
+    },
+    {
+        "nome": "Roberto Alves",
+        "email": "roberto.alves@dataflow.com.br",
+        "telefone": "(61) 93210-9876",
+        "empresa": "DataFlow",
+    },
+    {
+        "nome": "Juliana Costa",
+        "email": "juliana.costa@webprime.com.br",
+        "telefone": "(71) 92109-8765",
+        "empresa": "WebPrime",
+    },
+    {
+        "nome": "Pedro Nunes",
+        "email": "pedro.nunes@cloudbase.com.br",
+        "telefone": "(81) 91098-7654",
+        "empresa": "CloudBase",
+    },
+    {
+        "nome": "Luciana Ferreira",
+        "email": "luciana.ferreira@nexusit.com.br",
+        "telefone": "(91) 90987-6543",
+        "empresa": "NexusIT",
+    },
+    {
+        "nome": "Ricardo Souza",
+        "email": "ricardo.souza@alphatech.com.br",
+        "telefone": "(11) 99876-5432",
+        "empresa": "AlphaTech",
+    },
+    {
+        "nome": "Camila Rocha",
+        "email": "camila.rocha@bitwise.com.br",
+        "telefone": "(21) 98765-4320",
+        "empresa": "Bitwise",
+    },
+    {
+        "nome": "Bruno Martins",
+        "email": "bruno.martins@techcorp.com.br",
+        "telefone": "(31) 97654-3211",
+        "empresa": "TechCorp",
+    },
+    {
+        "nome": "Patrícia Gomes",
+        "email": "patricia.gomes@innovatech.com.br",
+        "telefone": "(41) 96543-2100",
+        "empresa": "InnovaTech",
+    },
+    {
+        "nome": "Diego Carvalho",
+        "email": "diego.carvalho@megastore.com.br",
+        "telefone": "(51) 95432-1099",
+        "empresa": "MegaStore",
+    },
+    {
+        "nome": "Tatiana Ribeiro",
+        "email": "tatiana.ribeiro@globalnet.com.br",
+        "telefone": "(61) 94321-0988",
+        "empresa": "GlobalNet",
+    },
 ]
 clientes = []
 for c_data in clientes_data:
@@ -118,18 +201,18 @@ for ag_data in agentes_data:
     if created:
         user.set_password("agente123")
         user.save()
-    
+
     perfil, _ = PerfilAgente.objects.get_or_create(
         user=user,
         defaults={
             "status": random.choice(["online", "online", "online", "ocupado", "ausente"]),
             "max_tickets_simultaneos": random.choice([5, 8, 10]),
-        }
+        },
     )
     # Associar especialidades aleatórias
     if not perfil.especialidades.exists():
         perfil.especialidades.set(random.sample(categorias, k=random.randint(2, 4)))
-    
+
     agentes.append(user)
     status_txt = "✓ criado" if created else "  existente"
     print(f"  {status_txt}: {user.get_full_name()} ({user.username})")
@@ -137,10 +220,7 @@ for ag_data in agentes_data:
 # Incluir admin como agente também
 admin_user = User.objects.filter(is_superuser=True).first()
 if admin_user:
-    PerfilAgente.objects.get_or_create(
-        user=admin_user,
-        defaults={"status": "online", "max_tickets_simultaneos": 999}
-    )
+    PerfilAgente.objects.get_or_create(user=admin_user, defaults={"status": "online", "max_tickets_simultaneos": 999})
     agentes.append(admin_user)
     print(f"  + admin ({admin_user.username}) registrado como agente")
 
@@ -149,10 +229,38 @@ if admin_user:
 # ─────────────────────────────────────────────────
 print("\n[4/7] Criando políticas de SLA...")
 sla_data = [
-    {"name": "SLA Crítico", "prioridade": "critica", "first_response_time": 30, "resolution_time": 240, "escalation_time": 60, "warning_percentage": 70},
-    {"name": "SLA Alta", "prioridade": "alta", "first_response_time": 60, "resolution_time": 480, "escalation_time": 120, "warning_percentage": 75},
-    {"name": "SLA Média", "prioridade": "media", "first_response_time": 240, "resolution_time": 1440, "escalation_time": 480, "warning_percentage": 80},
-    {"name": "SLA Baixa", "prioridade": "baixa", "first_response_time": 480, "resolution_time": 2880, "escalation_time": 960, "warning_percentage": 85},
+    {
+        "name": "SLA Crítico",
+        "prioridade": "critica",
+        "first_response_time": 30,
+        "resolution_time": 240,
+        "escalation_time": 60,
+        "warning_percentage": 70,
+    },
+    {
+        "name": "SLA Alta",
+        "prioridade": "alta",
+        "first_response_time": 60,
+        "resolution_time": 480,
+        "escalation_time": 120,
+        "warning_percentage": 75,
+    },
+    {
+        "name": "SLA Média",
+        "prioridade": "media",
+        "first_response_time": 240,
+        "resolution_time": 1440,
+        "escalation_time": 480,
+        "warning_percentage": 80,
+    },
+    {
+        "name": "SLA Baixa",
+        "prioridade": "baixa",
+        "first_response_time": 480,
+        "resolution_time": 2880,
+        "escalation_time": 960,
+        "warning_percentage": 85,
+    },
 ]
 sla_policies = []
 for sla in sla_data:
@@ -167,11 +275,13 @@ for sla in sla_data:
             "warning_percentage": sla["warning_percentage"],
             "escalation_enabled": True,
             "escalation_to": random.choice(agentes),
-        }
+        },
     )
     sla_policies.append(policy)
     status_txt = "✓ criada" if created else "  existente"
-    print(f"  {status_txt}: {policy.name} (Resposta: {policy.first_response_time}min, Resolução: {policy.resolution_time}min)")
+    print(
+        f"  {status_txt}: {policy.name} (Resposta: {policy.first_response_time}min, Resolução: {policy.resolution_time}min)"
+    )
 
 # ─────────────────────────────────────────────────
 # 5. TICKETS — com distribuição realista ao longo dos últimos 90 dias
@@ -286,104 +396,103 @@ else:
         # Mais tickets em dias úteis, menos no fim de semana
         data_base = now - timedelta(days=dias_atras)
         dia_semana = data_base.weekday()
-        
+
         if dia_semana < 5:  # Seg-Sex
             num_tickets = random.choices([0, 1, 2, 3, 4], weights=[5, 25, 35, 25, 10])[0]
         else:  # Fim de semana
             num_tickets = random.choices([0, 1], weights=[70, 30])[0]
-        
+
         for _ in range(num_tickets):
             categoria = random.choice(categorias)
             cat_nome = categoria.nome
             titulo = random.choice(titulos_por_categoria.get(cat_nome, titulos_por_categoria["Suporte Técnico"]))
             cliente = random.choice(clientes)
-            prioridade = random.choices(
-                ["baixa", "media", "alta", "critica"],
-                weights=[15, 45, 30, 10]
-            )[0]
-            
+            prioridade = random.choices(["baixa", "media", "alta", "critica"], weights=[15, 45, 30, 10])[0]
+
             # Status baseado na "idade" do ticket
             if dias_atras > 30:
                 # Tickets antigos: maioria fechados/resolvidos
-                status = random.choices(
-                    ["resolvido", "fechado"],
-                    weights=[30, 70]
-                )[0]
+                status = random.choices(["resolvido", "fechado"], weights=[30, 70])[0]
             elif dias_atras > 14:
                 # Tickets de 2-4 semanas: mistura
                 status = random.choices(
-                    ["em_andamento", "resolvido", "fechado", "aguardando_cliente"],
-                    weights=[15, 30, 45, 10]
+                    ["em_andamento", "resolvido", "fechado", "aguardando_cliente"], weights=[15, 30, 45, 10]
                 )[0]
             elif dias_atras > 3:
                 # Tickets recentes (1-2 semanas): mais ativos
                 status = random.choices(
                     ["aberto", "em_andamento", "resolvido", "fechado", "aguardando_cliente"],
-                    weights=[20, 30, 25, 15, 10]
+                    weights=[20, 30, 25, 15, 10],
                 )[0]
             else:
                 # Tickets muito recentes (últimos 3 dias): muitos abertos
-                status = random.choices(
-                    ["aberto", "em_andamento", "aguardando_cliente"],
-                    weights=[50, 35, 15]
-                )[0]
-            
+                status = random.choices(["aberto", "em_andamento", "aguardando_cliente"], weights=[50, 35, 15])[0]
+
             # Hora aleatória em horário comercial (com alguma variação)
-            hora = random.choices(
-                range(7, 22),
-                weights=[2, 8, 12, 15, 15, 12, 10, 8, 6, 5, 3, 2, 1, 1, 1]
-            )[0]
+            hora = random.choices(range(7, 22), weights=[2, 8, 12, 15, 15, 12, 10, 8, 6, 5, 3, 2, 1, 1, 1])[0]
             minuto = random.randint(0, 59)
             data_criacao = data_base.replace(hour=hora, minute=minuto, second=random.randint(0, 59))
-            
+
             # Atribuir agente (a maioria tem agente)
             if status in ["aberto"] and random.random() < 0.4:
                 agente = None  # Alguns abertos ainda não atribuídos
             else:
                 agente = random.choice(agentes)
-            
+
             # Encontrar SLA policy
             sla_policy = next((p for p in sla_policies if p.prioridade == prioridade), None)
-            
+
             ticket = Ticket(
                 cliente=cliente,
                 agente=agente,
                 categoria=categoria,
                 titulo=titulo,
                 descricao=random.choice(descricoes),
-                tags=",".join(random.sample(["urgente", "cliente-vip", "recorrente", "sla", "infraestrutura", "software", "hardware", "rede", "segurança"], k=random.randint(0, 3))),
+                tags=",".join(
+                    random.sample(
+                        [
+                            "urgente",
+                            "cliente-vip",
+                            "recorrente",
+                            "sla",
+                            "infraestrutura",
+                            "software",
+                            "hardware",
+                            "rede",
+                            "segurança",
+                        ],
+                        k=random.randint(0, 3),
+                    )
+                ),
                 status=status,
                 prioridade=prioridade,
                 origem=random.choices(["web", "email", "whatsapp", "telefone"], weights=[40, 25, 20, 15])[0],
                 sla_policy=sla_policy,
             )
-            
+
             # Salvar sem auto_now_add para poder definir criado_em
             ticket.save()
             # Atualizar criado_em diretamente (bypass auto_now_add)
             Ticket.objects.filter(pk=ticket.pk).update(criado_em=data_criacao)
-            
+
             # Definir timestamps de resolução/fechamento
             if status in ["resolvido", "fechado"]:
-                tempo_resolucao = timedelta(
-                    hours=random.randint(1, 72),
-                    minutes=random.randint(0, 59)
-                )
+                tempo_resolucao = timedelta(hours=random.randint(1, 72), minutes=random.randint(0, 59))
                 resolvido_em = data_criacao + tempo_resolucao
                 if resolvido_em > now:
                     resolvido_em = now - timedelta(hours=random.randint(1, 24))
-                
+
                 update_fields = {"resolvido_em": resolvido_em, "atualizado_em": resolvido_em}
-                
+
                 if status == "fechado":
                     fechado_em = resolvido_em + timedelta(hours=random.randint(1, 48))
                     if fechado_em > now:
                         fechado_em = now - timedelta(hours=random.randint(0, 12))
                     update_fields["fechado_em"] = fechado_em
                     update_fields["atualizado_em"] = fechado_em
-                
+
                 Ticket.objects.filter(pk=ticket.pk).update(**update_fields)
-            
+
             # First response
             if agente and status != "aberto":
                 first_resp_delta = timedelta(
@@ -393,7 +502,7 @@ else:
                 if first_response_at > now:
                     first_response_at = data_criacao + timedelta(minutes=random.randint(5, 60))
                 Ticket.objects.filter(pk=ticket.pk).update(first_response_at=first_response_at)
-            
+
             # SLA deadlines
             if sla_policy:
                 sla_deadline = data_criacao + timedelta(minutes=sla_policy.first_response_time)
@@ -402,7 +511,7 @@ else:
                     sla_deadline=sla_deadline,
                     sla_resolution_deadline=sla_resolution_deadline,
                 )
-            
+
             # Escalation para tickets críticos antigos
             if prioridade == "critica" and status in ["aberto", "em_andamento"] and dias_atras > 2:
                 Ticket.objects.filter(pk=ticket.pk).update(
@@ -410,9 +519,9 @@ else:
                     escalated_to=random.choice(agentes),
                     escalated_at=data_criacao + timedelta(hours=random.randint(1, 4)),
                 )
-            
+
             tickets_criados += 1
-            
+
             # --- INTERAÇÕES para este ticket ---
             if status == "aberto":
                 num_interacoes = random.randint(0, 2)
@@ -420,20 +529,22 @@ else:
                 num_interacoes = random.randint(1, 5)
             else:
                 num_interacoes = random.randint(2, 8)
-            
+
             ticket_obj = Ticket.objects.get(pk=ticket.pk)  # refresh
             for i in range(num_interacoes):
                 delta_horas = random.randint(1, max(1, dias_atras * 6))
-                data_interacao = data_criacao + timedelta(hours=delta_horas // num_interacoes * (i + 1) if num_interacoes > 0 else delta_horas)
+                data_interacao = data_criacao + timedelta(
+                    hours=delta_horas // num_interacoes * (i + 1) if num_interacoes > 0 else delta_horas
+                )
                 if data_interacao > now:
                     data_interacao = now - timedelta(minutes=random.randint(1, 60))
-                
+
                 # Alternar entre agente e "sistema"
                 if agente and random.random() < 0.7:
                     usuario_interacao = agente
                 else:
                     usuario_interacao = admin_user or agentes[0]
-                
+
                 interacao = InteracaoTicket.objects.create(
                     ticket=ticket_obj,
                     usuario=usuario_interacao,
@@ -451,7 +562,7 @@ else:
 print("\n[6/7] Criando notificações...")
 notif_count = 0
 if admin_user and Notification.objects.count() == 0:
-    recent_tickets = Ticket.objects.order_by('-criado_em')[:10]
+    recent_tickets = Ticket.objects.order_by("-criado_em")[:10]
     for t in recent_tickets:
         Notification.objects.create(
             user=admin_user,

@@ -2,8 +2,9 @@
 Mixins reutilizáveis para modelos do dashboard.
 Padrão BACEN/Compliance — Soft Delete para modelos financeiros.
 """
-from django.db import models
+
 from django.contrib.auth.models import User
+from django.db import models
 from django.utils import timezone
 
 
@@ -44,32 +45,31 @@ class SoftDeleteAllManager(models.Manager):
 class SoftDeleteModel(models.Model):
     """
     Mixin abstrato para soft delete em modelos financeiros.
-    
+
     Uso:
         class Contrato(SoftDeleteModel):
             ...
-    
+
     - objects = SoftDeleteManager() → filtra deletados
     - all_objects = SoftDeleteAllManager() → inclui deletados
     - .soft_delete(user) → marca como deletado
     - .restore() → restaura registro
     """
+
     is_deleted = models.BooleanField(
         default=False,
         db_index=True,
         verbose_name="Excluído",
-        help_text="Soft delete — registro não é removido do banco"
+        help_text="Soft delete — registro não é removido do banco",
     )
-    deleted_at = models.DateTimeField(
-        null=True, blank=True,
-        verbose_name="Excluído em"
-    )
+    deleted_at = models.DateTimeField(null=True, blank=True, verbose_name="Excluído em")
     deleted_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
-        null=True, blank=True,
+        null=True,
+        blank=True,
         related_name="%(class)s_deleted",
-        verbose_name="Excluído por"
+        verbose_name="Excluído por",
     )
 
     objects = SoftDeleteManager()
@@ -83,14 +83,14 @@ class SoftDeleteModel(models.Model):
         self.is_deleted = True
         self.deleted_at = timezone.now()
         self.deleted_by = user
-        self.save(update_fields=['is_deleted', 'deleted_at', 'deleted_by'])
+        self.save(update_fields=["is_deleted", "deleted_at", "deleted_by"])
 
     def restore(self):
         """Restaura um registro soft-deleted."""
         self.is_deleted = False
         self.deleted_at = None
         self.deleted_by = None
-        self.save(update_fields=['is_deleted', 'deleted_at', 'deleted_by'])
+        self.save(update_fields=["is_deleted", "deleted_at", "deleted_by"])
 
     def hard_delete(self):
         """Exclusão real — somente para admin/migrations."""
