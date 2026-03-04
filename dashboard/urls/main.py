@@ -4,7 +4,7 @@ from .. import tenants as tenant_views
 from .. import views
 from ..services import integrations
 from ..utils.monitoring import HealthCheckView, MetricsView
-from ..views import analytics, chat, chatbot_ai, executive, push, sla
+from ..views import analytics, chat, chatbot_ai, compliance, executive, push, sla
 from ..views import ticket_operations as ticket_operations_views
 from ..views import workflow_builder as workflow_builder_views
 
@@ -69,6 +69,15 @@ urlpatterns = [
     # Relatórios
     path("relatorios/itens-atendimento/", views.relatorio_itens_atendimento, name="relatorio_itens_atendimento"),
     path("export/tickets/", views.export_tickets, name="export_tickets"),
+    # ========== COMPLIANCE ==========
+    path("compliance/audit/", compliance.AuditTrailView.as_view(), name="compliance_audit"),
+    path("compliance/audit/export/", compliance.audit_export_csv, name="compliance_audit_export"),
+    path("compliance/lgpd/", compliance.LGPDPanelView.as_view(), name="compliance_lgpd"),
+    path("compliance/lgpd/<int:pk>/process/", compliance.lgpd_process_request, name="compliance_lgpd_process"),
+    # ========== MACROS ==========
+    path("macros/", views.macros_list, name="macros_list"),
+    path("macros/create/", views.macro_create, name="macro_create"),
+    path("macros/<int:pk>/delete/", views.macro_delete, name="macro_delete"),
     # ========== FUNCIONALIDADES AVANÇADAS ==========
     # SLA Management System
     path("sla/", sla.sla_dashboard, name="sla_dashboard"),

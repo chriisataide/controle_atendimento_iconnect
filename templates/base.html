@@ -1554,6 +1554,13 @@
                                 </a>
                             </li>
                             <li class="nav-item">
+                                <a class="nav-link {% if 'chatbot_ai' in request.resolver_match.url_name|default:'' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:chatbot_ai_dashboard' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">psychology</i>
+                                    <span class="nav-link-text ms-1">Chatbot Admin</span>
+                                    <span class="sb-badge sb-badge-slate ms-auto">ADM</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link {% if 'whatsapp' in request.resolver_match.url_name|default:'' or 'whatsapp' in request.resolver_match.namespace|default:'' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:whatsapp:dashboard' %}" onclick="event.stopPropagation()">
                                     <i class="material-icons">smartphone</i>
                                     <span class="nav-link-text ms-1">WhatsApp Business</span>
@@ -1671,7 +1678,69 @@
                     </div>
                 </li>
 
+                <li class="nav-item sidebar-dropdown">
+                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="ferramentas_config" onclick="toggleSidebarDropdown(event,this,'ferramentas_config')">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <span class="d-flex align-items-center">
+                                <i class="material-icons sidebar-section-icon me-2">build</i>
+                                <h6 class="text-uppercase text-xs font-weight-bolder mb-0 sidebar-section-title">Ferramentas</h6>
+                            </span>
+                            <i class="material-icons dropdown-arrow ms-2">keyboard_arrow_down</i>
+                        </div>
+                    </div>
+                    <div class="sidebar-dropdown-menu" id="dropdown-ferramentas_config">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'macros_list' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:macros_list' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">flash_on</i>
+                                    <span class="nav-link-text ms-1">Macros</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'notifications' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:notifications' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">notifications</i>
+                                    <span class="nav-link-text ms-1">Notificações</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'search' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:search' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">search</i>
+                                    <span class="nav-link-text ms-1">Pesquisa Avançada</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
                 {% if user.is_superuser or user.is_staff %}
+                <li class="nav-item sidebar-dropdown">
+                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="compliance" onclick="toggleSidebarDropdown(event,this,'compliance')">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <span class="d-flex align-items-center">
+                                <i class="material-icons sidebar-section-icon me-2">verified_user</i>
+                                <h6 class="text-uppercase text-xs font-weight-bolder mb-0 sidebar-section-title">Compliance</h6>
+                            </span>
+                            <i class="material-icons dropdown-arrow ms-2">keyboard_arrow_down</i>
+                        </div>
+                    </div>
+                    <div class="sidebar-dropdown-menu" id="dropdown-compliance">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'compliance_audit' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:compliance_audit' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">fact_check</i>
+                                    <span class="nav-link-text ms-1">Trilha de Auditoria</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'compliance_lgpd' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:compliance_lgpd' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">shield</i>
+                                    <span class="nav-link-text ms-1">LGPD</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                {% endif %}
                 <li class="nav-item sidebar-dropdown">
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="sistema" onclick="toggleSidebarDropdown(event,this,'sistema')">
                         <div class="d-flex align-items-center justify-content-between w-100">

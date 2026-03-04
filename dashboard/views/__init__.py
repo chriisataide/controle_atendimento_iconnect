@@ -27,6 +27,21 @@ Módulos:
     helpers            - Funções auxiliares
 """
 
+# Compliance — Auditoria e LGPD
+from .compliance import (
+    AuditTrailView,
+    LGPDPanelView,
+    audit_export_csv,
+    lgpd_process_request,
+)
+
+# Macros — Respostas Rápidas
+from .banking_features import (
+    macros_list,
+    macro_create,
+    macro_delete,
+)
+
 # Autenticação, perfil, usuários, pontos de venda
 from .auth_profile import (
     PontoDeVendaCreateView,
@@ -206,4 +221,13 @@ __all__ = [
     "api_remover_item_atendimento",
     "relatorio_itens_atendimento",
     "api_estatisticas_financeiras_ticket",
+    # Compliance
+    "AuditTrailView",
+    "LGPDPanelView",
+    "audit_export_csv",
+    "lgpd_process_request",
+    # Macros
+    "macros_list",
+    "macro_create",
+    "macro_delete",
 ]
