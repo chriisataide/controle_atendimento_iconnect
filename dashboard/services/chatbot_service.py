@@ -271,6 +271,16 @@ class ChatbotService:
                 return await self._handle_client_attention(user_id, message)
 
             elif intent == IntentType.SYSTEM_GUIDE:
+                # Detectar perguntas genéricas → visão geral do sistema
+                general_phrases = [
+                    "o que o sistema faz", "funcionalidades", "visão geral",
+                    "o que ele faz", "o que isso faz", "o que o iconnect faz",
+                    "todas as funcionalidades", "funcionalidades do sistema",
+                    "o que tem", "o que pode", "tudo que faz",
+                ]
+                msg_lower = message.lower().strip().rstrip("?!.")
+                if any(phrase in msg_lower for phrase in general_phrases):
+                    return self._handle_system_help()
                 return self._handle_system_guide(message)
 
             else:

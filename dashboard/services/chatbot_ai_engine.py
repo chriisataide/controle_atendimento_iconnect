@@ -108,7 +108,7 @@ class ChatbotAIEngine:
             ),
         },
         "criar_ticket": {
-            "keywords": ["criar ticket", "novo ticket", "abrir ticket", "novo chamado", "abrir chamado", "criar chamado", "registrar chamado", "registrar ticket"],
+            "keywords": ["criar ticket", "novo ticket", "abrir ticket", "novo chamado", "abrir chamado", "criar chamado", "registrar chamado", "registrar ticket", "criar um ticket", "abrir um chamado", "abrir um ticket"],
             "title": "📝 Criar Novo Ticket",
             "path": "/dashboard/tickets/novo/",
             "guide": (
@@ -127,7 +127,7 @@ class ChatbotAIEngine:
             ),
         },
         "listar_tickets": {
-            "keywords": ["listar tickets", "ver tickets", "meus tickets", "todos tickets", "lista de tickets", "lista de chamados", "pesquisar ticket", "buscar ticket", "encontrar ticket"],
+            "keywords": ["listar tickets", "ver tickets", "meus tickets", "todos tickets", "lista de tickets", "lista de chamados", "pesquisar ticket", "buscar ticket", "encontrar ticket", "meus chamados", "ver chamados"],
             "title": "📋 Listar e Pesquisar Tickets",
             "path": "/dashboard/tickets/",
             "guide": (
@@ -145,7 +145,7 @@ class ChatbotAIEngine:
             ),
         },
         "kanban": {
-            "keywords": ["kanban", "quadro kanban", "board", "arrastar ticket", "mover ticket", "visualização kanban"],
+            "keywords": ["kanban", "quadro kanban", "board", "arrastar ticket", "mover ticket", "visualização kanban", "quadro de tickets"],
             "title": "📌 Quadro Kanban",
             "path": "/dashboard/tickets/kanban/",
             "guide": (
@@ -160,7 +160,7 @@ class ChatbotAIEngine:
             ),
         },
         "editar_ticket": {
-            "keywords": ["editar ticket", "alterar ticket", "modificar ticket", "atualizar ticket", "mudar status", "alterar chamado", "editar chamado"],
+            "keywords": ["editar ticket", "alterar ticket", "modificar ticket", "atualizar ticket", "mudar status", "alterar chamado", "editar chamado", "editar um ticket", "alterar um ticket"],
             "title": "✏️ Editar Ticket",
             "path": "/dashboard/tickets/{id}/editar/",
             "guide": (
@@ -359,7 +359,7 @@ class ChatbotAIEngine:
             ),
         },
         "base_conhecimento": {
-            "keywords": ["base de conhecimento", "knowledge", "artigo", "artigos", "documentação", "faq", "perguntas frequentes", "manual"],
+            "keywords": ["base de conhecimento", "knowledge", "artigo", "artigos", "documentação", "faq", "perguntas frequentes", "manual", "base conhecimento"],
             "title": "📚 Base de Conhecimento",
             "path": "/dashboard/knowledge/",
             "guide": (
@@ -685,29 +685,56 @@ class ChatbotAIEngine:
         """Busca o guia mais adequado para a pergunta do usuário"""
         message_lower = message.lower()
 
+        # Detectar perguntas genéricas sobre o sistema → visão geral
+        general_patterns = [
+            r"\bo que (o sistema|ele|isso|o iconnect) faz\b",
+            r"\b(visão geral|overview|todas as funcionalidades|funcionalidades do sistema)\b",
+            r"\b(o que|quais).*(funcionalidade|recurso|módulo|ferramenta)s?",
+            r"\b(mostre?|liste?|exib[ae]).*(funcionalidade|recurso|módulo|tudo|tudo que)\b",
+            r"\b(me (mostr[ae]|diga|fal[ae])).*(sistema|tudo|funcionalidades|o que (tem|pode|faz))\b",
+            r"\b(ajuda|help|menu principal)\b.*\b(sistema|geral|completo)\b",
+            r"^(o que o sistema faz|funcionalidades|visão geral)\s*[?!.]?$",
+        ]
+        for pattern in general_patterns:
+            if re.search(pattern, message_lower):
+                return self._handle_system_help()
+
         best_match = None
         best_score = 0
+
+        # Palavras da mensagem (sem stopwords comuns)
+        stopwords = {"o", "a", "os", "as", "um", "uma", "uns", "umas", "de", "do", "da",
+                      "dos", "das", "em", "no", "na", "nos", "nas", "por", "para", "com",
+                      "que", "se", "ao", "é", "eu", "me", "como", "e", "ou"}
+        message_words = set(message_lower.split()) - stopwords
 
         for guide_key, guide_data in self.SYSTEM_GUIDES.items():
             score = 0
 
-            # Verificar keywords diretas
             for keyword in guide_data["keywords"]:
+                # 1) Match exato por substring (melhor score)
                 if keyword in message_lower:
-                    # Score proporcional ao tamanho da keyword (mais específica = melhor)
                     keyword_score = len(keyword.split()) * 0.3 + 0.4
                     score = max(score, keyword_score)
+                else:
+                    # 2) Match por palavras não-contíguas: todas as palavras
+                    #    significativas da keyword aparecem na mensagem
+                    kw_words = set(keyword.split()) - stopwords
+                    if kw_words and kw_words.issubset(message_words):
+                        keyword_score = len(kw_words) * 0.25 + 0.35
+                        score = max(score, keyword_score)
 
-            # Verificar similaridade com título do guia
-            title_clean = re.sub(r"[^\w\s]", "", guide_data["title"].lower())
-            title_similarity = difflib.SequenceMatcher(None, message_lower, title_clean).ratio()
-            score = max(score, title_similarity)
+            # Verificar similaridade com título do guia (apenas como apoio, não como match principal)
+            if score > 0:
+                title_clean = re.sub(r"[^\w\s]", "", guide_data["title"].lower())
+                title_similarity = difflib.SequenceMatcher(None, message_lower, title_clean).ratio()
+                score = max(score, title_similarity)
 
             if score > best_score:
                 best_score = score
                 best_match = guide_data
 
-        if best_match and best_score >= 0.3:
+        if best_match and best_score >= 0.4:
             return {
                 "text": f'**{best_match["title"]}**\n\n{best_match["guide"]}',
                 "confidence": min(best_score + 0.3, 1.0),
