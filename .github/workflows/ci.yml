@@ -53,6 +53,7 @@ jobs:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/iconnect_test
       REDIS_URL: redis://localhost:6379/0
       CELERY_TASK_ALWAYS_EAGER: 'true'
+      TESTING: 'true'
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python

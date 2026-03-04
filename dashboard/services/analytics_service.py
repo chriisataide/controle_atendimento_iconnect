@@ -198,9 +198,9 @@ class AnalyticsService:
 
     def _calculate_satisfaction_score(self, tickets) -> Optional[float]:
         """Calcular score médio de satisfação"""
-        from .models import AvaliacaoSatisfacao
+        from dashboard.models.satisfacao import AvaliacaoSatisfacao
 
-        avg = AvaliacaoSatisfacao.objects.filter(ticket__in=tickets).aggregate(avg=Avg("nota"))["avg"]
+        avg = AvaliacaoSatisfacao.objects.filter(ticket__in=tickets).aggregate(avg=Avg("nota_atendimento"))["avg"]
         return float(avg) if avg is not None else None
 
     def _calculate_agent_utilization(self, start_date, end_date) -> Dict:

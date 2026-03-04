@@ -407,8 +407,17 @@ AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = timedelta(minutes=30)
 AXES_LOCKOUT_TEMPLATE = None  # Usa JSON response
 AXES_RESET_ON_SUCCESS = True
-AUTHENTICATION_BACKENDS = [
-    "axes.backends.AxesStandaloneBackend",
-    "django.contrib.auth.backends.ModelBackend",
-]
+
+# Desabilita Axes em ambiente de teste/CI
+_TESTING = config("TESTING", default="false").lower() in ("true", "1", "yes")
+if _TESTING:
+    AXES_ENABLED = False
+    AUTHENTICATION_BACKENDS = [
+        "django.contrib.auth.backends.ModelBackend",
+    ]
+else:
+    AUTHENTICATION_BACKENDS = [
+        "axes.backends.AxesStandaloneBackend",
+        "django.contrib.auth.backends.ModelBackend",
+    ]
 CELERY_TIMEZONE = TIME_ZONE

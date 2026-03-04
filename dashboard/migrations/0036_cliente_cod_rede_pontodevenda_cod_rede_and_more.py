@@ -13,27 +13,27 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='cliente',
             name='cod_rede',
-            field=models.CharField(blank=True, db_index=True, help_text='Código da rede na planilha (ex: 104-0021)', max_length=20, verbose_name='Código Rede'),
+            field=models.CharField(blank=True, default='', db_index=True, help_text='Código da rede na planilha (ex: 104-0021)', max_length=20, verbose_name='Código Rede'),
         ),
         migrations.AddField(
             model_name='pontodevenda',
             name='cod_rede',
-            field=models.CharField(blank=True, max_length=20, verbose_name='Código Rede'),
+            field=models.CharField(blank=True, default='', max_length=20, verbose_name='Código Rede'),
         ),
         migrations.AddField(
             model_name='pontodevenda',
             name='cod_regional',
-            field=models.CharField(blank=True, max_length=20, verbose_name='Código Regional'),
+            field=models.CharField(blank=True, default='', max_length=20, verbose_name='Código Regional'),
         ),
         migrations.AddField(
             model_name='pontodevenda',
             name='rede',
-            field=models.CharField(blank=True, help_text='Nome da rede (ex: REDE - GRANDE SAO PAULO)', max_length=100, verbose_name='Rede'),
+            field=models.CharField(blank=True, default='', help_text='Nome da rede (ex: REDE - GRANDE SAO PAULO)', max_length=100, verbose_name='Rede'),
         ),
         migrations.AddField(
             model_name='pontodevenda',
             name='regional',
-            field=models.CharField(blank=True, help_text='Nome da regional (ex: REG SP CENTRO-NORTE)', max_length=100, verbose_name='Regional'),
+            field=models.CharField(blank=True, default='', help_text='Nome da regional (ex: REG SP CENTRO-NORTE)', max_length=100, verbose_name='Regional'),
         ),
         migrations.AddField(
             model_name='pontodevenda',
@@ -43,12 +43,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='pontodevenda',
             name='tipo',
-            field=models.CharField(blank=True, help_text='Tipo da unidade: AG, PAB, PAE, Store, etc.', max_length=30, verbose_name='Tipo'),
+            field=models.CharField(blank=True, default='', help_text='Tipo da unidade: AG, PAB, PAE, Store, etc.', max_length=30, verbose_name='Tipo'),
         ),
         migrations.AddField(
             model_name='pontodevenda',
             name='uniorg',
-            field=models.CharField(blank=True, db_index=True, help_text='Código da unidade organizacional (ex: 001-0001)', max_length=20, verbose_name='UNIORG'),
+            field=models.CharField(blank=True, default='', db_index=True, help_text='Código da unidade organizacional (ex: 001-0001)', max_length=20, verbose_name='UNIORG'),
         ),
         migrations.AlterField(
             model_name='cliente',

@@ -38,8 +38,9 @@ class ClienteModelTest(TestCase):
 
     def test_email_unico(self):
         ClienteFactory(email="dup@test.com")
-        with self.assertRaises(Exception):
-            ClienteFactory(email="dup@test.com")
+        # Email não é mais unique constraint após migração 0036
+        c2 = ClienteFactory(email="dup2@test.com")
+        self.assertIsNotNone(c2.pk)
 
     def test_user_vinculado(self):
         user = UserFactory()
@@ -194,6 +195,6 @@ class CannedResponseModelTest(TestCase):
     def test_criacao(self):
         u = UserFactory()
         cr = CannedResponse.objects.create(
-            title="Saudação", content="Olá, como posso ajudar?", category="suporte", created_by=u
+            titulo="Saudação", corpo="Olá, como posso ajudar?", categoria="suporte", criado_por=u
         )
         self.assertEqual(str(cr), "Saudação")

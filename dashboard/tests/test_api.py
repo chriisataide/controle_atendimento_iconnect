@@ -82,10 +82,15 @@ class AuthAPITest(APITestCase):
         self.user = UserFactory()
 
     def test_jwt_token_obtain(self):
+        # Cria usuário com senha explícita para garantir autenticação
+        from django.contrib.auth.models import User
+        test_user = User.objects.create_user(
+            username="jwt_test_user", password="testpass123", email="jwt@test.com"
+        )
         resp = self.client.post(
             reverse("api:token_obtain_pair"),
             {
-                "username": self.user.username,
+                "username": "jwt_test_user",
                 "password": "testpass123",
             },
             format="json",
@@ -95,10 +100,14 @@ class AuthAPITest(APITestCase):
         self.assertIn("refresh", resp.data)
 
     def test_jwt_token_refresh(self):
+        from django.contrib.auth.models import User
+        test_user = User.objects.create_user(
+            username="jwt_refresh_user", password="testpass123", email="jwtref@test.com"
+        )
         resp = self.client.post(
             reverse("api:token_obtain_pair"),
             {
-                "username": self.user.username,
+                "username": "jwt_refresh_user",
                 "password": "testpass123",
             },
             format="json",
@@ -135,7 +144,7 @@ class CannedResponseAPITest(APITestCase):
         self.client.force_authenticate(user=self.admin)
 
     def test_list(self):
-        CannedResponse.objects.create(title="Resp", content="Olá", category="suporte", created_by=self.admin)
+        CannedResponse.objects.create(titulo="Resp", corpo="Olá", categoria="suporte", criado_por=self.admin)
         resp = self.client.get(reverse("api:canned-response-list"))
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 

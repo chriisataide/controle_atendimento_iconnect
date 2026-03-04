@@ -63,7 +63,31 @@ class PontoDeVenda(models.Model):
     responsavel_telefone = models.CharField(
         "Telefone do Responsável", max_length=500, help_text="Criptografado em repouso"
     )
-    responsavel_email = models.EmailField("E-mail do Responsável")
+    responsavel_email = models.EmailField("E-mail do Responsável", blank=True)
+
+    # Campos de rede/regional (importação planilha)
+    cod_rede = models.CharField("Código Rede", max_length=20, blank=True, default="")
+    cod_regional = models.CharField("Código Regional", max_length=20, blank=True, default="")
+    rede = models.CharField(
+        "Rede", max_length=100, blank=True, default="",
+        help_text="Nome da rede (ex: REDE - GRANDE SAO PAULO)",
+    )
+    regional = models.CharField(
+        "Regional", max_length=100, blank=True, default="",
+        help_text="Nome da regional (ex: REG SP CENTRO-NORTE)",
+    )
+    status_unidade = models.CharField(
+        "Status Unidade", max_length=30, blank=True, default="Ativo",
+        help_text="Status operacional: Ativo, Virtual, Encerrado, etc.",
+    )
+    tipo = models.CharField(
+        "Tipo", max_length=30, blank=True, default="",
+        help_text="Tipo da unidade: AG, PAB, PAE, Store, etc.",
+    )
+    uniorg = models.CharField(
+        "UNIORG", max_length=20, blank=True, default="", db_index=True,
+        help_text="Código da unidade organizacional (ex: 001-0001)",
+    )
 
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
@@ -133,6 +157,11 @@ class Cliente(models.Model):
     empresa = models.CharField(max_length=100, blank=True, verbose_name="Empresa (legado)")
     observacoes = models.TextField(blank=True, verbose_name="Observações")
     ativo = models.BooleanField(default=True, verbose_name="Ativo")
+    cod_rede = models.CharField(
+        max_length=20, blank=True, default="", db_index=True,
+        verbose_name="Código Rede",
+        help_text="Código da rede na planilha (ex: 104-0021)",
+    )
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
 
