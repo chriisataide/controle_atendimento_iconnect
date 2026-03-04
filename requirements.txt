@@ -21,7 +21,7 @@ django-redis==5.4.0
 gunicorn==23.0.0
 
 # Storage
-boto3==1.35.81
+boto3==1.40.59
 django-storages==1.14.4
 
 # Cache
@@ -31,7 +31,7 @@ django-storages==1.14.4
 pywebpush==1.14.0
 
 # Monitoring & Logging
-sentry-sdk[django]==2.19.2
+sentry-sdk[django]==2.42.1
 psutil==6.1.1
 
 # Background Tasks
@@ -42,16 +42,16 @@ django-celery-beat==2.8.1
 
 # Dependencies
 requests==2.32.3
-pytz==2024.2
+pytz==2025.2
 pillow==11.1.0
 
 # Analysis & ML
 textblob==0.18.0.post0
 scikit-learn==1.6.1
-nltk==3.9.1
+nltk==3.9.2
 pandas==2.2.3
 numpy==2.2.2
-joblib==1.4.2
+joblib==1.5.2
 
 # Database
 psycopg2-binary==2.9.10
