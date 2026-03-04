@@ -290,10 +290,39 @@ class TicketCreateView(CreateView):
         calculo_vig_dados = self.request.POST.get("calculo_vigilante_dados")
         if calculo_vig_dados:
             try:
+                from datetime import datetime as dt
+
+                from ..models.vigilante import RegistroVigilante
+
                 dados = json.loads(calculo_vig_dados)
                 tipo = dados.get("tipo", "implantacao")
                 periodos = dados.get("periodos", [])
                 valor_total = dados.get("valor_total", 0)
+
+                # Salvar registros estruturados no modelo RegistroVigilante
+                for p in periodos:
+                    inicio_str = p.get("inicio", "")
+                    fim_str = p.get("fim", "")
+                    try:
+                        inicio_dt = dt.fromisoformat(inicio_str)
+                        fim_dt = dt.fromisoformat(fim_str)
+                    except (ValueError, TypeError):
+                        inicio_dt = None
+                        fim_dt = None
+
+                    if inicio_dt and fim_dt:
+                        RegistroVigilante.objects.create(
+                            ticket=self.object,
+                            tipo=p.get("tipo", tipo),
+                            empresa=p.get("empresa", ""),
+                            uf=p.get("uf", ""),
+                            inicio=inicio_dt,
+                            fim=fim_dt,
+                            duracao_minutos=p.get("duracao_minutos", 0),
+                            valor=p.get("valor", 0),
+                            detalhes=p.get("detalhes", ""),
+                            criado_por=self.request.user,
+                        )
 
                 # Adicionar resumo do cálculo à descrição do ticket
                 resumo_html = f"\n<hr><h4>{'Implantação de Vigilante' if tipo == 'implantacao' else 'Pronta Resposta'} — Resumo do Cálculo</h4>"

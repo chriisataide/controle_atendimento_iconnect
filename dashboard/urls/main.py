@@ -4,7 +4,7 @@ from .. import tenants as tenant_views
 from .. import views
 from ..services import integrations
 from ..utils.monitoring import HealthCheckView, MetricsView
-from ..views import analytics, chat, chatbot_ai, compliance, executive, push, sla
+from ..views import analytics, chat, chatbot_ai, compliance, executive, push, sla, vigilante
 from ..views import ticket_operations as ticket_operations_views
 from ..views import workflow_builder as workflow_builder_views
 
@@ -193,6 +193,8 @@ urlpatterns = [
     path("analytics/", analytics.analytics_dashboard, name="analytics_dashboard"),
     # Dashboard Executivo
     path("executive/", executive.executive_dashboard, name="executive_dashboard"),
+    # Dashboard Vigilante (Sala de Monitoramento)
+    path("vigilante/", vigilante.vigilante_dashboard, name="vigilante_dashboard"),
     # APIs do Dashboard Executivo
     path("api/executive-kpis/", executive.executive_kpis_api, name="executive_kpis_api"),
     path("api/executive-charts/", executive.executive_charts_api, name="executive_charts_api"),

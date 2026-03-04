@@ -68,6 +68,9 @@ from .push import NotificationPreference, PushNotificationLog, PushSubscription 
 # Modelos Satisfação
 from .satisfacao import AvaliacaoSatisfacao, PerguntaPesquisa, PesquisaSatisfacao  # noqa: F401
 
+# Modelos Vigilante (Implantação / Pronta Resposta)
+from .vigilante import RegistroVigilante  # noqa: F401
+
 # Modelos WhatsApp
 from .whatsapp import (  # noqa: F401
     WhatsAppAnalytics,

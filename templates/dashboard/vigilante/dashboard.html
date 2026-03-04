@@ -1,0 +1,684 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Vigilante - iConnect{% endblock %}
+{% block page_title %}Sala de Monitoramento{% endblock %}
+{% block breadcrumb_title %}Dashboard Vigilante{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ===== VIGILANTE DASHBOARD ===== */
+.vig-dash { --vig-green: #16a34a; --vig-green-light: #bbf7d0; --vig-blue: #2563eb; --vig-blue-light: #bfdbfe; --vig-amber: #d97706; --vig-red: #dc2626; --vig-slate: #475569; }
+
+/* KPI Cards */
+.vig-kpi-card { border-radius: 1rem; border: none; overflow: hidden; transition: transform .2s, box-shadow .2s; }
+.vig-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,.12); }
+.vig-kpi-card .kpi-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+.vig-kpi-card .kpi-icon i { font-size: 1.5rem; color: #fff; }
+.vig-kpi-card .kpi-value { font-size: 1.6rem; font-weight: 800; color: #1e293b; line-height: 1.1; }
+.vig-kpi-card .kpi-label { font-size: .75rem; color: #64748b; text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+.vig-kpi-card .kpi-footer { font-size: .75rem; color: #94a3b8; }
+.vig-kpi-card .kpi-footer .up { color: var(--vig-green); font-weight: 700; }
+.vig-kpi-card .kpi-footer .down { color: var(--vig-red); font-weight: 700; }
+
+.bg-vig-green { background: linear-gradient(135deg, #16a34a, #22c55e); }
+.bg-vig-blue { background: linear-gradient(135deg, #2563eb, #3b82f6); }
+.bg-vig-amber { background: linear-gradient(135deg, #d97706, #f59e0b); }
+.bg-vig-red { background: linear-gradient(135deg, #dc2626, #ef4444); }
+.bg-vig-indigo { background: linear-gradient(135deg, #4f46e5, #6366f1); }
+.bg-vig-teal { background: linear-gradient(135deg, #0d9488, #14b8a6); }
+
+/* Chart Cards */
+.vig-chart-card { border-radius: 1rem; border: none; }
+.vig-chart-card .card-header { background: transparent; border-bottom: 1px solid #f1f5f9; padding: 1rem 1.25rem .75rem; }
+.vig-chart-card .card-header h6 { font-size: .85rem; font-weight: 700; color: #1e293b; margin: 0; }
+.vig-chart-card .card-header small { font-size: .7rem; color: #94a3b8; }
+.vig-chart-card .card-body { padding: 1rem 1.25rem; }
+
+/* Filters bar */
+.vig-filters { background: #fff; border-radius: 1rem; padding: .75rem 1.25rem; margin-bottom: 1.5rem; border: 1px solid #e2e8f0; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+.vig-filters label { font-size: .7rem; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: .15rem; display: block; }
+.vig-filters select { border: 1px solid #e2e8f0; border-radius: .5rem; padding: .35rem .75rem; font-size: .8rem; color: #334155; background: #f8fafc; min-width: 140px; }
+.vig-filters select:focus { outline: none; border-color: var(--vig-green); box-shadow: 0 0 0 3px rgba(22,163,74,.15); }
+.vig-filters .filter-btn { background: linear-gradient(135deg, #16a34a, #22c55e); color: #fff; border: none; border-radius: .5rem; padding: .4rem 1rem; font-size: .8rem; font-weight: 600; cursor: pointer; transition: all .2s; }
+.vig-filters .filter-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(22,163,74,.3); }
+
+/* Table */
+.vig-table { border-radius: 1rem; overflow: hidden; }
+.vig-table thead th { background: #f8fafc; font-size: .7rem; text-transform: uppercase; letter-spacing: .5px; color: #64748b; font-weight: 700; border-bottom: 2px solid #e2e8f0; padding: .75rem .6rem; white-space: nowrap; }
+.vig-table tbody td { font-size: .8rem; color: #334155; padding: .65rem .6rem; vertical-align: middle; border-bottom: 1px solid #f1f5f9; }
+.vig-table tbody tr:hover { background: #f0fdf4; }
+.vig-badge-impl { background: #dcfce7; color: #166534; font-size: .65rem; font-weight: 700; padding: .2rem .55rem; border-radius: 1rem; }
+.vig-badge-pr { background: #fee2e2; color: #991b1b; font-size: .65rem; font-weight: 700; padding: .2rem .55rem; border-radius: 1rem; }
+.vig-badge-ticket { background: #e0e7ff; color: #3730a3; font-size: .65rem; font-weight: 600; padding: .2rem .5rem; border-radius: .4rem; text-decoration: none; }
+.vig-badge-ticket:hover { background: #c7d2fe; }
+
+/* Header */
+.vig-dash-header { margin-bottom: 1.5rem; }
+.vig-dash-header h3 { font-size: 1.4rem; font-weight: 800; color: #1e293b; }
+.vig-dash-header p { font-size: .85rem; color: #64748b; }
+.vig-dash-header .vig-icon-header { width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, #16a34a, #22c55e); display: flex; align-items: center; justify-content: center; }
+.vig-dash-header .vig-icon-header i { font-size: 1.5rem; color: #fff; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .vig-kpi-card .kpi-value { font-size: 1.3rem; }
+    .vig-filters { flex-direction: column; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- ===== HEADER ===== -->
+<div class="row vig-dash-header">
+    <div class="col-lg-8 col-md-7">
+        <div class="d-flex align-items-center gap-3 ms-3">
+            <div class="vig-icon-header">
+                <i class="material-symbols-rounded">shield_person</i>
+            </div>
+            <div>
+                <h3 class="mb-0">Sala de Monitoramento</h3>
+                <p class="mb-0">Dashboard de Implantação e Pronta Resposta de Vigilante</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+        <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-sm mb-0" style="background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;">
+            <i class="material-symbols-rounded text-sm me-1">add</i> Novo Registro
+        </a>
+        <button class="btn btn-outline-secondary btn-sm mb-0 ms-1" onclick="location.reload()">
+            <i class="material-symbols-rounded text-sm me-1">refresh</i> Atualizar
+        </button>
+    </div>
+</div>
+
+<!-- ===== FILTROS ===== -->
+<div class="vig-filters">
+    <div>
+        <label>Tipo</label>
+        <select id="filtroTipo" onchange="applyFilters()">
+            <option value="todos" {% if filtro_tipo == 'todos' %}selected{% endif %}>Todos</option>
+            <option value="implantacao" {% if filtro_tipo == 'implantacao' %}selected{% endif %}>Implantação</option>
+            <option value="pronta-resposta" {% if filtro_tipo == 'pronta-resposta' %}selected{% endif %}>Pronta Resposta</option>
+        </select>
+    </div>
+    <div>
+        <label>Empresa</label>
+        <select id="filtroEmpresa" onchange="applyFilters()">
+            <option value="">Todas</option>
+            {% for emp in empresas_disponiveis %}
+            <option value="{{ emp }}" {% if filtro_empresa == emp %}selected{% endif %}>{{ emp }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <label>UF</label>
+        <select id="filtroUF" onchange="applyFilters()">
+            <option value="">Todas</option>
+            {% for uf in ufs_disponiveis %}
+            <option value="{{ uf }}" {% if filtro_uf == uf %}selected{% endif %}>{{ uf }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="ms-auto">
+        <label>&nbsp;</label>
+        <button class="filter-btn" onclick="clearFilters()">
+            <i class="material-symbols-rounded text-sm me-1" style="vertical-align:middle;">filter_alt_off</i> Limpar
+        </button>
+    </div>
+</div>
+
+<!-- ===== KPI CARDS ===== -->
+<div class="row mt-2 vig-dash">
+    <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+        <div class="card vig-kpi-card h-100">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="kpi-icon bg-vig-green">
+                        <i class="material-symbols-rounded">receipt_long</i>
+                    </div>
+                    <div>
+                        <p class="kpi-label mb-1">Total Registros</p>
+                        <p class="kpi-value mb-0">{{ total_registros }}</p>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-2" style="opacity:.08;">
+                <p class="kpi-footer mb-0">
+                    <span class="up">{{ registros_mes }}</span> este mês
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+        <div class="card vig-kpi-card h-100">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="kpi-icon bg-vig-blue">
+                        <i class="material-symbols-rounded">engineering</i>
+                    </div>
+                    <div>
+                        <p class="kpi-label mb-1">Implantações</p>
+                        <p class="kpi-value mb-0">{{ total_implantacoes }}</p>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-2" style="opacity:.08;">
+                <p class="kpi-footer mb-0">Instalações de vigilante</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+        <div class="card vig-kpi-card h-100">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="kpi-icon bg-vig-red">
+                        <i class="material-symbols-rounded">emergency</i>
+                    </div>
+                    <div>
+                        <p class="kpi-label mb-1">Pronta Resposta</p>
+                        <p class="kpi-value mb-0">{{ total_pronta_resposta }}</p>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-2" style="opacity:.08;">
+                <p class="kpi-footer mb-0">Atendimentos emergenciais</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+        <div class="card vig-kpi-card h-100">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="kpi-icon bg-vig-amber">
+                        <i class="material-symbols-rounded">payments</i>
+                    </div>
+                    <div>
+                        <p class="kpi-label mb-1">Valor Total</p>
+                        <p class="kpi-value mb-0" style="font-size:1.2rem;">R$ {{ valor_total|floatformat:2 }}</p>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-2" style="opacity:.08;">
+                <p class="kpi-footer mb-0">Acumulado geral</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+        <div class="card vig-kpi-card h-100">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="kpi-icon bg-vig-indigo">
+                        <i class="material-symbols-rounded">trending_up</i>
+                    </div>
+                    <div>
+                        <p class="kpi-label mb-1">Valor Mês</p>
+                        <p class="kpi-value mb-0" style="font-size:1.2rem;">R$ {{ valor_mes|floatformat:2 }}</p>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-2" style="opacity:.08;">
+                <p class="kpi-footer mb-0">
+                    {% if variacao_mensal > 0 %}
+                    <span class="down">+{{ variacao_mensal|floatformat:1 }}%</span> vs mês anterior
+                    {% elif variacao_mensal < 0 %}
+                    <span class="up">{{ variacao_mensal|floatformat:1 }}%</span> vs mês anterior
+                    {% else %}
+                    Sem variação
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+        <div class="card vig-kpi-card h-100">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="kpi-icon bg-vig-teal">
+                        <i class="material-symbols-rounded">schedule</i>
+                    </div>
+                    <div>
+                        <p class="kpi-label mb-1">Duração Média</p>
+                        <p class="kpi-value mb-0">{{ duracao_media_h }}h {{ duracao_media_m }}m</p>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-2" style="opacity:.08;">
+                <p class="kpi-footer mb-0">Tempo médio por registro</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== GRÁFICOS LINHA 1 ===== -->
+<div class="row mt-2">
+    <div class="col-lg-8 mb-4">
+        <div class="card vig-chart-card h-100">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6>Evolução Mensal de Valores</h6>
+                        <small>Últimos 12 meses — Implantação vs Pronta Resposta</small>
+                    </div>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-secondary btn-sm active" onclick="setChartMode('valor')">R$ Valor</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setChartMode('qtd')">Qtd</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="chartEvolucao" height="280"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 mb-4">
+        <div class="card vig-chart-card h-100">
+            <div class="card-header">
+                <h6>Distribuição por Tipo</h6>
+                <small>Implantação vs Pronta Resposta (R$)</small>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <canvas id="chartTipo" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== GRÁFICOS LINHA 2 ===== -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card vig-chart-card h-100">
+            <div class="card-header">
+                <h6>Gastos por Empresa</h6>
+                <small>Top 10 — Valor total acumulado</small>
+            </div>
+            <div class="card-body">
+                <canvas id="chartEmpresas" height="260"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card vig-chart-card h-100">
+            <div class="card-header">
+                <h6>Distribuição por Estado (UF)</h6>
+                <small>Valor total por unidade federativa</small>
+            </div>
+            <div class="card-body">
+                <canvas id="chartUFs" height="260"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== TENDÊNCIA DIÁRIA ===== -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card vig-chart-card">
+            <div class="card-header">
+                <h6>Tendência Diária</h6>
+                <small>Últimos 30 dias — Valor e quantidade de registros</small>
+            </div>
+            <div class="card-body">
+                <canvas id="chartTendencia" height="120"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== TABELA DE REGISTROS RECENTES ===== -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card vig-chart-card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6>Registros Recentes</h6>
+                        <small>Últimos 25 registros de implantação e pronta resposta</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table vig-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Ticket</th>
+                                <th>Tipo</th>
+                                <th>Empresa</th>
+                                <th>UF</th>
+                                <th>Início</th>
+                                <th>Fim</th>
+                                <th>Duração</th>
+                                <th>Valor</th>
+                                <th>Criado por</th>
+                                <th>Data</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reg in registros_recentes %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'dashboard:ticket_detail' reg.ticket.pk %}" class="vig-badge-ticket">
+                                        #{{ reg.ticket.numero }}
+                                    </a>
+                                </td>
+                                <td>
+                                    {% if reg.tipo == 'implantacao' %}
+                                    <span class="vig-badge-impl">Implantação</span>
+                                    {% else %}
+                                    <span class="vig-badge-pr">Pronta Resposta</span>
+                                    {% endif %}
+                                </td>
+                                <td><strong>{{ reg.empresa }}</strong></td>
+                                <td>{{ reg.uf }}</td>
+                                <td>{{ reg.inicio|date:"d/m/Y H:i" }}</td>
+                                <td>{{ reg.fim|date:"d/m/Y H:i" }}</td>
+                                <td>{{ reg.duracao_formatada }}</td>
+                                <td><strong>R$ {{ reg.valor|floatformat:2 }}</strong></td>
+                                <td>{{ reg.criado_por.first_name|default:"—" }}</td>
+                                <td>{{ reg.criado_em|date:"d/m/Y" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="10" class="text-center py-5" style="color:#94a3b8;">
+                                    <i class="material-symbols-rounded d-block mb-2" style="font-size:3rem;opacity:.3;">shield_person</i>
+                                    <p class="mb-1" style="font-size:.9rem;font-weight:600;">Nenhum registro encontrado</p>
+                                    <p class="mb-0" style="font-size:.8rem;">Crie um ticket com template de Sala de Monitoramento para gerar registros</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ============ DADOS ============
+    const mesesLabels = {{ meses_labels|safe }};
+    const implValores = {{ impl_valores|safe }};
+    const prValores = {{ pr_valores|safe }};
+    const implQtd = {{ impl_qtd|safe }};
+    const prQtd = {{ pr_qtd|safe }};
+    const empresasLabels = {{ empresas_labels|safe }};
+    const empresasValores = {{ empresas_valores|safe }};
+    const ufsLabels = {{ ufs_labels|safe }};
+    const ufsValores = {{ ufs_valores|safe }};
+    const tendenciaLabels = {{ tendencia_labels|safe }};
+    const tendenciaValores = {{ tendencia_valores|safe }};
+    const tendenciaQtd = {{ tendencia_qtd|safe }};
+    const valorImpl = {{ valor_impl_total }};
+    const valorPR = {{ valor_pr_total }};
+
+    const GREEN = '#16a34a';
+    const GREEN_LIGHT = 'rgba(22,163,74,.15)';
+    const RED = '#dc2626';
+    const RED_LIGHT = 'rgba(220,38,38,.15)';
+    const BLUE = '#2563eb';
+    const BLUE_LIGHT = 'rgba(37,99,235,.15)';
+
+    // ============ CHART 1: Evolução Mensal ============
+    const ctxEvolucao = document.getElementById('chartEvolucao').getContext('2d');
+    window.chartEvolucao = new Chart(ctxEvolucao, {
+        type: 'bar',
+        data: {
+            labels: mesesLabels,
+            datasets: [
+                {
+                    label: 'Implantação (R$)',
+                    data: implValores,
+                    backgroundColor: GREEN_LIGHT,
+                    borderColor: GREEN,
+                    borderWidth: 2,
+                    borderRadius: 6,
+                    barPercentage: 0.6,
+                },
+                {
+                    label: 'Pronta Resposta (R$)',
+                    data: prValores,
+                    backgroundColor: RED_LIGHT,
+                    borderColor: RED,
+                    borderWidth: 2,
+                    borderRadius: 6,
+                    barPercentage: 0.6,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'top', labels: { usePointStyle: true, padding: 15 } },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => `${ctx.dataset.label}: R$ ${ctx.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits:2})}`
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: v => 'R$ ' + v.toLocaleString('pt-BR') }
+                }
+            }
+        }
+    });
+
+    // Troca valor/quantidade
+    window.setChartMode = function(mode) {
+        const chart = window.chartEvolucao;
+        if (mode === 'qtd') {
+            chart.data.datasets[0].data = implQtd;
+            chart.data.datasets[0].label = 'Implantação (Qtd)';
+            chart.data.datasets[1].data = prQtd;
+            chart.data.datasets[1].label = 'Pronta Resposta (Qtd)';
+            chart.options.scales.y.ticks.callback = v => v;
+            chart.options.plugins.tooltip.callbacks.label = ctx => `${ctx.dataset.label}: ${ctx.parsed.y}`;
+        } else {
+            chart.data.datasets[0].data = implValores;
+            chart.data.datasets[0].label = 'Implantação (R$)';
+            chart.data.datasets[1].data = prValores;
+            chart.data.datasets[1].label = 'Pronta Resposta (R$)';
+            chart.options.scales.y.ticks.callback = v => 'R$ ' + v.toLocaleString('pt-BR');
+            chart.options.plugins.tooltip.callbacks.label = ctx => `${ctx.dataset.label}: R$ ${ctx.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
+        }
+        chart.update();
+        // Toggle buttons
+        document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+    };
+
+    // ============ CHART 2: Tipo (Doughnut) ============
+    new Chart(document.getElementById('chartTipo').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Implantação', 'Pronta Resposta'],
+            datasets: [{
+                data: [valorImpl, valorPR],
+                backgroundColor: [GREEN, RED],
+                borderWidth: 0,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+                legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12 } },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
+                            const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                            return `${ctx.label}: R$ ${ctx.parsed.toLocaleString('pt-BR', {minimumFractionDigits:2})} (${pct}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // ============ CHART 3: Empresas (Horizontal Bar) ============
+    new Chart(document.getElementById('chartEmpresas').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: empresasLabels,
+            datasets: [{
+                label: 'Valor Total (R$)',
+                data: empresasValores,
+                backgroundColor: empresasValores.map((_, i) => {
+                    const colors = ['#16a34a','#2563eb','#d97706','#dc2626','#7c3aed','#0d9488','#ea580c','#0284c7','#9333ea','#64748b'];
+                    return colors[i % colors.length] + '33';
+                }),
+                borderColor: empresasValores.map((_, i) => {
+                    const colors = ['#16a34a','#2563eb','#d97706','#dc2626','#7c3aed','#0d9488','#ea580c','#0284c7','#9333ea','#64748b'];
+                    return colors[i % colors.length];
+                }),
+                borderWidth: 2,
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => `R$ ${ctx.parsed.x.toLocaleString('pt-BR', {minimumFractionDigits:2})}`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: { callback: v => 'R$ ' + v.toLocaleString('pt-BR') }
+                }
+            }
+        }
+    });
+
+    // ============ CHART 4: UFs (Bar) ============
+    new Chart(document.getElementById('chartUFs').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: ufsLabels,
+            datasets: [{
+                label: 'Valor Total (R$)',
+                data: ufsValores,
+                backgroundColor: BLUE_LIGHT,
+                borderColor: BLUE,
+                borderWidth: 2,
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => `R$ ${ctx.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits:2})}`
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: v => 'R$ ' + v.toLocaleString('pt-BR') }
+                }
+            }
+        }
+    });
+
+    // ============ CHART 5: Tendência Diária ============
+    const ctxTend = document.getElementById('chartTendencia').getContext('2d');
+    const gradientTend = ctxTend.createLinearGradient(0, 0, 0, 200);
+    gradientTend.addColorStop(0, 'rgba(22,163,74,.25)');
+    gradientTend.addColorStop(1, 'rgba(22,163,74,.02)');
+
+    new Chart(ctxTend, {
+        type: 'line',
+        data: {
+            labels: tendenciaLabels,
+            datasets: [
+                {
+                    label: 'Valor (R$)',
+                    data: tendenciaValores,
+                    borderColor: GREEN,
+                    backgroundColor: gradientTend,
+                    fill: true,
+                    tension: .4,
+                    pointRadius: 2,
+                    pointHoverRadius: 5,
+                    borderWidth: 2,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Registros',
+                    data: tendenciaQtd,
+                    borderColor: BLUE,
+                    backgroundColor: 'transparent',
+                    borderDash: [5,5],
+                    tension: .4,
+                    pointRadius: 2,
+                    pointHoverRadius: 5,
+                    borderWidth: 2,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'top', labels: { usePointStyle: true, padding: 15 } },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            if (ctx.datasetIndex === 0) return `Valor: R$ ${ctx.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
+                            return `Registros: ${ctx.parsed.y}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    position: 'left',
+                    beginAtZero: true,
+                    ticks: { callback: v => 'R$ ' + v.toLocaleString('pt-BR') }
+                },
+                y1: {
+                    type: 'linear',
+                    position: 'right',
+                    beginAtZero: true,
+                    grid: { drawOnChartArea: false },
+                    ticks: { stepSize: 1 }
+                }
+            }
+        }
+    });
+});
+
+// ============ FILTROS ============
+function applyFilters() {
+    const tipo = document.getElementById('filtroTipo').value;
+    const empresa = document.getElementById('filtroEmpresa').value;
+    const uf = document.getElementById('filtroUF').value;
+    const params = new URLSearchParams();
+    if (tipo !== 'todos') params.set('tipo', tipo);
+    if (empresa) params.set('empresa', empresa);
+    if (uf) params.set('uf', uf);
+    window.location.search = params.toString();
+}
+
+function clearFilters() {
+    window.location.search = '';
+}
+</script>
+{% endblock %}
