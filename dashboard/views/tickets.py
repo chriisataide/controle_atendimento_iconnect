@@ -286,6 +286,36 @@ class TicketCreateView(CreateView):
             except (json.JSONDecodeError, KeyError, ValueError) as e:
                 logger.error("Erro ao processar produtos: %s", e, exc_info=True)
 
+        # Processar cálculo de vigilante (Sala de Monitoramento)
+        calculo_vig_dados = self.request.POST.get("calculo_vigilante_dados")
+        if calculo_vig_dados:
+            try:
+                dados = json.loads(calculo_vig_dados)
+                tipo = dados.get("tipo", "implantacao")
+                periodos = dados.get("periodos", [])
+                valor_total = dados.get("valor_total", 0)
+
+                # Adicionar resumo do cálculo à descrição do ticket
+                resumo_html = f"\n<hr><h4>{'Implantação de Vigilante' if tipo == 'implantacao' else 'Pronta Resposta'} — Resumo do Cálculo</h4>"
+                resumo_html += "<table style='width:100%;border-collapse:collapse;'>"
+                resumo_html += "<tr style='background:#f5f5f5;'><th style='padding:6px;border:1px solid #ddd;'>Empresa</th><th style='padding:6px;border:1px solid #ddd;'>UF</th><th style='padding:6px;border:1px solid #ddd;'>Início</th><th style='padding:6px;border:1px solid #ddd;'>Fim</th><th style='padding:6px;border:1px solid #ddd;'>Duração</th><th style='padding:6px;border:1px solid #ddd;'>Valor</th></tr>"
+                for p in periodos:
+                    dur_h = int(p.get("duracao_minutos", 0) // 60)
+                    dur_m = int(p.get("duracao_minutos", 0) % 60)
+                    resumo_html += f"<tr><td style='padding:6px;border:1px solid #ddd;'>{p.get('empresa','')}</td><td style='padding:6px;border:1px solid #ddd;'>{p.get('uf','')}</td><td style='padding:6px;border:1px solid #ddd;'>{p.get('inicio','')}</td><td style='padding:6px;border:1px solid #ddd;'>{p.get('fim','')}</td><td style='padding:6px;border:1px solid #ddd;'>{dur_h}h {dur_m}min</td><td style='padding:6px;border:1px solid #ddd;'>R$ {p.get('valor', 0):.2f}</td></tr>"
+                resumo_html += f"<tr style='font-weight:bold;background:#e8f5e9;'><td colspan='5' style='padding:6px;border:1px solid #ddd;text-align:right;'>TOTAL:</td><td style='padding:6px;border:1px solid #ddd;'>R$ {valor_total:.2f}</td></tr>"
+                resumo_html += "</table>"
+
+                self.object.descricao = (self.object.descricao or "") + resumo_html
+                self.object.save(update_fields=["descricao"])
+
+                logger.info(
+                    "Cálculo de vigilante (%s) salvo no ticket #%s: %d períodos, total R$ %.2f",
+                    tipo, self.object.numero, len(periodos), valor_total
+                )
+            except (json.JSONDecodeError, KeyError, ValueError) as e:
+                logger.error("Erro ao processar cálculo de vigilante: %s", e, exc_info=True)
+
         # Processar anexos
         if "anexos" in self.request.FILES:
             from ..utils.security import validate_file_upload
