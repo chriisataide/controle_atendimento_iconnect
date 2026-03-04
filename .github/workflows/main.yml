@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Issue auto-closer
-      uses: roots/issue-closer-action@v1.1
+      uses: roots/issue-closer-action@v1.2
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         issue-close-message: "@${issue.user.login} this issue was automatically closed because it did not follow the bellow rules:\n\n<pre>\n\n\n\nIMPORTANT: Please use the following link to create a new issue:\n\nhttps://github.com/chriisataide/controle_atendimento_iconnect/issues\n\n**If your issue was not created using the proper template, it will be closed immediately.**\n\n\n\nSistema de Controle de Atendimento iConnect - iCodev Tecnologia e Inovação\n👉  https://github.com/chriisataide/controle_atendimento_iconnect\n\n\n</pre>\n\n"
