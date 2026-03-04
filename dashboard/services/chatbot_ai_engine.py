@@ -215,7 +215,7 @@ class ChatbotAIEngine:
             ),
         },
         "usuarios": {
-            "keywords": ["usuário", "usuarios", "criar usuário", "novo usuário", "editar usuário", "gerenciar usuários", "listar usuários", "permissões", "nível de acesso", "role"],
+            "keywords": ["usuário", "usuarios", "usuários", "criar usuário", "novo usuário", "editar usuário", "gerenciar usuários", "listar usuários", "permissões", "permissoes", "nível de acesso", "nivel de acesso", "role"],
             "title": "👤 Gestão de Usuários",
             "path": "/dashboard/users/",
             "guide": (
@@ -288,7 +288,7 @@ class ChatbotAIEngine:
             ),
         },
         "relatorios": {
-            "keywords": ["relatório", "relatorios", "exportar", "gerar relatório", "report", "analytics", "análise", "estatísticas", "dados", "métricas"],
+            "keywords": ["relatório", "relatorios", "relatórios", "gerar relatório", "report", "análise", "estatísticas", "dados", "métricas"],
             "title": "📈 Relatórios e Analytics",
             "path": "/dashboard/reports/",
             "guide": (
@@ -310,7 +310,7 @@ class ChatbotAIEngine:
             ),
         },
         "notificacoes": {
-            "keywords": ["notificação", "notificações", "alerta", "alertas", "avisos", "push"],
+            "keywords": ["notificação", "notificações", "notificacao", "notificacoes", "alerta", "alertas", "avisos", "push"],
             "title": "🔔 Notificações",
             "path": "/dashboard/notifications/",
             "guide": (
@@ -327,7 +327,7 @@ class ChatbotAIEngine:
             ),
         },
         "automacao": {
-            "keywords": ["automação", "automatizar", "regra", "regras", "workflow", "fluxo", "automático"],
+            "keywords": ["automação", "automacao", "automatizar", "regra", "regras", "workflow", "workflows", "fluxo", "automático", "automatico"],
             "title": "🤖 Automação e Workflows",
             "path": "/dashboard/automation/",
             "guide": (
@@ -388,7 +388,7 @@ class ChatbotAIEngine:
             ),
         },
         "compliance": {
-            "keywords": ["compliance", "auditoria", "lgpd", "dados pessoais", "privacidade", "audit trail", "trilha de auditoria"],
+            "keywords": ["compliance", "auditoria", "lgpd", "dados pessoais", "privacidade", "audit trail", "trilha de auditoria", "conformidade"],
             "title": "🔒 Compliance e LGPD",
             "path": "/dashboard/compliance/audit/",
             "guide": (
@@ -406,7 +406,7 @@ class ChatbotAIEngine:
             ),
         },
         "pesquisa": {
-            "keywords": ["pesquisar", "buscar", "procurar", "search", "encontrar"],
+            "keywords": ["pesquisar", "pesquisa", "buscar", "procurar", "search", "encontrar", "busca avançada", "busca avancada"],
             "title": "🔍 Pesquisa Avançada",
             "path": "/dashboard/search/",
             "guide": (
@@ -466,6 +466,133 @@ class ChatbotAIEngine:
                 "3. Acompanhe o status dos chamados\n"
                 "4. Abra novos chamados\n\n"
                 "📍 **Acesse em:** `/dashboard/cliente/`"
+            ),
+        },
+        "financeiro": {
+            "keywords": ["financeiro", "contrato", "contratos", "fatura", "faturas", "movimentação financeira", "centro de custo", "centros de custo", "cobrança", "pagamento"],
+            "title": "💰 Módulo Financeiro",
+            "path": "/dashboard/financeiro/",
+            "guide": (
+                "**Como usar o Módulo Financeiro:**\n\n"
+                '1. No menu lateral, clique em **"Financeiro"**\n'
+                "2. Acesse o **Dashboard Financeiro** com visão geral\n\n"
+                "**Contratos:**\n"
+                '1. Acesse **"Financeiro"** → **"Contratos"**\n'
+                "2. Crie, edite e gerencie contratos com clientes\n\n"
+                "**Faturas:**\n"
+                '1. Acesse **"Financeiro"** → **"Faturas"**\n'
+                "2. Gerencie cobranças e pagamentos\n\n"
+                "**Movimentações:**\n"
+                '1. Acesse **"Financeiro"** → **"Movimentações"**\n'
+                "2. Registre entradas e saídas financeiras\n\n"
+                "**Centros de Custo:**\n"
+                '1. Acesse **"Financeiro"** → **"Centros de Custo"**\n'
+                "2. Organize despesas por departamento/projeto\n\n"
+                "📍 **Acesse em:** `/dashboard/financeiro/`"
+            ),
+        },
+        "estoque": {
+            "keywords": ["estoque", "produto", "produtos", "inventário", "estoque crítico", "movimentação de estoque"],
+            "title": "📦 Estoque",
+            "path": "/dashboard/estoque/",
+            "guide": (
+                "**Como gerenciar o Estoque:**\n\n"
+                '1. No menu lateral, clique em **"Estoque & Equipamentos"**\n'
+                "2. Acesse o **Dashboard** com visão geral do estoque\n\n"
+                "**Produtos:**\n"
+                '1. Acesse **"Produtos"** para ver todos os itens\n'
+                '2. Clique em **"+ Novo Produto"** para cadastrar\n\n'
+                "**Movimentações:**\n"
+                '1. Acesse **"Movimentações"** para entradas e saídas\n\n'
+                "**Estoque Crítico:**\n"
+                '1. Acesse **"Estoque Crítico"** para ver itens abaixo do mínimo\n\n'
+                "📍 **Acesse em:** `/dashboard/estoque/`"
+            ),
+        },
+        "equipamentos": {
+            "keywords": ["equipamento", "equipamentos", "hardware", "dispositivo", "dispositivos", "alerta de equipamento", "alertas equipamento"],
+            "title": "🖥️ Equipamentos",
+            "path": "/dashboard/equipamentos/",
+            "guide": (
+                "**Como gerenciar Equipamentos:**\n\n"
+                '1. No menu lateral, clique em **"Estoque & Equipamentos"**\n\n'
+                "**Lista de Equipamentos:**\n"
+                '1. Acesse **"Equipamentos"** para ver todos cadastrados\n'
+                '2. Clique em **"+ Novo"** para cadastrar\n\n'
+                "**Alertas:**\n"
+                '1. Acesse **"Alertas Equip."** para ver alertas ativos\n\n'
+                "📍 **Acesse em:** `/dashboard/equipamentos/`"
+            ),
+        },
+        "comunicacao_central": {
+            "keywords": ["central de comunicação", "central unificada", "hub comunicação", "communication center", "hub"],
+            "title": "🔗 Central de Comunicação Unificada",
+            "path": "/dashboard/communication/",
+            "guide": (
+                "**Como usar a Central de Comunicação:**\n\n"
+                '1. No menu lateral, em **"Chat & Mensagens"**, clique em **"Central Unificada"**\n'
+                "2. Acesse todas as conversas em um único lugar\n"
+                "3. Integre mensagens de chat, WhatsApp e tickets\n\n"
+                "📍 **Acesse em:** `/dashboard/communication/`"
+            ),
+        },
+        "executive_dashboard": {
+            "keywords": ["dashboard executivo", "visão executiva", "painel executivo", "ceo", "estratégico", "gerencial"],
+            "title": "📊 Dashboard Executivo",
+            "path": "/dashboard/executive/",
+            "guide": (
+                "**Como acessar o Dashboard Executivo:**\n\n"
+                '1. No menu lateral, em **"Dashboards & Relatórios"**, clique em **"Dashboard Executivo"**\n'
+                "2. Veja métricas estratégicas da operação:\n"
+                "   • Receita e tendências\n"
+                "   • Volume de atendimentos\n"
+                "   • Performance por equipe\n"
+                "   • Satisfação do cliente\n\n"
+                "📍 **Acesse em:** `/dashboard/executive/`"
+            ),
+        },
+        "analytics": {
+            "keywords": ["analytics", "análise de dados", "dashboard analytics", "gráficos", "indicadores", "kpi"],
+            "title": "📈 Analytics",
+            "path": "/dashboard/analytics/",
+            "guide": (
+                "**Como usar o Analytics:**\n\n"
+                '1. No menu lateral, em **"Dashboards & Relatórios"**, clique em **"Analytics"**\n'
+                "2. Explore dashboards interativos com:\n"
+                "   • Gráficos de tendência\n"
+                "   • Métricas de desempenho\n"
+                "   • Comparativos por período\n"
+                "   • Indicadores chave (KPIs)\n\n"
+                "📍 **Acesse em:** `/dashboard/analytics/`"
+            ),
+        },
+        "calculo_vigilante": {
+            "keywords": ["cálculo vigilante", "calculo vigilante", "vigilante", "cálculo", "calcular vigilante"],
+            "title": "🧮 Cálculo Vigilante",
+            "path": "/calculo-vigilante/",
+            "guide": (
+                "**Como usar o Cálculo Vigilante:**\n\n"
+                '1. No menu lateral, em **"Cálculos"**, clique em **"Cálculo Vigilante"**\n'
+                "2. Faça upload da planilha ou preencha os dados\n"
+                "3. Visualize o preview dos cálculos\n"
+                '4. Clique em **"Processar"** para gerar o resultado\n'
+                "5. Faça o download do resultado processado\n\n"
+                "📍 **Acesse em:** `/calculo-vigilante/`"
+            ),
+        },
+        "mobile_pwa": {
+            "keywords": ["mobile", "celular", "pwa", "app", "aplicativo", "instalar app", "instalar no celular"],
+            "title": "📱 Mobile / PWA",
+            "path": "/dashboard/pwa/",
+            "guide": (
+                "**Como usar o iConnect no celular:**\n\n"
+                '1. No menu lateral, em **"Sistema & Usuários"**, clique em **"Mobile / PWA"**\n'
+                "2. Siga o guia de instalação para seu dispositivo:\n"
+                "   • **Android:** Abra no Chrome → Menu → Instalar App\n"
+                "   • **iPhone:** Abra no Safari → Compartilhar → Adicionar à Tela\n"
+                "3. O app será instalado na sua tela inicial\n\n"
+                "💡 **Dica:** O app funciona offline para consultas básicas!\n\n"
+                "📍 **Acesse em:** `/dashboard/pwa/`"
             ),
         },
     }
@@ -655,20 +782,41 @@ class ChatbotAIEngine:
         features_text = (
             "🗺️ **Guia Completo do Sistema iConnect**\n\n"
             "Posso te ensinar a usar qualquer funcionalidade! Aqui está tudo o que o sistema oferece:\n\n"
-            "📋 **Tickets** — Criar, listar, editar, Kanban\n"
-            "👥 **Clientes** — Cadastrar e gerenciar empresas\n"
-            "🏪 **Pontos de Venda** — Unidades/filiais\n"
-            "👤 **Usuários** — Criar, editar, permissões\n"
-            "⏱️ **SLA** — Políticas e alertas de prazo\n"
-            "💬 **Chat** — Comunicação interna em tempo real\n"
-            "📈 **Relatórios** — Analytics e exportações\n"
-            "🤖 **Automação** — Regras e workflows visuais\n"
-            "📱 **WhatsApp** — Integração Business\n"
-            "📚 **Base de Conhecimento** — Artigos e FAQ\n"
-            "⚡ **Macros** — Respostas rápidas\n"
-            "🔔 **Notificações** — Alertas em tempo real\n"
-            "🔒 **Compliance** — Auditoria e LGPD\n"
-            "🔍 **Pesquisa** — Busca avançada\n\n"
+            "**📊 Acesso Rápido**\n"
+            "• **Dashboard** — Painel principal com resumo geral\n"
+            "• **Novo Ticket** — Atalho para criar ticket rapidamente\n\n"
+            "**🎯 Atendimento**\n"
+            "• **Tickets** — Criar, listar, Kanban, meus tickets\n"
+            "• **SLA & Qualidade** — Políticas, alertas e relatórios de prazo\n\n"
+            "**👥 Clientes**\n"
+            "• **Portal do Cliente** — Área do cliente para acompanhar chamados\n"
+            "• **Clientes** — Cadastrar e gerenciar empresas\n"
+            "• **Pontos de Venda** — Unidades e filiais (PDV)\n\n"
+            "**💰 Financeiro & Estoque**\n"
+            "• **Financeiro** — Contratos, faturas, movimentações, centros de custo\n"
+            "• **Estoque** — Produtos, movimentações, estoque crítico\n"
+            "• **Equipamentos** — Cadastro, alertas e movimentações\n\n"
+            "**💬 Comunicação**\n"
+            "• **Central Unificada** — Hub de comunicação integrado\n"
+            "• **Chat Avançado** — Comunicação interna em tempo real\n"
+            "• **Chatbot IA** — Assistente inteligente (eu! 🤖)\n"
+            "• **WhatsApp Business** — Integração com WhatsApp API\n\n"
+            "**📈 Análise**\n"
+            "• **Dashboard Agente** — Painel do atendente\n"
+            "• **Dashboard Executivo** — Visão estratégica (CEO)\n"
+            "• **Analytics** — Dashboards interativos\n"
+            "• **Relatórios** — Relatórios avançados e exportações\n\n"
+            "**🛠️ Ferramentas**\n"
+            "• **Cálculo Vigilante** — Cálculos de vigilância\n\n"
+            "**⚙️ Configurações**\n"
+            "• **Automação** — Workflows visuais e regras automáticas\n"
+            "• **Usuários** — Criar, editar, permissões e níveis de acesso\n"
+            "• **Base de Conhecimento** — Artigos e FAQ\n"
+            "• **Macros** — Respostas rápidas para tickets\n"
+            "• **Notificações** — Alertas em tempo real\n"
+            "• **Compliance** — Auditoria e LGPD\n"
+            "• **Pesquisa** — Busca avançada global\n"
+            "• **Mobile/PWA** — Acesso via celular\n\n"
             '**Pergunte sobre qualquer item acima!** Exemplo: _"Como criar um ticket?"_'
         )
         return {
@@ -677,7 +825,7 @@ class ChatbotAIEngine:
             "suggestions": [
                 "Como criar um ticket?",
                 "Como gerenciar clientes?",
-                "Como usar o Kanban?",
+                "Como usar o financeiro?",
             ],
         }
 
@@ -769,6 +917,14 @@ class ChatbotAIEngine:
             "📥 Exportar Dados": ["Como ver relatórios?", "Como ver meus tickets?", "O que o sistema faz?"],
             "🎧 Dashboard do Agente": ["Como ver meus tickets?", "Como criar um ticket?", "O que o sistema faz?"],
             "🏠 Portal do Cliente": ["Como criar um ticket?", "Como ver meus tickets?", "O que o sistema faz?"],
+            "💰 Módulo Financeiro": ["Como ver relatórios?", "Como gerenciar clientes?", "O que o sistema faz?"],
+            "📦 Estoque": ["Como usar equipamentos?", "Como ver relatórios?", "O que o sistema faz?"],
+            "🖥️ Equipamentos": ["Como gerenciar estoque?", "Como criar um ticket?", "O que o sistema faz?"],
+            "🔗 Central de Comunicação Unificada": ["Como usar o chat?", "Como usar o WhatsApp?", "O que o sistema faz?"],
+            "📊 Dashboard Executivo": ["Como ver relatórios?", "Como usar analytics?", "O que o sistema faz?"],
+            "📈 Analytics": ["Como ver relatórios?", "Como usar o dashboard executivo?", "O que o sistema faz?"],
+            "🧮 Cálculo Vigilante": ["O que o sistema faz?", "Como criar um ticket?", "Como ver relatórios?"],
+            "📱 Mobile / PWA": ["O que o sistema faz?", "Como criar um ticket?", "Como usar notificações?"],
         }
 
         title = current_guide.get("title", "")
