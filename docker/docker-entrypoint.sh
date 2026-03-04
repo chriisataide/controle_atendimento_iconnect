@@ -39,6 +39,10 @@ python manage.py migrate --noinput
 echo "📦 Coletando arquivos estáticos..."
 python manage.py collectstatic --noinput
 
+# Importar Pontos de Venda (idempotente - só importa se não existirem)
+echo "📍 Verificando importação de Pontos de Venda..."
+python manage.py importar_pdv
+
 # Criar superusuário se não existir
 # SEGURANÇA: Usa variáveis de ambiente em vez de credenciais hardcoded
 echo "👤 Verificando superusuário..."
