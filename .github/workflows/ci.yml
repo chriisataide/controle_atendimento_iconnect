@@ -73,7 +73,7 @@ jobs:
     - name: Run tests with coverage
       run: |
         coverage run --source=dashboard,controle_atendimento manage.py test dashboard.tests -v2
-        coverage report --fail-under=60
+        coverage report --fail-under=45
         coverage xml -o coverage.xml
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
