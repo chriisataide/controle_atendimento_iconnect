@@ -6,15 +6,16 @@ Implementa assistente virtual com IA para atendimento automatizado
 import logging
 import re
 from dataclasses import dataclass
+from datetime import timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..models import Ticket
-from .notifications import NotificationService
+from asgiref.sync import sync_to_async
+from django.db.models import Count, Q
+from django.utils import timezone
 
-# Aliases para compatibilidade (modelos renomeados)
-Agent = None  # Usar User do django.contrib.auth
-Customer = None  # Usar Cliente de .models
+from ..models import Cliente, PrioridadeTicket, StatusTicket, Ticket
+from .notifications import NotificationService
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,12 @@ class IntentType(Enum):
     ACCOUNT_INFO = "account_info"
     SCHEDULE_CALLBACK = "schedule_callback"
     ESCALATE = "escalate"
+    # Intents analíticas (dashboard)
+    DASHBOARD_STATS = "dashboard_stats"
+    DAILY_SUMMARY = "daily_summary"
+    AGENT_PERFORMANCE = "agent_performance"
+    CLIENT_ATTENTION = "client_attention"
+    SYSTEM_GUIDE = "system_guide"
     GOODBYE = "goodbye"
     UNKNOWN = "unknown"
 
@@ -88,6 +95,45 @@ class IntentClassifier:
             IntentType.ESCALATE: [
                 r"\b(falar com|gerente|supervisor|humano|pessoa)\b",
                 r"\b(não resolve|não funciona|quero falar)\b",
+            ],
+            # Intents analíticas para o dashboard
+            IntentType.DASHBOARD_STATS: [
+                r"\b(quantos|quantas|total|contagem)\b.*(ticket|chamado|aberto|pendente|resolvid)",
+                r"\b(tickets?|chamados?)\s+(abertos?|pendentes?|hoje|ativos?)\b",
+                r"\b(abertos?|pendentes?)\s+(hoje|agora|temos)\b",
+                r"\b(quantos|quantas)\s+(tickets?|chamados?)\b",
+            ],
+            IntentType.DAILY_SUMMARY: [
+                r"\b(resumo|resumir|overview|visão geral)\b",
+                r"\b(resumo|relatório|report).*(dia|hoje|diário)\b",
+                r"\b(dia|hoje|diário).*(resumo|relatório|report)\b",
+                r"\b(como est[áa]|como vai|como anda).*(atendimento|dia|hoje)\b",
+                r"\b(mostre|mostra|exib[ae]).*(resumo|dados|informações|números)\b",
+            ],
+            IntentType.AGENT_PERFORMANCE: [
+                r"\b(tempo|média|performance|desempenho).*(resposta|agente|atendente)\b",
+                r"\b(agente|atendente|equipe).*(tempo|performance|desempenho|produtividade)\b",
+                r"\b(tempo médio|média de tempo)\b",
+                r"\b(sla|nivel de serviço|nível de serviço)\b",
+                r"\b(produtividade|eficiência)\b.*(agente|equipe|time)",
+            ],
+            IntentType.CLIENT_ATTENTION: [
+                r"\b(clientes?|pacientes?).*(aten[çc][ãa]o|imediata|urgente|priorit|crític)\b",
+                r"\b(aten[çc][ãa]o|urgente|priorit|crític).*(clientes?|pacientes?)\b",
+                r"\b(quais|quem).*(precis|necessit).*(aten[çc][ãa]o|ajuda|suporte)\b",
+                r"\b(clientes?|chamados?)\s+(urgentes?|críticos?|prioritários?)\b",
+            ],
+            # Guia de uso do sistema
+            IntentType.SYSTEM_GUIDE: [
+                r"\b(como|onde|aonde)\b.*(faço|faz|fazer|acessar|criar|editar|ver|listar|configurar|usar|mexer|navegar|abrir|encontrar|pesquisar|buscar|exportar|gerenciar|cadastrar|alterar|excluir|deletar)",
+                r"\b(onde fica|como faço|como eu|como faz|me ensina|me mostra|me ajuda|me explica|me diz)\b",
+                r"\b(tutorial|passo a passo|roteiro|instruções|instrucoes)\b",
+                r"\b(quero|preciso|gostaria de?)\b.*(criar|editar|ver|listar|acessar|abrir|cadastrar|exportar|gerar|configurar)",
+                r"\b(funcionalidade|função|módulo|seção|página|menu|tela)\b",
+                r"\bpara que serve\b",
+                r"\bcomo funciona\b",
+                r"\bo que (o sistema|ele|isso) faz\b",
+                r"\b(acessar?|ir para|entrar em|abrir)\b.*(tela|page|pagina|página|módulo|seção|menu)",
             ],
             IntentType.GOODBYE: [r"\b(tchau|adeus|até logo|obrigado|valeu)\b", r"\b(fim|encerrar|sair)\b"],
         }
@@ -212,8 +258,28 @@ class ChatbotService:
             elif intent == IntentType.ESCALATE:
                 return await self._handle_escalation(user_id, message, context)
 
+            elif intent == IntentType.DASHBOARD_STATS:
+                return await self._handle_dashboard_stats(user_id, message)
+
+            elif intent == IntentType.DAILY_SUMMARY:
+                return await self._handle_daily_summary(user_id, message)
+
+            elif intent == IntentType.AGENT_PERFORMANCE:
+                return await self._handle_agent_performance(user_id, message)
+
+            elif intent == IntentType.CLIENT_ATTENTION:
+                return await self._handle_client_attention(user_id, message)
+
+            elif intent == IntentType.SYSTEM_GUIDE:
+                return self._handle_system_guide(message)
+
             else:
-                # Resposta padrão
+                # Tentar encontrar guia do sistema antes de dar resposta padrão
+                guide_response = self._handle_system_guide(message)
+                if guide_response.confidence >= 0.5:
+                    return guide_response
+
+                # Resposta padrão via knowledge base
                 response_text, quick_replies = self.knowledge_base.get_response(intent)
 
                 return ChatbotResponse(
@@ -455,6 +521,329 @@ class ChatbotService:
             requires_human=True,
             actions=["escalate_to_human"],
             context={"escalation_requested": True},
+        )
+
+    # ====================================
+    # ANALYTICS HANDLERS (intents analíticas)
+    # ====================================
+
+    async def _handle_dashboard_stats(self, user_id: int, message: str) -> ChatbotResponse:
+        """Retorna estatísticas de tickets do dashboard"""
+
+        @sync_to_async
+        def get_stats():
+            hoje = timezone.now().date()
+            total = Ticket.objects.count()
+            abertos = Ticket.objects.filter(status=StatusTicket.ABERTO).count()
+            em_andamento = Ticket.objects.filter(status=StatusTicket.EM_ANDAMENTO).count()
+            aguardando = Ticket.objects.filter(status=StatusTicket.AGUARDANDO_CLIENTE).count()
+            resolvidos_hoje = Ticket.objects.filter(
+                status=StatusTicket.RESOLVIDO,
+                atualizado_em__date=hoje,
+            ).count()
+            criados_hoje = Ticket.objects.filter(criado_em__date=hoje).count()
+            criticos = Ticket.objects.filter(
+                prioridade=PrioridadeTicket.CRITICA,
+                status__in=[StatusTicket.ABERTO, StatusTicket.EM_ANDAMENTO],
+            ).count()
+            return {
+                "total": total,
+                "abertos": abertos,
+                "em_andamento": em_andamento,
+                "aguardando": aguardando,
+                "resolvidos_hoje": resolvidos_hoje,
+                "criados_hoje": criados_hoje,
+                "criticos": criticos,
+            }
+
+        stats = await get_stats()
+
+        response_text = "📊 **Estatísticas de Tickets**\n\n"
+        response_text += f"🎫 Total de tickets: **{stats['total']}**\n"
+        response_text += f"📂 Abertos: **{stats['abertos']}**\n"
+        response_text += f"⚡ Em andamento: **{stats['em_andamento']}**\n"
+        response_text += f"⏳ Aguardando cliente: **{stats['aguardando']}**\n"
+        response_text += f"🆕 Criados hoje: **{stats['criados_hoje']}**\n"
+        response_text += f"✅ Resolvidos hoje: **{stats['resolvidos_hoje']}**\n"
+
+        if stats["criticos"] > 0:
+            response_text += f"\n🚨 **{stats['criticos']} ticket(s) crítico(s) ativo(s)!**"
+
+        return ChatbotResponse(
+            message=response_text,
+            intent=IntentType.DASHBOARD_STATS,
+            confidence=0.95,
+            quick_replies=["Resumo do dia", "Tempo de resposta", "Clientes urgentes", "Criar ticket"],
+        )
+
+    async def _handle_daily_summary(self, user_id: int, message: str) -> ChatbotResponse:
+        """Retorna resumo completo do dia"""
+
+        @sync_to_async
+        def get_summary():
+            hoje = timezone.now().date()
+
+            criados = Ticket.objects.filter(criado_em__date=hoje).count()
+            resolvidos = Ticket.objects.filter(
+                status=StatusTicket.RESOLVIDO,
+                atualizado_em__date=hoje,
+            ).count()
+            fechados = Ticket.objects.filter(
+                status=StatusTicket.FECHADO,
+                atualizado_em__date=hoje,
+            ).count()
+
+            abertos_ativos = Ticket.objects.filter(
+                status__in=[StatusTicket.ABERTO, StatusTicket.EM_ANDAMENTO]
+            ).count()
+
+            # Distribuição por prioridade dos ativos
+            por_prioridade = dict(
+                Ticket.objects.filter(
+                    status__in=[StatusTicket.ABERTO, StatusTicket.EM_ANDAMENTO]
+                )
+                .values_list("prioridade")
+                .annotate(c=Count("id"))
+                .values_list("prioridade", "c")
+            )
+
+            # Agentes ativos hoje
+            agentes_ativos = (
+                Ticket.objects.filter(
+                    atualizado_em__date=hoje,
+                    agente__isnull=False,
+                )
+                .values("agente")
+                .distinct()
+                .count()
+            )
+
+            return {
+                "criados": criados,
+                "resolvidos": resolvidos,
+                "fechados": fechados,
+                "abertos_ativos": abertos_ativos,
+                "por_prioridade": por_prioridade,
+                "agentes_ativos": agentes_ativos,
+            }
+
+        s = await get_summary()
+
+        response_text = "📋 **Resumo do Dia**\n\n"
+        response_text += f"🆕 Tickets criados hoje: **{s['criados']}**\n"
+        response_text += f"✅ Resolvidos hoje: **{s['resolvidos']}**\n"
+        response_text += f"🔒 Fechados hoje: **{s['fechados']}**\n"
+        response_text += f"📂 Ativos no momento: **{s['abertos_ativos']}**\n"
+        response_text += f"👥 Agentes ativos hoje: **{s['agentes_ativos']}**\n"
+
+        pp = s["por_prioridade"]
+        if pp:
+            response_text += "\n**Ativos por prioridade:**\n"
+            prio_labels = {
+                "critica": "🔴 Crítica",
+                "alta": "🟠 Alta",
+                "media": "🟡 Média",
+                "baixa": "🟢 Baixa",
+            }
+            for pk, label in prio_labels.items():
+                if pp.get(pk, 0) > 0:
+                    response_text += f"  {label}: {pp[pk]}\n"
+
+        # Taxa de resolução
+        if s["criados"] > 0:
+            taxa = round((s["resolvidos"] / s["criados"]) * 100)
+            response_text += f"\n📈 Taxa de resolução: **{taxa}%**"
+
+        return ChatbotResponse(
+            message=response_text,
+            intent=IntentType.DAILY_SUMMARY,
+            confidence=0.95,
+            quick_replies=["Tickets abertos", "Tempo de resposta", "Clientes urgentes", "Criar ticket"],
+        )
+
+    async def _handle_agent_performance(self, user_id: int, message: str) -> ChatbotResponse:
+        """Retorna métricas de performance dos agentes"""
+
+        @sync_to_async
+        def get_performance():
+            hoje = timezone.now().date()
+            semana = hoje - timedelta(days=7)
+
+            # Tickets resolvidos por agente esta semana
+            agentes = list(
+                Ticket.objects.filter(
+                    agente__isnull=False,
+                    atualizado_em__date__gte=semana,
+                )
+                .values("agente__first_name", "agente__last_name", "agente__username")
+                .annotate(
+                    total=Count("id"),
+                    resolvidos=Count("id", filter=Q(status=StatusTicket.RESOLVIDO)),
+                )
+                .order_by("-resolvidos")[:5]
+            )
+
+            # Tempo médio de primeira resposta (se disponível)
+            tickets_com_resposta = Ticket.objects.filter(
+                first_response_at__isnull=False,
+                criado_em__date__gte=semana,
+            )
+            avg_first_response = None
+            if tickets_com_resposta.exists():
+                total_min = 0
+                count = 0
+                for t in tickets_com_resposta[:100]:
+                    delta = (t.first_response_at - t.criado_em).total_seconds() / 60
+                    if delta > 0:
+                        total_min += delta
+                        count += 1
+                if count > 0:
+                    avg_first_response = total_min / count
+
+            return {
+                "agentes": agentes,
+                "avg_first_response": avg_first_response,
+            }
+
+        perf = await get_performance()
+
+        response_text = "⏱️ **Performance dos Agentes** (últimos 7 dias)\n\n"
+
+        if perf["avg_first_response"] is not None:
+            mins = int(perf["avg_first_response"])
+            if mins >= 60:
+                response_text += f"📨 Tempo médio de primeira resposta: **{mins // 60}h {mins % 60}min**\n\n"
+            else:
+                response_text += f"📨 Tempo médio de primeira resposta: **{mins} min**\n\n"
+
+        if perf["agentes"]:
+            response_text += "**Top agentes:**\n"
+            for i, a in enumerate(perf["agentes"], 1):
+                nome = a.get("agente__first_name") or a.get("agente__username", "N/A")
+                sobrenome = a.get("agente__last_name", "")
+                nome_completo = f"{nome} {sobrenome}".strip()
+                response_text += f"  {i}. {nome_completo}: {a['resolvidos']}/{a['total']} resolvidos\n"
+        else:
+            response_text += "Nenhum agente com atividade registrada."
+
+        return ChatbotResponse(
+            message=response_text,
+            intent=IntentType.AGENT_PERFORMANCE,
+            confidence=0.9,
+            quick_replies=["Tickets abertos", "Resumo do dia", "Clientes urgentes"],
+        )
+
+    async def _handle_client_attention(self, user_id: int, message: str) -> ChatbotResponse:
+        """Retorna clientes que precisam de atenção imediata"""
+
+        @sync_to_async
+        def get_clients():
+            agora = timezone.now()
+
+            # Tickets críticos/altos abertos, ordenados por antiguidade
+            tickets_urgentes = list(
+                Ticket.objects.filter(
+                    status__in=[StatusTicket.ABERTO, StatusTicket.EM_ANDAMENTO],
+                    prioridade__in=[PrioridadeTicket.CRITICA, PrioridadeTicket.ALTA],
+                )
+                .select_related("cliente")
+                .order_by("criado_em")[:10]
+            )
+
+            # Tickets com SLA prestes a vencer
+            sla_risco = list(
+                Ticket.objects.filter(
+                    sla_deadline__isnull=False,
+                    sla_deadline__lte=agora + timedelta(hours=2),
+                    sla_deadline__gt=agora,
+                    status__in=[StatusTicket.ABERTO, StatusTicket.EM_ANDAMENTO],
+                )
+                .select_related("cliente")
+                .order_by("sla_deadline")[:5]
+            )
+
+            # Tickets sem resposta há mais de 24h
+            sem_resposta = list(
+                Ticket.objects.filter(
+                    status=StatusTicket.ABERTO,
+                    first_response_at__isnull=True,
+                    criado_em__lte=agora - timedelta(hours=24),
+                )
+                .select_related("cliente")
+                .order_by("criado_em")[:5]
+            )
+
+            return {
+                "urgentes": tickets_urgentes,
+                "sla_risco": sla_risco,
+                "sem_resposta": sem_resposta,
+            }
+
+        data = await get_clients()
+
+        response_text = "🚨 **Clientes que Precisam de Atenção**\n\n"
+
+        if data["urgentes"]:
+            response_text += "**Tickets críticos/alta prioridade:**\n"
+            for t in data["urgentes"][:5]:
+                prio_emoji = "🔴" if t.prioridade == PrioridadeTicket.CRITICA else "🟠"
+                cliente_nome = t.cliente.nome if t.cliente else "N/A"
+                tempo = timezone.now() - t.criado_em
+                horas = int(tempo.total_seconds() / 3600)
+                response_text += f"  {prio_emoji} #{t.numero} - {cliente_nome} ({t.titulo[:40]})"
+                response_text += f" — há {horas}h\n"
+        else:
+            response_text += "✅ Nenhum ticket crítico/alto no momento.\n"
+
+        if data["sem_resposta"]:
+            response_text += f"\n⚠️ **{len(data['sem_resposta'])} ticket(s) sem resposta há +24h:**\n"
+            for t in data["sem_resposta"][:3]:
+                cliente_nome = t.cliente.nome if t.cliente else "N/A"
+                response_text += f"  📭 #{t.numero} - {cliente_nome}\n"
+
+        if data["sla_risco"]:
+            response_text += f"\n⏰ **{len(data['sla_risco'])} ticket(s) com SLA prestes a vencer:**\n"
+            for t in data["sla_risco"][:3]:
+                cliente_nome = t.cliente.nome if t.cliente else "N/A"
+                response_text += f"  ⏳ #{t.numero} - {cliente_nome}\n"
+
+        if not data["urgentes"] and not data["sem_resposta"] and not data["sla_risco"]:
+            response_text = "✅ **Tudo em dia!** Nenhum cliente precisa de atenção imediata no momento."
+
+        return ChatbotResponse(
+            message=response_text,
+            intent=IntentType.CLIENT_ATTENTION,
+            confidence=0.9,
+            quick_replies=["Tickets abertos", "Resumo do dia", "Tempo de resposta"],
+        )
+
+    # ====================================
+    # SYSTEM GUIDE (roteiros do sistema)
+    # ====================================
+
+    # Importa guias do chatbot_ai_engine para evitar duplicação
+    def _handle_system_guide(self, message: str) -> ChatbotResponse:
+        """Busca o guia mais adequado para a pergunta do usuário"""
+        from .chatbot_ai_engine import chatbot_engine
+
+        result = chatbot_engine._handle_system_guide(message)
+        return ChatbotResponse(
+            message=result["text"],
+            intent=IntentType.SYSTEM_GUIDE,
+            confidence=result["confidence"],
+            quick_replies=result.get("suggestions", []),
+        )
+
+    def _handle_system_help(self) -> ChatbotResponse:
+        """Retorna visão geral de todas as funcionalidades do sistema"""
+        from .chatbot_ai_engine import chatbot_engine
+
+        result = chatbot_engine._handle_system_help()
+        return ChatbotResponse(
+            message=result["text"],
+            intent=IntentType.SYSTEM_GUIDE,
+            confidence=result["confidence"],
+            quick_replies=result.get("suggestions", []),
         )
 
     # ====================================
