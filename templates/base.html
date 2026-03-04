@@ -1519,7 +1519,7 @@
                 <!-- ======================================== -->
                 <!--           COMUNICAÇÃO                    -->
                 <!-- ======================================== -->
-                <li class="nav-item"><p class="sidebar-section-label"><span class="section-dot" style="background:#06b6d4;"></span>Comunicação</p></li>
+                <li class="nav-item"><p class="sidebar-section-label"><span class="section-dot" style="background:#3b82f6;"></span>Comunicação</p></li>
                 
                 <li class="nav-item sidebar-dropdown">
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="comunicacao" onclick="toggleSidebarDropdown(event,this,'comunicacao')">
@@ -1574,7 +1574,7 @@
                 <!-- ======================================== -->
                 <!--           ANÁLISE & RELATÓRIOS           -->
                 <!-- ======================================== -->
-                <li class="nav-item"><p class="sidebar-section-label"><span class="section-dot" style="background:#334155;"></span>Análise</p></li>
+                <li class="nav-item"><p class="sidebar-section-label"><span class="section-dot" style="background:#6366f1;"></span>Análise</p></li>
                 
                 <li class="nav-item sidebar-dropdown">
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="analise" onclick="toggleSidebarDropdown(event,this,'analise')">
@@ -1619,36 +1619,9 @@
                 </li>
 
                 <!-- ======================================== -->
-                <!--           FERRAMENTAS                    -->
+                <!--        FERRAMENTAS & AUTOMAÇÃO           -->
                 <!-- ======================================== -->
                 <li class="nav-item"><p class="sidebar-section-label"><span class="section-dot" style="background:#8b5cf6;"></span>Ferramentas</p></li>
-                
-                <li class="nav-item sidebar-dropdown">
-                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="calculos" onclick="toggleSidebarDropdown(event,this,'calculos')">
-                        <div class="d-flex align-items-center justify-content-between w-100">
-                            <span class="d-flex align-items-center">
-                                <i class="material-icons sidebar-section-icon me-2">calculate</i>
-                                <h6 class="text-uppercase text-xs font-weight-bolder mb-0 sidebar-section-title">Cálculos</h6>
-                            </span>
-                            <i class="material-icons dropdown-arrow ms-2">keyboard_arrow_down</i>
-                        </div>
-                    </div>
-                    <div class="sidebar-dropdown-menu" id="dropdown-calculos">
-                        <ul class="navbar-nav">
-                            <li class="nav-item">
-                                <a class="nav-link {% if active_page == 'calculo_vigilante' %}active{% else %}text-dark{% endif %}" href="{% url 'calculo_vigilante:pagina' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">security</i>
-                                    <span class="nav-link-text ms-1">Cálculo Vigilante</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
-
-                <!-- ======================================== -->
-                <!--           CONFIGURAÇÕES                  -->
-                <!-- ======================================== -->
-                <li class="nav-item"><p class="sidebar-section-label"><span class="section-dot" style="background:#94a3b8;"></span>Configurações</p></li>
                 
                 <li class="nav-item sidebar-dropdown">
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="automacao" onclick="toggleSidebarDropdown(event,this,'automacao')">
@@ -1679,27 +1652,27 @@
                 </li>
 
                 <li class="nav-item sidebar-dropdown">
-                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="ferramentas_config" onclick="toggleSidebarDropdown(event,this,'ferramentas_config')">
+                    <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="utilitarios" onclick="toggleSidebarDropdown(event,this,'utilitarios')">
                         <div class="d-flex align-items-center justify-content-between w-100">
                             <span class="d-flex align-items-center">
                                 <i class="material-icons sidebar-section-icon me-2">build</i>
-                                <h6 class="text-uppercase text-xs font-weight-bolder mb-0 sidebar-section-title">Ferramentas</h6>
+                                <h6 class="text-uppercase text-xs font-weight-bolder mb-0 sidebar-section-title">Utilitários</h6>
                             </span>
                             <i class="material-icons dropdown-arrow ms-2">keyboard_arrow_down</i>
                         </div>
                     </div>
-                    <div class="sidebar-dropdown-menu" id="dropdown-ferramentas_config">
+                    <div class="sidebar-dropdown-menu" id="dropdown-utilitarios">
                         <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link {% if active_page == 'calculo_vigilante' %}active{% else %}text-dark{% endif %}" href="{% url 'calculo_vigilante:pagina' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">calculate</i>
+                                    <span class="nav-link-text ms-1">Cálculo Vigilante</span>
+                                </a>
+                            </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.url_name == 'macros_list' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:macros_list' %}" onclick="event.stopPropagation()">
                                     <i class="material-icons">flash_on</i>
                                     <span class="nav-link-text ms-1">Macros</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {% if request.resolver_match.url_name == 'notifications' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:notifications' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">notifications</i>
-                                    <span class="nav-link-text ms-1">Notificações</span>
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -1708,11 +1681,21 @@
                                     <span class="nav-link-text ms-1">Pesquisa Avançada</span>
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'notifications' %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:notifications' %}" onclick="event.stopPropagation()">
+                                    <i class="material-icons">notifications</i>
+                                    <span class="nav-link-text ms-1">Notificações</span>
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </li>
 
+                <!-- ======================================== -->
+                <!--           ADMINISTRAÇÃO                  -->
+                <!-- ======================================== -->
                 {% if user.is_superuser or user.is_staff %}
+                <li class="nav-item"><p class="sidebar-section-label"><span class="section-dot" style="background:#64748b;"></span>Administração</p></li>
                 <li class="nav-item sidebar-dropdown">
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="compliance" onclick="toggleSidebarDropdown(event,this,'compliance')">
                         <div class="d-flex align-items-center justify-content-between w-100">
@@ -1740,15 +1723,13 @@
                         </ul>
                     </div>
                 </li>
-                {% endif %}
 
-                {% if user.is_superuser or user.is_staff %}
                 <li class="nav-item sidebar-dropdown">
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="sistema" onclick="toggleSidebarDropdown(event,this,'sistema')">
                         <div class="d-flex align-items-center justify-content-between w-100">
                             <span class="d-flex align-items-center">
                                 <i class="material-icons sidebar-section-icon me-2">settings</i>
-                                <h6 class="text-uppercase text-xs font-weight-bolder mb-0 sidebar-section-title">Sistema & Usuários</h6>
+                                <h6 class="text-uppercase text-xs font-weight-bolder mb-0 sidebar-section-title">Sistema</h6>
                             </span>
                             <i class="material-icons dropdown-arrow ms-2">keyboard_arrow_down</i>
                         </div>
