@@ -177,6 +177,7 @@
 .sug-btn .sug-icon.amber  { background: rgba(245,158,11,.1); color: #f59e0b; }
 .sug-btn .sug-icon.green  { background: rgba(34,197,94,.1);  color: #22c55e; }
 .sug-btn .sug-icon.red    { background: rgba(239,68,68,.1);  color: #ef4444; }
+.sug-btn .sug-icon.purple { background: rgba(139,92,246,.1); color: #8b5cf6; }
 .sug-btn .sug-label { font-size: .78rem; font-weight: 500; color: var(--ic-text-primary, #1e293b); }
 .sug-btn .sug-desc  { font-size: .68rem; color: var(--ic-text-muted, #94a3b8); }
 
@@ -189,24 +190,51 @@
 }
 .stat-row .stat-label { font-size: .75rem; color: var(--ic-text-secondary, #64748b); flex: 1; }
 .stat-row .stat-value { font-size: .8rem; font-weight: 700; color: var(--ic-text-primary, #1e293b); }
+.stat-row .stat-value.critical { color: #ef4444; }
+.stat-row .stat-value.success  { color: #22c55e; }
 
 /* Welcome message */
-.welcome-section { text-align: center; padding: 2rem 1rem; }
+.welcome-section { text-align: center; padding: 2.5rem 1rem; }
 .welcome-section .welcome-icon {
-    width: 64px; height: 64px; border-radius: 50%; margin: 0 auto .75rem;
-    background: linear-gradient(135deg, var(--ic-accent-glow), rgba(6,182,212,.08));
+    width: 72px; height: 72px; border-radius: 50%; margin: 0 auto .75rem;
+    background: linear-gradient(135deg, var(--ic-accent-glow, rgba(6,182,212,.12)), rgba(6,182,212,.04));
     display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 0 8px rgba(6,182,212,.06);
 }
-.welcome-section .welcome-icon .material-symbols-rounded { font-size: 2rem; color: var(--ic-accent, #06b6d4); }
-.welcome-section h5 { font-size: 1rem; font-weight: 700; color: var(--ic-text-primary, #1e293b); margin-bottom: .3rem; }
-.welcome-section p { font-size: .8rem; color: var(--ic-text-secondary, #64748b); margin: 0; max-width: 360px; margin-inline: auto; }
-.welcome-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem; margin-top: 1rem; }
+.welcome-section .welcome-icon .material-symbols-rounded { font-size: 2.2rem; color: var(--ic-accent, #06b6d4); }
+.welcome-section h5 { font-size: 1.05rem; font-weight: 700; color: var(--ic-text-primary, #1e293b); margin-bottom: .3rem; }
+.welcome-section p { font-size: .82rem; color: var(--ic-text-secondary, #64748b); margin: 0; max-width: 420px; margin-inline: auto; line-height: 1.6; }
+.welcome-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem; margin-top: 1.25rem; }
 .welcome-chips .chip {
-    padding: .4rem .85rem; border-radius: 2rem; font-size: .75rem; font-weight: 500;
+    padding: .45rem .9rem; border-radius: 2rem; font-size: .75rem; font-weight: 500;
     background: var(--ic-bg-card, #fff); border: 1px solid var(--ic-bg-active, #e2e8f0);
     cursor: pointer; transition: all .2s; color: var(--ic-text-primary, #1e293b);
+    display: inline-flex; align-items: center; gap: .3rem;
 }
-.welcome-chips .chip:hover { border-color: var(--ic-accent, #06b6d4); background: var(--ic-accent-glow); color: var(--ic-accent-dark, #0891b2); }
+.welcome-chips .chip:hover { border-color: var(--ic-accent, #06b6d4); background: var(--ic-accent-glow, rgba(6,182,212,.08)); color: var(--ic-accent-dark, #0891b2); transform: translateY(-1px); }
+
+/* Slash command autocomplete */
+.slash-menu {
+    position: absolute; bottom: 100%; left: 0; right: 0;
+    background: var(--ic-bg-card, #fff); border: 1px solid var(--ic-bg-active, #e2e8f0);
+    border-radius: .75rem; box-shadow: 0 -4px 20px rgba(0,0,0,.1);
+    max-height: 220px; overflow-y: auto; display: none; z-index: 10;
+    margin-bottom: .5rem;
+}
+.slash-menu.show { display: block; }
+.slash-item {
+    display: flex; align-items: center; gap: .6rem;
+    padding: .5rem .85rem; cursor: pointer; transition: background .15s;
+    font-size: .8rem;
+}
+.slash-item:first-child { border-radius: .75rem .75rem 0 0; }
+.slash-item:last-child  { border-radius: 0 0 .75rem .75rem; }
+.slash-item:hover, .slash-item.active { background: var(--ic-accent-glow, rgba(6,182,212,.08)); }
+.slash-item kbd {
+    font-size: .7rem; padding: 1px 5px; border-radius: 3px;
+    background: #e2e8f0; color: #64748b; font-family: monospace;
+}
+.slash-item .slash-desc { color: var(--ic-text-muted, #94a3b8); font-size: .72rem; margin-left: auto; }
 
 /* Responsive */
 @media (max-width: 991px) {
@@ -221,7 +249,7 @@
     .chat-sidebar .side-card { min-width: 100%; }
 }
 
-/* Dark mode support */
+/* Dark mode */
 [data-bs-theme="dark"] .chat-card,
 [data-bs-theme="dark"] .side-card { background: #1e293b; border-color: rgba(255,255,255,.06); }
 [data-bs-theme="dark"] .chat-messages { background: #0f172a; }
@@ -230,6 +258,9 @@
 [data-bs-theme="dark"] .chat-input-wrap textarea { color: #e2e8f0; }
 [data-bs-theme="dark"] .sug-btn { background: #0f172a; }
 [data-bs-theme="dark"] .welcome-chips .chip { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+[data-bs-theme="dark"] .slash-menu { background: #1e293b; border-color: #334155; }
+[data-bs-theme="dark"] .slash-item:hover { background: rgba(6,182,212,.12); }
+[data-bs-theme="dark"] .slash-item kbd { background: #334155; color: #94a3b8; }
 </style>
 {% endblock %}
 
@@ -263,25 +294,27 @@
                     <div class="welcome-icon">
                         <i class="material-symbols-rounded">psychology</i>
                     </div>
-                    <h5>Olá! Sou o assistente iConnect</h5>
-                    <p>Posso consultar tickets, mostrar estatísticas, e te ensinar a usar qualquer funcionalidade do sistema! Pergunte como quiser.</p>
+                    <h5>Olá, {{ user.first_name|default:user.username }}! 👋</h5>
+                    <p>Sou o assistente inteligente do iConnect. Posso consultar tickets em tempo real, mostrar estatísticas, guiar você pelo sistema e muito mais. Experimente!</p>
                     <div class="welcome-chips">
                         <span class="chip welcome-chip" data-text="O que o sistema faz?">🗺️ Visão geral</span>
                         <span class="chip welcome-chip" data-text="Como criar um ticket?">📝 Criar Ticket</span>
-                        <span class="chip welcome-chip" data-text="Como gerenciar clientes?">👥 Clientes</span>
                         <span class="chip welcome-chip" data-text="Quantos tickets abertos temos hoje?">📊 Tickets abertos</span>
                         <span class="chip welcome-chip" data-text="Mostre um resumo do atendimento de hoje">📋 Resumo do dia</span>
-                        <span class="chip welcome-chip" data-text="oi">👋 Começar</span>
+                        <span class="chip welcome-chip" data-text="Quais clientes precisam de atenção imediata?">🚨 Clientes urgentes</span>
+                        <span class="chip welcome-chip" data-text="Qual o tempo médio de resposta dos agentes?">⏱️ Performance</span>
                     </div>
                 </div>
             </div>
 
             <!-- Input -->
-            <div class="chat-input-area">
+            <div class="chat-input-area" style="position:relative;">
+                <!-- Slash command menu -->
+                <div class="slash-menu" id="slashMenu"></div>
                 <form id="chatbotForm" autocomplete="off">
                     {% csrf_token %}
                     <div class="chat-input-wrap">
-                        <textarea id="chatbotInput" rows="1" placeholder="Digite sua mensagem..." aria-label="Mensagem para o chatbot"></textarea>
+                        <textarea id="chatbotInput" rows="1" placeholder="Digite sua mensagem ou / para atalhos..." aria-label="Mensagem para o chatbot"></textarea>
                         <button type="submit" class="btn-send" id="btnSend" title="Enviar" aria-label="Enviar mensagem">
                             <i class="material-symbols-rounded">send</i>
                         </button>
@@ -289,7 +322,8 @@
                     <div class="d-flex justify-content-between align-items-center mt-1 px-1">
                         <span class="text-xs" style="color:var(--ic-text-muted)">
                             <kbd style="font-size:.6rem;padding:1px 4px;border-radius:3px;background:#e2e8f0;color:#64748b">Enter</kbd> enviar &bull;
-                            <kbd style="font-size:.6rem;padding:1px 4px;border-radius:3px;background:#e2e8f0;color:#64748b">Shift+Enter</kbd> nova linha
+                            <kbd style="font-size:.6rem;padding:1px 4px;border-radius:3px;background:#e2e8f0;color:#64748b">Shift+Enter</kbd> nova linha &bull;
+                            <kbd style="font-size:.6rem;padding:1px 4px;border-radius:3px;background:#e2e8f0;color:#64748b">/</kbd> atalhos
                         </span>
                         <span id="charCount" class="text-xs" style="color:var(--ic-text-muted)"></span>
                     </div>
@@ -327,9 +361,9 @@
                     <div class="sug-icon red"><i class="material-symbols-rounded">priority_high</i></div>
                     <div><div class="sug-label">Clientes urgentes</div><div class="sug-desc">Atenção imediata</div></div>
                 </button>
-                <button class="sug-btn suggestion-btn" data-text="Como gerenciar usuários?">
-                    <div class="sug-icon blue"><i class="material-symbols-rounded">manage_accounts</i></div>
-                    <div><div class="sug-label">Gerenciar usuários</div><div class="sug-desc">Criar e editar contas</div></div>
+                <button class="sug-btn suggestion-btn" data-text="Qual o tempo médio de resposta dos agentes?">
+                    <div class="sug-icon purple"><i class="material-symbols-rounded">speed</i></div>
+                    <div><div class="sug-label">Performance</div><div class="sug-desc">Métricas de agentes</div></div>
                 </button>
                 <button class="sug-btn suggestion-btn" data-text="Preciso falar com um atendente humano">
                     <div class="sug-icon amber"><i class="material-symbols-rounded">support_agent</i></div>
@@ -347,24 +381,29 @@
             </div>
             <div class="side-body" id="statsBody">
                 <div class="stat-row">
-                    <div class="stat-icon" style="background:var(--ic-status-aberto-bg,#fef2f2);color:var(--ic-status-aberto,#ef4444)"><i class="material-symbols-rounded" style="font-size:.9rem">folder_open</i></div>
+                    <div class="stat-icon" style="background:rgba(239,68,68,.08);color:#ef4444"><i class="material-symbols-rounded" style="font-size:.9rem">folder_open</i></div>
                     <span class="stat-label">Abertos</span>
                     <span class="stat-value" id="statAbertos">—</span>
                 </div>
                 <div class="stat-row">
-                    <div class="stat-icon" style="background:var(--ic-status-andamento-bg,#fffbeb);color:var(--ic-status-andamento,#f59e0b)"><i class="material-symbols-rounded" style="font-size:.9rem">sync</i></div>
+                    <div class="stat-icon" style="background:rgba(245,158,11,.08);color:#f59e0b"><i class="material-symbols-rounded" style="font-size:.9rem">sync</i></div>
                     <span class="stat-label">Em andamento</span>
                     <span class="stat-value" id="statAndamento">—</span>
                 </div>
                 <div class="stat-row">
-                    <div class="stat-icon" style="background:var(--ic-status-resolvido-bg,#f0fdf4);color:var(--ic-status-resolvido,#22c55e)"><i class="material-symbols-rounded" style="font-size:.9rem">check_circle</i></div>
+                    <div class="stat-icon" style="background:rgba(34,197,94,.08);color:#22c55e"><i class="material-symbols-rounded" style="font-size:.9rem">check_circle</i></div>
                     <span class="stat-label">Resolvidos hoje</span>
-                    <span class="stat-value" id="statResolvidos">—</span>
+                    <span class="stat-value success" id="statResolvidos">—</span>
                 </div>
                 <div class="stat-row">
-                    <div class="stat-icon" style="background:var(--ic-prio-critica-bg,#fef2f2);color:var(--ic-prio-critica,#ef4444)"><i class="material-symbols-rounded" style="font-size:.9rem">warning</i></div>
+                    <div class="stat-icon" style="background:rgba(6,182,212,.08);color:#06b6d4"><i class="material-symbols-rounded" style="font-size:.9rem">add_circle</i></div>
+                    <span class="stat-label">Criados hoje</span>
+                    <span class="stat-value" id="statCriados">—</span>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-icon" style="background:rgba(239,68,68,.08);color:#ef4444"><i class="material-symbols-rounded" style="font-size:.9rem">warning</i></div>
                     <span class="stat-label">Críticos</span>
-                    <span class="stat-value" id="statCriticos">—</span>
+                    <span class="stat-value critical" id="statCriticos">—</span>
                 </div>
             </div>
         </div>
@@ -373,28 +412,36 @@
         <div class="side-card">
             <div class="side-header">
                 <i class="material-symbols-rounded">keyboard</i>
-                <h6>Atalhos</h6>
+                <h6>Atalhos de Comando</h6>
             </div>
             <div class="side-body">
                 <div class="d-flex justify-content-between align-items-center py-1">
                     <span class="text-xs" style="color:var(--ic-text-secondary)">Guia do sistema</span>
-                    <span class="text-xs" style="color:var(--ic-text-muted)">digite <kbd style="font-size:.6rem;padding:1px 4px;border-radius:3px;background:#e2e8f0;color:#64748b">/guia</kbd></span>
+                    <kbd style="font-size:.65rem;padding:1px 5px;border-radius:3px;background:#e2e8f0;color:#64748b">/guia</kbd>
                 </div>
                 <div class="d-flex justify-content-between align-items-center py-1">
                     <span class="text-xs" style="color:var(--ic-text-secondary)">Tickets abertos</span>
-                    <span class="text-xs" style="color:var(--ic-text-muted)">digite <kbd style="font-size:.6rem;padding:1px 4px;border-radius:3px;background:#e2e8f0;color:#64748b">/tickets</kbd></span>
+                    <kbd style="font-size:.65rem;padding:1px 5px;border-radius:3px;background:#e2e8f0;color:#64748b">/tickets</kbd>
                 </div>
                 <div class="d-flex justify-content-between align-items-center py-1">
                     <span class="text-xs" style="color:var(--ic-text-secondary)">Resumo do dia</span>
-                    <span class="text-xs" style="color:var(--ic-text-muted)">digite <kbd style="font-size:.6rem;padding:1px 4px;border-radius:3px;background:#e2e8f0;color:#64748b">/resumo</kbd></span>
+                    <kbd style="font-size:.65rem;padding:1px 5px;border-radius:3px;background:#e2e8f0;color:#64748b">/resumo</kbd>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-1">
+                    <span class="text-xs" style="color:var(--ic-text-secondary)">Performance</span>
+                    <kbd style="font-size:.65rem;padding:1px 5px;border-radius:3px;background:#e2e8f0;color:#64748b">/performance</kbd>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-1">
+                    <span class="text-xs" style="color:var(--ic-text-secondary)">Clientes urgentes</span>
+                    <kbd style="font-size:.65rem;padding:1px 5px;border-radius:3px;background:#e2e8f0;color:#64748b">/urgentes</kbd>
                 </div>
                 <div class="d-flex justify-content-between align-items-center py-1">
                     <span class="text-xs" style="color:var(--ic-text-secondary)">Falar com humano</span>
-                    <span class="text-xs" style="color:var(--ic-text-muted)">digite <kbd style="font-size:.6rem;padding:1px 4px;border-radius:3px;background:#e2e8f0;color:#64748b">/humano</kbd></span>
+                    <kbd style="font-size:.65rem;padding:1px 5px;border-radius:3px;background:#e2e8f0;color:#64748b">/humano</kbd>
                 </div>
                 <div class="d-flex justify-content-between align-items-center py-1">
                     <span class="text-xs" style="color:var(--ic-text-secondary)">Limpar chat</span>
-                    <span class="text-xs" style="color:var(--ic-text-muted)">digite <kbd style="font-size:.6rem;padding:1px 4px;border-radius:3px;background:#e2e8f0;color:#64748b">/limpar</kbd></span>
+                    <kbd style="font-size:.65rem;padding:1px 5px;border-radius:3px;background:#e2e8f0;color:#64748b">/limpar</kbd>
                 </div>
             </div>
         </div>
@@ -411,9 +458,29 @@ document.addEventListener('DOMContentLoaded', function() {
     const input        = document.getElementById('chatbotInput');
     const btnSend      = document.getElementById('btnSend');
     const charCount    = document.getElementById('charCount');
+    const slashMenu    = document.getElementById('slashMenu');
     const csrfToken    = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const API_URL      = '{% url "dashboard:chatbot_api" %}';
+    const STATS_URL    = '{% url "dashboard:chatbot_stats_api" %}';
     let messageHistory = [];
     let isFirstMessage = true;
+    let isSending      = false;
+
+    // ===== Slash commands =====
+    const slashCommands = [
+        { cmd: '/tickets',     label: 'Tickets abertos',  desc: 'Estatísticas de tickets', text: 'Quantos tickets abertos temos hoje?' },
+        { cmd: '/resumo',      label: 'Resumo do dia',    desc: 'Visão geral do dia',      text: 'Mostre um resumo do atendimento de hoje' },
+        { cmd: '/performance', label: 'Performance',      desc: 'Métricas dos agentes',    text: 'Qual o tempo médio de resposta dos agentes?' },
+        { cmd: '/urgentes',    label: 'Clientes urgentes', desc: 'Atenção imediata',        text: 'Quais clientes precisam de atenção imediata?' },
+        { cmd: '/guia',        label: 'Guia do sistema',  desc: 'Funcionalidades',         text: 'O que o sistema faz?' },
+        { cmd: '/criar',       label: 'Criar ticket',     desc: 'Passo a passo',           text: 'Como criar um ticket?' },
+        { cmd: '/clientes',    label: 'Clientes',         desc: 'Gestão de clientes',      text: 'Como gerenciar clientes?' },
+        { cmd: '/usuarios',    label: 'Usuários',         desc: 'Gestão de usuários',      text: 'Como gerenciar usuários?' },
+        { cmd: '/kanban',      label: 'Kanban',           desc: 'Quadro Kanban',           text: 'Como usar o Kanban?' },
+        { cmd: '/sla',         label: 'SLA',              desc: 'Acordos de nível',        text: 'Como funciona o SLA?' },
+        { cmd: '/humano',      label: 'Falar com humano', desc: 'Escalonar',               text: 'Preciso falar com um atendente humano' },
+        { cmd: '/limpar',      label: 'Limpar chat',      desc: 'Reiniciar conversa',      text: null },
+    ];
 
     // ===== Auto-resize textarea =====
     input.addEventListener('input', function() {
@@ -422,24 +489,41 @@ document.addEventListener('DOMContentLoaded', function() {
         const len = this.value.length;
         charCount.textContent = len > 0 ? `${len}/500` : '';
         btnSend.disabled = len === 0;
+
+        // Slash menu
+        handleSlashMenu(this.value);
     });
     btnSend.disabled = true;
 
-    // ===== Slash commands =====
-    const slashCommands = {
-        '/tickets': 'Quantos tickets abertos temos hoje?',
-        '/resumo': 'Mostre um resumo do atendimento de hoje',
-        '/performance': 'Qual o tempo médio de resposta dos agentes?',
-        '/urgentes': 'Quais clientes precisam de atenção imediata?',
-        '/humano': 'Preciso falar com um atendente humano',
-        '/criar': 'Como criar um ticket?',
-        '/ajuda': 'O que o sistema faz?',
-        '/guia': 'O que o sistema faz?',
-        '/clientes': 'Como gerenciar clientes?',
-        '/usuarios': 'Como gerenciar usuários?',
-        '/kanban': 'Como usar o Kanban?',
-        '/sla': 'Como funciona o SLA?',
-    };
+    // ===== Slash menu autocomplete =====
+    function handleSlashMenu(value) {
+        const text = value.trim().toLowerCase();
+        if (text.startsWith('/') && text.length > 0) {
+            const filtered = slashCommands.filter(c => c.cmd.startsWith(text));
+            if (filtered.length > 0 && text !== '/limpar') {
+                slashMenu.innerHTML = filtered.map((c, i) =>
+                    `<div class="slash-item${i === 0 ? ' active' : ''}" data-cmd="${c.cmd}" data-text="${c.text || ''}">
+                        <kbd>${c.cmd}</kbd> <span>${c.label}</span> <span class="slash-desc">${c.desc}</span>
+                    </div>`
+                ).join('');
+                slashMenu.classList.add('show');
+
+                slashMenu.querySelectorAll('.slash-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        const cmd = this.dataset.cmd;
+                        const text = this.dataset.text;
+                        slashMenu.classList.remove('show');
+                        if (cmd === '/limpar') { clearChat(); input.value = ''; return; }
+                        if (text) { input.value = ''; sendMessage(text); }
+                    });
+                });
+            } else {
+                slashMenu.classList.remove('show');
+            }
+        } else {
+            slashMenu.classList.remove('show');
+        }
+    }
 
     // ===== Format markdown to HTML =====
     function formatMessage(text) {
@@ -449,6 +533,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/>/g, '&gt;')
             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.+?)\*/g, '<em>$1</em>')
+            .replace(/📍 Acesse em: (\/\S+)/g, '📍 Acesse em: <a href="$1">$1</a>')
             .replace(/\n/g, '<br>')
             .replace(/• /g, '&bull; ')
             .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>');
@@ -489,6 +574,26 @@ document.addEventListener('DOMContentLoaded', function() {
         messageHistory.push({ role: isUser ? 'user' : 'bot', content, time: timeNow() });
     }
 
+    // ===== Quick replies =====
+    function addQuickReplies(suggestions) {
+        if (!suggestions || suggestions.length === 0) return;
+        const qrDiv = document.createElement('div');
+        qrDiv.className = 'quick-replies';
+        suggestions.forEach(function(s) {
+            const btn = document.createElement('button');
+            btn.className = 'qr-btn';
+            btn.type = 'button';
+            btn.innerHTML = `<i class="material-symbols-rounded" style="font-size:.8rem">arrow_forward</i>${escapeHtml(s)}`;
+            btn.addEventListener('click', function() {
+                qrDiv.remove();
+                sendMessage(s);
+            });
+            qrDiv.appendChild(btn);
+        });
+        messagesDiv.appendChild(qrDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
     // ===== Typing indicator =====
     function showTyping() {
         const el = document.createElement('div');
@@ -510,64 +615,56 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===== Send message =====
     async function sendMessage(text) {
         text = text.trim();
-        if (!text) return;
-        if (text.length > 500) { text = text.substring(0, 500); }
+        if (!text || isSending) return;
+        if (text.length > 500) text = text.substring(0, 500);
 
         // Slash command handling
-        if (text === '/limpar') { clearChat(); return; }
-        const cmd = slashCommands[text.toLowerCase()];
-        if (cmd) { text = cmd; }
+        slashMenu.classList.remove('show');
+        if (text === '/limpar') { clearChat(); input.value = ''; return; }
+        const cmdMatch = slashCommands.find(c => c.cmd === text.toLowerCase());
+        if (cmdMatch && cmdMatch.text) { text = cmdMatch.text; }
 
         addMessage(text, true);
         input.value = '';
         input.style.height = 'auto';
         charCount.textContent = '';
         btnSend.disabled = true;
+        isSending = true;
         showTyping();
 
         try {
-            const response = await fetch('{% url "dashboard:chatbot_api" %}', {
+            const response = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                 body: JSON.stringify({ message: text })
             });
 
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.error || `HTTP ${response.status}`);
+            }
 
             const data = await response.json();
             removeTyping();
 
-            const botMsg = data.response || data.message || 'Desculpe, não consegui processar.';
+            const botMsg = data.response || 'Desculpe, não consegui processar sua mensagem.';
             addMessage(botMsg, false);
 
             // Quick replies
-            if (data.suggestions && data.suggestions.length > 0) {
-                const qrDiv = document.createElement('div');
-                qrDiv.className = 'quick-replies';
-                data.suggestions.forEach(function(s) {
-                    const btn = document.createElement('button');
-                    btn.className = 'qr-btn';
-                    btn.innerHTML = `<i class="material-symbols-rounded" style="font-size:.8rem">arrow_forward</i>${escapeHtml(s)}`;
-                    btn.addEventListener('click', function() {
-                        qrDiv.remove();
-                        sendMessage(s);
-                    });
-                    qrDiv.appendChild(btn);
-                });
-                messagesDiv.appendChild(qrDiv);
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            }
+            addQuickReplies(data.suggestions);
 
-            // Update sidebar stats if relevant
-            if (data.type === 'dashboard_stats' || data.type === 'daily_summary') {
+            // Refresh sidebar stats on analytics responses
+            const analyticsTypes = ['dashboard_stats', 'daily_summary', 'agent_performance', 'client_attention'];
+            if (analyticsTypes.includes(data.type)) {
                 loadLiveStats();
             }
         } catch(err) {
             removeTyping();
-            addMessage('⚠️ Desculpe, ocorreu um erro de conexão. Tente novamente.', false);
+            addMessage('⚠️ Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente em instantes.', false);
             console.error('Chatbot error:', err);
         }
 
+        isSending = false;
         btnSend.disabled = false;
         input.focus();
     }
@@ -586,7 +683,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let text = '=== Conversa iConnect Chatbot ===\n';
         text += `Data: ${new Date().toLocaleDateString('pt-BR')}\n\n`;
         messageHistory.forEach(m => {
-            const label = m.role === 'user' ? 'Voce' : 'Bot';
+            const label = m.role === 'user' ? 'Você' : 'Assistente';
             text += `[${m.time}] ${label}:\n${m.content}\n\n`;
         });
         const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
@@ -598,32 +695,21 @@ document.addEventListener('DOMContentLoaded', function() {
         URL.revokeObjectURL(url);
     }
 
-    // ===== Load live stats sidebar =====
+    // ===== Load live stats sidebar (dedicated endpoint) =====
     async function loadLiveStats() {
         try {
-            const response = await fetch('{% url "dashboard:chatbot_api" %}', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                body: JSON.stringify({ message: 'Quantos tickets abertos temos hoje?' })
+            const response = await fetch(STATS_URL, {
+                headers: { 'X-CSRFToken': csrfToken }
             });
+            if (!response.ok) return;
             const data = await response.json();
-            if (data.response) {
-                const match = (label) => {
-                    const re = new RegExp(label + '.*?\\*\\*(\\d+)\\*\\*');
-                    const m = data.response.match(re);
-                    return m ? m[1] : '0';
-                };
-                document.getElementById('statAbertos').textContent = match('Abertos');
-                document.getElementById('statAndamento').textContent = match('Em andamento');
-                document.getElementById('statResolvidos').textContent = match('Resolvidos');
-                const critMatch = data.response.match(/(\d+)\s*ticket\(s\)\s*cr[íi]tico/);
-                if (critMatch) {
-                    document.getElementById('statCriticos').textContent = critMatch[1];
-                } else {
-                    document.getElementById('statCriticos').textContent = match('cr[íi]tico');
-                }
-                document.getElementById('statsTime').textContent = timeNow();
-            }
+
+            document.getElementById('statAbertos').textContent = data.abertos ?? '—';
+            document.getElementById('statAndamento').textContent = data.em_andamento ?? '—';
+            document.getElementById('statResolvidos').textContent = data.resolvidos_hoje ?? '—';
+            document.getElementById('statCriados').textContent = data.criados_hoje ?? '—';
+            document.getElementById('statCriticos').textContent = data.criticos ?? '—';
+            document.getElementById('statsTime').textContent = timeNow();
         } catch(e) { /* silent */ }
     }
 
@@ -637,6 +723,34 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             sendMessage(input.value);
+        }
+        // Navigate slash menu with arrows
+        if (slashMenu.classList.contains('show')) {
+            const items = slashMenu.querySelectorAll('.slash-item');
+            const active = slashMenu.querySelector('.slash-item.active');
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                const idx = Array.from(items).indexOf(active);
+                const next = e.key === 'ArrowDown'
+                    ? items[(idx + 1) % items.length]
+                    : items[(idx - 1 + items.length) % items.length];
+                if (active) active.classList.remove('active');
+                next.classList.add('active');
+            }
+            if (e.key === 'Tab' || (e.key === 'Enter' && active)) {
+                e.preventDefault();
+                if (active) active.click();
+            }
+            if (e.key === 'Escape') {
+                slashMenu.classList.remove('show');
+            }
+        }
+    });
+
+    // Close slash menu on outside click
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.chat-input-area')) {
+            slashMenu.classList.remove('show');
         }
     });
 

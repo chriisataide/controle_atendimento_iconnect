@@ -5,6 +5,7 @@ Views de funcionalidades diversas: relatórios, busca, PWA, chatbot, comunicaç�
 import json
 import logging
 
+from asgiref.sync import async_to_sync
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.db.models import Avg, F, Q
@@ -39,16 +40,50 @@ def chatbot_api(request):
             message = data.get("message", "")
 
             chatbot = ChatbotService()
-            response = chatbot.process_message(request.user.id, message)
+            response = async_to_sync(chatbot.process_message)(request.user.id, message)
 
             return JsonResponse(
-                {"response": response.message, "suggestions": response.suggestions, "type": response.response_type}
+                {
+                    "response": response.message,
+                    "suggestions": response.quick_replies or [],
+                    "type": response.intent.value if response.intent else "unknown",
+                    "confidence": response.confidence,
+                }
             )
         except Exception as e:
             logger.error(f"Erro no chatbot_api: {e}", exc_info=True)
             return JsonResponse({"error": "Erro interno."}, status=500)
 
     return JsonResponse({"error": "Método não permitido"}, status=405)
+
+
+@login_required
+def chatbot_stats_api(request):
+    """API de estatísticas rápidas para o sidebar do chatbot"""
+    try:
+        hoje = timezone.now().date()
+        abertos = Ticket.objects.filter(status=StatusTicket.ABERTO).count()
+        em_andamento = Ticket.objects.filter(status=StatusTicket.EM_ANDAMENTO).count()
+        resolvidos_hoje = Ticket.objects.filter(
+            status=StatusTicket.RESOLVIDO,
+            atualizado_em__date=hoje,
+        ).count()
+        criticos = Ticket.objects.filter(
+            prioridade=PrioridadeTicket.CRITICA,
+            status__in=[StatusTicket.ABERTO, StatusTicket.EM_ANDAMENTO],
+        ).count()
+        criados_hoje = Ticket.objects.filter(criado_em__date=hoje).count()
+
+        return JsonResponse({
+            "abertos": abertos,
+            "em_andamento": em_andamento,
+            "resolvidos_hoje": resolvidos_hoje,
+            "criticos": criticos,
+            "criados_hoje": criados_hoje,
+        })
+    except Exception as e:
+        logger.error(f"Erro no chatbot_stats_api: {e}", exc_info=True)
+        return JsonResponse({"error": "Erro ao buscar estatísticas"}, status=500)
 
 
 @login_required

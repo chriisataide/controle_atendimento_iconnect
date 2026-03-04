@@ -80,6 +80,7 @@ from .features import (
     chat_interface,
     chatbot_api,
     chatbot_interface,
+    chatbot_stats_api,
     communication_center,
     custom_reports,
     download_report,
@@ -184,6 +185,7 @@ __all__ = [
     # Features
     "chatbot_interface",
     "chatbot_api",
+    "chatbot_stats_api",
     "chat_interface",
     "reports_dashboard",
     "generate_report",

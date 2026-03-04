@@ -116,6 +116,7 @@ urlpatterns = [
     # AI Chatbot Interface
     path("chatbot/", views.chatbot_interface, name="chatbot"),
     path("chatbot/api/", views.chatbot_api, name="chatbot_api"),
+    path("chatbot/stats/", views.chatbot_stats_api, name="chatbot_stats_api"),
     # Automation Engine
     path("automation/", views.automation_dashboard, name="automation"),
     path("automation/rules/", views.automation_rules, name="automation_rules"),
