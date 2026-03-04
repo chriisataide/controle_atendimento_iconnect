@@ -1741,6 +1741,8 @@
                     </div>
                 </li>
                 {% endif %}
+
+                {% if user.is_superuser or user.is_staff %}
                 <li class="nav-item sidebar-dropdown">
                     <div class="sidebar-dropdown-header sidebar-dropdown-toggle" data-dropdown-id="sistema" onclick="toggleSidebarDropdown(event,this,'sistema')">
                         <div class="d-flex align-items-center justify-content-between w-100">
