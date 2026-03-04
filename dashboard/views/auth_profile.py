@@ -26,6 +26,7 @@ from ..models import (
 )
 from ..utils.rbac import get_user_role
 from ..utils.security import log_suspicious_activity, rate_limit
+from ..utils.rbac import role_required
 
 logger = logging.getLogger("dashboard")
 User = get_user_model()
@@ -74,6 +75,7 @@ class PontoDeVendaForm(forms.ModelForm):
 
 
 @method_decorator([login_required], name="dispatch")
+@method_decorator(role_required('admin', 'gerente', 'supervisor'), name='dispatch')
 class PontoDeVendaListView(ListView):
     model = PontoDeVenda
     template_name = "dashboard/pontodevenda_list.html"
@@ -163,6 +165,7 @@ class PontoDeVendaListView(ListView):
 
 
 @method_decorator([login_required], name="dispatch")
+@method_decorator(role_required('admin', 'gerente', 'supervisor'), name='dispatch')
 class PontoDeVendaCreateView(CreateView):
     model = PontoDeVenda
     form_class = PontoDeVendaForm
@@ -182,6 +185,7 @@ class PontoDeVendaCreateView(CreateView):
 
 
 @method_decorator([login_required], name="dispatch")
+@method_decorator(role_required('admin', 'gerente', 'supervisor'), name='dispatch')
 class PontoDeVendaDetailView(DetailView):
     model = PontoDeVenda
     template_name = "dashboard/pontodevenda_detail.html"
@@ -195,6 +199,7 @@ class PontoDeVendaDetailView(DetailView):
 
 
 @method_decorator([login_required], name="dispatch")
+@method_decorator(role_required('admin', 'gerente', 'supervisor'), name='dispatch')
 class PontoDeVendaUpdateView(UpdateView):
     model = PontoDeVenda
     form_class = PontoDeVendaForm
@@ -214,6 +219,7 @@ class PontoDeVendaUpdateView(UpdateView):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def api_pontos_de_venda_por_cliente(request):
     """API AJAX para retornar pontos de venda filtrados por cliente"""
     cliente_id = request.GET.get("cliente_id")
@@ -242,6 +248,7 @@ def api_pontos_de_venda_por_cliente(request):
 
 
 @method_decorator([login_required], name="dispatch")
+@method_decorator(role_required('admin', 'gerente', 'supervisor'), name='dispatch')
 class UserListView(ListView):
     model = User
     template_name = "dashboard/user_list.html"
@@ -266,6 +273,7 @@ class UserListView(ListView):
 
 
 @method_decorator([login_required], name="dispatch")
+@method_decorator(role_required('admin', 'gerente', 'supervisor'), name='dispatch')
 class UserCreateView(CreateView):
     model = User
     template_name = "dashboard/user_form.html"
@@ -291,6 +299,7 @@ class UserCreateView(CreateView):
 
 
 @method_decorator([login_required], name="dispatch")
+@method_decorator(role_required('admin', 'gerente', 'supervisor'), name='dispatch')
 class UserUpdateView(UpdateView):
     model = User
     template_name = "dashboard/user_edit.html"
@@ -321,6 +330,7 @@ class UserUpdateView(UpdateView):
 
 
 @method_decorator([login_required], name="dispatch")
+@method_decorator(role_required('admin', 'gerente', 'supervisor'), name='dispatch')
 class UserDeleteView(DeleteView):
     model = User
     success_url = reverse_lazy("dashboard:user_list")

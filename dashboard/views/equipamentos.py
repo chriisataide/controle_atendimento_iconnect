@@ -19,6 +19,7 @@ from django.views.generic import DetailView, ListView
 
 from ..models import Cliente, PontoDeVenda, Ticket
 from ..models.equipamento import AlertaEquipamento, ConfiguracaoAlertaEquipamento, Equipamento, HistoricoEquipamento
+from ..utils.rbac import role_required
 
 logger = logging.getLogger("dashboard")
 
@@ -27,6 +28,7 @@ logger = logging.getLogger("dashboard")
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def equipamento_dashboard(request):
     """Dashboard principal do módulo de equipamentos."""
     agora = timezone.now()
@@ -212,6 +214,7 @@ class EquipamentoDetailView(DetailView):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def equipamento_create(request):
     """Criar novo equipamento."""
     if request.method == "POST":
@@ -281,6 +284,7 @@ def equipamento_create(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def equipamento_update(request, pk):
     """Editar equipamento existente."""
     equip = get_object_or_404(Equipamento, pk=pk)
@@ -338,6 +342,7 @@ def equipamento_update(request, pk):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def registrar_movimentacao(request, pk):
     """Registrar instalação, troca, retirada ou manutenção."""
     equip = get_object_or_404(Equipamento, pk=pk)
@@ -442,6 +447,7 @@ def registrar_movimentacao(request, pk):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def alerta_list(request):
     """Lista de alertas de equipamentos."""
     filtro = request.GET.get("filtro", "pendentes")
@@ -476,6 +482,7 @@ def alerta_list(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def alerta_resolver(request, pk):
     """Resolver um alerta de equipamento."""
     alerta = get_object_or_404(AlertaEquipamento, pk=pk)
@@ -499,6 +506,7 @@ def alerta_resolver(request, pk):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def equipamentos_por_cliente(request, cliente_id):
     """Equipamentos instalados nos PdVs de um cliente específico."""
     cliente = get_object_or_404(Cliente, pk=cliente_id)
@@ -537,6 +545,7 @@ def equipamentos_por_cliente(request, cliente_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def api_equipamentos_cliente(request, cliente_id):
     """API ajax: retorna equipamentos dos PdVs de um cliente."""
     equipamentos = Equipamento.objects.filter(ponto_de_venda__cliente_id=cliente_id, status="ativo").values(
@@ -547,6 +556,7 @@ def api_equipamentos_cliente(request, cliente_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def api_dashboard_stats(request):
     """API ajax: métricas resumidas para badges e cards dinâmicos."""
     alertas = AlertaEquipamento.objects.filter(resolvido=False).count()

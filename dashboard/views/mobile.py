@@ -5,8 +5,11 @@ from django.template.loader import render_to_string
 # API AJAX para scroll infinito/paginação mobile
 from django.views.decorators.http import require_GET
 
+from ..utils.rbac import role_required
+
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 @require_GET
 def mobile_tickets_ajax(request):
     """Retorna tickets paginados para scroll infinito (AJAX)"""
@@ -79,6 +82,7 @@ from ..models import CategoriaTicket, Cliente, InteracaoTicket, PerfilAgente, Ti
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def mobile_dashboard(request):
     """Dashboard otimizado para mobile"""
 
@@ -132,6 +136,7 @@ def mobile_dashboard(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def mobile_ticket_list(request):
     """Lista de tickets otimizada para mobile"""
 
@@ -185,6 +190,7 @@ def mobile_ticket_list(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def mobile_ticket_detail(request, ticket_id):
     """Detalhes do ticket otimizados para mobile"""
 
@@ -251,6 +257,7 @@ def mobile_ticket_detail(request, ticket_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def mobile_create_ticket(request):
     """Criação rápida de ticket no mobile"""
 
@@ -333,12 +340,14 @@ mobile_ticket_create = mobile_create_ticket
 
 # Views adicionais que podem ser necessárias
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def mobile_chat(request):
     """Chat mobile (placeholder)"""
     return render(request, "mobile/chat.html", {"is_mobile": True})
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def mobile_ticket_status_update(request, ticket_id):
     """Atualizar status do ticket via AJAX"""
     if request.method == "POST":
@@ -386,6 +395,7 @@ def mobile_ticket_status_update(request, ticket_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def mobile_ticket_comment(request, ticket_id):
     """Adicionar comentário ao ticket via AJAX"""
     if request.method == "POST":
@@ -415,6 +425,7 @@ def mobile_ticket_comment(request, ticket_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def mobile_tickets_check_updates(request):
     """Verificar se há atualizações nos tickets"""
     try:
@@ -451,6 +462,7 @@ def mobile_tickets_check_updates(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def mobile_ticket_upload_photo(request, ticket_id):
     """Upload de foto para o ticket"""
     if request.method == "POST":
@@ -488,6 +500,7 @@ def mobile_ticket_upload_photo(request, ticket_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def mobile_chat_ticket(request, ticket_id):
     """Chat específico do ticket (placeholder)"""
     ticket = get_object_or_404(Ticket, id=ticket_id)
@@ -495,6 +508,7 @@ def mobile_chat_ticket(request, ticket_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def mobile_offline(request):
     """Página offline para PWA"""
     context = {
@@ -505,6 +519,7 @@ def mobile_offline(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def mobile_notifications(request):
     """Notificações mobile"""
     notifications = []

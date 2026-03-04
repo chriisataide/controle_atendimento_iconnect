@@ -140,8 +140,9 @@ def log_suspicious_activity(description="Suspicious activity detected"):
                 # Executar a view
                 response = view_func(request, *args, **kwargs)
 
-                # Log da atividade (opcional - pode ser condicionado)
-                log_suspicious_activity_func(request, f"{description} - {view_func.__name__}")
+                # Log apenas de respostas com erro (status >= 400)
+                if hasattr(response, "status_code") and response.status_code >= 400:
+                    log_suspicious_activity_func(request, f"{description} - {view_func.__name__} [HTTP {response.status_code}]")
 
                 return response
             except Exception as e:

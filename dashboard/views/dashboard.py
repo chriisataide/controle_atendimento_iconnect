@@ -25,6 +25,7 @@ from ..models import (
     Ticket,
 )
 from ..utils.security import rate_limit
+from ..utils.rbac import role_required
 
 logger = logging.getLogger("dashboard")
 User = get_user_model()
@@ -51,6 +52,7 @@ def home_redirect(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def admin_dashboard(request):
     """
     Dashboard administrativo com acesso total ao sistema
@@ -453,6 +455,7 @@ class DashboardView(TemplateView):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @rate_limit(max_requests=100, window_seconds=3600)
 def ajax_metrics(request):
     """

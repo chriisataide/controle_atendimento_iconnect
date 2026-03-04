@@ -19,9 +19,11 @@ from ..models import (
     PerfilAgente,
     Ticket,
 )
+from ..utils.rbac import role_required
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def executive_dashboard(request):
     """Dashboard Executivo Principal"""
 
@@ -88,6 +90,7 @@ def executive_dashboard(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def executive_kpis_api(request):
     """API para dados dos KPIs em tempo real"""
 
@@ -172,6 +175,7 @@ def executive_kpis_api(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def executive_charts_api(request):
     """API para dados dos gráficos executivos"""
 
@@ -249,6 +253,7 @@ def executive_charts_api(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def executive_alerts_api(request):
     """API para alertas executivos"""
 
@@ -313,6 +318,7 @@ def executive_alerts_api(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def executive_widget_config(request):
     """Configuração de widgets do dashboard"""
 

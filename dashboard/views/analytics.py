@@ -7,9 +7,11 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from ..models import Cliente, Ticket
+from ..utils.rbac import role_required
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def analytics_dashboard(request):
     """Dashboard executivo com métricas avançadas"""
 
@@ -150,6 +152,7 @@ def analytics_dashboard(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def relatorio_detalhado(request):
     """Relatório detalhado personalizável"""
 

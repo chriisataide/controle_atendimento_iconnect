@@ -19,9 +19,9 @@ mkdir -p /app/logs/django
 
 # Garantir permissões corretas
 echo "🔐 Configurando permissões..."
-chmod -R 755 /app/logs
-chmod -R 755 /app/staticfiles
-chmod -R 755 /app/media
+chmod -R 755 /app/logs 2>/dev/null || true
+chmod -R 755 /app/staticfiles 2>/dev/null || true
+chmod -R 755 /app/media 2>/dev/null || true
 
 # Aguardar banco de dados estar disponível
 echo "🗄️  Aguardando banco de dados..."

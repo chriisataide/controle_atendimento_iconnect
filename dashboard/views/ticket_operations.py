@@ -10,11 +10,13 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 
 from ..services.ticket_operations import ticket_ops
+from ..utils.rbac import role_required
 
 logger = logging.getLogger("dashboard")
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @require_POST
 def api_merge_tickets(request):
     """
@@ -44,6 +46,7 @@ def api_merge_tickets(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @require_POST
 def api_split_ticket(request):
     """
@@ -78,6 +81,7 @@ def api_split_ticket(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @require_POST
 def api_add_sub_ticket(request, pk):
     """
@@ -100,6 +104,7 @@ def api_add_sub_ticket(request, pk):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @require_POST
 def api_remove_sub_ticket(request, pk):
     """
@@ -119,6 +124,7 @@ def api_remove_sub_ticket(request, pk):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @require_GET
 def api_ticket_hierarchy(request, pk):
     """
@@ -138,6 +144,7 @@ def api_ticket_hierarchy(request, pk):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 @require_POST
 def api_link_tickets(request, pk):
     """

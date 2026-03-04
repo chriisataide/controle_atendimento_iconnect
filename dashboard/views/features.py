@@ -14,6 +14,7 @@ from django.utils import timezone
 
 from ..models import Cliente, PrioridadeTicket, StatusTicket, Ticket
 from ..services.chatbot_service import ChatbotService
+from ..utils.rbac import role_required
 
 logger = logging.getLogger("dashboard")
 
@@ -51,6 +52,7 @@ def chatbot_api(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def chat_interface(request):
     """Interface de Chat em Tempo Real"""
     return render(request, "dashboard/chat/interface.html", {"title": "Chat - iConnect", "current_page": "chat"})
@@ -60,6 +62,7 @@ def chat_interface(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def reports_dashboard(request):
     """Dashboard de Relatórios Avançados"""
     from ..models import RelatorioFinanceiro
@@ -83,6 +86,7 @@ def reports_dashboard(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def generate_report(request):
     """Gerar Relatório Customizado"""
     if request.method == "POST":
@@ -92,6 +96,7 @@ def generate_report(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def download_report(request, report_id):
     """Download de Relatório"""
     response = HttpResponse(content_type="application/pdf")
@@ -101,6 +106,7 @@ def download_report(request, report_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def custom_reports(request):
     """Relatórios Customizados"""
     return render(
@@ -286,6 +292,7 @@ self.addEventListener('fetch', event => {
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def export_tickets(request):
     """View para exportar dados dos tickets (somente staff)."""
     if not request.user.is_staff:
@@ -325,6 +332,8 @@ def export_tickets(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def communication_center(request):
     """Central de Comunicação Unificada"""
     from django.db import models

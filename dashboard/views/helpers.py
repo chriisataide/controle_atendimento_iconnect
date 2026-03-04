@@ -144,17 +144,18 @@ def get_dashboard_metrics():
         }
 
     except ImportError:
-        # Se os models não existirem, retornar dados de exemplo
+        # Se os models não existirem, retornar dados zerados (sem dados fake)
         return {
-            "atendimentos_hoje": 47,
-            "variacao_atendimentos": 12.5,
-            "usuarios_ativos": 15,
-            "tickets_abertos": 8,
-            "taxa_resolucao": 94.2,
+            "atendimentos_hoje": 0,
+            "variacao_atendimentos": 0,
+            "usuarios_ativos": 0,
+            "tickets_abertos": 0,
+            "taxa_resolucao": 0,
             "tickets_recentes": [],
             "agentes_status": [],
-            "atendimentos_por_hora": [12, 19, 15, 23, 18, 25, 10],
-            "tickets_por_mes": [50, 40, 300, 320, 500, 350, 200, 230, 500],
+            "atendimentos_por_hora": [],
+            "tickets_por_mes": [],
+            "_error": "Models not available",
         }
 
 

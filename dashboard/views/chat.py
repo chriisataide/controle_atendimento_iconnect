@@ -17,9 +17,11 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
 from ..models import ChatBot, ChatMessage, ChatParticipant, ChatRoom, ChatSettings, Cliente, Ticket
+from ..utils.rbac import role_required
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def chat_dashboard(request):
     """Dashboard principal do sistema de chat"""
     user = request.user
@@ -66,6 +68,7 @@ def chat_dashboard(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def chat_room(request, room_id):
     """Interface da sala de chat"""
     room = get_object_or_404(ChatRoom, id=room_id)
@@ -122,6 +125,7 @@ def chat_room(request, room_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def create_chat_room(request):
     """Criar nova sala de chat"""
     if request.method == "POST":
@@ -172,6 +176,7 @@ def create_chat_room(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def chat_history(request, room_id):
     """Histórico completo de mensagens"""
     room = get_object_or_404(ChatRoom, id=room_id)
@@ -235,6 +240,7 @@ def chat_history(request, room_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def chat_settings_view(request):
     """Configurações de chat do usuário"""
     settings, created = ChatSettings.objects.get_or_create(user=request.user)
@@ -269,6 +275,7 @@ def chat_settings_view(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 @require_http_methods(["POST"])
 def api_send_message(request):
     """API para enviar mensagem via AJAX"""
@@ -322,6 +329,7 @@ def api_send_message(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def api_room_participants(request, room_id):
     """API para listar participantes da sala"""
     room = get_object_or_404(ChatRoom, id=room_id)
@@ -349,6 +357,7 @@ def api_room_participants(request, room_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def api_recent_rooms(request):
     """API para salas recentes do usuário"""
     rooms = (
@@ -381,6 +390,7 @@ def api_recent_rooms(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 @require_http_methods(["POST"])
 def api_create_ticket_from_chat(request, room_id):
     """Criar ticket a partir de conversa de chat"""
@@ -434,6 +444,7 @@ def api_create_ticket_from_chat(request, room_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def chatbot_settings(request):
     """Configurações do ChatBot"""
     if not request.user.is_staff:

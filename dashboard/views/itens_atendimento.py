@@ -12,11 +12,13 @@ from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
 
 from ..models import Ticket
+from ..utils.rbac import role_required
 
 logger = logging.getLogger("dashboard")
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def api_produtos_ativos(request):
     """API para listar produtos ativos para seleção"""
     from ..models import Produto
@@ -42,6 +44,7 @@ def api_produtos_ativos(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 @require_http_methods(["POST"])
 def api_add_item_atendimento(request):
     """API para adicionar item ao atendimento"""
@@ -96,6 +99,7 @@ def api_add_item_atendimento(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def api_listar_itens_atendimento(request, ticket_id):
     """API para listar itens do atendimento"""
     from ..models import ItemAtendimento
@@ -148,6 +152,7 @@ def api_listar_itens_atendimento(request, ticket_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 @require_http_methods(["DELETE"])
 def api_remover_item_atendimento(request, item_id):
     """API para remover item do atendimento"""
@@ -171,6 +176,7 @@ def api_remover_item_atendimento(request, item_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def relatorio_itens_atendimento(request):
     """Relatório de produtos e serviços mais utilizados"""
     from ..models import ItemAtendimento
@@ -248,6 +254,7 @@ def relatorio_itens_atendimento(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def api_estatisticas_financeiras_ticket(request, ticket_id):
     """API com estatísticas financeiras de um ticket"""
     from ..models import ItemAtendimento

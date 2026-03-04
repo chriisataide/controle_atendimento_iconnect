@@ -21,6 +21,7 @@ from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from ..models import Ticket
 from ..models.estoque import CategoriaEstoque, EstoqueAlerta, Fornecedor, MovimentacaoEstoque, Produto, TipoMovimentacao
+from ..utils.rbac import role_required
 
 logger = logging.getLogger("dashboard")
 
@@ -29,6 +30,7 @@ logger = logging.getLogger("dashboard")
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def estoque_dashboard(request):
     """Dashboard principal do módulo de estoque"""
     from ..models import ItemAtendimento
@@ -333,6 +335,7 @@ class MovimentacaoListView(ListView):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def movimentacao_create(request):
     """Criar nova movimentação de estoque"""
     if request.method == "POST":
@@ -405,6 +408,7 @@ def movimentacao_create(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def relatorios_index(request):
     """Página unificada de relatórios"""
 
@@ -495,6 +499,7 @@ def relatorios_index(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def relatorio_estoque(request):
     """Relatório de posição de estoque"""
 
@@ -533,6 +538,7 @@ def relatorio_estoque(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def relatorio_movimentacoes(request):
     """Relatório de movimentações por período"""
 
@@ -583,6 +589,7 @@ def relatorio_movimentacoes(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def api_produto_info(request, produto_id):
     """API para obter informações de um produto"""
     try:
@@ -603,6 +610,7 @@ def api_produto_info(request, produto_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def api_alertas_estoque(request):
     """API para obter alertas de estoque não resolvidos"""
     alertas = EstoqueAlerta.objects.filter(resolvido=False).select_related("produto")
@@ -623,6 +631,7 @@ def api_alertas_estoque(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def api_resolver_alerta(request, alerta_id):
     """API para resolver um alerta de estoque"""
     if request.method == "POST":

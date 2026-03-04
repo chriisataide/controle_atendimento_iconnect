@@ -10,11 +10,13 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
+from ..utils.rbac import role_required
 
 logger = logging.getLogger("dashboard")
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def automation_dashboard(request):
     """Dashboard do Sistema de Automação"""
     from ..models import WorkflowExecution, WorkflowRule
@@ -141,6 +143,7 @@ def automation_dashboard(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def automation_rules(request):
     """Gerenciamento de Regras de Automação"""
     from ..models import WorkflowExecution, WorkflowRule
@@ -208,6 +211,7 @@ def automation_rules(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def automation_workflows(request):
     """Gerenciamento de Workflows"""
     from ..models import WorkflowExecution, WorkflowRule

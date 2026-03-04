@@ -14,9 +14,11 @@ logger = logging.getLogger("dashboard")
 
 # Import dos modelos financeiros
 from ..models import CentroCusto, Contrato, Fatura, MovimentacaoFinanceira
+from ..utils.rbac import role_required
 
 
 @login_required
+@role_required('admin', 'gerente', 'financeiro')
 def dashboard_financeiro(request):
     """Dashboard principal do módulo financeiro - integrado com chamados"""
     import json as _json
@@ -222,6 +224,7 @@ def dashboard_financeiro(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'financeiro')
 def contratos_lista(request):
     """Lista de contratos"""
     # Buscar contratos reais do banco
@@ -236,6 +239,7 @@ def contratos_lista(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'financeiro')
 def faturas_lista(request):
     """Lista de faturas"""
     # Buscar faturas reais do banco
@@ -262,6 +266,7 @@ def faturas_lista(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'financeiro')
 def movimentacoes_lista(request):
     """Lista de movimentações financeiras"""
     import json as _json
@@ -332,6 +337,7 @@ def movimentacoes_lista(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'financeiro')
 def relatorios_financeiros(request):
     """Página de relatórios financeiros"""
     import json as _json
@@ -434,6 +440,7 @@ def relatorios_financeiros(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'financeiro')
 def api_movimentacoes(request):
     """API para retornar movimentações em JSON"""
     if request.method == "GET":
@@ -459,6 +466,7 @@ def api_movimentacoes(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'financeiro')
 def api_gerar_relatorio(request):
     """API para gerar relatórios personalizados"""
     if request.method == "POST":
@@ -509,6 +517,7 @@ def api_gerar_relatorio(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'financeiro')
 def centros_custo_lista(request):
     """Lista de centros de custo"""
     centros_custo = (
@@ -524,6 +533,7 @@ def centros_custo_lista(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'financeiro')
 def centro_custo_create(request):
     """Criar novo centro de custo"""
     if request.method == "POST":
@@ -580,6 +590,7 @@ def centro_custo_create(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'financeiro')
 def centro_custo_detail(request, centro_id):
     """Detalhes do centro de custo"""
     from django.db.models import Sum
@@ -619,6 +630,7 @@ def centro_custo_detail(request, centro_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'financeiro')
 def centro_custo_edit(request, centro_id):
     """Editar centro de custo"""
     from django.shortcuts import get_object_or_404, redirect
@@ -686,6 +698,7 @@ def centro_custo_edit(request, centro_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'financeiro')
 def centros_custo_dashboard(request):
     """Dashboard dos centros de custo"""
     from django.db.models import Count, Q, Sum
@@ -787,6 +800,7 @@ def centros_custo_dashboard(request):
 
 
 @login_required
+@role_required('admin', 'gerente', 'financeiro')
 def api_centros_custo_stats(request):
     """API para estatísticas dos centros de custo"""
     from django.db.models import Sum

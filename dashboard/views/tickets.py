@@ -29,6 +29,7 @@ from ..models import (
     TicketAnexo,
 )
 from .helpers import get_role_filtered_tickets, user_can_access_ticket
+from ..utils.rbac import role_required
 
 logger = logging.getLogger("dashboard")
 User = get_user_model()
@@ -38,6 +39,7 @@ User = get_user_model()
 
 
 @method_decorator(login_required, name="dispatch")
+@method_decorator(role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente'), name='dispatch')
 class KanbanBoardView(TemplateView):
     """Visualização Kanban do pipeline de tickets"""
 
@@ -88,6 +90,7 @@ class KanbanBoardView(TemplateView):
 
 
 @method_decorator(login_required, name="dispatch")
+@method_decorator(role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente'), name='dispatch')
 class TicketListView(ListView):
     model = Ticket
     template_name = "dashboard/tickets/list.html"
@@ -309,6 +312,7 @@ class TicketCreateView(CreateView):
 
 
 @method_decorator(login_required, name="dispatch")
+@method_decorator(role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente'), name='dispatch')
 class TicketUpdateView(UpdateView):
     model = Ticket
     template_name = "dashboard/tickets/update.html"
@@ -335,6 +339,7 @@ class TicketUpdateView(UpdateView):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def add_interaction(request, ticket_id):
     """Adiciona uma nova interação ao ticket"""
     if request.method == "POST":
@@ -359,6 +364,8 @@ def add_interaction(request, ticket_id):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def update_ticket_status(request):
     """API para atualizar status do ticket via AJAX"""
     if request.method == "POST":
@@ -413,6 +420,7 @@ def update_ticket_status(request):
 
 
 @method_decorator(login_required, name="dispatch")
+@method_decorator(role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente'), name='dispatch')
 class AgenteDashboardView(TemplateView):
     template_name = "dashboard/agente/dashboard.html"
 
@@ -442,6 +450,7 @@ class AgenteDashboardView(TemplateView):
 
 
 @method_decorator(login_required, name="dispatch")
+@method_decorator(role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente'), name='dispatch')
 class AgenteTicketsView(ListView):
     model = Ticket
     template_name = "dashboard/agente/tickets.html"

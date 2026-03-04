@@ -19,6 +19,7 @@ from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 from ..forms import ClienteForm
 from ..models import Cliente, Ticket
 from ..utils.security import rate_limit
+from ..utils.rbac import role_required
 
 logger = logging.getLogger("dashboard")
 User = get_user_model()
@@ -323,6 +324,7 @@ class ClienteUpdateView(UpdateView):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 def cliente_detail_view(request, pk):
     """Detalhe de um cliente com seus tickets"""
     if not (request.user.is_staff or request.user.is_superuser):
@@ -347,6 +349,7 @@ def cliente_detail_view(request, pk):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor')
 def cliente_delete_view(request, pk):
     """Excluir um cliente"""
     if not (request.user.is_staff or request.user.is_superuser):
@@ -364,6 +367,7 @@ def cliente_delete_view(request, pk):
 
 
 @login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
 @rate_limit(max_requests=120, window_seconds=3600)
 def cliente_stats_ajax(request):
     """
