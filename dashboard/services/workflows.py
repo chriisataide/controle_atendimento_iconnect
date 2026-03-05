@@ -18,6 +18,17 @@ from .notifications import notification_service
 logger = logging.getLogger(__name__)
 
 
+def _get_system_user():
+    """Retorna um usuario de sistema para interacoes automaticas."""
+    from django.contrib.auth.models import User
+
+    user, _ = User.objects.get_or_create(
+        username="sistema",
+        defaults={"first_name": "Sistema", "last_name": "iConnect", "is_active": False},
+    )
+    return user
+
+
 class WorkflowEngine:
     """Engine principal para execução de workflows"""
 
@@ -26,7 +37,14 @@ class WorkflowEngine:
 
     def execute_workflow(self, ticket, trigger_event, user=None):
         """Executa workflow baseado no evento disparador"""
+        import dashboard.signals as _sig
+
+        if _sig._workflow_executing:
+            return []
+
         try:
+            _sig._workflow_executing = True
+
             # Buscar regras aplicáveis
             applicable_rules = self._get_applicable_rules(ticket, trigger_event)
 
@@ -40,7 +58,7 @@ class WorkflowEngine:
                     ticket=ticket,
                     rule=rule,
                     trigger_event=trigger_event,
-                    execution_result=json.dumps(result),
+                    execution_result=result,
                     executed_by=user,
                 )
 
@@ -50,6 +68,8 @@ class WorkflowEngine:
         except Exception as e:
             logger.error(f"Erro na execução do workflow: {str(e)}")
             return []
+        finally:
+            _sig._workflow_executing = False
 
     def _get_applicable_rules(self, ticket, trigger_event):
         """Retorna regras aplicáveis ao ticket e evento"""
@@ -75,7 +95,7 @@ class WorkflowEngine:
     def _check_rule_conditions(self, rule, ticket):
         """Verifica se as condições da regra são atendidas"""
         try:
-            conditions = json.loads(rule.conditions) if rule.conditions else {}
+            conditions = rule.conditions if isinstance(rule.conditions, dict) else {}
 
             # Verificar categoria
             if "categoria" in conditions:
@@ -130,7 +150,7 @@ class WorkflowEngine:
     def _execute_rule(self, rule, ticket, user):
         """Executa uma regra específica"""
         try:
-            actions = json.loads(rule.actions) if rule.actions else {}
+            actions = rule.actions if isinstance(rule.actions, dict) else {}
             results = {"rule_id": rule.id, "actions_executed": []}
 
             for action_type, action_config in actions.items():
@@ -146,18 +166,19 @@ class WorkflowEngine:
     def _execute_action(self, action_type, action_config, ticket, user):
         """Executa uma ação específica"""
         try:
+            sys_user = _get_system_user()
+
             if action_type == "change_status":
                 old_status = ticket.status
                 ticket.status = action_config["new_status"]
-                ticket.save()
+                ticket.save(update_fields=["status", "atualizado_em"])
 
-                # Log da mudança
                 InteracaoTicket.objects.create(
                     ticket=ticket,
-                    usuario=None,  # Sistema
+                    usuario=sys_user,
                     tipo="sistema",
-                    conteudo=f'Status alterado automaticamente de "{old_status}" para "{ticket.status}" por workflow.',
-                    publico=False,
+                    mensagem=f'Status alterado automaticamente de "{old_status}" para "{ticket.status}" por workflow.',
+                    eh_publico=False,
                 )
 
                 return f"Status alterado para {ticket.status}"
@@ -165,14 +186,14 @@ class WorkflowEngine:
             elif action_type == "change_priority":
                 old_priority = ticket.prioridade
                 ticket.prioridade = action_config["new_priority"]
-                ticket.save()
+                ticket.save(update_fields=["prioridade", "atualizado_em"])
 
                 InteracaoTicket.objects.create(
                     ticket=ticket,
-                    usuario=None,
+                    usuario=sys_user,
                     tipo="sistema",
-                    conteudo=f'Prioridade alterada automaticamente de "{old_priority}" para "{ticket.prioridade}" por workflow.',
-                    publico=False,
+                    mensagem=f'Prioridade alterada automaticamente de "{old_priority}" para "{ticket.prioridade}" por workflow.',
+                    eh_publico=False,
                 )
 
                 return f"Prioridade alterada para {ticket.prioridade}"
@@ -191,14 +212,14 @@ class WorkflowEngine:
                     try:
                         agent = User.objects.get(id=action_config["specific_agent_id"])
                         ticket.agente = agent
-                        ticket.save()
+                        ticket.save(update_fields=["agente", "atualizado_em"])
 
                         InteracaoTicket.objects.create(
                             ticket=ticket,
-                            usuario=None,
+                            usuario=sys_user,
                             tipo="sistema",
-                            conteudo=f"Ticket atribuído automaticamente a {agent.username} por workflow.",
-                            publico=False,
+                            mensagem=f"Ticket atribuído automaticamente a {agent.username} por workflow.",
+                            eh_publico=False,
                         )
 
                         return f"Ticket atribuído a {agent.username}"
@@ -232,7 +253,7 @@ class WorkflowEngine:
                 is_public = action_config.get("public", False)
 
                 InteracaoTicket.objects.create(
-                    ticket=ticket, usuario=None, tipo="sistema", conteudo=comment, publico=is_public
+                    ticket=ticket, usuario=sys_user, tipo="sistema", mensagem=comment, eh_publico=is_public
                 )
 
                 return f"Comentário adicionado ({'público' if is_public else 'privado'})"
@@ -250,10 +271,10 @@ class WorkflowEngine:
 
                     InteracaoTicket.objects.create(
                         ticket=ticket,
-                        usuario=None,
+                        usuario=sys_user,
                         tipo="sistema",
-                        conteudo=f'Ticket escalado automaticamente (nível {escalation_level}). Prioridade alterada de "{old_priority}" para "{ticket.prioridade}".',
-                        publico=False,
+                        mensagem=f'Ticket escalado automaticamente (nível {escalation_level}). Prioridade alterada de "{old_priority}" para "{ticket.prioridade}".',
+                        eh_publico=False,
                     )
 
                     return f"Ticket escalado para nível {escalation_level}"

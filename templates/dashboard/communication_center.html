@@ -383,15 +383,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
                 datasets: [{
                     label: 'Mensagens',
-                    data: [
-                        {{ analytics.total_messages|default:"0" }},
-                        Math.round({{ analytics.total_messages|default:"0" }} * 0.8),
-                        Math.round({{ analytics.total_messages|default:"0" }} * 1.1),
-                        Math.round({{ analytics.total_messages|default:"0" }} * 0.9),
-                        Math.round({{ analytics.total_messages|default:"0" }} * 1.2),
-                        Math.round({{ analytics.total_messages|default:"0" }} * 0.5),
-                        Math.round({{ analytics.total_messages|default:"0" }} * 0.3)
-                    ],
+                    data: {{ messages_by_weekday_json|safe }},
                     tension: 0.4,
                     borderWidth: 2,
                     borderColor: '#06b6d4',
@@ -430,9 +422,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 labels: ['Chat Interno', 'WhatsApp', 'Chatbot IA'],
                 datasets: [{
                     data: [
-                        {{ active_conversations|default:"0" }},
-                        Math.max(1, Math.round({{ active_conversations|default:"0" }} * 0.6)),
-                        Math.max(1, Math.round({{ analytics.total_messages|default:"0" }} * 0.2))
+                        {{ channel_chat_count|default:0 }},
+                        {{ channel_whatsapp_count|default:0 }},
+                        {{ channel_chatbot_count|default:0 }}
                     ],
                     backgroundColor: ['#334155', '#06b6d4', '#22c55e'],
                     borderWidth: 0

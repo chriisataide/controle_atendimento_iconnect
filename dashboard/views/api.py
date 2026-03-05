@@ -480,56 +480,70 @@ class CannedResponseDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def export_tickets_excel(request):
-    """Exportar tickets para Excel"""
+    """Exportar tickets para Excel (API) — layout padronizado."""
     if not _is_admin_or_supervisor(request.user):
         return Response({"error": "Acesso restrito a admin/supervisor"}, status=403)
     from django.http import HttpResponse
     from openpyxl import Workbook
+    from dashboard.views.features import _apply_excel_style, _auto_adjust_columns
+    from openpyxl.styles import Alignment, PatternFill
 
-    period = _safe_period_days(request)  # Already capped at 365
+    period = _safe_period_days(request)
     since = timezone.now() - timedelta(days=period)
 
     tickets = (
         Ticket.objects.filter(criado_em__gte=since)
-        .select_related("cliente", "agente", "categoria")
+        .select_related("cliente", "agente", "categoria", "ponto_de_venda")
         .order_by("-criado_em")
     )
 
     wb = Workbook()
     ws = wb.active
     ws.title = "Tickets"
-    headers = [
-        "Numero",
-        "Titulo",
-        "Status",
-        "Prioridade",
-        "Tipo",
-        "Cliente",
-        "Agente",
-        "Categoria",
-        "Criado em",
-        "Resolvido em",
-    ]
-    ws.append(headers)
 
-    for t in tickets.iterator():  # .iterator() to avoid loading all into memory
-        ws.append(
-            [
-                t.numero,
-                t.titulo,
-                t.status,
-                t.prioridade,
-                t.tipo,
-                t.cliente.nome if t.cliente else "",
-                t.agente.get_full_name() if t.agente else "",
-                t.categoria.nome if t.categoria else "",
-                t.criado_em.strftime("%Y-%m-%d %H:%M") if t.criado_em else "",
-                t.resolvido_em.strftime("%Y-%m-%d %H:%M") if t.resolvido_em else "",
-            ]
-        )
+    headers = [
+        "Número", "Empresa", "Ponto de Venda", "Status", "Prioridade",
+        "Tipo", "Sintoma", "Subtipo", "Agente",
+        "Criado em", "Resolvido em",
+    ]
+
+    data_start_row, thin_border = _apply_excel_style(
+        ws, headers, title_row="Relatório de Tickets — iConnect"
+    )
+
+    zebra_fill = PatternFill(start_color="F2F6FC", end_color="F2F6FC", fill_type="solid")
+    data_alignment = Alignment(vertical="center")
+
+    row_num = data_start_row + 1
+    for t in tickets.iterator():
+        values = [
+            t.numero,
+            t.cliente.nome if t.cliente else "",
+            str(t.ponto_de_venda) if t.ponto_de_venda else "",
+            t.get_status_display() if hasattr(t, "get_status_display") else t.status,
+            t.get_prioridade_display() if hasattr(t, "get_prioridade_display") else t.prioridade,
+            t.get_tipo_display() if hasattr(t, "get_tipo_display") else t.tipo,
+            t.sintoma or "",
+            t.subtipo or "",
+            t.agente.get_full_name() if t.agente else "",
+            t.criado_em.strftime("%d/%m/%Y %H:%M") if t.criado_em else "",
+            t.resolvido_em.strftime("%d/%m/%Y %H:%M") if t.resolvido_em else "",
+        ]
+        for col_idx, value in enumerate(values, 1):
+            cell = ws.cell(row=row_num, column=col_idx, value=value)
+            cell.border = thin_border
+            cell.alignment = data_alignment
+            if row_num % 2 == 0:
+                cell.fill = zebra_fill
+        row_num += 1
+
+    _auto_adjust_columns(ws)
+    ws.freeze_panes = ws.cell(row=data_start_row + 1, column=1)
+    ws.auto_filter.ref = f"A{data_start_row}:{chr(64 + len(headers))}{row_num - 1}"
 
     response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    response["Content-Disposition"] = f'attachment; filename="tickets_{period}d.xlsx"'
+    filename = f"tickets_{period}d.xlsx"
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
     wb.save(response)
     return response
 

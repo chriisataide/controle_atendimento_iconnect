@@ -980,30 +980,99 @@ class ChatbotAIEngine:
         )
 
     def get_analytics(self, days: int = 30) -> Dict:
-        """Obtém analytics do chatbot"""
+        """Obtém analytics do chatbot com dados reais."""
         from datetime import timedelta
 
-        from django.db.models import Avg
+        from django.db.models import Avg, Count
+        from django.db.models.functions import ExtractHour
         from django.utils import timezone
 
-        end_date = timezone.now().date()
+        now = timezone.now()
+        end_date = now.date()
         start_date = end_date - timedelta(days=days)
+        today = now.date()
 
-        conversations = ChatbotConversation.objects.filter(iniciada_em__date__range=[start_date, end_date])
-
+        conversations = ChatbotConversation.objects.filter(
+            iniciada_em__date__range=[start_date, end_date]
+        )
         messages = ChatbotMessage.objects.filter(conversa__in=conversations)
+        bot_messages = messages.filter(tipo="bot")
+
+        total_conversations = conversations.count()
+        total_messages = messages.count()
+        bot_count = bot_messages.count()
+
+        # --- Distribuição de confiança (contagem real) ---
+        bot_with_conf = bot_messages.filter(confianca__isnull=False)
+        high_confidence = bot_with_conf.filter(confianca__gte=0.8).count()
+        medium_confidence = bot_with_conf.filter(confianca__gte=0.5, confianca__lt=0.8).count()
+        low_confidence = bot_with_conf.filter(confianca__lt=0.5).count()
+
+        # --- Atividade por hora (últimos 30 dias) ---
+        hourly_qs = (
+            messages.annotate(hour=ExtractHour("timestamp"))
+            .values("hour")
+            .annotate(total=Count("id"))
+            .order_by("hour")
+        )
+        hourly_map = {row["hour"]: row["total"] for row in hourly_qs}
+        hourly_activity = [hourly_map.get(h, 0) for h in range(24)]
+
+        # --- Mensagens de hoje ---
+        messages_today = ChatbotMessage.objects.filter(
+            timestamp__date=today
+        ).count()
+
+        # --- Tendências ---
+        # Crescimento: comparar este período com o anterior
+        prev_start = start_date - timedelta(days=days)
+        prev_conversations = ChatbotConversation.objects.filter(
+            iniciada_em__date__range=[prev_start, start_date - timedelta(days=1)]
+        ).count()
+        if prev_conversations > 0:
+            conversations_growth = ((total_conversations - prev_conversations) / prev_conversations) * 100
+        else:
+            conversations_growth = 100.0 if total_conversations > 0 else 0.0
+
+        # Taxa de resolução: conversas encerradas (não ativas) / total
+        resolved = conversations.filter(ativa=False).count()
+        resolution_rate = (resolved / total_conversations * 100) if total_conversations > 0 else 0.0
+
+        # Tempo médio de resposta a partir de ChatbotAnalytics (se existir)
+        from ..models import ChatbotAnalytics
+        avg_response = ChatbotAnalytics.objects.filter(
+            data__range=[start_date, end_date],
+            tempo_resposta_medio__isnull=False,
+        ).aggregate(avg=Avg("tempo_resposta_medio"))["avg"]
+        avg_response_time = float(avg_response) if avg_response else 0.0
+
+        # Satisfação do usuário a partir de ChatbotAnalytics
+        avg_satisfaction = ChatbotAnalytics.objects.filter(
+            data__range=[start_date, end_date],
+            satisfacao_media__isnull=False,
+        ).aggregate(avg=Avg("satisfacao_media"))["avg"]
+        user_satisfaction = float(avg_satisfaction) if avg_satisfaction else 0.0
 
         return {
-            "total_conversations": conversations.count(),
-            "total_messages": messages.count(),
-            "avg_messages_per_conversation": messages.count() / max(conversations.count(), 1),
-            "bot_messages": messages.filter(tipo="bot").count(),
+            "total_conversations": total_conversations,
+            "total_messages": total_messages,
+            "avg_messages_per_conversation": total_messages / max(total_conversations, 1),
+            "bot_messages": bot_count,
             "user_messages": messages.filter(tipo="user").count(),
-            "avg_confidence": messages.filter(tipo="bot", confianca__isnull=False).aggregate(avg=Avg("confianca"))[
-                "avg"
-            ]
-            or 0,
+            "avg_confidence": bot_messages.filter(confianca__isnull=False).aggregate(
+                avg=Avg("confianca")
+            )["avg"] or 0,
             "active_conversations": conversations.filter(ativa=True).count(),
+            # Novas chaves:
+            "messages_today": messages_today,
+            "high_confidence": high_confidence,
+            "medium_confidence": medium_confidence,
+            "low_confidence": low_confidence,
+            "hourly_activity": hourly_activity,
+            "conversations_growth": round(conversations_growth, 1),
+            "resolution_rate": round(resolution_rate, 1),
+            "avg_response_time": round(avg_response_time, 1),
+            "user_satisfaction": round(user_satisfaction, 1),
         }
 
 

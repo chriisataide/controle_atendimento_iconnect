@@ -227,13 +227,23 @@ def dashboard_financeiro(request):
 @role_required('admin', 'gerente', 'financeiro')
 def contratos_lista(request):
     """Lista de contratos"""
+    from ..models import CategoriaEstoque, Produto
+
     # Buscar contratos reais do banco
     contratos = Contrato.objects.select_related("cliente").all()
+
+    # Buscar categorias LPU com contagem de produtos
+    categorias_lpu = []
+    for cat in CategoriaEstoque.objects.all().order_by("nome"):
+        qtd = Produto.objects.filter(categoria=cat, status="ativo").count()
+        if qtd > 0:
+            categorias_lpu.append({"categoria": cat, "qtd": qtd})
 
     context = {
         "title": "Contratos",
         "page": "contratos",
         "contratos": contratos,
+        "categorias_lpu": categorias_lpu,
     }
     return render(request, "financeiro/contratos_lista.html", context)
 
@@ -848,3 +858,39 @@ def api_centros_custo_stats(request):
             return JsonResponse({"error": "Erro ao processar dados"}, status=400)
 
     return JsonResponse({"error": "Método não permitido"}, status=405)
+
+
+@login_required
+@role_required('admin', 'gerente', 'financeiro')
+def api_lpu_por_categoria(request, categoria_id):
+    """API para listar produtos LPU de uma categoria"""
+    from ..models import CategoriaEstoque, Produto
+
+    try:
+        cat = CategoriaEstoque.objects.get(id=categoria_id)
+    except CategoriaEstoque.DoesNotExist:
+        return JsonResponse({"error": "Categoria não encontrada"}, status=404)
+
+    produtos = (
+        Produto.objects.filter(categoria=cat, status="ativo", codigo__startswith="LPU-")
+        .order_by("codigo")
+    )
+
+    data = []
+    for p in produtos:
+        data.append({
+            "id": p.id,
+            "codigo": p.codigo,
+            "nome": p.nome,
+            "tipo": p.tipo,
+            "preco_venda": float(p.preco_venda),
+            "preco_locacao": float(p.preco_locacao),
+            "descricao": p.descricao,
+        })
+
+    return JsonResponse({
+        "categoria": cat.nome,
+        "cor": cat.cor,
+        "icone": cat.icone,
+        "produtos": data,
+    })

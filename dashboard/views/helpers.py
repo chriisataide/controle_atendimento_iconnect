@@ -226,14 +226,13 @@ def get_analytics_data():
         }
 
     except Exception:
-        # Dados de exemplo em caso de erro
         return {
-            "tickets_por_mes": json.dumps([10, 15, 12, 20, 25, 18, 22, 30, 28, 35, 40, 38]),
-            "status_data": {"aberto": 8, "em_andamento": 15, "resolvido": 42, "fechado": 120},
+            "tickets_por_mes": json.dumps([0] * 12),
+            "status_data": {"aberto": 0, "em_andamento": 0, "resolvido": 0, "fechado": 0},
             "agent_performance": [],
             "heatmap_data": [],
-            "tickets_abertos": 8,
-            "tickets_andamento": 15,
-            "tickets_resolvidos": 42,
-            "tickets_fechados": 120,
+            "tickets_abertos": 0,
+            "tickets_andamento": 0,
+            "tickets_resolvidos": 0,
+            "tickets_fechados": 0,
         }

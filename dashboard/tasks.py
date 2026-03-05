@@ -675,3 +675,39 @@ def lgpd_data_retention():
 
     logger.info(f"LGPD data retention: {processed} itens processados.")
     return processed
+
+
+# ---------------------------------------------------------------------------
+# Workflow Engine — execução assíncrona de regras de workflow
+# ---------------------------------------------------------------------------
+
+
+@shared_task(ignore_result=True)
+def execute_workflow_for_ticket(ticket_id: int, trigger_event: str, user_id: int | None = None):
+    """Executa todas as regras de workflow aplicáveis a um ticket/evento."""
+    from django.contrib.auth.models import User
+
+    from .models import Ticket
+    from .services.workflows import workflow_engine
+
+    try:
+        ticket = Ticket.objects.select_related("categoria", "agente", "cliente").get(pk=ticket_id)
+    except Ticket.DoesNotExist:
+        logger.warning("Workflow task: ticket %s não encontrado", ticket_id)
+        return
+
+    user = None
+    if user_id:
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            pass
+
+    results = workflow_engine.execute_workflow(ticket, trigger_event, user=user)
+    if results:
+        logger.info(
+            "Workflow '%s' executado para ticket #%s — %s regra(s) processada(s)",
+            trigger_event,
+            ticket.numero,
+            len(results),
+        )

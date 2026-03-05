@@ -6,7 +6,6 @@ Features:
     - LGPDPanelView: Painel de gestão LGPD com consentimentos e solicitações
     - API endpoints para filtros/export
 """
-import csv
 import json
 from datetime import timedelta
 
@@ -80,7 +79,7 @@ class AuditTrailView(ListView):
             'total_24h': AuditEvent.objects.filter(timestamp__gte=last_24h).count(),
             'total_7d': AuditEvent.objects.filter(timestamp__gte=last_7d).count(),
             'suspicious': AuditEvent.objects.filter(is_suspicious=True, is_resolved=False).count(),
-            'security_alerts': SecurityAlert.objects.filter(resolved=False).count(),
+            'security_alerts': SecurityAlert.objects.exclude(status='resolved').count(),
         }
         ctx['event_types'] = AuditEvent.EVENT_TYPES
         ctx['severity_levels'] = AuditEvent.SEVERITY_LEVELS
@@ -106,19 +105,33 @@ class AuditTrailView(ListView):
 @login_required
 @staff_member_required
 def audit_export_csv(request):
-    """Exporta eventos de auditoria em CSV."""
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = f'attachment; filename="auditoria_{timezone.now():%Y%m%d_%H%M}.csv"'
+    """Exporta eventos de auditoria em Excel com layout padronizado."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+    from dashboard.views.features import _apply_excel_style, _auto_adjust_columns
 
-    writer = csv.writer(response)
-    writer.writerow([
-        'Data/Hora', 'Tipo', 'Severidade', 'Usuário', 'Ação',
-        'Descrição', 'IP', 'Suspeito', 'Resolvido',
-    ])
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Auditoria"
+
+    headers = [
+        "Data/Hora", "Tipo", "Severidade", "Usuário", "Ação",
+        "Descrição", "IP", "Suspeito", "Resolvido",
+    ]
+
+    data_start_row, thin_border = _apply_excel_style(
+        ws, headers, header_fill_color="475569",
+        title_row="Relatório de Auditoria — iConnect",
+    )
+
+    zebra_fill = PatternFill(start_color="F2F6FC", end_color="F2F6FC", fill_type="solid")
+    data_alignment = Alignment(vertical="center")
 
     qs = AuditEvent.objects.select_related('user').order_by('-timestamp')[:5000]
-    for e in qs:
-        writer.writerow([
+
+    row_num = data_start_row + 1
+    for e in qs.iterator():
+        values = [
             e.timestamp.strftime('%d/%m/%Y %H:%M:%S'),
             e.get_event_type_display(),
             e.get_severity_display(),
@@ -128,8 +141,25 @@ def audit_export_csv(request):
             e.ip_address,
             'Sim' if e.is_suspicious else 'Não',
             'Sim' if e.is_resolved else 'Não',
-        ])
+        ]
+        for col_idx, value in enumerate(values, 1):
+            cell = ws.cell(row=row_num, column=col_idx, value=value)
+            cell.border = thin_border
+            cell.alignment = data_alignment
+            if row_num % 2 == 0:
+                cell.fill = zebra_fill
+        row_num += 1
 
+    _auto_adjust_columns(ws)
+    ws.freeze_panes = ws.cell(row=data_start_row + 1, column=1)
+    ws.auto_filter.ref = f"A{data_start_row}:{chr(64 + len(headers))}{row_num - 1}"
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    filename = f"auditoria_{timezone.now():%Y%m%d_%H%M}.xlsx"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
     return response
 
 

@@ -779,64 +779,102 @@
             border: none;
             border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            box-shadow: 0 25px 50px rgba(0,0,0,.15);
         }
         .settings-modal .modal-header {
             background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
-            color: #fff;
             border: none;
-            padding: 20px 24px;
+            padding: 1.25rem 1.5rem;
         }
         .settings-modal .modal-header .modal-title {
-            font-weight: 600;
+            font-weight: 700;
+            font-size: .95rem;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            color: #ffffff;
+        }
+        .settings-modal .modal-header .modal-title .material-icons {
+            font-size: 20px;
+            background: rgba(255,255,255,.15);
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            color: #ffffff;
         }
         .settings-modal .modal-header .btn-close {
             filter: invert(1);
+            font-size: .65rem;
+            opacity: .7;
+            transition: opacity .2s;
         }
+        .settings-modal .modal-header .btn-close:hover { opacity: 1; }
         .settings-modal .modal-body {
-            padding: 24px;
+            padding: 1.5rem;
         }
         .settings-modal .modal-footer {
-            border-top: 1px solid #e2e8f0;
-            padding: 12px 24px;
+            border-top: 1px solid #f1f5f9;
+            padding: .875rem 1.5rem;
+        }
+        .shortcut-section {
+            margin-bottom: 1.25rem;
+        }
+        .shortcut-section:last-child { margin-bottom: 0; }
+        .shortcut-section-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .shortcut-section-title .material-icons {
+            font-size: 14px;
         }
         .shortcut-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 10px 12px;
-            border-radius: 8px;
-            margin-bottom: 4px;
-            transition: background 0.15s;
+            border-radius: 10px;
+            margin-bottom: 2px;
+            transition: background 0.2s;
         }
-        .shortcut-row:hover { background: #f1f5f9; }
+        .shortcut-row:hover { background: #f8fafc; }
         .shortcut-row .shortcut-label {
-            font-size: 13px;
+            font-size: .84rem;
             color: #334155;
             font-weight: 500;
         }
         .shortcut-row .shortcut-keys {
             display: flex;
-            gap: 4px;
+            gap: 5px;
             align-items: center;
         }
         .shortcut-row .shortcut-keys kbd {
-            background: #f1f5f9;
+            background: #f8fafc;
             color: #334155;
             border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            padding: 3px 8px;
+            border-radius: 8px;
+            padding: 4px 10px;
             font-size: 11px;
             font-weight: 600;
-            font-family: 'Inter', monospace;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            font-family: 'Inter', -apple-system, monospace;
+            box-shadow: 0 1px 3px rgba(0,0,0,.06);
+            min-width: 28px;
+            text-align: center;
         }
         .shortcut-row .shortcut-keys .key-sep {
             font-size: 10px;
-            color: #94a3b8;
+            color: #cbd5e1;
+            font-weight: 500;
         }
         .sysinfo-card {
             border: 1px solid #e2e8f0;
@@ -870,7 +908,10 @@
             font-weight: 600;
             color: #334155;
         }
+        .dark-version .settings-modal .modal-content { box-shadow: 0 25px 50px rgba(0,0,0,.4); }
         .dark-version .settings-modal .modal-body { background: var(--bg-card); color: var(--text-primary); }
+        .dark-version .settings-modal .modal-footer { border-top-color: var(--border-color); }
+        .dark-version .shortcut-section-title { color: #64748b; }
         .dark-version .shortcut-row:hover { background: rgba(6, 182, 212, 0.08); }
         .dark-version .shortcut-row .shortcut-label { color: var(--text-primary); }
         .dark-version .shortcut-row .shortcut-keys kbd { background: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color); }
@@ -1782,11 +1823,11 @@
             
             <!-- ===== FOOTER DA SIDEBAR ===== -->
             <div class="sidebar-footer">
-                <a class="sidebar-footer-link" href="{% url 'dashboard:profile' %}">
+                <a class="sidebar-footer-link" href="{% url 'dashboard:profile' %}" data-tooltip="Meu Perfil">
                     <i class="material-icons">account_circle</i>
                     <span>{{ user.get_full_name|default:user.username|truncatewords:2 }}</span>
                 </a>
-                <a class="sidebar-footer-link text-danger" href="{% url 'logout' %}">
+                <a class="sidebar-footer-link text-danger" href="{% url 'logout' %}" data-tooltip="Sair">
                     <i class="material-icons">logout</i>
                     <span>Sair</span>
                 </a>
@@ -1849,11 +1890,9 @@
                         <li class="nav-item px-3 d-flex align-items-center">
                             <a href="{% url 'dashboard:notifications' %}" class="nav-link text-body p-0 position-relative" id="notificationButton" title="Central de Notificações">
                                 <i class="material-icons">notifications</i>
-                                {% if unread_notifications_count and unread_notifications_count > 0 %}
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationBadge" style="font-size: 10px;">
-                                    {{ unread_notifications_count }}
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationBadge" style="font-size: 10px;{% if not unread_notifications_count or unread_notifications_count == 0 %} display:none;{% endif %}">
+                                    {{ unread_notifications_count|default:"0" }}
                                 </span>
-                                {% endif %}
                             </a>
                         </li>
                         <li class="nav-item dropdown px-3 d-flex align-items-center">
@@ -1933,8 +1972,8 @@
                                             <i class="material-icons">file_download</i>
                                         </div>
                                         <div class="item-info">
-                                            <p class="item-title">Exportar Dados</p>
-                                            <p class="item-desc">Baixar relatórios e tickets</p>
+                                            <p class="item-title">Exportar Excel</p>
+                                            <p class="item-desc">Baixar planilha de tickets</p>
                                         </div>
                                         <i class="material-icons" style="font-size:16px;color:#94a3b8;">chevron_right</i>
                                     </a>
@@ -2301,60 +2340,66 @@
         function showKeyboardShortcuts() {
             const shortcuts = `
                 <div class="modal fade settings-modal" id="shortcutsModal" tabindex="-1">
-                    <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-dialog modal-dialog-centered" style="max-width:440px;">
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 class="modal-title">
                                     <i class="material-icons">keyboard</i>
-                                    Atalhos do Teclado
+                                    <span>Atalhos do Teclado</span>
                                 </h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                             </div>
                             <div class="modal-body">
-                                <h6 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;margin-bottom:10px;">
-                                    <i class="material-icons" style="font-size:14px;vertical-align:middle;margin-right:4px;">explore</i>
-                                    Navegação
-                                </h6>
-                                <div class="shortcut-row">
-                                    <span class="shortcut-label">Dashboard</span>
-                                    <span class="shortcut-keys"><kbd>Alt</kbd><span class="key-sep">+</span><kbd>D</kbd></span>
+                                <div class="shortcut-section">
+                                    <div class="shortcut-section-title">
+                                        <i class="material-icons">explore</i>
+                                        Navegação
+                                    </div>
+                                    <div class="shortcut-row">
+                                        <span class="shortcut-label">Dashboard</span>
+                                        <span class="shortcut-keys"><kbd>Alt</kbd><span class="key-sep">+</span><kbd>D</kbd></span>
+                                    </div>
+                                    <div class="shortcut-row">
+                                        <span class="shortcut-label">Lista de Tickets</span>
+                                        <span class="shortcut-keys"><kbd>Alt</kbd><span class="key-sep">+</span><kbd>T</kbd></span>
+                                    </div>
+                                    <div class="shortcut-row">
+                                        <span class="shortcut-label">Novo Ticket</span>
+                                        <span class="shortcut-keys"><kbd>Alt</kbd><span class="key-sep">+</span><kbd>N</kbd></span>
+                                    </div>
+                                    <div class="shortcut-row">
+                                        <span class="shortcut-label">Meu Perfil</span>
+                                        <span class="shortcut-keys"><kbd>Alt</kbd><span class="key-sep">+</span><kbd>P</kbd></span>
+                                    </div>
                                 </div>
-                                <div class="shortcut-row">
-                                    <span class="shortcut-label">Lista de Tickets</span>
-                                    <span class="shortcut-keys"><kbd>Alt</kbd><span class="key-sep">+</span><kbd>T</kbd></span>
-                                </div>
-                                <div class="shortcut-row">
-                                    <span class="shortcut-label">Novo Ticket</span>
-                                    <span class="shortcut-keys"><kbd>Alt</kbd><span class="key-sep">+</span><kbd>N</kbd></span>
-                                </div>
-                                <div class="shortcut-row">
-                                    <span class="shortcut-label">Meu Perfil</span>
-                                    <span class="shortcut-keys"><kbd>Alt</kbd><span class="key-sep">+</span><kbd>P</kbd></span>
-                                </div>
-                                <hr style="margin:14px 0;">
-                                <h6 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;margin-bottom:10px;">
-                                    <i class="material-icons" style="font-size:14px;vertical-align:middle;margin-right:4px;">bolt</i>
-                                    Ações Rápidas
-                                </h6>
-                                <div class="shortcut-row">
-                                    <span class="shortcut-label">Salvar Formulário</span>
-                                    <span class="shortcut-keys"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>S</kbd></span>
-                                </div>
-                                <div class="shortcut-row">
-                                    <span class="shortcut-label">Fechar Modal</span>
-                                    <span class="shortcut-keys"><kbd>Esc</kbd></span>
-                                </div>
-                                <div class="shortcut-row">
-                                    <span class="shortcut-label">Confirmar Ação</span>
-                                    <span class="shortcut-keys"><kbd>Enter</kbd></span>
-                                </div>
-                                <div class="shortcut-row">
-                                    <span class="shortcut-label">Buscar</span>
-                                    <span class="shortcut-keys"><kbd>/</kbd></span>
+                                <div class="shortcut-section">
+                                    <div class="shortcut-section-title">
+                                        <i class="material-icons">bolt</i>
+                                        Ações Rápidas
+                                    </div>
+                                    <div class="shortcut-row">
+                                        <span class="shortcut-label">Salvar Formulário</span>
+                                        <span class="shortcut-keys"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>S</kbd></span>
+                                    </div>
+                                    <div class="shortcut-row">
+                                        <span class="shortcut-label">Fechar Modal</span>
+                                        <span class="shortcut-keys"><kbd>Esc</kbd></span>
+                                    </div>
+                                    <div class="shortcut-row">
+                                        <span class="shortcut-label">Confirmar Ação</span>
+                                        <span class="shortcut-keys"><kbd>Enter</kbd></span>
+                                    </div>
+                                    <div class="shortcut-row">
+                                        <span class="shortcut-label">Buscar</span>
+                                        <span class="shortcut-keys"><kbd>/</kbd></span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                <button type="button" class="btn" data-bs-dismiss="modal"
+                                        style="background:#f1f5f9;color:#475569;border:none;padding:.55rem 1.25rem;border-radius:10px;font-weight:600;font-size:.84rem;">
+                                    Fechar
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -2503,7 +2548,9 @@
 
             // Gera data-tooltip para itens da sidebar (usado no modo colapsado)
             document.querySelectorAll('.sidebar-quick-link').forEach(function(link) {
-                const text = link.textContent.trim();
+                var clone = link.cloneNode(true);
+                clone.querySelectorAll('i, .sq-icon').forEach(function(el) { el.remove(); });
+                var text = clone.textContent.trim();
                 if (text) link.setAttribute('data-tooltip', text);
             });
             document.querySelectorAll('.sidebar-dropdown-header').forEach(function(header) {
@@ -2534,10 +2581,13 @@
                     }
                 }
                 
-                // Atalho para busca
+                // Atalho para busca (ignora quando foco está em input/textarea/contenteditable)
                 if (e.key === '/' && !e.ctrlKey && !e.altKey) {
+                    const tag = document.activeElement?.tagName;
+                    const editable = document.activeElement?.isContentEditable;
+                    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || editable) return;
                     const searchInput = document.querySelector('.form-control');
-                    if (searchInput && document.activeElement !== searchInput) {
+                    if (searchInput) {
                         e.preventDefault();
                         searchInput.focus();
                     }
@@ -3219,15 +3269,20 @@
             margin-right: 0 !important;
         }
         /* Dropdown menus - popup ao hover quando colapsado */
+        /* Quando colapsado, o container precisa permitir overflow dos popups */
+        .sidenav.collapsed #sidenav-collapse-main {
+            overflow: visible !important;
+        }
         .sidenav.collapsed .sidebar-dropdown-menu {
             position: absolute !important;
             left: 72px !important;
             top: 0 !important;
-            width: 200px;
+            width: 220px;
             max-height: none !important;
+            overflow: visible !important;
             background: #fff !important;
-            border-radius: 8px !important;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important;
+            border-radius: 10px !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
             border: 1px solid #e2e8f0 !important;
             padding: 8px 0 !important;
             z-index: 9999;
@@ -3245,16 +3300,41 @@
         .sidenav.collapsed .sidebar-dropdown-menu .nav-link i.material-icons {
             display: none;
         }
-        /* Footer links - só ícone */
+        /* Footer links - só ícone + tooltip */
         .sidenav.collapsed .sidebar-footer {
             padding: 8px;
+            position: relative;
         }
         .sidenav.collapsed .sidebar-footer-link {
             justify-content: center;
             padding: 8px;
+            position: relative;
         }
         .sidenav.collapsed .sidebar-footer-link .material-icons {
             margin-right: 0 !important;
+        }
+        .sidenav.collapsed .sidebar-footer-link::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 64px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #1e293b;
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.15s ease, visibility 0.15s ease;
+            z-index: 10000;
+            pointer-events: none;
+        }
+        .sidenav.collapsed .sidebar-footer-link:hover::after {
+            opacity: 1;
+            visibility: visible;
         }
         /* Hover expand - mostra tooltip com nome */
         .sidenav.collapsed .nav-item {
@@ -3291,7 +3371,8 @@
             border-color: var(--border-color) !important;
         }
         .dark-version .sidenav.collapsed .sidebar-quick-link::after,
-        .dark-version .sidenav.collapsed .sidebar-dropdown-header::after {
+        .dark-version .sidenav.collapsed .sidebar-dropdown-header::after,
+        .dark-version .sidenav.collapsed .sidebar-footer-link::after {
             background: #0f172a;
         }
         
@@ -3824,6 +3905,10 @@
         // Restaurar estado dos dropdowns ao carregar a página
         function restoreSidebarDropdownState() {
             try {
+                // Não restaurar quando sidebar está colapsado
+                var sidenav = document.getElementById('sidenav-main');
+                if (sidenav && sidenav.classList.contains('collapsed')) return;
+
                 const savedState = localStorage.getItem('openSidebarDropdowns');
                 if (savedState) {
                     const openDropdowns = JSON.parse(savedState);
@@ -3844,6 +3929,10 @@
         
         // Verificar qual dropdown deve estar aberto baseado na página atual
         function setActiveDropdown() {
+            // Não abrir dropdowns automaticamente quando sidebar está colapsado
+            var sidenav = document.getElementById('sidenav-main');
+            if (sidenav && sidenav.classList.contains('collapsed')) return;
+
             const currentUrl = window.location.pathname;
             // Array de pares [padrão, id] do mais específico para o mais genérico
             const urlToDropdown = [
@@ -3908,6 +3997,16 @@
 
             // Definir dropdown ativo baseado na página atual (apenas na carga da página)
             setActiveDropdown();
+
+            // No modo colapsado, fechar popup ao clicar em um link do submenu
+            document.querySelectorAll('.sidebar-dropdown-menu .nav-link').forEach(function(link) {
+                link.addEventListener('click', function() {
+                    var sidenav = document.getElementById('sidenav-main');
+                    if (sidenav && sidenav.classList.contains('collapsed')) {
+                        closeAllSidebarDropdowns();
+                    }
+                });
+            });
         });
         
         // Função para fechar todos os dropdowns
@@ -4097,6 +4196,99 @@
         });
     })();
     </script>
+
+<!-- Modal de Confirmação Global -->
+<div class="modal fade" id="iConfirmModal" tabindex="-1" aria-hidden="true" style="z-index:10001!important;">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+    <div class="modal-content" style="border-radius:16px;border:none;overflow:hidden;box-shadow:0 25px 50px rgba(0,0,0,.15);">
+      <div class="modal-header" id="iConfirmHeader" style="border-bottom:1px solid #e2e8f0;padding:1.25rem 1.5rem;">
+        <div class="d-flex align-items-center gap-2">
+          <div id="iConfirmIconWrap" style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+            <i class="material-symbols-rounded" id="iConfirmIcon" style="font-size:20px;"></i>
+          </div>
+          <h6 class="modal-title mb-0 fw-bold" id="iConfirmTitle" style="font-size:.95rem;"></h6>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar" style="font-size:.65rem;"></button>
+      </div>
+      <div class="modal-body" style="padding:1.25rem 1.5rem;">
+        <p class="mb-0" id="iConfirmMessage" style="font-size:.88rem;color:#334155;line-height:1.6;"></p>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid #f1f5f9;padding:.875rem 1.5rem;gap:.5rem;">
+        <button type="button" class="btn" id="iConfirmCancel" data-bs-dismiss="modal"
+                style="background:#f1f5f9;color:#475569;border:none;padding:.55rem 1.25rem;border-radius:10px;font-weight:600;font-size:.84rem;">
+          Cancelar
+        </button>
+        <button type="button" class="btn" id="iConfirmOk"
+                style="padding:.55rem 1.25rem;border-radius:10px;font-weight:600;font-size:.84rem;border:none;color:#fff;">
+          Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/**
+ * iConfirm — Modal de confirmação padrão iConnect.
+ *
+ * Uso:
+ *   iConfirm({ message: 'Tem certeza?' }).then(ok => { if (ok) ... });
+ *
+ * Opções:
+ *   title    - Título do modal (padrão: 'Confirmar')
+ *   message  - Mensagem/corpo
+ *   type     - 'warning' | 'danger' | 'info' | 'success' (padrão: 'warning')
+ *   confirmText - Texto do botão confirmar (padrão: 'Confirmar')
+ *   cancelText  - Texto do botão cancelar  (padrão: 'Cancelar')
+ */
+window.iConfirm = function(opts = {}) {
+    const type = opts.type || 'warning';
+    const themes = {
+        warning: { bg:'#fffbeb', border:'#fde68a', icon:'warning',   iconColor:'#d97706', btnBg:'linear-gradient(135deg,#f59e0b,#d97706)' },
+        danger:  { bg:'#fef2f2', border:'#fecaca', icon:'delete_forever', iconColor:'#dc2626', btnBg:'linear-gradient(135deg,#ef4444,#dc2626)' },
+        info:    { bg:'#eff6ff', border:'#bfdbfe', icon:'info',      iconColor:'#2563eb', btnBg:'linear-gradient(135deg,#3b82f6,#2563eb)' },
+        success: { bg:'#f0fdf4', border:'#bbf7d0', icon:'check_circle', iconColor:'#16a34a', btnBg:'linear-gradient(135deg,#22c55e,#16a34a)' }
+    };
+    const t = themes[type] || themes.warning;
+
+    document.getElementById('iConfirmHeader').style.background = t.bg;
+    document.getElementById('iConfirmHeader').style.borderBottomColor = t.border;
+    document.getElementById('iConfirmIconWrap').style.background = t.bg;
+    document.getElementById('iConfirmIcon').textContent = t.icon;
+    document.getElementById('iConfirmIcon').style.color = t.iconColor;
+    document.getElementById('iConfirmTitle').textContent = opts.title || 'Confirmar';
+    document.getElementById('iConfirmTitle').style.color = t.iconColor;
+    document.getElementById('iConfirmMessage').innerHTML = opts.message || 'Deseja continuar?';
+    document.getElementById('iConfirmOk').textContent = opts.confirmText || 'Confirmar';
+    document.getElementById('iConfirmOk').style.background = t.btnBg;
+    document.getElementById('iConfirmCancel').textContent = opts.cancelText || 'Cancelar';
+
+    return new Promise(function(resolve) {
+        const modalEl = document.getElementById('iConfirmModal');
+        const modal = new bootstrap.Modal(modalEl, { backdrop: 'static' });
+
+        function cleanup() {
+            okBtn.removeEventListener('click', onOk);
+            modalEl.removeEventListener('hidden.bs.modal', onHidden);
+        }
+        const okBtn = document.getElementById('iConfirmOk');
+        let resolved = false;
+
+        function onOk() {
+            resolved = true;
+            modal.hide();
+        }
+        function onHidden() {
+            cleanup();
+            resolve(resolved);
+        }
+
+        okBtn.addEventListener('click', onOk);
+        modalEl.addEventListener('hidden.bs.modal', onHidden);
+        modal.show();
+    });
+};
+</script>
 
 </body>
 </html>

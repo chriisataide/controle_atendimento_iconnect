@@ -98,7 +98,7 @@ class TicketListView(ListView):
     paginate_by = 15
 
     def get_queryset(self):
-        queryset = Ticket.objects.select_related("cliente", "categoria", "agente").order_by("-criado_em")
+        queryset = Ticket.objects.select_related("cliente", "categoria", "agente", "ponto_de_venda").order_by("-criado_em")
 
         # RBAC: filtrar tickets por papel do usuário
         queryset = get_role_filtered_tickets(self.request.user, queryset)
@@ -213,6 +213,22 @@ class TicketDetailView(DetailView):
         context["anexos"] = self.object.anexos.all() if hasattr(self.object, "anexos") else []
         context["status_choices"] = StatusTicket.choices
         context["cliente_total_tickets"] = Ticket.objects.filter(cliente=self.object.cliente).count()
+
+        # Dados de Sala de Monitoramento
+        from ..models.vigilante import RegistroVigilante
+        registros = RegistroVigilante.objects.filter(ticket=self.object).order_by("criado_em")
+        context["registros_vigilante"] = registros
+        context["is_sala_monitoramento"] = registros.exists()
+        if registros.exists():
+            completos = registros.exclude(valor__isnull=True)
+            context["valor_total_vigilante"] = sum(float(r.valor) for r in completos if r.valor)
+            context["has_pendentes"] = registros.filter(fim__isnull=True).exists()
+
+        # Descrição limpa (sem a tabela de resumo gerada automaticamente)
+        desc = self.object.descricao or ""
+        if "<hr>" in desc:
+            desc = desc[: desc.index("<hr>")]
+        context["descricao_limpa"] = desc.strip()
         return context
 
 
@@ -241,6 +257,9 @@ class TicketCreateView(CreateView):
         return context
 
     def form_valid(self, form):
+        # Atribuir o usuário logado como agente responsável
+        form.instance.agente = self.request.user
+
         try:
             cliente = Cliente.objects.get(email=self.request.user.email)
             form.instance.cliente = cliente
@@ -302,15 +321,16 @@ class TicketCreateView(CreateView):
                 # Salvar registros estruturados no modelo RegistroVigilante
                 for p in periodos:
                     inicio_str = p.get("inicio", "")
-                    fim_str = p.get("fim", "")
+                    fim_str = p.get("fim") or ""
+                    is_pendente = p.get("pendente", False)
                     try:
-                        inicio_dt = dt.fromisoformat(inicio_str)
-                        fim_dt = dt.fromisoformat(fim_str)
+                        inicio_dt = dt.fromisoformat(inicio_str) if inicio_str else None
+                        fim_dt = dt.fromisoformat(fim_str) if fim_str else None
                     except (ValueError, TypeError):
                         inicio_dt = None
                         fim_dt = None
 
-                    if inicio_dt and fim_dt:
+                    if inicio_dt:
                         RegistroVigilante.objects.create(
                             ticket=self.object,
                             tipo=p.get("tipo", tipo),
@@ -318,8 +338,8 @@ class TicketCreateView(CreateView):
                             uf=p.get("uf", ""),
                             inicio=inicio_dt,
                             fim=fim_dt,
-                            duracao_minutos=p.get("duracao_minutos", 0),
-                            valor=p.get("valor", 0),
+                            duracao_minutos=p.get("duracao_minutos") if not is_pendente else None,
+                            valor=p.get("valor") if not is_pendente else None,
                             detalhes=p.get("detalhes", ""),
                             criado_por=self.request.user,
                         )
@@ -329,9 +349,15 @@ class TicketCreateView(CreateView):
                 resumo_html += "<table style='width:100%;border-collapse:collapse;'>"
                 resumo_html += "<tr style='background:#f5f5f5;'><th style='padding:6px;border:1px solid #ddd;'>Empresa</th><th style='padding:6px;border:1px solid #ddd;'>UF</th><th style='padding:6px;border:1px solid #ddd;'>Início</th><th style='padding:6px;border:1px solid #ddd;'>Fim</th><th style='padding:6px;border:1px solid #ddd;'>Duração</th><th style='padding:6px;border:1px solid #ddd;'>Valor</th></tr>"
                 for p in periodos:
-                    dur_h = int(p.get("duracao_minutos", 0) // 60)
-                    dur_m = int(p.get("duracao_minutos", 0) % 60)
-                    resumo_html += f"<tr><td style='padding:6px;border:1px solid #ddd;'>{p.get('empresa','')}</td><td style='padding:6px;border:1px solid #ddd;'>{p.get('uf','')}</td><td style='padding:6px;border:1px solid #ddd;'>{p.get('inicio','')}</td><td style='padding:6px;border:1px solid #ddd;'>{p.get('fim','')}</td><td style='padding:6px;border:1px solid #ddd;'>{dur_h}h {dur_m}min</td><td style='padding:6px;border:1px solid #ddd;'>R$ {p.get('valor', 0):.2f}</td></tr>"
+                    is_pend = p.get("pendente", False)
+                    dur_min = p.get("duracao_minutos", 0) or 0
+                    dur_h = int(dur_min // 60)
+                    dur_m = int(dur_min % 60)
+                    fim_display = p.get('fim', '') or '⏳ Pendente'
+                    duracao_display = f"{dur_h}h {dur_m}min" if not is_pend else "Pendente"
+                    valor_display = f"R$ {p.get('valor', 0):.2f}" if not is_pend else "Pendente"
+                    row_style = "background:#fef3c7;" if is_pend else ""
+                    resumo_html += f"<tr style='{row_style}'><td style='padding:6px;border:1px solid #ddd;'>{p.get('empresa','')}</td><td style='padding:6px;border:1px solid #ddd;'>{p.get('uf','')}</td><td style='padding:6px;border:1px solid #ddd;'>{p.get('inicio','')}</td><td style='padding:6px;border:1px solid #ddd;'>{fim_display}</td><td style='padding:6px;border:1px solid #ddd;'>{duracao_display}</td><td style='padding:6px;border:1px solid #ddd;'>{valor_display}</td></tr>"
                 resumo_html += f"<tr style='font-weight:bold;background:#e8f5e9;'><td colspan='5' style='padding:6px;border:1px solid #ddd;text-align:right;'>TOTAL:</td><td style='padding:6px;border:1px solid #ddd;'>R$ {valor_total:.2f}</td></tr>"
                 resumo_html += "</table>"
 
@@ -375,7 +401,7 @@ class TicketCreateView(CreateView):
 class TicketUpdateView(UpdateView):
     model = Ticket
     template_name = "dashboard/tickets/update.html"
-    fields = ["cliente", "ponto_de_venda", "categoria", "titulo", "descricao", "status", "prioridade", "agente"]
+    fields = ["cliente", "ponto_de_venda", "categoria", "tipo", "subtipo", "sintoma", "titulo", "descricao", "status", "prioridade", "agente"]
 
     def get_queryset(self):
         base_qs = Ticket.objects.all()
@@ -390,9 +416,107 @@ class TicketUpdateView(UpdateView):
         context["pontos_de_venda"] = PontoDeVenda.objects.select_related("cliente").all().order_by("nome_fantasia")
         context["categorias"] = CategoriaTicket.objects.all()
         context["agentes"] = User.objects.filter(perfilagente__isnull=False)
+        context["tipo_choices"] = Ticket.TIPO_CHOICES
+
+        # Dados de Sala de Monitoramento
+        from ..models.vigilante import RegistroVigilante
+        registros = RegistroVigilante.objects.filter(ticket=self.object).order_by("criado_em")
+        context["registros_vigilante"] = registros
+        context["is_sala_monitoramento"] = registros.exists()
+        context["has_pendentes"] = registros.filter(fim__isnull=True).exists()
         return context
 
     def form_valid(self, form):
+        # Processar cálculo de vigilante (Sala de Monitoramento)
+        calculo_vig_dados = self.request.POST.get("calculo_vigilante_dados")
+        if calculo_vig_dados:
+            try:
+                from datetime import datetime as dt
+
+                from ..models.vigilante import RegistroVigilante
+
+                dados = json.loads(calculo_vig_dados)
+                registros_update = dados.get("registros_update", [])
+
+                for reg_data in registros_update:
+                    reg_id = reg_data.get("id")
+                    fim_str = reg_data.get("fim") or ""
+                    if reg_id and fim_str:
+                        try:
+                            reg = RegistroVigilante.objects.get(id=reg_id, ticket=self.object)
+                            fim_dt = dt.fromisoformat(fim_str)
+                            duracao_min = reg_data.get("duracao_minutos", 0)
+                            valor = reg_data.get("valor", 0)
+                            detalhes = reg_data.get("detalhes", "")
+
+                            reg.fim = fim_dt
+                            reg.duracao_minutos = duracao_min
+                            reg.valor = valor
+                            reg.detalhes = detalhes
+                            reg.save(update_fields=["fim", "duracao_minutos", "valor", "detalhes"])
+                        except (RegistroVigilante.DoesNotExist, ValueError, TypeError) as e:
+                            logger.warning("Erro ao atualizar registro vigilante %s: %s", reg_id, e)
+
+                # Novos períodos (adicionados na edição)
+                novos = dados.get("periodos_novos", [])
+                tipo_padrao = dados.get("tipo", "implantacao")
+                for p in novos:
+                    inicio_str = p.get("inicio", "")
+                    fim_str = p.get("fim") or ""
+                    is_pendente = p.get("pendente", False)
+                    try:
+                        inicio_dt = dt.fromisoformat(inicio_str) if inicio_str else None
+                        fim_dt = dt.fromisoformat(fim_str) if fim_str else None
+                    except (ValueError, TypeError):
+                        inicio_dt = None
+                        fim_dt = None
+
+                    if inicio_dt:
+                        RegistroVigilante.objects.create(
+                            ticket=self.object,
+                            tipo=p.get("tipo", tipo_padrao),
+                            empresa=p.get("empresa", ""),
+                            uf=p.get("uf", ""),
+                            inicio=inicio_dt,
+                            fim=fim_dt,
+                            duracao_minutos=p.get("duracao_minutos") if not is_pendente else None,
+                            valor=p.get("valor") if not is_pendente else None,
+                            detalhes=p.get("detalhes", ""),
+                            criado_por=self.request.user,
+                        )
+
+                # Recalcular resumo na descrição
+                all_registros = RegistroVigilante.objects.filter(ticket=self.object)
+                if all_registros.exists():
+                    tipo_label = "Implantação de Vigilante" if tipo_padrao == "implantacao" else "Pronta Resposta"
+                    # Remove resumo anterior (tudo após <hr>)
+                    desc = form.instance.descricao or ""
+                    if "<hr>" in desc:
+                        desc = desc[:desc.index("<hr>")]
+                    resumo_html = f"\n<hr><h4>{tipo_label} — Resumo do Cálculo</h4>"
+                    resumo_html += "<table style='width:100%;border-collapse:collapse;'>"
+                    resumo_html += "<tr style='background:#f5f5f5;'><th style='padding:6px;border:1px solid #ddd;'>Empresa</th><th style='padding:6px;border:1px solid #ddd;'>UF</th><th style='padding:6px;border:1px solid #ddd;'>Início</th><th style='padding:6px;border:1px solid #ddd;'>Fim</th><th style='padding:6px;border:1px solid #ddd;'>Duração</th><th style='padding:6px;border:1px solid #ddd;'>Valor</th></tr>"
+                    valor_total = 0
+                    for r in all_registros:
+                        is_pend = r.pendente
+                        if not is_pend and r.valor:
+                            valor_total += float(r.valor)
+                        dur_min = r.duracao_minutos or 0
+                        dur_h = int(dur_min // 60)
+                        dur_m = int(dur_min % 60)
+                        inicio_fmt = r.inicio.strftime("%d/%m/%Y %H:%M") if r.inicio else ""
+                        fim_fmt = r.fim.strftime("%d/%m/%Y %H:%M") if r.fim else "⏳ Pendente"
+                        duracao_display = f"{dur_h}h {dur_m}min" if not is_pend else "Pendente"
+                        valor_display = f"R$ {float(r.valor):.2f}" if not is_pend and r.valor else "Pendente"
+                        row_style = "background:#fef3c7;" if is_pend else ""
+                        resumo_html += f"<tr style='{row_style}'><td style='padding:6px;border:1px solid #ddd;'>{r.empresa}</td><td style='padding:6px;border:1px solid #ddd;'>{r.uf}</td><td style='padding:6px;border:1px solid #ddd;'>{inicio_fmt}</td><td style='padding:6px;border:1px solid #ddd;'>{fim_fmt}</td><td style='padding:6px;border:1px solid #ddd;'>{duracao_display}</td><td style='padding:6px;border:1px solid #ddd;'>{valor_display}</td></tr>"
+                    resumo_html += f"<tr style='font-weight:bold;background:#e8f5e9;'><td colspan='5' style='padding:6px;border:1px solid #ddd;text-align:right;'>TOTAL:</td><td style='padding:6px;border:1px solid #ddd;'>R$ {valor_total:.2f}</td></tr>"
+                    resumo_html += "</table>"
+                    form.instance.descricao = desc + resumo_html
+
+            except (json.JSONDecodeError, KeyError, ValueError) as e:
+                logger.error("Erro ao processar cálculo de vigilante na edição: %s", e, exc_info=True)
+
         messages.success(self.request, "Ticket atualizado com sucesso!")
         return super().form_valid(form)
 

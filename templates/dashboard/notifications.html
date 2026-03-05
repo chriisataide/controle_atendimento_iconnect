@@ -90,6 +90,7 @@
                 </button>
                 {% endif %}
             </div>
+            <form id="csrfForm" style="display:none;">{% csrf_token %}</form>
         </div>
     </div>
     
@@ -337,9 +338,12 @@
                                             </a>
                                         {% endif %}
                                         
-                                        <button class="btn btn-sm btn-outline-danger" 
-                                                onclick="deleteNotification({{ notification.id }})" title="Remover">
-                                            <i class="material-symbols-rounded">close</i>
+                                        <button class="btn btn-sm" 
+                                                onclick="deleteNotification({{ notification.id }})" title="Remover"
+                                                style="width:32px;height:32px;padding:0;border-radius:8px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;display:inline-flex;align-items:center;justify-content:center;transition:all .2s;"
+                                                onmouseover="this.style.background='#ef4444';this.style.color='#fff';"
+                                                onmouseout="this.style.background='#fef2f2';this.style.color='#ef4444';">
+                                            <i class="material-symbols-rounded" style="font-size:16px;">close</i>
                                         </button>
                                     </div>
                                 </div>
@@ -514,9 +518,11 @@
 
 .notification-actions-full {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
     gap: 8px;
     flex-shrink: 0;
+    align-self: center;
 }
 
 /* Responsivo */
@@ -581,25 +587,31 @@ function markAsRead(notificationId) {
 }
 
 function markAllAsRead() {
-    if (!confirm('Marcar todas as notificações como lidas?')) return;
-    
-    fetch('/dashboard/api/notifications/mark-all-read/', {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': getCSRFToken(),
-            'Content-Type': 'application/json'
-        }
-    }).then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.querySelectorAll('.notification-item-full.unread').forEach(item => {
-                item.classList.remove('unread');
-            });
-            document.querySelectorAll('button[onclick*="markAsRead"]').forEach(btn => btn.remove());
-            showToast(`${data.updated_count || 'Todas'} notificações marcadas como lidas`, 'success');
-            setTimeout(() => location.reload(), 800);
-        }
-    }).catch(() => showToast('Erro ao marcar notificações', 'danger'));
+    iConfirm({
+        title: 'Marcar todas como lidas',
+        message: 'Deseja marcar todas as notificações como lidas?',
+        type: 'info',
+        confirmText: 'Sim, marcar todas'
+    }).then(ok => {
+        if (!ok) return;
+        fetch('/dashboard/api/notifications/mark-all-read/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'Content-Type': 'application/json'
+            }
+        }).then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.querySelectorAll('.notification-item-full.unread').forEach(item => {
+                    item.classList.remove('unread');
+                });
+                document.querySelectorAll('button[onclick*="markAsRead"]').forEach(btn => btn.remove());
+                showToast(`${data.updated_count || 'Todas'} notificações marcadas como lidas`, 'success');
+                setTimeout(() => location.reload(), 800);
+            }
+        }).catch(() => showToast('Erro ao marcar notificações', 'danger'));
+    });
 }
 
 function deleteNotification(notificationId) {

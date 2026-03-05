@@ -2,69 +2,195 @@
 {% load static %}
 
 {% block title %}Workflow Builder — iConnect{% endblock %}
+{% block page_title %}Workflow Builder{% endblock %}
+{% block breadcrumb_title %}Workflow Builder{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Palette */
+.palette-section-title {
+  font-size: .68rem; text-transform: uppercase; color: #94a3b8; font-weight: 700;
+  letter-spacing: .5px; padding: 0 .5rem; margin: .75rem 0 .35rem;
+}
+.palette-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; margin: 2px 0; border-radius: 8px;
+  cursor: grab; transition: all .15s; border: 1px solid transparent;
+  font-size: .82rem; color: #334155;
+}
+.palette-item:hover { background: #f1f5f9; border-color: #e2e8f0; }
+.palette-item:active { cursor: grabbing; background: #e2e8f0; }
+.palette-icon {
+  width: 28px; height: 28px; border-radius: 6px; display: flex;
+  align-items: center; justify-content: center; flex-shrink: 0;
+}
+.palette-icon i { font-size: 16px; color: #fff; }
+
+/* Canvas */
+.builder-canvas {
+  min-height: 550px;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 19px, #f1f5f9 20px),
+    repeating-linear-gradient(90deg, transparent, transparent 19px, #f1f5f9 20px);
+  border-radius: 0 0 12px 12px;
+  transition: background .2s;
+}
+.builder-canvas.drag-over { background-color: #f0fdf4; }
+
+/* Flow nodes */
+.flow-node {
+  background: #fff; border: 1px solid #e2e8f0; border-left: 4px solid #e2e8f0;
+  border-radius: 10px; padding: 12px 16px; margin: 8px auto;
+  max-width: 360px; position: relative; transition: all .2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.flow-node:hover { border-color: #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+.flow-node .node-badge {
+  font-size: .6rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;
+  text-transform: uppercase; letter-spacing: .3px;
+}
+.flow-node .node-label { font-size: .82rem; font-weight: 600; color: #334155; }
+.flow-node .node-delete {
+  position: absolute; top: -8px; right: -8px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #ef4444; color: #fff; border: 2px solid #fff;
+  font-size: 12px; display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity .15s; cursor: pointer;
+  box-shadow: 0 2px 4px rgba(239,68,68,.3);
+}
+.flow-node:hover .node-delete { opacity: 1; }
+.flow-connector { text-align: center; color: #cbd5e1; font-size: 20px; line-height: 1; }
+
+/* Rules list */
+.rule-card {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+  padding: .75rem; margin-bottom: .5rem; transition: all .15s; cursor: pointer;
+}
+.rule-card:hover { background: #f8fafc; border-color: #cbd5e1; }
+.rule-card .rule-name { font-size: .82rem; font-weight: 600; color: #334155; }
+.rule-card .rule-trigger { font-size: .7rem; color: #94a3b8; }
+.rule-card .rule-actions-bar { margin-top: .4rem; display: flex; gap: 4px; }
+.btn-xs {
+  padding: 3px 7px; font-size: 11px; border-radius: 5px; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.btn-xs i { font-size: 13px; }
+
+/* Metrics */
+.metric-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .4rem 0; border-bottom: 1px solid #f1f5f9;
+  font-size: .82rem; color: #334155;
+}
+.metric-row:last-child { border-bottom: none; }
+.metric-row strong { font-weight: 700; }
+
+/* Cards padrão */
+.wf-card { border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06); overflow: hidden; }
+.wf-card-header {
+  padding: .85rem 1rem; border-bottom: 1px solid #f1f5f9;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.wf-card-header h6 { font-size: .85rem; font-weight: 600; color: #334155; margin: 0; }
+.wf-card-header h6 i { font-size: 18px; vertical-align: -3px; margin-right: 6px; color: #64748b; }
+
+/* Empty state */
+.canvas-empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 4rem 2rem; color: #94a3b8;
+}
+.canvas-empty i { font-size: 3.5rem; margin-bottom: .75rem; color: #cbd5e1; }
+.canvas-empty p { font-size: .85rem; margin: 0; }
+
+/* Template option */
+.template-option {
+  display: flex; align-items: center; gap: 12px;
+  padding: .85rem 1rem; border: 1px solid #e2e8f0; border-radius: 10px;
+  margin-bottom: .5rem; cursor: pointer; transition: all .15s;
+}
+.template-option:hover { background: #f8fafc; border-color: #06b6d4; }
+.template-icon {
+  width: 40px; height: 40px; border-radius: 8px; display: flex;
+  align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #334155, #1e293b);
+}
+.template-icon i { font-size: 20px; color: #fff; }
+.template-option strong { font-size: .85rem; color: #334155; }
+.template-option p { font-size: .75rem; color: #94a3b8; margin: 0; }
+
+/* Status badge */
+.badge-active { background: #dcfce7; color: #16a34a; font-size: .65rem; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+.badge-inactive { background: #f1f5f9; color: #94a3b8; font-size: .65rem; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-
-  <!-- Header -->
-  <div class="row mb-4">
-    <div class="col-12 d-flex justify-content-between align-items-center">
-      <div>
-        <h4 class="mb-1"><i class="material-symbols-rounded me-2">account_tree</i>Visual Workflow Builder</h4>
-        <p class="text-sm text-muted mb-0">Arraste e solte para criar fluxos de automação</p>
+<div class="container-fluid py-2">
+  <!-- ===== HEADER ===== -->
+  <div class="row mb-3">
+    <div class="col-lg-8 col-md-7">
+      <div class="ms-3">
+        <h3 class="mb-0 h4 font-weight-bolder">Workflow Builder</h3>
+        <p class="mb-0 text-sm text-muted">Arraste e solte para criar fluxos de automação</p>
       </div>
-      <div>
-        <button class="btn btn-sm btn-outline-info me-2" id="btnTemplates">
-          <i class="material-symbols-rounded me-1">auto_fix_high</i> Templates
-        </button>
-        <button class="btn btn-sm btn-primary" id="btnNewWorkflow">
-          <i class="material-symbols-rounded me-1">add</i> Novo Workflow
-        </button>
-      </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+      <button class="btn btn-sm btn-outline-secondary mb-0" id="btnTemplates">
+        <i class="material-symbols-rounded text-sm me-1">auto_fix_high</i> Templates
+      </button>
+      <button class="btn btn-sm mb-0 ms-1 text-white" style="background:linear-gradient(135deg,#06b6d4,#0891b2);" id="btnNewWorkflow">
+        <i class="material-symbols-rounded text-sm me-1">add</i> Novo Workflow
+      </button>
     </div>
   </div>
 
-  <!-- Main Layout: Sidebar + Canvas -->
-  <div class="row">
+  <!-- ===== MAIN LAYOUT ===== -->
+  <div class="row px-2">
     <!-- Sidebar: Componentes -->
     <div class="col-lg-3 col-md-4">
-      <div class="card shadow-sm mb-4">
-        <div class="card-header bg-gradient-dark text-white p-3">
-          <h6 class="mb-0"><i class="material-symbols-rounded me-2">build</i>Componentes</h6>
+      <div class="card wf-card mb-3">
+        <div class="wf-card-header">
+          <h6><i class="material-symbols-rounded">build</i> Componentes</h6>
         </div>
-        <div class="card-body p-2">
+        <div class="card-body p-2" style="max-height:520px;overflow-y:auto;">
           <!-- Triggers -->
-          <p class="text-xs text-uppercase text-muted fw-bold px-2 mt-2 mb-1">Gatilhos</p>
-          <div id="triggerPalette" class="palette-section">
+          <p class="palette-section-title">Gatilhos</p>
+          <div id="triggerPalette">
             {% for t in triggers %}
             <div class="palette-item draggable" draggable="true"
-                 data-type="trigger" data-id="{{ t.id }}" data-label="{{ t.label }}">
-              <i class="{{ t.icon }} me-2" style="color:{{ t.color }}"></i>
-              <span class="text-sm">{{ t.label }}</span>
+                 data-type="trigger" data-id="{{ t.id }}" data-label="{{ t.label }}" data-icon="{{ t.icon }}" data-color="{{ t.color }}">
+              <div class="palette-icon" style="background:{{ t.color }}">
+                <i class="material-symbols-rounded">{{ t.icon }}</i>
+              </div>
+              <span>{{ t.label }}</span>
             </div>
             {% endfor %}
           </div>
 
           <!-- Conditions -->
-          <p class="text-xs text-uppercase text-muted fw-bold px-2 mt-3 mb-1">Condições</p>
-          <div id="conditionPalette" class="palette-section">
+          <p class="palette-section-title mt-2">Condições</p>
+          <div id="conditionPalette">
             {% for c in conditions %}
             <div class="palette-item draggable" draggable="true"
-                 data-type="condition" data-id="{{ c.id }}" data-label="{{ c.label }}">
-              <i class="{{ c.icon }} me-2" style="color:{{ c.color }}"></i>
-              <span class="text-sm">{{ c.label }}</span>
+                 data-type="condition" data-id="{{ c.id }}" data-label="{{ c.label }}" data-icon="{{ c.icon }}" data-color="{{ c.color }}">
+              <div class="palette-icon" style="background:{{ c.color }}">
+                <i class="material-symbols-rounded">{{ c.icon }}</i>
+              </div>
+              <span>{{ c.label }}</span>
             </div>
             {% endfor %}
           </div>
 
           <!-- Actions -->
-          <p class="text-xs text-uppercase text-muted fw-bold px-2 mt-3 mb-1">Ações</p>
-          <div id="actionPalette" class="palette-section">
+          <p class="palette-section-title mt-2">Ações</p>
+          <div id="actionPalette">
             {% for a in actions %}
             <div class="palette-item draggable" draggable="true"
-                 data-type="action" data-id="{{ a.id }}" data-label="{{ a.label }}">
-              <i class="{{ a.icon }} me-2" style="color:{{ a.color }}"></i>
-              <span class="text-sm">{{ a.label }}</span>
+                 data-type="action" data-id="{{ a.id }}" data-label="{{ a.label }}" data-icon="{{ a.icon }}" data-color="{{ a.color }}">
+              <div class="palette-icon" style="background:{{ a.color }}">
+                <i class="material-symbols-rounded">{{ a.icon }}</i>
+              </div>
+              <span>{{ a.label }}</span>
             </div>
             {% endfor %}
           </div>
@@ -74,62 +200,56 @@
 
     <!-- Canvas -->
     <div class="col-lg-6 col-md-4">
-      <div class="card shadow-sm" style="min-height:600px">
-        <div class="card-header p-3 d-flex justify-content-between align-items-center">
-          <input type="text" id="workflowName" class="form-control form-control-sm w-50"
-                 placeholder="Nome do workflow..." value="">
-          <div>
-            <button class="btn btn-sm btn-outline-success me-1" id="btnValidate" title="Validar">
-              <i class="material-symbols-rounded">check_circle</i>
+      <div class="card wf-card">
+        <div class="wf-card-header">
+          <input type="text" id="workflowName" class="form-control form-control-sm border-0 bg-transparent"
+                 placeholder="Nome do workflow..." value="" style="font-weight:600;font-size:.9rem;max-width:280px;color:#334155;">
+          <div class="d-flex gap-1">
+            <button class="btn btn-sm btn-outline-secondary" id="btnValidate" title="Validar">
+              <i class="material-symbols-rounded" style="font-size:16px;">check_circle</i>
             </button>
-            <button class="btn btn-sm btn-success" id="btnSave" title="Salvar">
-              <i class="material-symbols-rounded me-1">save</i>Salvar
+            <button class="btn btn-sm text-white" id="btnSave" title="Salvar" style="background:linear-gradient(135deg,#22c55e,#16a34a);">
+              <i class="material-symbols-rounded me-1" style="font-size:16px;">save</i>Salvar
             </button>
           </div>
         </div>
-        <div class="card-body p-0 position-relative" id="builderCanvas"
-             style="min-height:550px; background: repeating-linear-gradient(
-               0deg, transparent, transparent 19px, #f1f5f9 20px),
-               repeating-linear-gradient(90deg, transparent, transparent 19px, #f1f5f9 20px);">
-          <!-- Drop zone -->
-          <div id="dropZone" class="d-flex flex-column align-items-center pt-5" style="min-height:500px">
-            <div id="emptyState" class="text-center text-muted mt-5">
-              <i class="material-symbols-rounded mb-3 opacity-25" style="font-size:3rem">account_tree</i>
+        <div class="card-body p-0 position-relative builder-canvas" id="builderCanvas">
+          <div id="dropZone" style="min-height:500px;">
+            <div id="emptyState" class="canvas-empty">
+              <i class="material-symbols-rounded">account_tree</i>
               <p>Arraste componentes da barra lateral para cá</p>
             </div>
-            <!-- Flow nodes are appended here -->
             <div id="flowNodes" class="w-100 px-4 pt-3"></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Existing Rules -->
+    <!-- Workflows Salvos + Métricas -->
     <div class="col-lg-3 col-md-4">
-      <div class="card shadow-sm">
-        <div class="card-header bg-gradient-dark text-white p-3">
-          <h6 class="mb-0"><i class="material-symbols-rounded me-2">list</i>Workflows Salvos</h6>
+      <div class="card wf-card mb-3">
+        <div class="wf-card-header">
+          <h6><i class="material-symbols-rounded">list_alt</i> Workflows Salvos</h6>
+          <span class="badge" style="background:#e0f2fe;color:#0284c7;font-size:.65rem;">{{ rules|length }}</span>
         </div>
-        <div class="card-body p-2" id="rulesList">
+        <div class="card-body p-2" id="rulesList" style="max-height:360px;overflow-y:auto;">
           {% for r in rules %}
-          <div class="rule-card p-2 mb-2 border rounded cursor-pointer" data-rule-id="{{ r.id }}">
+          <div class="rule-card" data-rule-id="{{ r.id }}">
             <div class="d-flex justify-content-between align-items-center">
-              <span class="text-sm fw-bold">{{ r.name }}</span>
-              <div>
-                <span class="badge {% if r.is_active %}bg-success{% else %}bg-secondary{% endif %} text-xs">
-                  {% if r.is_active %}Ativo{% else %}Inativo{% endif %}
-                </span>
-              </div>
+              <span class="rule-name">{{ r.name }}</span>
+              <span class="{% if r.is_active %}badge-active{% else %}badge-inactive{% endif %}">
+                {% if r.is_active %}Ativo{% else %}Inativo{% endif %}
+              </span>
             </div>
-            <small class="text-muted">{{ r.get_trigger_event_display }}</small>
-            <div class="mt-1">
+            <div class="rule-trigger">{{ r.get_trigger_event_display }}</div>
+            <div class="rule-actions-bar">
               <button class="btn btn-xs btn-outline-primary btn-edit-rule" data-id="{{ r.id }}" title="Editar">
                 <i class="material-symbols-rounded">edit</i>
               </button>
               <button class="btn btn-xs btn-outline-warning btn-toggle-rule" data-id="{{ r.id }}" title="Ativar/Desativar">
                 <i class="material-symbols-rounded">power_settings_new</i>
               </button>
-              <button class="btn btn-xs btn-outline-info btn-duplicate-rule" data-id="{{ r.id }}" title="Duplicar">
+              <button class="btn btn-xs btn-outline-secondary btn-duplicate-rule" data-id="{{ r.id }}" title="Duplicar">
                 <i class="material-symbols-rounded">content_copy</i>
               </button>
               <button class="btn btn-xs btn-outline-danger btn-delete-rule" data-id="{{ r.id }}" title="Excluir">
@@ -138,18 +258,23 @@
             </div>
           </div>
           {% empty %}
-          <p class="text-sm text-muted text-center py-3">Nenhum workflow criado</p>
+          <div class="canvas-empty" style="padding:2rem 1rem;">
+            <i class="material-symbols-rounded" style="font-size:2rem;">inbox</i>
+            <p>Nenhum workflow criado</p>
+          </div>
           {% endfor %}
         </div>
       </div>
 
       <!-- Metrics Card -->
-      <div class="card shadow-sm mt-3">
-        <div class="card-header bg-gradient-info text-white p-3">
-          <h6 class="mb-0"><i class="material-symbols-rounded me-2">bar_chart</i>Métricas</h6>
+      <div class="card wf-card">
+        <div class="wf-card-header">
+          <h6><i class="material-symbols-rounded">bar_chart</i> Métricas</h6>
         </div>
-        <div class="card-body pt-3" id="metricsCard">
-          <p class="text-sm text-muted">Carregando...</p>
+        <div class="card-body p-3" id="metricsCard">
+          <div class="metric-row">
+            <span class="text-muted">Carregando...</span>
+          </div>
         </div>
       </div>
     </div>
@@ -157,20 +282,23 @@
 
   <!-- Templates Modal -->
   <div class="modal fade" id="templatesModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title"><i class="material-symbols-rounded me-2">auto_fix_high</i>Templates de Workflow</h5>
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border:none;border-radius:14px;">
+        <div class="modal-header border-0 pb-0">
+          <h6 class="modal-title" style="font-weight:600;color:#334155;">
+            <i class="material-symbols-rounded me-2" style="vertical-align:-3px;">auto_fix_high</i>Templates de Workflow
+          </h6>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body pt-2">
           {% for tmpl in templates %}
-          <div class="d-flex align-items-center p-3 border rounded mb-2 template-option"
-               data-template="{{ tmpl.id }}" style="cursor:pointer">
-            <i class="{{ tmpl.icon }} fa-2x me-3 text-primary"></i>
+          <div class="template-option" data-template="{{ tmpl.id }}">
+            <div class="template-icon">
+              <i class="material-symbols-rounded">{{ tmpl.icon }}</i>
+            </div>
             <div>
               <strong>{{ tmpl.label }}</strong>
-              <p class="text-sm text-muted mb-0">{{ tmpl.description }}</p>
+              <p>{{ tmpl.description }}</p>
             </div>
           </div>
           {% endfor %}
@@ -179,53 +307,15 @@
     </div>
   </div>
 </div>
+{% endblock %}
 
-<style>
-.palette-item {
-  padding: 8px 12px;
-  margin: 2px 0;
-  border-radius: 6px;
-  cursor: grab;
-  transition: all .15s;
-  border: 1px solid transparent;
-}
-.palette-item:hover {
-  background: #f1f5f9;
-  border-color: #e2e8f0;
-}
-.palette-item:active { cursor: grabbing; }
-.flow-node {
-  background: #fff;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 12px 16px;
-  margin: 8px auto;
-  max-width: 340px;
-  position: relative;
-  transition: all .2s;
-  box-shadow: 0 1px 3px rgba(0,0,0,.08);
-}
-.flow-node:hover { border-color: #06b6d4; box-shadow: 0 4px 12px rgba(6,182,212,.15); }
-.flow-node .node-delete {
-  position: absolute; top: -8px; right: -8px;
-  width: 22px; height: 22px; border-radius: 50%;
-  background: #ef4444; color: #fff; border: none;
-  font-size: 10px; display: flex; align-items: center; justify-content: center;
-  opacity: 0; transition: opacity .15s;
-}
-.flow-node:hover .node-delete { opacity: 1; }
-.flow-connector {
-  text-align: center; color: #cbd5e1; font-size: 20px;
-}
-.rule-card:hover { background: #f8fafc; }
-.btn-xs { padding: 2px 6px; font-size: 11px; }
-</style>
-
+{% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const csrfToken = '{{ csrf_token }}';
   const flowNodes = document.getElementById('flowNodes');
   const emptyState = document.getElementById('emptyState');
+  const builderCanvas = document.getElementById('builderCanvas');
   let currentEditId = null;
   let workflowData = { trigger: null, conditions: {}, actions: {} };
 
@@ -236,16 +326,25 @@ document.addEventListener('DOMContentLoaded', function() {
         type: el.dataset.type,
         id: el.dataset.id,
         label: el.dataset.label,
+        icon: el.dataset.icon,
+        color: el.dataset.color,
       }));
+      el.style.opacity = '0.5';
     });
+    el.addEventListener('dragend', () => { el.style.opacity = '1'; });
   });
 
   const dropZone = document.getElementById('dropZone');
-  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.background = '#f0fdf4'; });
-  dropZone.addEventListener('dragleave', () => { dropZone.style.background = ''; });
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    builderCanvas.classList.add('drag-over');
+  });
+  dropZone.addEventListener('dragleave', () => {
+    builderCanvas.classList.remove('drag-over');
+  });
   dropZone.addEventListener('drop', e => {
     e.preventDefault();
-    dropZone.style.background = '';
+    builderCanvas.classList.remove('drag-over');
     const data = JSON.parse(e.dataTransfer.getData('text/plain'));
     addFlowNode(data);
   });
@@ -253,17 +352,17 @@ document.addEventListener('DOMContentLoaded', function() {
   function addFlowNode(data) {
     emptyState.style.display = 'none';
 
-    // Prevent duplicate triggers
     if (data.type === 'trigger' && workflowData.trigger) {
-      alert('Apenas um gatilho por workflow!');
+      showToast('Apenas um gatilho por workflow!', 'warning');
       return;
     }
 
     const id = data.type + '_' + data.id + '_' + Date.now();
     const colors = { trigger: '#22c55e', condition: '#06b6d4', action: '#0891b2' };
     const labels = { trigger: 'Gatilho', condition: 'Condição', action: 'Ação' };
+    const nodeColor = data.color || colors[data.type];
 
-    // Add connector if not first
+    // Connector
     if (flowNodes.children.length > 0) {
       const conn = document.createElement('div');
       conn.className = 'flow-connector';
@@ -275,21 +374,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const node = document.createElement('div');
     node.className = 'flow-node';
     node.id = id;
-    node.style.borderLeftColor = colors[data.type];
-    node.style.borderLeftWidth = '4px';
+    node.style.borderLeftColor = nodeColor;
     node.innerHTML = `
       <button class="node-delete" onclick="removeNode('${id}')">&times;</button>
-      <div class="d-flex align-items-center mb-1">
-        <span class="badge text-white me-2" style="background:${colors[data.type]};font-size:10px">${labels[data.type]}</span>
-        <strong class="text-sm">${data.label}</strong>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <span class="node-badge text-white" style="background:${nodeColor}">${labels[data.type]}</span>
+        <span class="node-label">${data.label}</span>
       </div>
-      <div class="node-config text-xs text-muted" id="cfg_${id}">
+      <div class="node-config" id="cfg_${id}" style="font-size:.78rem;color:#94a3b8;">
         ${getConfigHtml(data)}
       </div>
     `;
     flowNodes.appendChild(node);
 
-    // Store in workflow data
     if (data.type === 'trigger') workflowData.trigger = data.id;
     else if (data.type === 'condition') workflowData.conditions[data.id] = {};
     else if (data.type === 'action') workflowData.actions[data.id] = {};
@@ -297,8 +394,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function getConfigHtml(data) {
     if (data.type === 'trigger') return '<em>Dispara quando: ' + data.label + '</em>';
-    if (data.type === 'condition') return `<input class="form-control form-control-sm mt-1" placeholder="Valor da condição..." data-cond-id="${data.id}">`;
-    if (data.type === 'action') return `<input class="form-control form-control-sm mt-1" placeholder="Config da ação..." data-action-id="${data.id}">`;
+    if (data.type === 'condition') return `<input class="form-control form-control-sm mt-1" style="font-size:.78rem;border-radius:6px;" placeholder="Valor da condição..." data-cond-id="${data.id}">`;
+    if (data.type === 'action') return `<input class="form-control form-control-sm mt-1" style="font-size:.78rem;border-radius:6px;" placeholder="Config da ação..." data-action-id="${data.id}">`;
     return '';
   }
 
@@ -308,7 +405,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (conn) conn.remove();
     if (node) node.remove();
 
-    // Update workflowData
     const parts = id.split('_');
     const type = parts[0];
     const dataId = parts[1];
@@ -319,14 +415,25 @@ document.addEventListener('DOMContentLoaded', function() {
     if (flowNodes.children.length === 0) emptyState.style.display = '';
   };
 
+  // Toast helper
+  function showToast(msg, type) {
+    if (typeof iConfirm === 'function' && type === 'confirm') return;
+    const toast = document.createElement('div');
+    toast.style.cssText = `position:fixed;top:20px;right:20px;z-index:9999;padding:12px 20px;border-radius:8px;color:#fff;font-size:.85rem;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,.15);transition:opacity .3s;`;
+    const colors = { success: '#22c55e', error: '#ef4444', warning: '#f59e0b', info: '#06b6d4' };
+    toast.style.background = colors[type] || colors.info;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
+  }
+
   // ====== SAVE ======
   document.getElementById('btnSave').addEventListener('click', async () => {
     const name = document.getElementById('workflowName').value.trim();
-    if (!name) { alert('Dê um nome ao workflow'); return; }
-    if (!workflowData.trigger) { alert('Adicione um gatilho'); return; }
-    if (Object.keys(workflowData.actions).length === 0) { alert('Adicione pelo menos uma ação'); return; }
+    if (!name) { showToast('Dê um nome ao workflow', 'warning'); return; }
+    if (!workflowData.trigger) { showToast('Adicione um gatilho', 'warning'); return; }
+    if (Object.keys(workflowData.actions).length === 0) { showToast('Adicione pelo menos uma ação', 'warning'); return; }
 
-    // Collect config values from inputs
     document.querySelectorAll('[data-cond-id]').forEach(el => {
       try { workflowData.conditions[el.dataset.condId] = JSON.parse(el.value); } catch { workflowData.conditions[el.dataset.condId] = el.value; }
     });
@@ -354,11 +461,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     if (resp.ok) {
-      alert('Workflow salvo com sucesso!');
-      location.reload();
+      showToast('Workflow salvo com sucesso!', 'success');
+      setTimeout(() => location.reload(), 800);
     } else {
       const err = await resp.json();
-      alert('Erro: ' + (err.error || JSON.stringify(err)));
+      showToast('Erro: ' + (err.error || JSON.stringify(err)), 'error');
     }
   });
 
@@ -374,8 +481,8 @@ document.addEventListener('DOMContentLoaded', function() {
       }),
     });
     const data = await resp.json();
-    if (data.valid) alert('✅ Workflow válido!');
-    else alert('❌ Erros: ' + data.errors.join(', '));
+    if (data.valid) showToast('Workflow válido!', 'success');
+    else showToast('Erros: ' + data.errors.join(', '), 'error');
   });
 
   // ====== NEW ======
@@ -399,8 +506,13 @@ document.addEventListener('DOMContentLoaded', function() {
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
         body: JSON.stringify({ template_name: el.dataset.template }),
       });
-      if (resp.ok) { alert('Template aplicado!'); location.reload(); }
-      else { const err = await resp.json(); alert('Erro: ' + err.error); }
+      if (resp.ok) {
+        showToast('Template aplicado!', 'success');
+        setTimeout(() => location.reload(), 800);
+      } else {
+        const err = await resp.json();
+        showToast('Erro: ' + err.error, 'error');
+      }
     });
   });
 
@@ -418,7 +530,18 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.btn-delete-rule').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      if (!confirm('Excluir este workflow?')) return;
+      if (typeof iConfirm === 'function') {
+        const ok = await iConfirm({
+          title: 'Excluir Workflow',
+          message: 'Tem certeza que deseja excluir este workflow?',
+          confirmText: 'Excluir',
+          cancelText: 'Cancelar',
+          type: 'danger',
+        });
+        if (!ok) return;
+      } else {
+        if (!confirm('Excluir este workflow?')) return;
+      }
       await fetch(`/dashboard/api/workflows/${btn.dataset.id}/delete/`, {
         method: 'DELETE', headers: { 'X-CSRFToken': csrfToken },
       });
@@ -429,10 +552,13 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.btn-duplicate-rule').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      await fetch(`/dashboard/api/workflows/${btn.dataset.id}/duplicate/`, {
+      const resp = await fetch(`/dashboard/api/workflows/${btn.dataset.id}/duplicate/`, {
         method: 'POST', headers: { 'X-CSRFToken': csrfToken },
       });
-      location.reload();
+      if (resp.ok) {
+        showToast('Workflow duplicado!', 'success');
+        setTimeout(() => location.reload(), 800);
+      }
     });
   });
 
@@ -450,12 +576,11 @@ document.addEventListener('DOMContentLoaded', function() {
       emptyState.style.display = 'none';
       workflowData = { trigger: rule.trigger_event, conditions: rule.conditions || {}, actions: rule.actions || {} };
 
-      // Render trigger
-      addFlowNode({ type: 'trigger', id: rule.trigger_event, label: rule.trigger_event });
-      // Render conditions
-      Object.keys(rule.conditions || {}).forEach(k => addFlowNode({ type: 'condition', id: k, label: k }));
-      // Render actions
-      Object.keys(rule.actions || {}).forEach(k => addFlowNode({ type: 'action', id: k, label: k }));
+      addFlowNode({ type: 'trigger', id: rule.trigger_event, label: rule.trigger_event, color: '#22c55e' });
+      Object.keys(rule.conditions || {}).forEach(k => addFlowNode({ type: 'condition', id: k, label: k, color: '#06b6d4' }));
+      Object.keys(rule.actions || {}).forEach(k => addFlowNode({ type: 'action', id: k, label: k, color: '#0891b2' }));
+
+      showToast('Editando: ' + rule.name, 'info');
     });
   });
 
@@ -465,17 +590,25 @@ document.addEventListener('DOMContentLoaded', function() {
       const resp = await fetch('/dashboard/api/workflows/metrics/');
       const m = await resp.json();
       document.getElementById('metricsCard').innerHTML = `
-        <div class="d-flex justify-content-between mb-2">
-          <span class="text-sm">Execuções (30d)</span>
+        <div class="metric-row">
+          <span>Execuções (30d)</span>
           <strong>${m.total_executions}</strong>
         </div>
-        <div class="d-flex justify-content-between mb-2">
-          <span class="text-sm">Taxa de sucesso</span>
-          <strong>${m.success_rate.toFixed(1)}%</strong>
+        <div class="metric-row">
+          <span>Taxa de sucesso</span>
+          <strong style="color:#22c55e">${m.success_rate.toFixed(1)}%</strong>
+        </div>
+        <div class="metric-row">
+          <span>Workflows ativos</span>
+          <strong>${document.querySelectorAll('.badge-active').length}</strong>
         </div>
       `;
     } catch(e) {
-      document.getElementById('metricsCard').innerHTML = '<p class="text-sm text-muted">Sem dados</p>';
+      document.getElementById('metricsCard').innerHTML = `
+        <div class="metric-row">
+          <span class="text-muted">Sem dados disponíveis</span>
+        </div>
+      `;
     }
   })();
 });

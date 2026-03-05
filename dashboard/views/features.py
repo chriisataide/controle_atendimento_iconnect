@@ -326,40 +326,135 @@ self.addEventListener('fetch', event => {
 # ========== EXPORTAÇÃO ==========
 
 
+def _apply_excel_style(ws, headers, *, header_fill_color="0D6EFD", title_row=None):
+    """Aplica estilo padronizado a uma planilha Excel."""
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+
+    thin_border = Border(
+        left=Side(style="thin", color="CCCCCC"),
+        right=Side(style="thin", color="CCCCCC"),
+        top=Side(style="thin", color="CCCCCC"),
+        bottom=Side(style="thin", color="CCCCCC"),
+    )
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(start_color=header_fill_color, end_color=header_fill_color, fill_type="solid")
+    header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+    data_start_row = 1
+    if title_row:
+        title_font = Font(bold=True, size=14, color="333333")
+        ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(headers))
+        cell = ws.cell(row=1, column=1)
+        cell.value = title_row
+        cell.font = title_font
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+
+        subtitle_font = Font(size=10, color="888888")
+        ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=len(headers))
+        cell2 = ws.cell(row=2, column=1)
+        cell2.value = f"Exportado em {timezone.now().strftime('%d/%m/%Y às %H:%M')}"
+        cell2.font = subtitle_font
+        cell2.alignment = Alignment(horizontal="center", vertical="center")
+
+        data_start_row = 4
+        for col_idx, header in enumerate(headers, 1):
+            cell = ws.cell(row=data_start_row, column=col_idx, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+            cell.border = thin_border
+    else:
+        for col_idx, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_idx, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+            cell.border = thin_border
+
+    return data_start_row, thin_border
+
+
+def _auto_adjust_columns(ws):
+    """Ajusta largura das colunas automaticamente."""
+    from openpyxl.cell.cell import MergedCell
+
+    for col in ws.columns:
+        max_length = 0
+        col_letter = None
+        for cell in col:
+            if isinstance(cell, MergedCell):
+                continue
+            if col_letter is None:
+                col_letter = cell.column_letter
+            if cell.value:
+                max_length = max(max_length, len(str(cell.value)))
+        if col_letter:
+            ws.column_dimensions[col_letter].width = min(max_length + 4, 50)
+
+
 @login_required
 @role_required('admin', 'gerente', 'supervisor')
 def export_tickets(request):
-    """View para exportar dados dos tickets (somente staff)."""
-    if not request.user.is_staff:
-        from django.http import HttpResponseForbidden
+    """Exportar tickets para Excel com layout profissional."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
-        return HttpResponseForbidden("Sem permissão para exportar dados.")
-    import csv
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Tickets"
 
-    from django.utils import timezone as tz
+    headers = [
+        "Número", "Empresa", "Ponto de Venda", "Status", "Prioridade",
+        "Tipo", "Sintoma", "Subtipo", "Agente",
+        "Criado em", "Resolvido em",
+    ]
 
-    response = HttpResponse(content_type="text/csv")
-    response["Content-Disposition"] = f'attachment; filename="tickets_{tz.now().strftime("%Y%m%d")}.csv"'
+    data_start_row, thin_border = _apply_excel_style(
+        ws, headers, title_row="Relatório de Tickets — iConnect"
+    )
 
-    writer = csv.writer(response)
-    writer.writerow(["ID", "Número", "Cliente", "Status", "Data Criação", "Categoria"])
+    zebra_fill = PatternFill(start_color="F2F6FC", end_color="F2F6FC", fill_type="solid")
+    data_alignment = Alignment(vertical="center")
 
-    tickets = Ticket.objects.select_related("cliente", "categoria").only(
-        "id", "numero", "cliente__nome", "status", "criado_em", "categoria__nome"
-    )[:1000]
+    tickets = (
+        Ticket.objects.select_related("cliente", "agente", "categoria", "ponto_de_venda")
+        .order_by("-criado_em")
+    )
 
-    for ticket in tickets:
-        writer.writerow(
-            [
-                ticket.id,
-                ticket.numero,
-                ticket.cliente.nome if ticket.cliente else "N/A",
-                ticket.get_status_display() if hasattr(ticket, "get_status_display") else ticket.status,
-                ticket.criado_em.strftime("%d/%m/%Y %H:%M"),
-                ticket.categoria.nome if ticket.categoria else "N/A",
-            ]
-        )
+    row_num = data_start_row + 1
+    for t in tickets.iterator():
+        values = [
+            t.numero,
+            t.cliente.nome if t.cliente else "",
+            str(t.ponto_de_venda) if t.ponto_de_venda else "",
+            t.get_status_display() if hasattr(t, "get_status_display") else t.status,
+            t.get_prioridade_display() if hasattr(t, "get_prioridade_display") else t.prioridade,
+            t.get_tipo_display() if hasattr(t, "get_tipo_display") else t.tipo,
+            t.sintoma or "",
+            t.subtipo or "",
+            t.agente.get_full_name() if t.agente else "",
+            t.criado_em.strftime("%d/%m/%Y %H:%M") if t.criado_em else "",
+            t.resolvido_em.strftime("%d/%m/%Y %H:%M") if t.resolvido_em else "",
+        ]
+        for col_idx, value in enumerate(values, 1):
+            cell = ws.cell(row=row_num, column=col_idx, value=value)
+            cell.border = thin_border
+            cell.alignment = data_alignment
+            if row_num % 2 == 0:
+                cell.fill = zebra_fill
+        row_num += 1
 
+    _auto_adjust_columns(ws)
+
+    ws.freeze_panes = ws.cell(row=data_start_row + 1, column=1)
+    ws.auto_filter.ref = f"A{data_start_row}:{chr(64 + len(headers))}{row_num - 1}"
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    filename = f"tickets_{timezone.now().strftime('%Y%m%d_%H%M')}.xlsx"
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    wb.save(response)
     return response
 
 
@@ -461,6 +556,45 @@ def communication_center(request):
         "satisfaction_rate": satisfaction_rate_val,
     }
 
+    # Dados reais para gráficos
+    import json as _json
+
+    # Volume de mensagens por dia da semana (últimos 7 dias)
+    messages_by_weekday = [0] * 7  # Seg a Dom
+    if ChatMessage:
+        try:
+            from django.db.models.functions import ExtractIsoWeekDay
+
+            seven_days_ago = timezone.now() - timezone.timedelta(days=7)
+            weekday_qs = (
+                ChatMessage.objects.filter(created_at__gte=seven_days_ago)
+                .annotate(wd=ExtractIsoWeekDay("created_at"))
+                .values("wd")
+                .annotate(total=models.Count("id"))
+            )
+            for row in weekday_qs:
+                # ExtractIsoWeekDay: 1=Mon..7=Sun → index 0..6
+                messages_by_weekday[row["wd"] - 1] = row["total"]
+        except Exception:
+            pass
+
+    # Dados por canal
+    chat_interno_count = active_conversations
+    whatsapp_count = 0
+    chatbot_count = 0
+    try:
+        from ..models import ChatbotMessage as CbMsg
+
+        chatbot_count = CbMsg.objects.filter(timestamp__date=timezone.now().date()).count()
+    except Exception:
+        pass
+    try:
+        from ..models import WhatsAppMessage
+
+        whatsapp_count = WhatsAppMessage.objects.filter(created_at__date=timezone.now().date()).count()
+    except Exception:
+        pass
+
     team_users = []
     try:
         team_users = (
@@ -481,6 +615,10 @@ def communication_center(request):
         "recent_knowledge": recent_knowledge,
         "analytics": analytics_data,
         "team_users": team_users,
+        "messages_by_weekday_json": _json.dumps(messages_by_weekday),
+        "channel_chat_count": chat_interno_count,
+        "channel_whatsapp_count": whatsapp_count,
+        "channel_chatbot_count": chatbot_count,
     }
 
     return render(request, "dashboard/communication_center.html", context)

@@ -27,7 +27,7 @@ CONDITION_CATALOG = [
         "label": "Status do ticket",
         "type": "multi_select",
         "options": ["aberto", "em_andamento", "aguardando_cliente", "resolvido", "fechado"],
-        "icon": "fas fa-flag",
+        "icon": "flag",
         "color": "#3b82f6",
     },
     {
@@ -35,7 +35,7 @@ CONDITION_CATALOG = [
         "label": "Prioridade",
         "type": "multi_select",
         "options": ["baixa", "media", "alta", "critica"],
-        "icon": "fas fa-exclamation-triangle",
+        "icon": "priority_high",
         "color": "#ef4444",
     },
     {
@@ -43,14 +43,14 @@ CONDITION_CATALOG = [
         "label": "Categoria",
         "type": "multi_select_dynamic",
         "source": "categorias",
-        "icon": "fas fa-folder",
+        "icon": "folder",
         "color": "#8b5cf6",
     },
     {
         "id": "has_agent",
         "label": "Agente atribuído?",
         "type": "boolean",
-        "icon": "fas fa-user-check",
+        "icon": "person_check",
         "color": "#10b981",
     },
     {
@@ -58,7 +58,7 @@ CONDITION_CATALOG = [
         "label": "Tempo desde criação",
         "type": "time_range",
         "fields": ["min_hours", "max_hours"],
-        "icon": "fas fa-clock",
+        "icon": "schedule",
         "color": "#f59e0b",
     },
     {
@@ -66,7 +66,7 @@ CONDITION_CATALOG = [
         "label": "Número de interações",
         "type": "number_range",
         "fields": ["min", "max"],
-        "icon": "fas fa-comments",
+        "icon": "chat",
         "color": "#06b6d4",
     },
 ]
@@ -78,7 +78,7 @@ ACTION_CATALOG = [
         "type": "select",
         "field": "new_status",
         "options": ["aberto", "em_andamento", "aguardando_cliente", "resolvido", "fechado"],
-        "icon": "fas fa-exchange-alt",
+        "icon": "swap_horiz",
         "color": "#3b82f6",
     },
     {
@@ -87,7 +87,7 @@ ACTION_CATALOG = [
         "type": "select",
         "field": "new_priority",
         "options": ["baixa", "media", "alta", "critica"],
-        "icon": "fas fa-arrow-up",
+        "icon": "arrow_upward",
         "color": "#ef4444",
     },
     {
@@ -95,7 +95,7 @@ ACTION_CATALOG = [
         "label": "Atribuir agente",
         "type": "agent_select",
         "fields": ["auto_assign", "specific_agent_id"],
-        "icon": "fas fa-user-plus",
+        "icon": "person_add",
         "color": "#10b981",
     },
     {
@@ -103,7 +103,7 @@ ACTION_CATALOG = [
         "label": "Enviar notificação",
         "type": "notification",
         "fields": ["recipients", "message"],
-        "icon": "fas fa-bell",
+        "icon": "notifications",
         "color": "#f59e0b",
     },
     {
@@ -111,7 +111,7 @@ ACTION_CATALOG = [
         "label": "Adicionar comentário",
         "type": "comment",
         "fields": ["comment", "public"],
-        "icon": "fas fa-comment-dots",
+        "icon": "comment",
         "color": "#8b5cf6",
     },
     {
@@ -119,19 +119,19 @@ ACTION_CATALOG = [
         "label": "Escalar ticket",
         "type": "escalate",
         "fields": ["level"],
-        "icon": "fas fa-level-up-alt",
+        "icon": "trending_up",
         "color": "#dc2626",
     },
 ]
 
 TRIGGER_CATALOG = [
-    {"id": "ticket_created", "label": "Ticket Criado", "icon": "fas fa-plus-circle", "color": "#10b981"},
-    {"id": "ticket_updated", "label": "Ticket Atualizado", "icon": "fas fa-edit", "color": "#3b82f6"},
-    {"id": "status_changed", "label": "Status Alterado", "icon": "fas fa-exchange-alt", "color": "#f59e0b"},
-    {"id": "agent_assigned", "label": "Agente Atribuído", "icon": "fas fa-user-check", "color": "#8b5cf6"},
-    {"id": "interaction_added", "label": "Interação Adicionada", "icon": "fas fa-comments", "color": "#06b6d4"},
-    {"id": "sla_warning", "label": "Aviso de SLA", "icon": "fas fa-exclamation", "color": "#ef4444"},
-    {"id": "sla_breach", "label": "Violação de SLA", "icon": "fas fa-times-circle", "color": "#dc2626"},
+    {"id": "ticket_created", "label": "Ticket Criado", "icon": "add_circle", "color": "#10b981"},
+    {"id": "ticket_updated", "label": "Ticket Atualizado", "icon": "edit", "color": "#3b82f6"},
+    {"id": "status_changed", "label": "Status Alterado", "icon": "swap_horiz", "color": "#f59e0b"},
+    {"id": "agent_assigned", "label": "Agente Atribuído", "icon": "person_check", "color": "#8b5cf6"},
+    {"id": "interaction_added", "label": "Interação Adicionada", "icon": "chat", "color": "#06b6d4"},
+    {"id": "sla_warning", "label": "Aviso de SLA", "icon": "warning", "color": "#ef4444"},
+    {"id": "sla_breach", "label": "Violação de SLA", "icon": "cancel", "color": "#dc2626"},
 ]
 
 TEMPLATE_CATALOG = [
@@ -139,19 +139,19 @@ TEMPLATE_CATALOG = [
         "id": "auto_assign_high_priority",
         "label": "Auto-atribuição Alta Prioridade",
         "description": "Atribui tickets alta/crítica automaticamente a um agente",
-        "icon": "fas fa-bolt",
+        "icon": "bolt",
     },
     {
         "id": "escalate_old_tickets",
         "label": "Escalação por Tempo",
         "description": "Escala tickets sem resposta após 24h",
-        "icon": "fas fa-clock",
+        "icon": "schedule",
     },
     {
         "id": "close_resolved_tickets",
         "label": "Auto-fechar Resolvidos",
         "description": "Fecha tickets resolvidos após 48h sem atividade",
-        "icon": "fas fa-check-double",
+        "icon": "done_all",
     },
 ]
 

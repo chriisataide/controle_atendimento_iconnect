@@ -184,7 +184,7 @@ class TicketCreateForm(forms.ModelForm):
 
     class Meta:
         model = Ticket
-        fields = ["cliente", "ponto_de_venda", "categoria", "tipo", "titulo", "descricao", "prioridade", "tags"]
+        fields = ["cliente", "ponto_de_venda", "categoria", "tipo", "titulo", "descricao", "prioridade", "subtipo", "sintoma", "tags"]
         widgets = {
             "cliente": forms.Select(attrs={"class": "form-control", "id": "clienteSelect"}),
             "ponto_de_venda": forms.Select(attrs={"class": "form-control", "id": "pdvSelect"}),
@@ -197,6 +197,8 @@ class TicketCreateForm(forms.ModelForm):
                 attrs={"class": "form-control", "rows": 5, "placeholder": "Descrição detalhada do problema"}
             ),
             "prioridade": forms.Select(attrs={"class": "form-control", "id": "prioridadeSelect"}),
+            "subtipo": forms.HiddenInput(attrs={"id": "subtipoInput"}),
+            "sintoma": forms.HiddenInput(attrs={"id": "sintomaInput"}),
             "tags": forms.TextInput(
                 attrs={"class": "form-control", "id": "tagsInput", "placeholder": "Tags separadas por vírgula"}
             ),
@@ -215,6 +217,8 @@ class TicketCreateForm(forms.ModelForm):
         self.fields["ponto_de_venda"].empty_label = "Selecione um ponto de venda..."
         self.fields["categoria"].empty_label = "Selecione uma categoria..."
         self.fields["prioridade"].empty_label = "Selecione a prioridade..."
+        self.fields["tipo"].choices = [("", "Selecione o tipo...")] + list(self.fields["tipo"].choices)
+        self.fields["tipo"].initial = ""
 
 
 class ClienteForm(forms.ModelForm):

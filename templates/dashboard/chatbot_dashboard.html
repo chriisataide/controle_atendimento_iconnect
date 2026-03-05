@@ -8,480 +8,446 @@
 
 {% block extra_css %}
 <style>
-.real-time-indicator {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    background-color: #22c55e;
-    border-radius: 50%;
-    margin-right: 8px;
-    animation: pulse 2s infinite;
+/* KPI Cards — padrão Slate+Cyan */
+.kpi-card { border: none; border-radius: 12px; transition: transform .2s, box-shadow .2s; overflow: hidden; }
+.kpi-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(51,65,85,.15); }
+.kpi-icon {
+  width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 0;
+}
+.kpi-icon i { font-size: 24px; }
+.kpi-value { font-size: 1.6rem; font-weight: 700; color: #1e293b; line-height: 1.2; }
+.kpi-label { font-size: .78rem; color: #64748b; font-weight: 500; }
+
+/* Chart cards — padrão sistema */
+.chart-card { border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.chart-header { border-bottom: 1px solid #f1f5f9; padding: 1rem 1.25rem .75rem; }
+.chart-header h6 { color: #334155; font-weight: 600; margin: 0; font-size: .9rem; }
+
+/* Quick actions */
+.quick-actions {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid #e2e8f0;
+}
+.quick-actions h6 {
+    font-size: .9rem;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: .75rem;
+}
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #334155, #1e293b);
+    color: #fff !important;
+    text-decoration: none;
+    border-radius: 8px;
+    margin: 0.2rem;
+    font-size: .8rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(30, 41, 59, 0.18);
+}
+.action-btn i { font-size: 16px; color: #fff !important; }
+.action-btn:hover {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #fff !important;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(30, 41, 59, 0.28);
 }
 
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
-    }
-    70% {
-        box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
-    }
+/* Tabs — padrão sistema */
+.ic-tabs { border-bottom: 2px solid #f1f5f9; }
+.ic-tabs .nav-link {
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #64748b;
+    font-weight: 500;
+    font-size: .85rem;
+    padding: .6rem 1rem;
+    margin-bottom: -2px;
+    transition: all .2s;
+}
+.ic-tabs .nav-link:hover { color: #334155; }
+.ic-tabs .nav-link.active {
+    background: none;
+    border-bottom: 2px solid #06b6d4;
+    color: #334155;
+    font-weight: 600;
 }
 
-.chatbot-stats-card {
-    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
-    border-radius: 15px;
-    padding: 1.5rem;
-    color: white;
-    margin-bottom: 1.5rem;
-}
-
+/* Conversation cards */
 .conversation-card {
     border: 1px solid #e2e8f0;
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 1rem;
     margin-bottom: 1rem;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
+    background: #fff;
 }
-
 .conversation-card:hover {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    border-color: #cbd5e1;
 }
 
 .confidence-badge {
     display: inline-block;
-    padding: 0.25rem 0.5rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    font-size: .7rem;
     font-weight: 600;
-    text-transform: uppercase;
 }
-
-.confidence-high {
-    background-color: #dcfce7;
-    color: #16a34a;
-}
-
-.confidence-medium {
-    background-color: #fef3c7;
-    color: #d97706;
-}
-
-.confidence-low {
-    background-color: #fef2f2;
-    color: #dc2626;
-}
+.confidence-high { background: #dcfce7; color: #16a34a; }
+.confidence-medium { background: #fef3c7; color: #d97706; }
+.confidence-low { background: #fef2f2; color: #dc2626; }
 
 .message-preview {
-    font-size: 0.9rem;
+    font-size: .82rem;
     color: #64748b;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.analytics-card {
-    background: white;
-    border-radius: 10px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    text-align: center;
-    border-left: 4px solid #334155;
+/* Table */
+.chatbot-table th {
+    font-size: .68rem; text-transform: uppercase; color: #94a3b8; font-weight: 700;
+    letter-spacing: .5px; border-bottom: 2px solid #f1f5f9; padding: .6rem .75rem;
 }
+.chatbot-table td { padding: .6rem .75rem; vertical-align: middle; font-size: .82rem; border-bottom: 1px solid #f8fafc; }
+.chatbot-table tr:hover td { background: #f8fafc; }
 
-.analytics-number {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #1e293b;
-    display: block;
-}
+/* Trend stats */
+.trend-stat h4 { font-size: 1.4rem; font-weight: 700; margin-bottom: .15rem; }
+.trend-stat p { font-size: .78rem; color: #64748b; font-weight: 500; }
 
-.analytics-label {
-    font-size: 0.9rem;
-    color: #64748b;
-    margin-top: 0.5rem;
-}
-
-.quick-actions {
-    background: #f8fafc;
-    border-radius: 10px;
-    padding: 1.5rem;
-}
-
-.action-btn {
-    display: inline-block;
-    padding: 0.75rem 1.5rem;
-    background: #334155;
-    color: white;
-    text-decoration: none;
-    border-radius: 8px;
-    margin: 0.25rem;
-    transition: all 0.3s ease;
-}
-
-.action-btn:hover {
-    background: #1e293b;
-    color: white;
-    text-decoration: none;
-    transform: translateY(-1px);
-}
-
-.tab-content {
-    margin-top: 1.5rem;
-}
-
-.nav-tabs .nav-link {
-    border: none;
-    border-bottom: 2px solid transparent;
-    color: #64748b;
-    font-weight: 500;
-}
-
-.nav-tabs .nav-link.active {
-    background: none;
-    border-bottom: 2px solid #334155;
-    color: #334155;
-}
-
+/* Empty state */
 .empty-state {
     text-align: center;
     padding: 3rem;
-    color: #64748b;
+    color: #94a3b8;
 }
+.empty-state i { font-size: 3rem; margin-bottom: 1rem; color: #cbd5e1; display: block; }
+.empty-state h6 { color: #64748b; font-weight: 600; }
+.empty-state p { font-size: .85rem; }
 
-.empty-state i {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    color: #cbd5e1;
-}
+/* Charts */
+.chart-container { position: relative; height: 280px; width: 100%; }
 
-/* Estilos para os gráficos */
-.chart-container {
-    position: relative;
-    height: 300px;
-    width: 100%;
-}
-
-#confidenceChart, #activityChart {
-    max-height: 300px;
-}
-
-.card-body canvas {
-    max-width: 100%;
-    height: auto;
-}
-
-.analytics-chart-card {
-    min-height: 400px;
+/* Responsive */
+@media (max-width: 768px) {
+  .kpi-value { font-size: 1.3rem; }
+  .kpi-icon { width: 40px; height: 40px; }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <!-- Header Section -->
-    <div class="row">
-        <div class="ms-3">
-            <h3 class="mb-0 h4 font-weight-bolder">Dashboard Chatbot IA</h3>
-            <p class="mb-4">
-                <span class="real-time-indicator" style="display: inline-block; width: 8px; height: 8px; background-color: rgb(34, 197, 94); border-radius: 50%; margin-right: 8px; animation: 2s ease 0s infinite normal none running pulse;"></span>
-                Monitore e gerencie as interações do seu assistente virtual inteligente.
-            </p>
+<div class="container-fluid py-2">
+    <!-- ===== HEADER + ACTIONS ===== -->
+    <div class="row mb-3">
+        <div class="col-lg-8 col-md-7">
+            <div class="ms-3">
+                <h3 class="mb-0 h4 font-weight-bolder">Dashboard Chatbot IA</h3>
+                <p class="mb-0 text-sm text-muted">Monitore e gerencie as interações do assistente virtual</p>
+            </div>
         </div>
-        <div class="col-md-6 d-flex align-items-center justify-content-end">
-            <button class="btn btn-outline-primary btn-sm me-2" onclick="refreshDashboard()">
-                <i class="material-symbols-rounded me-1">sync</i>
-                Atualizar
+        <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+            <button class="btn btn-sm mb-0 text-white" style="background:linear-gradient(135deg,#06b6d4,#0891b2);" onclick="refreshDashboard()">
+                <i class="material-symbols-rounded text-sm me-1">sync</i> Atualizar
             </button>
-            <button class="btn btn-outline-secondary btn-sm" onclick="exportReport()">
-                <i class="material-symbols-rounded me-1">download</i>
-                Exportar
-            </button>
+            <a href="{% url 'dashboard:chatbot_ai_interface' %}" class="btn btn-sm btn-outline-secondary mb-0 ms-1">
+                <i class="material-symbols-rounded text-sm me-1">forum</i> Testar Chatbot
+            </a>
         </div>
     </div>
 
-    <!-- Analytics Cards -->
-    <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="analytics-card">
-                <span class="analytics-number">{{ analytics.total_conversations|default:0 }}</span>
-                <div class="analytics-label">
-                    <i class="material-symbols-rounded me-1">forum</i>
-                    Total de Conversas
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="analytics-card">
-                <span class="analytics-number">{{ analytics.messages_today|default:0 }}</span>
-                <div class="analytics-label">
-                    <i class="material-symbols-rounded me-1">chat_bubble</i>
-                    Mensagens Hoje
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="analytics-card">
-                <span class="analytics-number">{{ analytics.avg_confidence|default:0|floatformat:1 }}%</span>
-                <div class="analytics-label">
-                    <i class="material-symbols-rounded me-1">psychology</i>
-                    Confiança Média
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="analytics-card">
-                <span class="analytics-number">{{ kb_count|default:0 }}</span>
-                <div class="analytics-label">
-                    <i class="material-symbols-rounded me-1">storage</i>
-                    Base de Conhecimento
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Ações Rápidas -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="quick-actions">
-                <h5 class="mb-3">
-                    <i class="material-symbols-rounded me-2">bolt</i>
-                    Ações Rápidas
-                </h5>
-                <a href="{% url 'dashboard:chatbot_ai_knowledge' %}" class="action-btn">
-                    <i class="material-symbols-rounded me-1">add</i>
-                    Adicionar Conhecimento
-                </a>
-                <a href="{% url 'dashboard:chatbot_ai_settings' %}" class="action-btn">
-                    <i class="material-symbols-rounded me-1">school</i>
-                    Configurações IA
-                </a>
-                <a href="{% url 'dashboard:chatbot_ai_conversations' %}" class="action-btn">
-                    <i class="material-symbols-rounded me-1">show_chart</i>
-                    Ver Conversas
-                </a>
-                <a href="{% url 'dashboard:chatbot_ai_interface' %}" class="action-btn">
-                    <i class="material-symbols-rounded me-1">forum</i>
-                    Testar Chatbot
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tabs de Conteúdo -->
-    <div class="row">
-        <div class="col-12">
-            <ul class="nav nav-tabs" id="chatbotTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="conversations-tab" data-bs-toggle="tab" 
-                            data-bs-target="#conversations" type="button" role="tab">
-                        <i class="material-symbols-rounded me-1">forum</i>
-                        Conversas Recentes
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="low-confidence-tab" data-bs-toggle="tab" 
-                            data-bs-target="#low-confidence" type="button" role="tab">
-                        <i class="material-symbols-rounded me-1">warning</i>
-                        Baixa Confiança
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" 
-                            data-bs-target="#analytics" type="button" role="tab">
-                        <i class="material-symbols-rounded me-1">bar_chart</i>
-                        Analytics
-                    </button>
-                </li>
-            </ul>
-
-            <div class="tab-content" id="chatbotTabContent">
-                <!-- Tab: Conversas Recentes -->
-                <div class="tab-pane fade show active" id="conversations" role="tabpanel">
-                    {% if recent_conversations %}
-                        <div class="row">
-                            {% for conversation in recent_conversations %}
-                            <div class="col-md-6 col-lg-4">
-                                <div class="conversation-card">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h6 class="mb-0">
-                                            {% if conversation.usuario %}
-                                                <i class="material-symbols-rounded me-1">person</i>
-                                                {{ conversation.usuario.get_full_name|default:conversation.usuario.username }}
-                                            {% else %}
-                                                <i class="material-symbols-rounded me-1">admin_panel_settings</i>
-                                                Usuário Anônimo
-                                            {% endif %}
-                                        </h6>
-                                        <small class="text-muted">
-                                            {{ conversation.iniciada_em|timesince }} atrás
-                                        </small>
-                                    </div>
-                                    
-                                    <div class="message-preview mb-2">
-                                        {{ conversation.ultima_mensagem|default:"Sem mensagens"|truncatechars:100 }}
-                                    </div>
-                                    
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="badge bg-primary">
-                                            {{ conversation.mensagens.count }} mensagens
-                                        </span>
-                                        <a href="#" class="btn btn-sm btn-outline-primary">
-                                            <i class="material-symbols-rounded me-1">visibility</i>
-                                            Ver Detalhes
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
+    <!-- ===== KPI CARDS ===== -->
+    <div class="row mb-4 px-2">
+        <div class="col-xl-3 col-md-6 mb-xl-0 mb-3">
+            <div class="card kpi-card">
+                <div class="card-header p-3 ps-3">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="kpi-label mb-0">Total de Conversas</p>
+                            <h4 class="kpi-value mb-0">{{ analytics.total_conversations|default:0 }}</h4>
                         </div>
-                    {% else %}
-                        <div class="empty-state">
+                        <div class="kpi-icon" style="background:linear-gradient(135deg,#334155,#1e293b);">
                             <i class="material-symbols-rounded">forum</i>
-                            <h5>Nenhuma conversa encontrada</h5>
-                            <p>As conversas com o chatbot aparecerão aqui conforme forem iniciadas.</p>
-                        </div>
-                    {% endif %}
-                </div>
-
-                <!-- Tab: Baixa Confiança -->
-                <div class="tab-pane fade" id="low-confidence" role="tabpanel">
-                    {% if low_confidence_messages %}
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Usuário</th>
-                                        <th>Pergunta</th>
-                                        <th>Resposta</th>
-                                        <th>Confiança</th>
-                                        <th>Data</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for message in low_confidence_messages %}
-                                    <tr>
-                                        <td>
-                                            {% if message.conversa.usuario %}
-                                                {{ message.conversa.usuario.get_full_name|default:message.conversa.usuario.username }}
-                                            {% else %}
-                                                Anônimo
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <div class="message-preview">
-                                                {{ message.conteudo|truncatechars:80 }}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="message-preview">
-                                                {{ message.resposta_bot|default:"—"|truncatechars:80 }}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            {% if message.confianca >= 0.5 %}
-                                                <span class="confidence-badge confidence-medium">
-                                                    {{ message.confianca|floatformat:2 }}
-                                                </span>
-                                            {% else %}
-                                                <span class="confidence-badge confidence-low">
-                                                    {{ message.confianca|floatformat:2 }}
-                                                </span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <small>{{ message.timestamp|date:"d/m/Y H:i" }}</small>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group btn-group-sm">
-                                                <button class="btn btn-outline-primary" title="Melhorar Resposta">
-                                                    <i class="material-symbols-rounded">edit</i>
-                                                </button>
-                                                <button class="btn btn-outline-success" title="Marcar como Resolvido">
-                                                    <i class="material-symbols-rounded">check</i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <div class="empty-state">
-                            <i class="material-symbols-rounded">warning</i>
-                            <h5>Ótimo! Nenhuma resposta com baixa confiança</h5>
-                            <p>O chatbot está funcionando bem e respondendo com alta confiança.</p>
-                        </div>
-                    {% endif %}
-                </div>
-
-                <!-- Tab: Analytics -->
-                <div class="tab-pane fade" id="analytics" role="tabpanel">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card analytics-chart-card">
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        <i class="material-symbols-rounded me-1">pie_chart</i>
-                                        Distribuição de Confiança
-                                    </h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="chart-container">
-                                        <canvas id="confidenceChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="card analytics-chart-card">
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        <i class="material-symbols-rounded me-1">schedule</i>
-                                        Atividade por Hora
-                                    </h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="chart-container">
-                                        <canvas id="activityChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
-                    
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        <i class="material-symbols-rounded me-1">trending_up</i>
-                                        Tendências dos Últimos 30 Dias
-                                    </h6>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-xl-0 mb-3">
+            <div class="card kpi-card">
+                <div class="card-header p-3 ps-3">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="kpi-label mb-0">Mensagens Hoje</p>
+                            <h4 class="kpi-value mb-0">{{ analytics.messages_today|default:0 }}</h4>
+                        </div>
+                        <div class="kpi-icon" style="background:linear-gradient(135deg,#06b6d4,#0891b2);">
+                            <i class="material-symbols-rounded">chat_bubble</i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-xl-0 mb-3">
+            <div class="card kpi-card">
+                <div class="card-header p-3 ps-3">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="kpi-label mb-0">Confiança Média</p>
+                            <h4 class="kpi-value mb-0">{{ analytics.avg_confidence|default:0|floatformat:1 }}%</h4>
+                        </div>
+                        <div class="kpi-icon" style="background:linear-gradient(135deg,#22c55e,#16a34a);">
+                            <i class="material-symbols-rounded">psychology</i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-xl-0 mb-3">
+            <div class="card kpi-card">
+                <div class="card-header p-3 ps-3">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="kpi-label mb-0">Base de Conhecimento</p>
+                            <h4 class="kpi-value mb-0">{{ kb_count|default:0 }}</h4>
+                        </div>
+                        <div class="kpi-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+                            <i class="material-symbols-rounded">storage</i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== AÇÕES RÁPIDAS ===== -->
+    <div class="row mb-4 px-2">
+        <div class="col-12">
+            <div class="quick-actions">
+                <h6>
+                    <i class="material-symbols-rounded me-1" style="vertical-align:-3px;font-size:18px;">bolt</i>
+                    Ações Rápidas
+                </h6>
+                <a href="{% url 'dashboard:chatbot_ai_knowledge' %}" class="action-btn">
+                    <i class="material-symbols-rounded">add</i> Adicionar Conhecimento
+                </a>
+                <a href="{% url 'dashboard:chatbot_ai_settings' %}" class="action-btn">
+                    <i class="material-symbols-rounded">school</i> Configurações IA
+                </a>
+                <a href="{% url 'dashboard:chatbot_ai_conversations' %}" class="action-btn">
+                    <i class="material-symbols-rounded">show_chart</i> Ver Conversas
+                </a>
+                <a href="{% url 'dashboard:chatbot_ai_interface' %}" class="action-btn">
+                    <i class="material-symbols-rounded">forum</i> Testar Chatbot
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== CONTEÚDO PRINCIPAL ===== -->
+    <div class="row px-2">
+        <div class="col-12">
+            <div class="card chart-card">
+                <div class="chart-header d-flex align-items-center justify-content-between">
+                    <div>
+                        <ul class="nav ic-tabs" id="chatbotTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="conversations-tab" data-bs-toggle="tab"
+                                        data-bs-target="#conversations" type="button" role="tab">
+                                    <i class="material-symbols-rounded me-1" style="font-size:16px;vertical-align:-3px;">forum</i>
+                                    Conversas Recentes
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="low-confidence-tab" data-bs-toggle="tab"
+                                        data-bs-target="#low-confidence" type="button" role="tab">
+                                    <i class="material-symbols-rounded me-1" style="font-size:16px;vertical-align:-3px;">warning</i>
+                                    Baixa Confiança
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="analytics-tab" data-bs-toggle="tab"
+                                        data-bs-target="#analytics" type="button" role="tab">
+                                    <i class="material-symbols-rounded me-1" style="font-size:16px;vertical-align:-3px;">bar_chart</i>
+                                    Analytics
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card-body p-3">
+                    <div class="tab-content" id="chatbotTabContent">
+                        <!-- Tab: Conversas Recentes -->
+                        <div class="tab-pane fade show active" id="conversations" role="tabpanel">
+                            {% if recent_conversations %}
+                                <div class="row">
+                                    {% for conversation in recent_conversations %}
+                                    <div class="col-md-6 col-lg-4">
+                                        <div class="conversation-card">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h6 class="mb-0" style="font-size:.85rem;color:#334155;">
+                                                    {% if conversation.usuario %}
+                                                        <i class="material-symbols-rounded me-1" style="font-size:16px;vertical-align:-3px;">person</i>
+                                                        {{ conversation.usuario.get_full_name|default:conversation.usuario.username }}
+                                                    {% else %}
+                                                        <i class="material-symbols-rounded me-1" style="font-size:16px;vertical-align:-3px;">admin_panel_settings</i>
+                                                        Usuário Anônimo
+                                                    {% endif %}
+                                                </h6>
+                                                <small class="text-muted" style="font-size:.7rem;">
+                                                    {{ conversation.iniciada_em|timesince }} atrás
+                                                </small>
+                                            </div>
+                                            <div class="message-preview mb-2">
+                                                {{ conversation.ultima_mensagem|default:"Sem mensagens"|truncatechars:100 }}
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="badge" style="background:#e0f2fe;color:#0284c7;font-size:.68rem;">
+                                                    {{ conversation.mensagens.count }} mensagens
+                                                </span>
+                                                <a href="#" class="btn btn-sm" style="font-size:.75rem;color:#06b6d4;font-weight:600;">
+                                                    Ver Detalhes <i class="material-symbols-rounded" style="font-size:14px;vertical-align:-3px;">arrow_forward</i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
                                 </div>
-                                <div class="card-body">
-                                    <div class="row text-center">
-                                        <div class="col-md-3">
-                                            <h4 class="text-primary">{{ analytics.conversations_growth|default:0|floatformat:1 }}%</h4>
-                                            <p class="mb-0">Crescimento em Conversas</p>
+                            {% else %}
+                                <div class="empty-state">
+                                    <i class="material-symbols-rounded">forum</i>
+                                    <h6>Nenhuma conversa encontrada</h6>
+                                    <p>As conversas com o chatbot aparecerão aqui conforme forem iniciadas.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Tab: Baixa Confiança -->
+                        <div class="tab-pane fade" id="low-confidence" role="tabpanel">
+                            {% if low_confidence_messages %}
+                                <div class="table-responsive">
+                                    <table class="table chatbot-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Usuário</th>
+                                                <th>Pergunta</th>
+                                                <th>Resposta</th>
+                                                <th>Confiança</th>
+                                                <th>Data</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for message in low_confidence_messages %}
+                                            <tr>
+                                                <td>
+                                                    {% if message.conversa.usuario %}
+                                                        {{ message.conversa.usuario.get_full_name|default:message.conversa.usuario.username }}
+                                                    {% else %}
+                                                        Anônimo
+                                                    {% endif %}
+                                                </td>
+                                                <td><div class="message-preview">{{ message.conteudo|truncatechars:80 }}</div></td>
+                                                <td><div class="message-preview">{{ message.resposta_bot|default:"—"|truncatechars:80 }}</div></td>
+                                                <td>
+                                                    {% if message.confianca >= 0.5 %}
+                                                        <span class="confidence-badge confidence-medium">{{ message.confianca|floatformat:2 }}</span>
+                                                    {% else %}
+                                                        <span class="confidence-badge confidence-low">{{ message.confianca|floatformat:2 }}</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td><small>{{ message.timestamp|date:"d/m/Y H:i" }}</small></td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button class="btn btn-outline-primary btn-sm" title="Melhorar Resposta" style="font-size:.7rem;">
+                                                            <i class="material-symbols-rounded" style="font-size:14px;">edit</i>
+                                                        </button>
+                                                        <button class="btn btn-outline-success btn-sm" title="Marcar como Resolvido" style="font-size:.7rem;">
+                                                            <i class="material-symbols-rounded" style="font-size:14px;">check</i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="empty-state">
+                                    <i class="material-symbols-rounded">check_circle</i>
+                                    <h6>Nenhuma resposta com baixa confiança</h6>
+                                    <p>O chatbot está respondendo com alta confiança.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Tab: Analytics -->
+                        <div class="tab-pane fade" id="analytics" role="tabpanel">
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="card chart-card">
+                                        <div class="chart-header">
+                                            <h6><i class="material-symbols-rounded me-1" style="font-size:16px;vertical-align:-3px;">pie_chart</i> Distribuição de Confiança</h6>
                                         </div>
-                                        <div class="col-md-3">
-                                            <h4 class="text-success">{{ analytics.resolution_rate|default:0|floatformat:1 }}%</h4>
-                                            <p class="mb-0">Taxa de Resolução</p>
+                                        <div class="card-body">
+                                            <div class="chart-container">
+                                                <canvas id="confidenceChart"></canvas>
+                                            </div>
                                         </div>
-                                        <div class="col-md-3">
-                                            <h4 class="text-info">{{ analytics.avg_response_time|default:0|floatformat:1 }}s</h4>
-                                            <p class="mb-0">Tempo Médio de Resposta</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card chart-card">
+                                        <div class="chart-header">
+                                            <h6><i class="material-symbols-rounded me-1" style="font-size:16px;vertical-align:-3px;">schedule</i> Atividade por Hora</h6>
                                         </div>
-                                        <div class="col-md-3">
-                                            <h4 class="text-warning">{{ analytics.user_satisfaction|default:0|floatformat:1 }}%</h4>
-                                            <p class="mb-0">Satisfação do Usuário</p>
+                                        <div class="card-body">
+                                            <div class="chart-container">
+                                                <canvas id="activityChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tendências -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="card chart-card">
+                                        <div class="chart-header">
+                                            <h6><i class="material-symbols-rounded me-1" style="font-size:16px;vertical-align:-3px;">trending_up</i> Tendências dos Últimos 30 Dias</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row text-center">
+                                                <div class="col-md-3 trend-stat">
+                                                    <h4 class="text-primary">{{ analytics.conversations_growth|default:0|floatformat:1 }}%</h4>
+                                                    <p class="mb-0">Crescimento em Conversas</p>
+                                                </div>
+                                                <div class="col-md-3 trend-stat">
+                                                    <h4 style="color:#22c55e;">{{ analytics.resolution_rate|default:0|floatformat:1 }}%</h4>
+                                                    <p class="mb-0">Taxa de Resolução</p>
+                                                </div>
+                                                <div class="col-md-3 trend-stat">
+                                                    <h4 style="color:#06b6d4;">{{ analytics.avg_response_time|default:0|floatformat:1 }}s</h4>
+                                                    <p class="mb-0">Tempo Médio de Resposta</p>
+                                                </div>
+                                                <div class="col-md-3 trend-stat">
+                                                    <h4 style="color:#f59e0b;">{{ analytics.user_satisfaction|default:0|floatformat:1 }}%</h4>
+                                                    <p class="mb-0">Satisfação do Usuário</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -520,9 +486,9 @@ function initializeCharts() {
     if (confidenceCtx && typeof Chart !== 'undefined') {
         try {
             // Dados de exemplo se não houver dados reais
-            const highConf = {{ analytics.high_confidence|default:65 }};
-            const mediumConf = {{ analytics.medium_confidence|default:25 }};
-            const lowConf = {{ analytics.low_confidence|default:10 }};
+            const highConf = {{ analytics.high_confidence|default:0 }};
+            const mediumConf = {{ analytics.medium_confidence|default:0 }};
+            const lowConf = {{ analytics.low_confidence|default:0 }};
             
             new Chart(confidenceCtx, {
                 type: 'doughnut',
@@ -579,7 +545,7 @@ function initializeCharts() {
     if (activityCtx && typeof Chart !== 'undefined') {
         try {
             // Dados de exemplo se não houver dados reais
-            const hourlyData = {{ analytics.hourly_activity|default:"[2, 1, 0, 0, 1, 3, 8, 15, 25, 30, 28, 35, 40, 38, 42, 45, 35, 30, 25, 20, 15, 10, 5, 3]"|safe }};
+            const hourlyData = {{ hourly_activity_json|safe }};
             
             new Chart(activityCtx, {
                 type: 'line',

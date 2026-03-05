@@ -66,7 +66,7 @@
 }
 .alert-urgent .btn-urgent {
   background: linear-gradient(135deg, #ef4444, #dc2626);
-  color: #fff; border: none; border-radius: 8px;
+  color: #fff !important; border: none; border-radius: 8px;
   padding: 8px 18px; font-size: 12px; font-weight: 600;
   white-space: nowrap; transition: all 0.2s ease;
   box-shadow: 0 2px 8px rgba(239,68,68,0.2);
@@ -74,10 +74,12 @@
 }
 .alert-urgent .btn-urgent:hover {
   box-shadow: 0 4px 12px rgba(239,68,68,0.35);
-  transform: translateY(-1px); color: #fff;
+  transform: translateY(-1px); color: #fff !important;
 }
-.alert-urgent .btn-urgent .material-icons {
+.alert-urgent .btn-urgent .material-icons,
+.alert-urgent .btn-urgent .material-symbols-rounded {
   font-size: 16px;
+  color: #fff !important;
 }
 
 /* Table */
@@ -136,7 +138,7 @@
       <i class="material-symbols-rounded text-sm me-1">add</i> Novo Ticket
     </a>
     <a href="{% url 'dashboard:export_tickets' %}" class="btn btn-sm btn-outline-secondary mb-0 ms-1">
-      <i class="material-symbols-rounded text-sm me-1">download</i> Exportar
+      <i class="material-symbols-rounded text-sm me-1">download</i> Exportar Excel
     </a>
   </div>
 </div>
@@ -602,8 +604,8 @@ var SL = { slate: '#334155', dark: '#1e293b', cyan: '#06b6d4', cyanL: '#22d3ee',
             datasets: [{
                 label: 'Tickets', data: datasets.anual.data,
                 borderColor: SL.cyan, backgroundColor: makeGradient(), borderWidth: 2.5, fill: true, tension: 0.4,
-                pointRadius: 3, pointHoverRadius: 6, pointBackgroundColor: SL.cyan,
-                pointBorderColor: document.body.classList.contains('dark-version') ? '#1e293b' : '#fff', pointBorderWidth: 2
+                pointRadius: 4, pointHoverRadius: 7, pointBackgroundColor: '#fff',
+                pointBorderColor: SL.cyan, pointBorderWidth: 2.5
             }]
         },
         options: {

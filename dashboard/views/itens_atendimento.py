@@ -34,6 +34,7 @@ def api_produtos_ativos(request):
                 "codigo": produto.codigo,
                 "tipo": produto.tipo,
                 "preco_venda": float(produto.preco_venda),
+                "preco_locacao": float(produto.preco_locacao),
                 "unidade_medida": produto.unidade_medida.sigla if produto.unidade_medida else "un",
                 "categoria": produto.categoria.nome if produto.categoria else "",
                 "estoque_atual": float(produto.estoque_atual) if produto.controla_estoque else None,

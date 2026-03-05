@@ -41,7 +41,7 @@
                             </select>
                         </div>
                         <div class="d-flex align-items-center gap-2">
-                            <label class="text-sm text-muted mb-0">Categoria:</label>
+                            <label class="text-sm text-muted mb-0">Sintoma:</label>
                             <select name="categoria" class="form-select form-select-sm" style="width:180px;" onchange="this.form.submit()">
                                 <option value="">Todas</option>
                                 {% for cat in categorias %}
@@ -113,9 +113,9 @@
                             {% endif %}
                         </div>
 
-                        {% if ticket.categoria %}
+                        {% if ticket.sintoma %}
                         <div class="mt-2">
-                            <span class="badge bg-light text-dark" style="font-size:10px;">{{ ticket.categoria.nome }}</span>
+                            <span class="badge bg-light text-dark" style="font-size:10px;">{{ ticket.sintoma }}</span>
                         </div>
                         {% endif %}
                     </div>

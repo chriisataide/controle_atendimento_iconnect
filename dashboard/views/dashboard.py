@@ -220,9 +220,8 @@ class DashboardView(TemplateView):
             while s_month > 12:
                 s_month -= 12
                 s_year += 1
-            s_dt = datetime(s_year, s_month, 1).date()
             semestre_labels.append(MESES_PT[s_month - 1])
-            tickets_por_semestre.append(mes_dict.get(s_dt, 0))
+            tickets_por_semestre.append(mes_dict.get(s_month, 0))
 
         # --- Dados Mensal (dias do mês atual) ---
         days_in_month = calendar.monthrange(hoje.year, hoje.month)[1]

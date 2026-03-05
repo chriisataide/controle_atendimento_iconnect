@@ -7,6 +7,10 @@
 
 {% block extra_css %}
 <style>
+  /* Hide the original categoria select and titulo input since they're auto-filled */
+  #categoriaSelect { display: none; }
+  #tituloInput { display: none; }
+
   :root {
     --tk-slate-900: #0f172a;
     --tk-slate-800: #1e293b;
@@ -941,6 +945,17 @@
     max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .tk-preview-empty { color: var(--tk-slate-400); font-style: italic; font-weight: 400; }
+  .tk-preview-row--stacked {
+    flex-direction: column; align-items: flex-start; gap: .25rem;
+  }
+  .tk-preview-row--stacked .tk-preview-value {
+    text-align: left; max-width: 100%; white-space: normal;
+    font-size: .72rem; font-weight: 500; line-height: 1.45;
+    color: var(--tk-slate-600);
+    background: var(--tk-slate-50); border-radius: .375rem;
+    padding: .35rem .5rem; width: 100%;
+    word-break: break-word;
+  }
 
   .tk-shortcuts dt { font-size: .72rem; color: var(--tk-slate-500); margin-bottom: .15rem; }
   .tk-shortcuts dd { margin-bottom: .5rem; }
@@ -1132,7 +1147,7 @@
             <div class="tk-tpl-tab" data-tab="autodefesa">
               <i class="material-symbols-rounded">security</i>
               Autodefesa Brasil
-              <span class="tk-tab-count">9</span>
+              <span class="tk-tab-count">11</span>
             </div>
             <div class="tk-tpl-tab" data-tab="monitoramento">
               <i class="material-symbols-rounded">monitoring</i>
@@ -1244,6 +1259,18 @@
                   <small>Predial</small>
                 </div>
               </div>
+              <div class="col-4 col-md-3 col-lg-2">
+                <div class="tk-tpl-option" data-template="ad-vandalismo">
+                  <i class="material-symbols-rounded">gavel</i>
+                  <small>Vandalismo</small>
+                </div>
+              </div>
+              <div class="col-4 col-md-3 col-lg-2">
+                <div class="tk-tpl-option" data-template="ad-painel">
+                  <i class="material-symbols-rounded">dashboard</i>
+                  <small>Painel Autodefesa</small>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1312,27 +1339,37 @@
           </div>
 
           <div class="row">
-            <div class="col-md-8">
+            <div class="col-md-4">
               <div class="tk-field">
-                <label>Título do Ticket <span class="required-dot"></span></label>
+                <label>Empresa</label>
+                <input type="text" id="empresaDisplay" class="form-control" placeholder="Selecione um template rápido" readonly style="background:#f1f5f9; cursor:not-allowed;">
                 {{ form.titulo }}
-                <span class="field-hint" id="tituloHint">Descreva brevemente o problema</span>
               </div>
             </div>
             <div class="col-md-4">
               <div class="tk-field">
-                <label>Categoria</label>
+                <label>Sintoma</label>
+                <input type="text" id="sintomaDisplay" class="form-control" placeholder="Selecione um template rápido" readonly style="background:#f1f5f9; cursor:not-allowed;">
                 {{ form.categoria }}
+                {{ form.sintoma }}
+              </div>
+            </div>
+            <div class="col-md-4" id="subtipoRow">
+              <div class="tk-field">
+                <label>Subtipo <span class="required-dot"></span></label>
+                <select id="subtipoSelect" class="form-control">
+                  <option value="">Selecione o subtipo...</option>
+                </select>
+                {{ form.subtipo }}
               </div>
             </div>
           </div>
 
           <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-4">
               <div class="tk-field">
-                <label>Tipo (ITIL) <span class="required-dot"></span></label>
+                <label>Tipo <span class="required-dot"></span></label>
                 {{ form.tipo }}
-                <span class="field-hint">Classifique conforme o framework ITIL</span>
               </div>
             </div>
           </div>
@@ -1465,10 +1502,16 @@
               </div>
             </div>
 
-            <button type="button" class="tk-vig-btn-calcular" id="btnCalcularVig" disabled>
-              <i class="material-symbols-rounded">calculate</i>
-              Calcular e Adicionar Período
-            </button>
+            <div class="d-flex gap-2 flex-wrap">
+              <button type="button" class="tk-vig-btn-calcular" id="btnCalcularVig" disabled>
+                <i class="material-symbols-rounded">calculate</i>
+                Calcular e Adicionar Período
+              </button>
+              <button type="button" class="tk-vig-btn-calcular" id="btnAdicionarPendente" disabled style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <i class="material-symbols-rounded">schedule_send</i>
+                Adicionar Início (Pendente)
+              </button>
+            </div>
 
             <!-- Lista de períodos adicionados -->
             <div class="tk-vig-lista-periodos" id="vigListaPeriodos"></div>
@@ -1525,18 +1568,28 @@
                   <strong id="prodSelNome" class="text-sm"></strong>
                   <span id="prodSelTipo" class="tk-prod-type ms-2"></span>
                 </div>
-                <span id="prodSelPreco" class="tk-prod-price"></span>
+                <div class="text-end">
+                  <span id="prodSelPreco" class="tk-prod-price"></span>
+                  <span id="prodSelPrecoLoc" class="tk-prod-price ms-2" style="color:var(--tk-blue-600);display:none;"></span>
+                </div>
               </div>
               <div class="row mt-2 g-2">
-                <div class="col-4">
+                <div class="col-3">
+                  <label class="d-block" style="font-size:.72rem;color:var(--tk-slate-500);font-weight:600;">Tipo de Preço</label>
+                  <select id="prodTipoPreco" class="form-control form-control-sm">
+                    <option value="venda">Venda</option>
+                    <option value="locacao">Locação</option>
+                  </select>
+                </div>
+                <div class="col-3">
                   <label class="d-block" style="font-size:.72rem;color:var(--tk-slate-500);font-weight:600;">Quantidade</label>
                   <input type="number" id="prodQtd" class="form-control form-control-sm" value="1" min="1" step="1">
                 </div>
-                <div class="col-4">
+                <div class="col-3">
                   <label class="d-block" style="font-size:.72rem;color:var(--tk-slate-500);font-weight:600;">Valor Unit. (R$)</label>
                   <input type="number" id="prodValor" class="form-control form-control-sm" step="0.01" min="0">
                 </div>
-                <div class="col-4">
+                <div class="col-3">
                   <label class="d-block" style="font-size:.72rem;color:var(--tk-slate-500);font-weight:600;">Desconto (%)</label>
                   <input type="number" id="prodDesconto" class="form-control form-control-sm" value="0" min="0" max="100" step="1">
                 </div>
@@ -1631,13 +1684,21 @@
           <span class="tk-preview-label">Ponto de Venda</span>
           <span class="tk-preview-value" id="prevPdv"><em class="tk-preview-empty">—</em></span>
         </div>
+        <div class="tk-preview-row tk-preview-row--stacked">
+          <span class="tk-preview-label">Endereço</span>
+          <span class="tk-preview-value" id="prevEndereco"><em class="tk-preview-empty">—</em></span>
+        </div>
         <div class="tk-preview-row">
-          <span class="tk-preview-label">Título</span>
+          <span class="tk-preview-label">Empresa</span>
           <span class="tk-preview-value" id="prevTitulo"><em class="tk-preview-empty">—</em></span>
         </div>
         <div class="tk-preview-row">
-          <span class="tk-preview-label">Categoria</span>
+          <span class="tk-preview-label">Sintoma</span>
           <span class="tk-preview-value" id="prevCategoria"><em class="tk-preview-empty">—</em></span>
+        </div>
+        <div class="tk-preview-row">
+          <span class="tk-preview-label">Subtipo</span>
+          <span class="tk-preview-value" id="prevSubtipo"><em class="tk-preview-empty">—</em></span>
         </div>
         <div class="tk-preview-row">
           <span class="tk-preview-label">Tipo (ITIL)</span>
@@ -1761,110 +1822,177 @@ document.addEventListener('DOMContentLoaded', function() {
     const templates = {
         // ── Geral ──
         'suporte-tecnico': {
-            titulo: 'Suporte Técnico — ',
+            empresa: 'Geral',
+            titulo: 'Suporte Técnico',
             descricao: '<p><strong>Problema:</strong></p><p></p><p><strong>Passos para reproduzir:</strong></p><ol><li></li></ol><p><strong>Comportamento esperado:</strong></p><p></p>',
             categoria: 'suporte',
+            sintoma: 'Suporte Técnico',
             prioridade: 'media'
         },
         'duvida': {
-            titulo: 'Dúvida — ',
+            empresa: 'Geral',
+            titulo: 'Dúvida',
             descricao: '<p><strong>Dúvida:</strong></p><p></p><p><strong>Contexto:</strong></p><p></p>',
             categoria: 'duvida',
+            sintoma: 'Dúvida',
             prioridade: 'baixa'
         },
         'solicitacao': {
-            titulo: 'Solicitação — ',
+            empresa: 'Geral',
+            titulo: 'Solicitação',
             descricao: '<p><strong>Solicitação:</strong></p><p></p><p><strong>Justificativa:</strong></p><p></p><p><strong>Prazo desejado:</strong></p><p></p>',
             categoria: 'solicitacao',
+            sintoma: 'Solicitação',
             prioridade: 'media'
         },
         'bug': {
-            titulo: '[BUG] ',
+            empresa: 'Geral',
+            titulo: 'Bug Report',
             descricao: '<p><strong>🐛 Descrição do Bug:</strong></p><p></p><p><strong>Passos para reproduzir:</strong></p><ol><li>Acessar...</li><li>Clicar em...</li><li>Observar...</li></ol><p><strong>Resultado atual:</strong></p><p></p><p><strong>Resultado esperado:</strong></p><p></p><p><strong>Ambiente:</strong> Navegador / Sistema / Versão</p>',
             categoria: 'bug',
+            sintoma: 'Bug Report',
             prioridade: 'alta'
         },
         'melhoria': {
-            titulo: '[MELHORIA] ',
+            empresa: 'Geral',
+            titulo: 'Melhoria',
             descricao: '<p><strong>💡 Sugestão de Melhoria:</strong></p><p></p><p><strong>Benefícios esperados:</strong></p><ul><li></li></ul><p><strong>Alternativas consideradas:</strong></p><p></p>',
             categoria: 'melhoria',
+            sintoma: 'Melhoria',
             prioridade: 'baixa'
         },
         'acesso': {
-            titulo: 'Solicitação de Acesso — ',
+            empresa: 'Geral',
+            titulo: 'Solicitação de Acesso',
             descricao: '<p><strong>🔑 Tipo de acesso:</strong></p><p></p><p><strong>Usuário:</strong></p><p></p><p><strong>Sistema/Recurso:</strong></p><p></p><p><strong>Justificativa:</strong></p><p></p>',
             categoria: 'acesso',
+            sintoma: 'Acesso',
             prioridade: 'media'
         },
         // ── Autodefesa Brasil ──
         'ad-neblina': {
-            titulo: '[AUTODEFESA BRASIL] Gerador de Neblina — ',
+            empresa: 'Autodefesa Brasil',
+            titulo: 'Gerador de Neblina',
             descricao: '<p><strong>Equipamento:</strong> Gerador de Neblina</p><p><strong>Fornecedora:</strong> Autodefesa Brasil</p><hr><p><strong>Descrição do problema / solicitação:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p><p><strong>Modelo do equipamento:</strong></p><p></p><p><strong>Nº de série (se disponível):</strong></p><p></p>',
             categoria: 'suporte',
+            sintoma: 'Gerador de Neblina',
             prioridade: 'alta'
         },
         'ad-alarme': {
-            titulo: '[AUTODEFESA BRASIL] Central de Alarme — ',
+            empresa: 'Autodefesa Brasil',
+            titulo: 'Central de Alarme',
             descricao: '<p><strong>Equipamento:</strong> Central de Alarme</p><p><strong>Fornecedora:</strong> Autodefesa Brasil</p><hr><p><strong>Descrição do problema / solicitação:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p><p><strong>Modelo da central:</strong></p><p></p><p><strong>Zonas afetadas:</strong></p><p></p>',
             categoria: 'suporte',
+            sintoma: 'Central de Alarme',
             prioridade: 'alta'
         },
         'ad-sensores': {
-            titulo: '[AUTODEFESA BRASIL] Sensores — ',
+            empresa: 'Autodefesa Brasil',
+            titulo: 'Sensores',
             descricao: '<p><strong>Equipamento:</strong> Sensores</p><p><strong>Fornecedora:</strong> Autodefesa Brasil</p><hr><p><strong>Tipo de sensor:</strong> (presença / abertura / barreira / outro)</p><p><strong>Descrição do problema / solicitação:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p><p><strong>Quantidade afetada:</strong></p><p></p>',
             categoria: 'suporte',
+            sintoma: 'Sensores',
             prioridade: 'media'
         },
         'ad-dvr': {
-            titulo: '[AUTODEFESA BRASIL] DVR — ',
+            empresa: 'Autodefesa Brasil',
+            titulo: 'DVR',
             descricao: '<p><strong>Equipamento:</strong> DVR</p><p><strong>Fornecedora:</strong> Autodefesa Brasil</p><hr><p><strong>Descrição do problema / solicitação:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p><p><strong>Modelo / Capacidade:</strong></p><p></p><p><strong>Canais afetados:</strong></p><p></p>',
             categoria: 'suporte',
+            sintoma: 'DVR',
             prioridade: 'alta'
         },
         'ad-cameras': {
-            titulo: '[AUTODEFESA BRASIL] Câmeras — ',
+            empresa: 'Autodefesa Brasil',
+            titulo: 'Câmeras',
             descricao: '<p><strong>Equipamento:</strong> Câmeras</p><p><strong>Fornecedora:</strong> Autodefesa Brasil</p><hr><p><strong>Descrição do problema / solicitação:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p><p><strong>Tipo:</strong> (dome / bullet / PTZ / outro)</p><p><strong>Quantidade afetada:</strong></p><p></p>',
             categoria: 'suporte',
+            sintoma: 'Câmeras',
             prioridade: 'media'
         },
         'ad-neutralizador': {
-            titulo: '[AUTODEFESA BRASIL] Neutralizador — ',
+            empresa: 'Autodefesa Brasil',
+            titulo: 'Neutralizador',
             descricao: '<p><strong>Equipamento:</strong> Neutralizador</p><p><strong>Fornecedora:</strong> Autodefesa Brasil</p><hr><p><strong>Descrição do problema / solicitação:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p><p><strong>Modelo:</strong></p><p></p><p><strong>Última manutenção:</strong></p><p></p>',
             categoria: 'suporte',
+            sintoma: 'Neutralizador',
             prioridade: 'critica'
         },
         'ad-porta': {
-            titulo: '[AUTODEFESA BRASIL] Porta Automática — ',
+            empresa: 'Autodefesa Brasil',
+            titulo: 'Porta Automática',
             descricao: '<p><strong>Equipamento:</strong> Porta Automática</p><p><strong>Fornecedora:</strong> Autodefesa Brasil</p><hr><p><strong>Descrição do problema / solicitação:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p><p><strong>Tipo:</strong> (eclusa / deslizante / giratória / outro)</p><p><strong>A agência está operando?</strong></p><p></p>',
             categoria: 'suporte',
+            sintoma: 'Porta Automática',
             prioridade: 'alta'
         },
         'ad-facial': {
-            titulo: '[AUTODEFESA BRASIL] Reconhecimento Facial — ',
+            empresa: 'Autodefesa Brasil',
+            titulo: 'Reconhecimento Facial',
             descricao: '<p><strong>Equipamento:</strong> Reconhecimento Facial</p><p><strong>Fornecedora:</strong> Autodefesa Brasil</p><hr><p><strong>Descrição do problema / solicitação:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p><p><strong>Modelo do terminal:</strong></p><p></p><p><strong>Quantidade de faces cadastradas:</strong></p><p></p>',
             categoria: 'suporte',
+            sintoma: 'Reconhecimento Facial',
             prioridade: 'media'
         },
         'ad-predial': {
-            titulo: '[AUTODEFESA BRASIL] Predial — ',
+            empresa: 'Autodefesa Brasil',
+            titulo: 'Predial',
             descricao: '<p><strong>Equipamento:</strong> Sistema Predial</p><p><strong>Fornecedora:</strong> Autodefesa Brasil</p><hr><p><strong>Descrição do problema / solicitação:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p><p><strong>Tipo de serviço:</strong> (elétrica / hidráulica / civil / outro)</p><p><strong>Urgência:</strong></p><p></p>',
             categoria: 'suporte',
+            sintoma: 'Predial',
             prioridade: 'media'
         },
+        'ad-vandalismo': {
+            empresa: 'Autodefesa Brasil',
+            titulo: 'Vandalismo',
+            descricao: '<p><strong>Tipo:</strong> Vandalismo</p><p><strong>Fornecedora:</strong> Autodefesa Brasil</p><hr><p><strong>Descrição da ocorrência:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p><p><strong>Data/Hora da ocorrência:</strong></p><p></p><p><strong>Boletim de Ocorrência (nº):</strong></p><p></p>',
+            categoria: 'suporte',
+            sintoma: 'Vandalismo',
+            prioridade: 'critica'
+        },
+        'ad-painel': {
+            empresa: 'Autodefesa Brasil',
+            titulo: 'Painel Autodefesa',
+            descricao: '<p><strong>Equipamento:</strong> Painel Autodefesa</p><p><strong>Fornecedora:</strong> Autodefesa Brasil</p><hr><p><strong>Descrição do problema / solicitação:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p>',
+            categoria: 'suporte',
+            sintoma: 'Painel Autodefesa',
+            prioridade: 'alta'
+        },
         'sm-implantacao': {
-            titulo: '[SALA DE MONITORAMENTO] Implantação de Vigilante — ',
+            empresa: 'Sala de Monitoramento',
+            titulo: 'Implantação de Vigilante',
             descricao: '<p><strong>Tipo:</strong> Implantação de Vigilante</p><p><strong>Setor:</strong> Sala de Monitoramento</p><hr><p><strong>Empresa de Vigilância:</strong> (preencher no cálculo abaixo)</p><p><strong>Motivo da implantação:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p><p><strong>Observações:</strong></p><p></p>',
             categoria: 'suporte',
+            sintoma: 'Implantação de Vigilante',
             prioridade: 'alta',
             calculoVigilante: true
         },
         'sm-pronta-resposta': {
-            titulo: '[SALA DE MONITORAMENTO] Pronta Resposta — ',
+            empresa: 'Sala de Monitoramento',
+            titulo: 'Pronta Resposta',
             descricao: '<p><strong>Tipo:</strong> Pronta Resposta</p><p><strong>Setor:</strong> Sala de Monitoramento</p><hr><p><strong>Empresa de Vigilância:</strong> (preencher no cálculo abaixo)</p><p><strong>Motivo da pronta resposta:</strong></p><p></p><p><strong>Local / Agência:</strong></p><p></p><p><strong>Observações:</strong></p><p></p>',
             categoria: 'suporte',
+            sintoma: 'Pronta Resposta',
             prioridade: 'critica',
             calculoVigilante: true
         }
+    };
+
+    // ============================================
+    // SUBTIPOS POR TEMPLATE
+    // ============================================
+    const subtiposPorTemplate = {
+        'ad-neblina': ['Temperatura Crítica', 'Bateria Danificada', 'GN OFF-LINE', 'Fluido vazio', 'Disparo Indevido'],
+        'ad-alarme': ['Off-line', 'Botão de pânico inoperante', 'Sirene Acionada'],
+        'ad-sensores': ['Múltiplos disparos', 'Posicionamento', 'Remanejamento'],
+        'ad-dvr': ['Off-line', 'Não gravando', 'Troca de HD', 'Acréscimo de HD'],
+        'ad-cameras': ['Off-line', 'Danificada', 'Remanejamento'],
+        'ad-neutralizador': ['Disparo indevido', 'Vazando'],
+        'ad-porta': ['Não acatou o comando', 'Off-line', 'Botoeira danificada', 'A porta desceu sozinha'],
+        'ad-facial': ['Off-line', 'Travado', 'Eletroímã inoperante'],
+        'ad-predial': ['Vistoria', 'Preventiva', 'Acréscimo', 'SDAI'],
+        'ad-vandalismo': ['Furto', 'Furto Qualificado', 'Estelionato', 'Causas Naturais'],
+        'ad-painel': ['Off-line'],
     };
 
     // Tabs de fornecedoras
@@ -1884,18 +2012,24 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.tk-tpl-option').forEach(o => o.classList.remove('active'));
             this.classList.add('active');
 
-            const tpl = templates[this.dataset.template];
+            const tplKey = this.dataset.template;
+            const tpl = templates[tplKey];
             if (!tpl) return;
 
             const tituloInput = document.getElementById('tituloInput');
+            const empresaDisplay = document.getElementById('empresaDisplay');
             const editorContent = document.getElementById('editorContent');
             const categoriaSelect = document.getElementById('categoriaSelect');
+            const sintomaDisplay = document.getElementById('sintomaDisplay');
+            const sintomaInput = document.getElementById('sintomaInput');
+            const subtipoSelect = document.getElementById('subtipoSelect');
+            const subtipoInput = document.getElementById('subtipoInput');
+            const subtipoRow = document.getElementById('subtipoRow');
 
-            if (tituloInput && tpl.titulo) {
-                tituloInput.value = tpl.titulo;
-                tituloInput.focus();
-                const len = tituloInput.value.length;
-                tituloInput.setSelectionRange(len, len);
+            // Preencher Empresa (read-only) e title hidden
+            if (tpl.empresa) {
+                if (empresaDisplay) empresaDisplay.value = tpl.empresa;
+                if (tituloInput) tituloInput.value = tpl.empresa;
             }
             if (editorContent && tpl.descricao) {
                 editorContent.innerHTML = tpl.descricao;
@@ -1908,6 +2042,31 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
             }
+            // Preencher Sintoma (read-only) com o nome do template
+            if (sintomaDisplay && tpl.sintoma) {
+                sintomaDisplay.value = tpl.sintoma;
+            }
+            // Salvar sintoma no hidden input
+            if (sintomaInput && tpl.sintoma) {
+                sintomaInput.value = tpl.sintoma;
+            }
+            // Preencher Subtipos dinâmicos
+            if (subtipoSelect && subtipoInput) {
+                const subtipos = subtiposPorTemplate[tplKey] || [];
+                subtipoSelect.innerHTML = '<option value="">Selecione o subtipo...</option>';
+                if (subtipos.length > 0) {
+                    subtipos.forEach(s => {
+                        const option = document.createElement('option');
+                        option.value = s;
+                        option.textContent = s;
+                        subtipoSelect.appendChild(option);
+                    });
+                    subtipoRow.style.display = '';
+                } else {
+                    subtipoRow.style.display = 'none';
+                }
+                subtipoInput.value = '';
+            }
             if (tpl.prioridade) {
                 selectPriority(tpl.prioridade);
             }
@@ -1915,7 +2074,6 @@ document.addEventListener('DOMContentLoaded', function() {
             updatePreview();
 
             // Se é template de Sala de Monitoramento, ativa seção de cálculo
-            const tplKey = this.dataset.template;
             if (tplKey === 'sm-implantacao' || tplKey === 'sm-pronta-resposta') {
                 activateCalculoVig(tplKey);
             } else {
@@ -1923,6 +2081,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // Subtipo change listener (uma única vez)
+    const _subtipoSelect = document.getElementById('subtipoSelect');
+    const _subtipoInput = document.getElementById('subtipoInput');
+    if (_subtipoSelect && _subtipoInput) {
+        _subtipoSelect.addEventListener('change', function() {
+            _subtipoInput.value = this.value;
+            updatePreview();
+        });
+    }
 
     // ============================================
     // CÁLCULO VIGILANTE (Sala de Monitoramento)
@@ -2016,11 +2184,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function checkVigFormReady() {
         const btn = document.getElementById('btnCalcularVig');
+        const btnPendente = document.getElementById('btnAdicionarPendente');
         const emp = vigEmpresaSelect?.value;
         const uf = vigUFSelect?.value;
         const inicio = document.getElementById('vigInicio')?.value;
         const fim = document.getElementById('vigFim')?.value;
-        btn.disabled = !(emp && uf && inicio && fim);
+        if (btn) btn.disabled = !(emp && uf && inicio && fim);
+        if (btnPendente) btnPendente.disabled = !(emp && uf && inicio);
     }
 
     ['vigEmpresa', 'vigUF', 'vigInicio', 'vigFim'].forEach(id => {
@@ -2094,7 +2264,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
-    // Botão calcular
+    // Botão calcular (com data fim)
     document.getElementById('btnCalcularVig')?.addEventListener('click', function() {
         const empresa = vigEmpresaSelect.value;
         const uf = vigUFSelect.value;
@@ -2108,10 +2278,36 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         resultado.tipo = vigTipoAtual;
+        resultado.pendente = false;
         vigPeriodos.push(resultado);
         renderVigPeriodos();
 
-        // Limpar campos de data
+        document.getElementById('vigInicio').value = '';
+        document.getElementById('vigFim').value = '';
+        checkVigFormReady();
+    });
+
+    // Botão adicionar pendente (só data início)
+    document.getElementById('btnAdicionarPendente')?.addEventListener('click', function() {
+        const empresa = vigEmpresaSelect.value;
+        const uf = vigUFSelect.value;
+        const inicio = document.getElementById('vigInicio').value;
+
+        if (!empresa || !uf || !inicio) return;
+
+        vigPeriodos.push({
+            empresa, uf, inicio,
+            fim: null,
+            duracaoMin: 0,
+            duracaoStr: 'Pendente',
+            detalhes: 'Aguardando data/hora final',
+            jornada: '—',
+            valor: 0,
+            tipo: vigTipoAtual,
+            pendente: true
+        });
+        renderVigPeriodos();
+
         document.getElementById('vigInicio').value = '';
         document.getElementById('vigFim').value = '';
         checkVigFormReady();
@@ -2131,18 +2327,21 @@ document.addEventListener('DOMContentLoaded', function() {
         let html = '';
         vigPeriodos.forEach((p, idx) => {
             const inicioFmt = new Date(p.inicio).toLocaleString('pt-BR');
-            const fimFmt = new Date(p.fim).toLocaleString('pt-BR');
+            const fimFmt = p.fim ? new Date(p.fim).toLocaleString('pt-BR') : '<span style="color:#f59e0b;font-weight:600;">⏳ Pendente</span>';
             const tipoLabel = p.tipo === 'implantacao' ? 'Implantação' : 'Pronta Resposta';
+            const valorStr = p.pendente ? '<span style="color:#f59e0b;">Pendente</span>' : `R$ ${p.valor.toFixed(2)}`;
+            const pendenteBorder = p.pendente ? 'border-left: 3px solid #f59e0b;' : '';
             html += `
-            <div class="tk-vig-periodo-item">
+            <div class="tk-vig-periodo-item" style="${pendenteBorder}">
                 <div class="info">
                     <strong>${p.empresa} — ${p.uf}</strong>
                     <span class="tk-calculo-tipo-badge ${p.tipo === 'implantacao' ? 'implantacao' : 'pronta-resposta'}" style="font-size:.6rem;padding:.1rem .4rem;">${tipoLabel}</span>
+                    ${p.pendente ? '<span style="background:#fef3c7;color:#92400e;font-size:.6rem;padding:.1rem .4rem;border-radius:4px;font-weight:600;margin-left:4px;">PENDENTE</span>' : ''}
                     <br><small>${inicioFmt} → ${fimFmt}</small>
                     <br><small style="color:var(--tk-slate-400);">${p.duracaoStr} — ${p.detalhes}</small>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                    <span class="valor">R$ ${p.valor.toFixed(2)}</span>
+                    <span class="valor">${valorStr}</span>
                     <button type="button" class="btn-remove" onclick="removeVigPeriodo(${idx})" title="Remover">
                         <i class="material-symbols-rounded" style="font-size:1rem;">close</i>
                     </button>
@@ -2152,16 +2351,18 @@ document.addEventListener('DOMContentLoaded', function() {
         lista.innerHTML = html;
 
         // Resumo
-        const totalValor = vigPeriodos.reduce((s, p) => s + p.valor, 0);
-        const totalMin = vigPeriodos.reduce((s, p) => s + p.duracaoMin, 0);
+        const periodosCompletos = vigPeriodos.filter(p => !p.pendente);
+        const periodosPendentes = vigPeriodos.filter(p => p.pendente);
+        const totalValor = periodosCompletos.reduce((s, p) => s + p.valor, 0);
+        const totalMin = periodosCompletos.reduce((s, p) => s + p.duracaoMin, 0);
         const horas = Math.floor(totalMin / 60);
         const mins = Math.round(totalMin % 60);
-        const jornadas = [...new Set(vigPeriodos.map(p => p.jornada))].join(', ');
+        const jornadas = [...new Set(periodosCompletos.map(p => p.jornada))].join(', ');
 
-        document.getElementById('vigResQtd').textContent = vigPeriodos.length;
-        document.getElementById('vigResDuracao').textContent = `${horas}h ${mins}min`;
+        document.getElementById('vigResQtd').textContent = `${vigPeriodos.length}${periodosPendentes.length ? ` (${periodosPendentes.length} pendente${periodosPendentes.length > 1 ? 's' : ''})` : ''}`;
+        document.getElementById('vigResDuracao').textContent = totalMin > 0 ? `${horas}h ${mins}min` : periodosPendentes.length ? 'Pendente' : '0h 0min';
         document.getElementById('vigResJornada').textContent = jornadas || '—';
-        document.getElementById('vigResTotal').textContent = `R$ ${totalValor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        document.getElementById('vigResTotal').textContent = totalValor > 0 ? `R$ ${totalValor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : periodosPendentes.length ? 'Pendente' : 'R$ 0,00';
         resumo.classList.add('show');
 
         // Salvar no hidden
@@ -2175,7 +2376,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 duracao_minutos: p.duracaoMin,
                 valor: p.valor,
                 detalhes: p.detalhes,
-                tipo: p.tipo
+                tipo: p.tipo,
+                pendente: p.pendente || false
             })),
             valor_total: totalValor
         });
@@ -2323,6 +2525,27 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!uniorgFeedback) return;
         uniorgFeedback.textContent = msg;
         uniorgFeedback.className = 'tk-feedback ' + (type || '');
+    }
+
+    function formatEndereco(pdv) {
+        if (!pdv) return '';
+        const lines = [];
+        if (pdv.logradouro) {
+            let rua = pdv.logradouro;
+            if (pdv.numero) rua += ', ' + pdv.numero;
+            if (pdv.complemento) rua += ' - ' + pdv.complemento;
+            lines.push(rua);
+        }
+        if (pdv.bairro) lines.push(pdv.bairro);
+        const cidadeEstado = [pdv.cidade, pdv.estado].filter(Boolean).join('/');
+        if (cidadeEstado) {
+            let loc = cidadeEstado;
+            if (pdv.cep) loc += ' — CEP: ' + pdv.cep;
+            lines.push(loc);
+        } else if (pdv.cep) {
+            lines.push('CEP: ' + pdv.cep);
+        }
+        return lines.join('<br>');
     }
 
     function setPdvInfo(pdv) {
@@ -2709,6 +2932,9 @@ document.addEventListener('DOMContentLoaded', function() {
         products.slice(0, 10).forEach(p => {
             const div = document.createElement('div');
             div.className = 'tk-prod-item';
+            const locInfo = p.preco_locacao > 0
+                ? `<span class="tk-prod-price" style="color:var(--tk-blue-600);">Loc: R$ ${p.preco_locacao.toFixed(2).replace('.', ',')}</span>`
+                : '';
             div.innerHTML = `
                 <div class="tk-prod-info">
                     <div>
@@ -2717,7 +2943,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div class="d-flex align-items-center gap-2">
                         <span class="tk-prod-type">${p.tipo}</span>
-                        <span class="tk-prod-price">R$ ${p.preco_venda.toFixed(2).replace('.', ',')}</span>
+                        <span class="tk-prod-price">Venda: R$ ${p.preco_venda.toFixed(2).replace('.', ',')}</span>
+                        ${locInfo}
                     </div>
                 </div>
             `;
@@ -2736,7 +2963,20 @@ document.addEventListener('DOMContentLoaded', function() {
         if (info) {
             document.getElementById('prodSelNome').textContent = p.nome;
             document.getElementById('prodSelTipo').textContent = p.tipo;
-            document.getElementById('prodSelPreco').textContent = `R$ ${p.preco_venda.toFixed(2).replace('.', ',')}`;
+            document.getElementById('prodSelPreco').textContent = `Venda: R$ ${p.preco_venda.toFixed(2).replace('.', ',')}`;
+
+            const precoLocEl = document.getElementById('prodSelPrecoLoc');
+            const tipoPrecoEl = document.getElementById('prodTipoPreco');
+            if (p.preco_locacao > 0) {
+                precoLocEl.textContent = `Locação: R$ ${p.preco_locacao.toFixed(2).replace('.', ',')}`;
+                precoLocEl.style.display = '';
+                tipoPrecoEl.closest('.col-3').style.display = '';
+            } else {
+                precoLocEl.style.display = 'none';
+                tipoPrecoEl.closest('.col-3').style.display = 'none';
+            }
+
+            tipoPrecoEl.value = 'venda';
             document.getElementById('prodValor').value = p.preco_venda.toFixed(2);
             document.getElementById('prodQtd').value = 1;
             document.getElementById('prodDesconto').value = 0;
@@ -2745,18 +2985,30 @@ document.addEventListener('DOMContentLoaded', function() {
         if (btnAddProduto) btnAddProduto.disabled = false;
     }
 
+    // Atualizar valor ao trocar tipo de preço
+    const prodTipoPreco = document.getElementById('prodTipoPreco');
+    if (prodTipoPreco) {
+        prodTipoPreco.addEventListener('change', function() {
+            if (!produtoSelecionado) return;
+            const valor = this.value === 'locacao' ? produtoSelecionado.preco_locacao : produtoSelecionado.preco_venda;
+            document.getElementById('prodValor').value = valor.toFixed(2);
+        });
+    }
+
     if (btnAddProduto) {
         btnAddProduto.addEventListener('click', () => {
             if (!produtoSelecionado) return;
             const qtd = parseFloat(document.getElementById('prodQtd').value) || 1;
             const valor = parseFloat(document.getElementById('prodValor').value) || produtoSelecionado.preco_venda;
             const desconto = parseFloat(document.getElementById('prodDesconto').value) || 0;
+            const tipoPreco = document.getElementById('prodTipoPreco').value || 'venda';
 
             itensAdicionados.push({
                 produto: produtoSelecionado,
                 quantidade: qtd,
                 valorUnitario: valor,
                 descontoPercentual: desconto,
+                tipoPreco: tipoPreco,
                 observacoes: ''
             });
 
@@ -2802,6 +3054,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </button>
                 </div>
                 <div class="d-flex gap-3" style="font-size:.8rem;color:var(--tk-slate-600);">
+                    <span class="badge badge-sm ${item.tipoPreco === 'locacao' ? 'bg-gradient-info' : 'bg-gradient-success'}" style="font-size:.65rem;">${item.tipoPreco === 'locacao' ? 'Locação' : 'Venda'}</span>
                     <span>Qtd: <strong>${item.quantidade}</strong></span>
                     <span>Valor: <strong>R$ ${item.valorUnitario.toFixed(2).replace('.', ',')}</strong></span>
                     ${item.descontoPercentual > 0 ? `<span>Desc: <strong>${item.descontoPercentual}%</strong></span>` : ''}
@@ -2851,11 +3104,20 @@ document.addEventListener('DOMContentLoaded', function() {
         prev('prevCliente', clienteSelect ? clienteSelect.options[clienteSelect.selectedIndex]?.text : '');
         prev('prevUniorg', uniorgInput ? uniorgInput.value : '');
         prev('prevPdv', pdvSelect && pdvSelect.value ? pdvSelect.options[pdvSelect.selectedIndex]?.text : '');
-        prev('prevTitulo', document.getElementById('tituloInput')?.value);
-        const catSel = document.getElementById('categoriaSelect');
-        prev('prevCategoria', catSel && catSel.value ? catSel.options[catSel.selectedIndex]?.text : '');
+        // Endereço do PDV selecionado
+        let enderecoText = '';
+        if (pdvSelect && pdvSelect.value) {
+            const pdv = cachedPdvs.find(p => String(p.id) === String(pdvSelect.value));
+            enderecoText = formatEndereco(pdv);
+        }
+        prev('prevEndereco', enderecoText);
+        prev('prevTitulo', document.getElementById('empresaDisplay')?.value);
+        const sintomaEl = document.getElementById('sintomaDisplay');
+        prev('prevCategoria', sintomaEl ? sintomaEl.value : '');
+        const subtipoSel = document.getElementById('subtipoSelect');
+        prev('prevSubtipo', subtipoSel && subtipoSel.value ? subtipoSel.value : '');
         const tipoSel = document.getElementById('tipoSelect');
-        prev('prevTipo', tipoSel && tipoSel.value ? tipoSel.options[tipoSel.selectedIndex]?.text : 'Incidente');
+        prev('prevTipo', tipoSel && tipoSel.value ? tipoSel.options[tipoSel.selectedIndex]?.text : 'Corretiva');
         const selectedPrio = document.querySelector('.tk-priority-opt.selected');
         prev('prevPrioridade', selectedPrio ? selectedPrio.textContent.trim() : 'Média');
         prev('prevAnexos', String(selectedFiles.length));
@@ -2870,8 +3132,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // ============================================
     // KEYBOARD SHORTCUTS
     // ============================================
+    // Prevent Enter from submitting the form on input/select fields
+    document.getElementById('ticketForm')?.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
+            const tag = e.target.tagName.toLowerCase();
+            if (tag === 'input' || tag === 'select') {
+                e.preventDefault();
+            }
+        }
+    });
+
     document.addEventListener('keydown', function(e) {
-        if (e.ctrlKey && e.key === 'Enter') {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             e.preventDefault();
             document.getElementById('submitBtn')?.click();
         }

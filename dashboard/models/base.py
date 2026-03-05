@@ -312,12 +312,11 @@ class WorkflowRule(models.Model):
 
 
 class Ticket(models.Model):
-    # --- Tipo ITIL ---
     TIPO_CHOICES = [
-        ("incidente", "Incidente"),
-        ("requisicao", "Requisicao de Servico"),
-        ("problema", "Problema"),
-        ("mudanca", "Mudanca"),
+        ("corretiva", "Corretiva"),
+        ("preventiva", "Preventiva"),
+        ("remoto", "Remoto"),
+        ("venda", "Venda"),
     ]
 
     numero = models.CharField(max_length=10, unique=True, blank=True, db_index=True)
@@ -336,8 +335,10 @@ class Ticket(models.Model):
 
     titulo = models.CharField(max_length=200)
     descricao = models.TextField()
+    subtipo = models.CharField(max_length=100, blank=True, default="", verbose_name="Subtipo")
+    sintoma = models.CharField(max_length=100, blank=True, default="", verbose_name="Sintoma")
     tags = models.CharField(max_length=500, blank=True, help_text="Tags separadas por virgula")
-    tipo = models.CharField(max_length=15, choices=TIPO_CHOICES, default="incidente")
+    tipo = models.CharField(max_length=15, choices=TIPO_CHOICES, default="corretiva")
     status = models.CharField(max_length=20, choices=StatusTicket.choices, default=StatusTicket.ABERTO, db_index=True)
     prioridade = models.CharField(
         max_length=10, choices=PrioridadeTicket.choices, default=PrioridadeTicket.MEDIA, db_index=True
@@ -1417,7 +1418,7 @@ class TicketTemplate(models.Model):
     descricao_padrao = models.TextField(blank=True)
     categoria = models.ForeignKey(CategoriaTicket, on_delete=models.SET_NULL, null=True, blank=True)
     prioridade = models.CharField(max_length=10, choices=PrioridadeTicket.choices, default=PrioridadeTicket.MEDIA)
-    tipo = models.CharField(max_length=15, choices=Ticket.TIPO_CHOICES, default="incidente")
+    tipo = models.CharField(max_length=15, choices=Ticket.TIPO_CHOICES, default="corretiva")
     tags_padrao = models.CharField(max_length=500, blank=True)
     ativo = models.BooleanField(default=True)
     criado_em = models.DateTimeField(auto_now_add=True)

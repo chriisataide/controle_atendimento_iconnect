@@ -116,7 +116,7 @@
     {% if categorias %}
     <div class="m-card">
         <div class="m-card-header">
-            <h3><span class="material-symbols-rounded">category</span> Categoria</h3>
+            <h3><span class="material-symbols-rounded">category</span> Sintoma</h3>
         </div>
         <div class="m-card-body">
             <div class="category-grid">
@@ -293,6 +293,16 @@ function renderPhotos() {
     });
 }
 function removePhoto(i) { selectedPhotos.splice(i, 1); renderPhotos(); }
+
+// Prevent Enter from submitting the form on input/select fields
+document.getElementById('ticketForm').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
+        const tag = e.target.tagName.toLowerCase();
+        if (tag === 'input' || tag === 'select') {
+            e.preventDefault();
+        }
+    }
+});
 
 // Form submit
 document.getElementById('ticketForm').addEventListener('submit', function(e) {

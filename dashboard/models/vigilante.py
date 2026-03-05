@@ -23,9 +23,9 @@ class RegistroVigilante(models.Model):
     empresa = models.CharField(max_length=100, db_index=True)
     uf = models.CharField(max_length=2, db_index=True)
     inicio = models.DateTimeField(verbose_name="Data/Hora Início")
-    fim = models.DateTimeField(verbose_name="Data/Hora Fim")
-    duracao_minutos = models.FloatField(verbose_name="Duração (minutos)")
-    valor = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Valor (R$)")
+    fim = models.DateTimeField(verbose_name="Data/Hora Fim", null=True, blank=True)
+    duracao_minutos = models.FloatField(verbose_name="Duração (minutos)", null=True, blank=True)
+    valor = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Valor (R$)", null=True, blank=True)
     detalhes = models.TextField(blank=True, verbose_name="Detalhamento do cálculo")
     criado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -46,7 +46,12 @@ class RegistroVigilante(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.get_tipo_display()} — {self.empresa}/{self.uf} — R$ {self.valor}"
+        status = "Pendente" if not self.fim else f"R$ {self.valor}"
+        return f"{self.get_tipo_display()} — {self.empresa}/{self.uf} — {status}"
+
+    @property
+    def pendente(self):
+        return self.fim is None
 
     @property
     def duracao_formatada(self):

@@ -30,6 +30,12 @@ logger = logging.getLogger("dashboard")
 
 
 # ---------------------------------------------------------------------------
+# Workflow Engine — flag para evitar loop recursivo
+# ---------------------------------------------------------------------------
+_workflow_executing = False
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
@@ -64,6 +70,22 @@ def _dispatch_task(task_func, *args, **kwargs):
         # Celery indisponível — executar síncronamente
         logger.debug("Celery indisponível; executando %s síncronamente", task_func.name)
         task_func(*args, **kwargs)
+
+
+@receiver(pre_save, sender=Ticket)
+def capture_ticket_old_state(sender, instance, **kwargs):
+    """Captura estado antigo do ticket antes de salvar (para workflow triggers)."""
+    if instance.pk:
+        try:
+            old = Ticket.objects.only("status", "agente_id").get(pk=instance.pk)
+            instance._wf_old_status = old.status
+            instance._wf_old_agente_id = old.agente_id
+        except Ticket.DoesNotExist:
+            instance._wf_old_status = None
+            instance._wf_old_agente_id = None
+    else:
+        instance._wf_old_status = None
+        instance._wf_old_agente_id = None
 
 
 @receiver(post_save, sender=Ticket)
@@ -136,6 +158,25 @@ def ticket_created_or_updated(sender, instance, created, **kwargs):
             except User.DoesNotExist:
                 pass
 
+    # ====== WORKFLOW ENGINE — disparar regras de automação ======
+    global _workflow_executing
+    if not _workflow_executing:
+        from .tasks import execute_workflow_for_ticket
+
+        if created:
+            _dispatch_task(execute_workflow_for_ticket, instance.id, "ticket_created")
+        else:
+            _dispatch_task(execute_workflow_for_ticket, instance.id, "ticket_updated")
+
+            old_status = getattr(instance, "_wf_old_status", None)
+            old_agente_id = getattr(instance, "_wf_old_agente_id", None)
+
+            if old_status and old_status != instance.status:
+                _dispatch_task(execute_workflow_for_ticket, instance.id, "status_changed")
+
+            if old_agente_id != getattr(instance.agente, "id", None) and instance.agente:
+                _dispatch_task(execute_workflow_for_ticket, instance.id, "agent_assigned")
+
 
 @receiver(post_save, sender=InteracaoTicket)
 def interaction_created(sender, instance, created, **kwargs):
@@ -204,12 +245,23 @@ def interaction_created(sender, instance, created, **kwargs):
             },
         )
 
+    # ====== WORKFLOW ENGINE — disparar interaction_added ======
+    if instance.tipo != "sistema":
+        from .tasks import execute_workflow_for_ticket
+
+        _dispatch_task(execute_workflow_for_ticket, ticket.id, "interaction_added", instance.usuario.id)
+
 
 # ========== FUNÇÕES AUXILIARES PARA SLA ==========
 
 
 def send_sla_warning(ticket):
     """⚠️ Alerta de SLA próximo do vencimento"""
+
+    # Workflow Engine — disparar sla_warning
+    from .tasks import execute_workflow_for_ticket
+
+    _dispatch_task(execute_workflow_for_ticket, ticket.id, "sla_warning")
 
     _safe_group_send(
         "agents",
@@ -240,6 +292,11 @@ def send_sla_warning(ticket):
 
 def send_sla_breach(ticket):
     """🚨 Alerta de violação de SLA"""
+
+    # Workflow Engine — disparar sla_breach
+    from .tasks import execute_workflow_for_ticket
+
+    _dispatch_task(execute_workflow_for_ticket, ticket.id, "sla_breach")
 
     # WebSocket imediato (leve)
     _safe_group_send(

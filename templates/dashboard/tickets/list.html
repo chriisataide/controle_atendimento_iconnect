@@ -21,7 +21,7 @@
       </a>
       {% if user.is_staff %}
       <a href="{% url 'dashboard:export_tickets' %}" class="btn btn-sm btn-outline-secondary mb-0 ms-1">
-        <i class="material-symbols-rounded text-sm me-1">download</i> Exportar
+        <i class="material-symbols-rounded text-sm me-1">download</i> Exportar Excel
       </a>
       {% endif %}
     </div>
@@ -161,9 +161,9 @@
               </select>
             </div>
             <div class="col-md-2">
-              <label class="form-label text-xs text-uppercase mb-1">Categoria</label>
+              <label class="form-label text-xs text-uppercase mb-1">Sintoma</label>
               <select name="categoria" class="form-select form-select-sm">
-                <option value="">Todas</option>
+                <option value="">Todos</option>
                 {% for cat in categorias %}
                 <option value="{{ cat.id }}" {% if filters.categoria == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.nome }}</option>
                 {% endfor %}
@@ -233,9 +233,12 @@
                 <tr>
                   <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4">Ticket</th>
                   <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cliente</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Unidade</th>
                   <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                   <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Prioridade</th>
-                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Categoria</th>
+                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tipo</th>
+                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Subtipo</th>
+                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Sintoma</th>
                   <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Agente</th>
                   <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Criado</th>
                   <th class="text-secondary opacity-7"></th>
@@ -256,7 +259,14 @@
                   </td>
                   <td>
                     <p class="text-xs font-weight-bold mb-0">{{ ticket.cliente.nome }}</p>
-                    <p class="text-xs text-secondary mb-0">{{ ticket.cliente.empresa|default:"—" }}</p>
+                  </td>
+                  <td>
+                    {% if ticket.ponto_de_venda %}
+                    <p class="text-xs font-weight-bold mb-0">{{ ticket.ponto_de_venda.nome_fantasia|truncatechars:25 }}</p>
+                    <p class="text-xs text-secondary mb-0">{{ ticket.ponto_de_venda.inscricao_estadual|default:"—" }}</p>
+                    {% else %}
+                    <span class="text-xs text-secondary">—</span>
+                    {% endif %}
                   </td>
                   <td class="align-middle text-center text-sm">
                     {% status_badge ticket.status %}
@@ -265,9 +275,15 @@
                     {% priority_badge ticket.prioridade %}
                   </td>
                   <td class="align-middle text-center">
-                    {% if ticket.categoria %}
-                    <span class="text-xs font-weight-bold" style="color: {{ ticket.categoria.cor }};">
-                      {{ ticket.categoria.nome }}
+                    <span class="text-xs font-weight-bold">{{ ticket.get_tipo_display|default:"—" }}</span>
+                  </td>
+                  <td class="align-middle text-center">
+                    <span class="text-xs font-weight-bold">{{ ticket.subtipo|default:"—" }}</span>
+                  </td>
+                  <td class="align-middle text-center">
+                    {% if ticket.sintoma %}
+                    <span class="text-xs font-weight-bold" {% if ticket.categoria %}style="color: {{ ticket.categoria.cor }};"{% endif %}>
+                      {{ ticket.sintoma }}
                     </span>
                     {% else %}
                     <span class="text-xs text-secondary">—</span>

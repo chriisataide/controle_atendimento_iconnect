@@ -78,8 +78,8 @@
               <p class="ic-page-subtitle">Registro completo de ações — Conformidade BACEN/LGPD</p>
             </div>
             <div class="d-flex gap-2">
-              <a href="{% url 'dashboard:audit_export_csv' %}" class="ic-btn-slate" title="Exportar CSV">
-                <span class="material-symbols-rounded" style="font-size:18px;">download</span> Exportar
+              <a href="{% url 'dashboard:compliance_audit_export' %}" class="ic-btn-slate" title="Exportar Excel">
+                <span class="material-symbols-rounded" style="font-size:18px;">download</span> Exportar Excel
               </a>
             </div>
           </div>
@@ -185,10 +185,10 @@
                   <td>
                     <div class="d-flex align-items-center">
                       <div class="ic-avatar ic-avatar-sm ic-avatar-primary me-2">
-                        {{ event.user.first_name.0|default:event.user.username.0|upper }}
+                        {% if event.user %}{{ event.user.first_name.0|default:event.user.username.0|upper }}{% else %}S{% endif %}
                       </div>
                       <div>
-                        <h6 class="mb-0 text-sm">{{ event.user.get_full_name|default:event.user.username|default:"Sistema" }}</h6>
+                        <h6 class="mb-0 text-sm">{% if event.user %}{{ event.user.get_full_name|default:event.user.username }}{% else %}Sistema{% endif %}</h6>
                       </div>
                     </div>
                   </td>
@@ -312,7 +312,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script nonce="{% csp_nonce %}">
+<script>
 document.addEventListener('DOMContentLoaded', function() {
     const labels = {{ chart_labels|safe }};
     const data = {{ chart_data|safe }};

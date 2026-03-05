@@ -180,6 +180,10 @@ class Produto(SoftDeleteModel):
     preco_venda = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(Decimal("0"))]
     )
+    preco_locacao = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(Decimal("0"))],
+        help_text="Valor de locação mensal (LPU)",
+    )
     margem_lucro = models.DecimalField(max_digits=5, decimal_places=2, default=0, help_text="Percentual de margem")
 
     # Controle de Estoque
@@ -227,6 +231,10 @@ class Produto(SoftDeleteModel):
             models.CheckConstraint(
                 condition=Q(preco_venda__gte=0),
                 name="produto_preco_venda_gte_0",
+            ),
+            models.CheckConstraint(
+                condition=Q(preco_locacao__gte=0),
+                name="produto_preco_locacao_gte_0",
             ),
             models.CheckConstraint(
                 condition=Q(estoque_minimo__gte=0),

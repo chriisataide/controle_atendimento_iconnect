@@ -238,6 +238,11 @@ def api_pontos_de_venda_por_cliente(request):
             "estado": p.estado or "",
             "uniorg": p.inscricao_estadual or "",
             "cnpj": p.cnpj or "",
+            "logradouro": p.logradouro or "",
+            "numero": p.numero or "",
+            "complemento": p.complemento or "",
+            "bairro": p.bairro or "",
+            "cep": p.cep or "",
         }
         for p in pdvs
     ]

@@ -89,6 +89,8 @@ def chatbot_feedback(request):
 @role_required('admin', 'gerente', 'supervisor')
 def chatbot_dashboard(request):
     """Dashboard administrativo do chatbot"""
+    import json
+
     if not request.user.is_staff:
         return render(request, "403.html")
 
@@ -113,6 +115,7 @@ def chatbot_dashboard(request):
         "recent_conversations": recent_conversations,
         "low_confidence_messages": low_confidence_messages,
         "kb_count": kb_count,
+        "hourly_activity_json": json.dumps(analytics.get("hourly_activity", [0] * 24)),
     }
 
     return render(request, "dashboard/chatbot_dashboard.html", context)

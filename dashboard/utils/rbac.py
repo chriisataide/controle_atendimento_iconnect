@@ -327,6 +327,7 @@ def rbac_context(request):
             ),
             "is_cliente": role == ROLE_CLIENTE,
             "user_perfil": user_perfil,
+            "unread_notifications_count": _get_unread_count(request.user),
         }
     return {
         "user_role": ROLE_CLIENTE,
@@ -339,4 +340,14 @@ def rbac_context(request):
         "is_visualizador": False,
         "is_cliente": True,
         "user_perfil": None,
+        "unread_notifications_count": 0,
     }
+
+
+def _get_unread_count(user):
+    """Retorna quantidade de notificações não lidas."""
+    try:
+        from dashboard.models import Notification
+        return Notification.objects.filter(user=user, read=False).count()
+    except Exception:
+        return 0

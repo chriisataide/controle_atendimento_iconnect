@@ -25,4 +25,5 @@ urlpatterns = [
     path("api/movimentacoes/", financeiro_views.api_movimentacoes, name="api_movimentacoes"),
     path("api/relatorio/", financeiro_views.api_gerar_relatorio, name="api_gerar_relatorio"),
     path("api/centros-custo/stats/", financeiro_views.api_centros_custo_stats, name="api_centros_custo_stats"),
+    path("api/lpu/<int:categoria_id>/", financeiro_views.api_lpu_por_categoria, name="api_lpu_por_categoria"),
 ]
