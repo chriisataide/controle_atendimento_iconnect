@@ -269,16 +269,24 @@
             {% for interacao in interacoes %}
             <div class="timeline-block mb-3">
               <span class="timeline-step">
-                {% if interacao.eh_publico %}
-                <i class="material-symbols-rounded text-sm" style="color: #06b6d4;">chat</i>
-                {% else %}
+                {% if interacao.tipo == 'status_change' %}
+                <i class="material-symbols-rounded text-sm" style="color: #f59e0b;">swap_horiz</i>
+                {% elif interacao.tipo == 'sistema' %}
+                <i class="material-symbols-rounded text-sm" style="color: #8b5cf6;">settings</i>
+                {% elif interacao.tipo == 'nota_interna' or not interacao.eh_publico %}
                 <i class="material-symbols-rounded text-sm text-warning">lock</i>
+                {% else %}
+                <i class="material-symbols-rounded text-sm" style="color: #06b6d4;">chat</i>
                 {% endif %}
               </span>
               <div class="timeline-content">
                 <h6 class="text-dark text-sm font-weight-bold mb-0">
                   {{ interacao.usuario.get_full_name|default:interacao.usuario.username }}
-                  {% if not interacao.eh_publico %}
+                  {% if interacao.tipo == 'status_change' %}
+                  <span class="badge badge-sm ms-1" style="background: linear-gradient(195deg, #f59e0b, #d97706); color: #fff;">Mudança de Status</span>
+                  {% elif interacao.tipo == 'sistema' %}
+                  <span class="badge badge-sm bg-gradient-dark ms-1">Sistema</span>
+                  {% elif not interacao.eh_publico %}
                   <span class="badge badge-sm bg-gradient-warning ms-1">Interno</span>
                   {% endif %}
                 </h6>

@@ -593,6 +593,10 @@
                                             <span class="text-xs fw-bold" style="color: #334155;">{{ ticket.titulo|truncatechars:30 }}</span>
                                             <br>
                                             <span class="text-xs text-secondary">{{ ticket.numero }} &bull; {{ ticket.cliente.nome|truncatechars:18 }}</span>
+                                            {% if ticket.ponto_de_venda %}
+                                            <br>
+                                            <span class="text-xs" style="color: #06b6d4;"><i class="fa-solid fa-store" style="font-size: 9px;"></i> {{ ticket.ponto_de_venda.inscricao_estadual|default:"—" }} &bull; {{ ticket.ponto_de_venda.nome_fantasia|truncatechars:22 }}</span>
+                                            {% endif %}
                                         </div>
                                     </td>
                                     <td class="text-center">

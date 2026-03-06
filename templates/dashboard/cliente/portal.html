@@ -477,6 +477,7 @@
                                 {% if admin_view %}
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cliente</th>
                                 {% endif %}
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Unidade</th>
                                 <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                                 <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Agente</th>
                                 <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Criado</th>
@@ -499,6 +500,14 @@
                                     <p class="text-sm font-weight-bold mb-0">{{ ticket.cliente.nome|default:"-" }}</p>
                                 </td>
                                 {% endif %}
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <h6 class="mb-0 text-sm">{{ ticket.ponto_de_venda.nome_fantasia|default:"-" }}</h6>
+                                        {% if ticket.ponto_de_venda.inscricao_estadual %}
+                                        <p class="text-xs text-secondary mb-0">{{ ticket.ponto_de_venda.inscricao_estadual }}</p>
+                                        {% endif %}
+                                    </div>
+                                </td>
                                 <td class="align-middle text-center text-sm">
                                     {% if ticket.status == 'aberto' %}
                                         <span class="badge badge-sm bg-gradient-danger">{{ ticket.get_status_display }}</span>
@@ -530,7 +539,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="{% if admin_view %}6{% else %}5{% endif %}" class="text-center py-4">
+                                <td colspan="{% if admin_view %}7{% else %}6{% endif %}" class="text-center py-4">
                                     <i class="material-symbols-rounded text-muted" style="font-size:40px;">inbox</i>
                                     <p class="text-muted mt-2 mb-0">Nenhum ticket encontrado.</p>
                                 </td>

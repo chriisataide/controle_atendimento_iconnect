@@ -24,6 +24,7 @@ from ..models import (
     StatusTicket,
     Ticket,
 )
+from ..models.vigilante import RegistroVigilante
 from ..utils.security import rate_limit
 from ..utils.rbac import role_required
 
@@ -109,7 +110,7 @@ def admin_dashboard(request):
         )
 
     # Tickets recentes com otimização
-    tickets_recentes = Ticket.objects.select_related("cliente", "categoria", "agente", "sla_policy").order_by(
+    tickets_recentes = Ticket.objects.select_related("cliente", "categoria", "agente", "sla_policy", "ponto_de_venda").order_by(
         "-criado_em"
     )[:10]
 
@@ -178,7 +179,7 @@ class DashboardView(TemplateView):
 
         # 3. Performance por agente (UMA query com annotate)
         agent_performance = list(
-            Ticket.objects.filter(status=StatusTicket.RESOLVIDO, agente__is_staff=True)
+            Ticket.objects.filter(status__in=[StatusTicket.RESOLVIDO, StatusTicket.FECHADO], agente__is_staff=True)
             .values("agente__username", "agente__first_name")
             .annotate(count=Count("id"))
             .order_by("-count")[:5]
@@ -194,11 +195,14 @@ class DashboardView(TemplateView):
         for item in heatmap_qs:
             heatmap_lookup[(item["dia"], item["hora"])] = item["count"]
 
+        # ExtractWeekDay: 1=Dom, 2=Seg, 3=Ter, 4=Qua, 5=Qui, 6=Sex, 7=Sab
+        # Ordenamos como Seg(2), Ter(3), Qua(4), Qui(5), Sex(6), Sab(7), Dom(1)
+        day_order = [2, 3, 4, 5, 6, 7, 1]
         heatmap_data = []
-        for dia in range(7):
+        for db_day in day_order:
             linha = []
             for hora in range(0, 24, 2):
-                total = sum(heatmap_lookup.get((dia + 1, h), 0) for h in range(hora, hora + 2))
+                total = sum(heatmap_lookup.get((db_day, h), 0) for h in range(hora, hora + 2))
                 linha.append(total)
             heatmap_data.append(linha)
 
@@ -284,7 +288,7 @@ class DashboardView(TemplateView):
         )
 
         # Tickets recentes com relacionamentos
-        context["tickets_recentes"] = Ticket.objects.select_related("cliente").order_by("-criado_em")[:10]
+        context["tickets_recentes"] = Ticket.objects.select_related("cliente", "ponto_de_venda").order_by("-criado_em")[:10]
 
         # Agentes status (busca real do banco)
         try:
@@ -300,13 +304,13 @@ class DashboardView(TemplateView):
 
         # === SLA Dados dinâmicos ===
         try:
-            from ..models import SLAAlert, SLAPolicy
+            from ..models import SLAHistory, SLAPolicy
 
             context["sla_policies_count"] = SLAPolicy.objects.filter(is_active=True).count()
-            context["sla_alerts_count"] = SLAAlert.objects.filter(resolved_at__isnull=True).count()
+            context["sla_breached_count"] = SLAHistory.objects.filter(status="breached").count()
         except Exception:
             context["sla_policies_count"] = 0
-            context["sla_alerts_count"] = 0
+            context["sla_breached_count"] = 0
 
         # === WhatsApp status dinâmico ===
         try:
@@ -449,6 +453,13 @@ class DashboardView(TemplateView):
             context["agentes_online"] = PerfilAgente.objects.filter(status="online").count()
         except Exception:
             context["agentes_online"] = 0
+
+        # === OS Pendentes (Vigilante - sem horário final) ===
+        context["os_pendentes_vigilante"] = (
+            RegistroVigilante.objects.filter(fim__isnull=True)
+            .select_related("ticket__cliente", "ticket__ponto_de_venda", "criado_por")
+            .order_by("-criado_em")[:15]
+        )
 
         return context
 

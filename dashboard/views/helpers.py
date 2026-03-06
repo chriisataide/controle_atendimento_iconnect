@@ -111,7 +111,7 @@ def get_dashboard_metrics():
         taxa_resolucao = (resolvidos_mes / total_mes * 100) if total_mes > 0 else 0
 
         # Tickets recentes (últimos 10)
-        tickets_recentes = Ticket.objects.select_related("cliente", "categoria", "agente").order_by("-criado_em")[:10]
+        tickets_recentes = Ticket.objects.select_related("cliente", "categoria", "agente", "ponto_de_venda").order_by("-criado_em")[:10]
 
         # Status dos agentes
         agentes_status = PerfilAgente.objects.select_related("user")[:5]
@@ -204,12 +204,15 @@ def get_analytics_data():
         )
 
         # Heatmap de horários (por dia da semana e hora)
+        # week_day: 1=Dom, 2=Seg, 3=Ter, 4=Qua, 5=Qui, 6=Sex, 7=Sab
+        # Exibimos como Seg(2), Ter(3), Qua(4), Qui(5), Sex(6), Sab(7), Dom(1)
+        day_order = [2, 3, 4, 5, 6, 7, 1]
         heatmap_data = []
-        for dia_semana in range(7):  # 0=domingo, 6=sábado
+        for db_day in day_order:
             dia_data = []
             for hora in range(0, 24, 2):  # A cada 2 horas
                 count = Ticket.objects.filter(
-                    criado_em__week_day=dia_semana + 1, criado_em__hour__gte=hora, criado_em__hour__lt=hora + 2
+                    criado_em__week_day=db_day, criado_em__hour__gte=hora, criado_em__hour__lt=hora + 2
                 ).count()
                 dia_data.append(count)
             heatmap_data.append(dia_data)

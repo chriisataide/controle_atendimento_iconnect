@@ -365,7 +365,7 @@ document.addEventListener('DOMContentLoaded', function() {
     new Chart(document.getElementById('statusDistChart'), {
         type: 'doughnut',
         data: {
-            labels: ['No Prazo', 'Alerta', 'Violado', 'Escalado', 'Concluído'],
+            labels: ['No Prazo', 'Alerta', 'Fora do Prazo', 'Escalado', 'Concluído'],
             datasets: [{
                 data: [statusData.on_track, statusData.warning, statusData.breached, statusData.escalated, statusData.completed],
                 backgroundColor: ['#66bb6a', '#ffa726', '#ef5350', '#42a5f5', '#78909c'],

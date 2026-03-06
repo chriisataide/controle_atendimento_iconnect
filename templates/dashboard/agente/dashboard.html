@@ -195,6 +195,9 @@
                       <div class="d-flex flex-column justify-content-center">
                         <h6 class="mb-0 text-sm">#{{ ticket.numero }}</h6>
                         <p class="text-xs text-secondary mb-0">{{ ticket.titulo|truncatechars:40 }}</p>
+                        {% if ticket.ponto_de_venda %}
+                        <p class="text-xs mb-0" style="color: #06b6d4;"><i class="fa-solid fa-store" style="font-size: 9px;"></i> {{ ticket.ponto_de_venda.inscricao_estadual|default:"—" }} &bull; {{ ticket.ponto_de_venda.nome_fantasia|truncatechars:22 }}</p>
+                        {% endif %}
                       </div>
                     </div>
                   </td>

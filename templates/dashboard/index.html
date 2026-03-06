@@ -112,9 +112,9 @@
 .timeline-line { width: 2px; background: #e2e8f0; margin-left: 3px; min-height: 24px; }
 
 /* Heatmap */
-.heatmap-table { font-size: .7rem; }
-.heatmap-table td { padding: 2px 3px; text-align: center; border-radius: 3px; font-weight: 500; }
-.heatmap-table th { font-size: .65rem; color: #94a3b8; font-weight: 600; padding: 2px 3px; }
+.heatmap-table { font-size: .7rem; width: 100%; table-layout: fixed; }
+.heatmap-table td { padding: 4px 2px; text-align: center; border-radius: 3px; font-weight: 500; min-width: 28px; }
+.heatmap-table th { font-size: .62rem; color: #94a3b8; font-weight: 600; padding: 4px 2px; }
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -369,6 +369,9 @@
                 <td>
                   <span class="ticket-num">#{{ ticket.numero|default:ticket.pk }}</span>
                   <div class="ticket-title">{{ ticket.titulo|truncatewords:5 }}</div>
+                  {% if ticket.ponto_de_venda %}
+                  <div class="text-xs" style="color: #06b6d4;"><i class="fa-solid fa-store" style="font-size: 9px;"></i> {{ ticket.ponto_de_venda.inscricao_estadual|default:"—" }} &bull; {{ ticket.ponto_de_venda.nome_fantasia|truncatechars:22 }}</div>
+                  {% endif %}
                 </td>
                 <td>
                   <span class="text-sm">{% if ticket.cliente %}{{ ticket.cliente.nome }}{% else %}--{% endif %}</span>
@@ -445,7 +448,7 @@
     </div>
 
     <!-- Atividade Recente -->
-    <div class="card sidebar-card">
+    <div class="card sidebar-card mb-3">
       <div class="chart-header">
         <h6 style="color:#334155;font-weight:600;margin:0;font-size:.9rem;">Atividade Recente</h6>
       </div>
@@ -471,50 +474,116 @@
         {% endfor %}
       </div>
     </div>
+
+    <!-- Top Agentes -->
+    <div class="card chart-card">
+      <div class="chart-header">
+        <h6 style="color:#334155;font-weight:600;margin:0;font-size:.9rem;">Top Agentes</h6>
+        <span class="text-sub">Tickets fechados</span>
+      </div>
+      <div class="card-body p-3">
+        <canvas id="agentChart" height="200"></canvas>
+      </div>
+    </div>
   </div>
 </div>
 
 <!-- ===== CHARTS ROW 2 ===== -->
 <div class="row px-2">
-  <!-- Top Agentes -->
-  <div class="col-lg-4 col-md-6 mb-3 px-2">
-    <div class="card chart-card h-100">
-      <div class="chart-header">
-        <h6>Top Agentes</h6>
-        <span class="text-sub">Tickets resolvidos</span>
-      </div>
-      <div class="card-body p-3">
-        <canvas id="agentChart" height="220"></canvas>
-      </div>
-    </div>
-  </div>
-
-  <!-- Atendimentos por Hora -->
-  <div class="col-lg-4 col-md-6 mb-3 px-2">
-    <div class="card chart-card h-100">
-      <div class="chart-header">
-        <h6>Atendimentos por Hora</h6>
-        <span class="text-sub">Fluxo di&aacute;rio</span>
-      </div>
-      <div class="card-body p-3">
-        <canvas id="chart-bars" height="220"></canvas>
-      </div>
-    </div>
-  </div>
-
   <!-- Heatmap -->
-  <div class="col-lg-4 col-md-12 mb-3 px-2">
-    <div class="card chart-card h-100">
+  <div class="col-12 mb-3 px-2">
+    <div class="card chart-card">
       <div class="chart-header">
         <h6>Mapa de Calor</h6>
         <span class="text-sub">Demanda por dia/hor&aacute;rio</span>
       </div>
       <div class="card-body p-3">
-        <div id="heatmapContainer" style="height:220px;overflow-x:auto;"></div>
+        <div id="heatmapContainer" style="min-height:200px;overflow-x:auto;"></div>
       </div>
     </div>
   </div>
 </div>
+
+<!-- ===== OS PENDENTES VIGILANTE ===== -->
+{% if os_pendentes_vigilante %}
+<div class="row px-2 mb-3">
+  <div class="col-12 px-2">
+    <div class="card chart-card">
+      <div class="chart-header d-flex justify-content-between align-items-center">
+        <div>
+          <h6 class="mb-0">
+            <i class="material-symbols-rounded text-sm me-1" style="color:#ef4444;">warning</i>
+            OS Pendentes — Hor&aacute;rio Final
+          </h6>
+          <span class="text-sub">Implanta&ccedil;&atilde;o / Pronta Resposta sem registro de t&eacute;rmino</span>
+        </div>
+        <span class="badge" style="background:rgba(239,68,68,0.12);color:#dc2626;font-size:.72rem;font-weight:600;padding:5px 12px;border-radius:8px;">
+          {{ os_pendentes_vigilante|length }} pendente{{ os_pendentes_vigilante|length|pluralize:"s" }}
+        </span>
+      </div>
+      <div class="card-body px-0 pb-2 pt-0">
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ticket</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Unidade</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tipo</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Empresa</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">In&iacute;cio</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tempo Aberto</th>
+                <th class="text-secondary opacity-7"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for reg in os_pendentes_vigilante %}
+              <tr>
+                <td>
+                  <div class="d-flex px-2 py-1">
+                    <div class="d-flex flex-column justify-content-center">
+                      <h6 class="mb-0 text-sm">#{{ reg.ticket.numero }}</h6>
+                      <p class="text-xs text-secondary mb-0 text-truncate" style="max-width:160px;">{{ reg.ticket.titulo|truncatechars:40 }}</p>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <p class="text-xs font-weight-bold mb-0">{{ reg.ticket.ponto_de_venda.nome_fantasia|default:"-" }}</p>
+                  <p class="text-xs text-secondary mb-0">{{ reg.ticket.ponto_de_venda.inscricao_estadual|default:"" }}</p>
+                </td>
+                <td class="align-middle text-center">
+                  {% if reg.tipo == 'implantacao' %}
+                  <span class="badge badge-sm" style="background:linear-gradient(195deg,#7c3aed,#6d28d9);color:#fff;">Implanta&ccedil;&atilde;o</span>
+                  {% elif reg.tipo == 'pronta-resposta' %}
+                  <span class="badge badge-sm" style="background:linear-gradient(195deg,#ea580c,#c2410c);color:#fff;">Pronta Resposta</span>
+                  {% else %}
+                  <span class="badge badge-sm bg-gradient-secondary">{{ reg.get_tipo_display }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="text-xs font-weight-bold">{{ reg.empresa }}</span>
+                  <span class="text-xs text-secondary ms-1">{{ reg.uf }}</span>
+                </td>
+                <td class="align-middle text-center">
+                  <span class="text-xs text-secondary">{{ reg.inicio|date:"d/m/Y H:i" }}</span>
+                </td>
+                <td class="align-middle text-center">
+                  <span class="badge badge-sm" style="background:rgba(239,68,68,0.1);color:#dc2626;font-weight:600;">{{ reg.inicio|timesince }}</span>
+                </td>
+                <td class="align-middle">
+                  <a href="{% url 'dashboard:ticket_detail' reg.ticket.pk %}" class="text-secondary font-weight-bold text-xs" title="Ver ticket">
+                    <i class="material-symbols-rounded">visibility</i>
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 <!-- ===== RESUMO FOOTER ===== -->
 <div class="row px-2 mb-4">
@@ -535,8 +604,8 @@
             <h5 class="mb-0" style="color:#334155;">{{ sla_policies_count|default:"0" }}</h5>
           </div>
           <div class="col-md-3 col-6">
-            <p class="text-xs text-muted mb-0">Alertas SLA</p>
-            <h5 class="mb-0" style="color:{% if sla_alerts_count > 0 %}#ef4444{% else %}#334155{% endif %};">{{ sla_alerts_count|default:"0" }}</h5>
+            <p class="text-xs text-muted mb-0">SLA Fora do Prazo</p>
+            <h5 class="mb-0" style="color:{% if sla_breached_count > 0 %}#ef4444{% else %}#334155{% endif %};">{{ sla_breached_count|default:"0" }}</h5>
           </div>
         </div>
       </div>
@@ -678,35 +747,6 @@ var SL = { slate: '#334155', dark: '#1e293b', cyan: '#06b6d4', cyanL: '#22d3ee',
     });
 })();
 
-// ===== BAR - Atendimentos por Hora =====
-(function() {
-    var ctx = document.getElementById('chart-bars');
-    if (!ctx) return;
-    var data = JSON.parse('{{ atendimentos_por_hora|escapejs }}');
-    if (!Array.isArray(data) || !data.length) return;
-    var max = Math.max.apply(null, data.concat([1]));
-    var colors = data.map(function(v) { return 'rgba(6,182,212,' + (0.25 + (v/max)*0.75) + ')'; });
-    var labels = [];
-    for (var i = 0; i < data.length; i++) labels.push(i + 'h');
-
-    new Chart(ctx.getContext('2d'), {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{ data: data, backgroundColor: colors, borderRadius: 4, borderSkipped: false, maxBarThickness: 14 }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(30,41,59,0.95)', borderColor: SL.cyan, borderWidth: 1, cornerRadius: 8 } },
-            scales: {
-                y: { grid: { drawBorder: false, color: 'rgba(0,0,0,0.04)' }, ticks: { font: { size: 10 }, color: '#94a3b8' } },
-                x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#94a3b8', maxRotation: 0 } }
-            },
-            animation: { duration: 1000, easing: 'easeOutQuart' }
-        }
-    });
-})();
-
 // ===== BAR HORIZONTAL - Top Agentes =====
 (function() {
     var ctx = document.getElementById('agentChart');
@@ -742,7 +782,8 @@ var SL = { slate: '#334155', dark: '#1e293b', cyan: '#06b6d4', cyanL: '#22d3ee',
     var data = JSON.parse('{{ heatmap_data|escapejs }}');
     if (!Array.isArray(data) || !data.length) { c.innerHTML = '<p class="text-center text-muted py-4 text-xs">Dados insuficientes</p>'; return; }
 
-    var hours = ['06','08','10','12','14','16','18','20'];
+    var hours = ['06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','21','22','23'];
+    var hourIndices = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
     var days = ['Seg','Ter','Qua','Qui','Sex','S\u00e1b','Dom'];
     var flat = [];
     for (var d = 0; d < data.length; d++) { if (Array.isArray(data[d])) for (var h = 0; h < data[d].length; h++) flat.push(data[d][h]); }
@@ -753,7 +794,7 @@ var SL = { slate: '#334155', dark: '#1e293b', cyan: '#06b6d4', cyanL: '#22d3ee',
     html += '</tr></thead><tbody>';
     days.forEach(function(day, di) {
         html += '<tr><td class="text-muted" style="font-weight:600;white-space:nowrap;">' + day + '</td>';
-        hours.forEach(function(_, hi) {
+        hourIndices.forEach(function(hi) {
             var v = (data[di] && data[di][hi]) ? data[di][hi] : 0;
             var intensity = v / max;
             var isDark = document.body.classList.contains('dark-version');

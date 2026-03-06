@@ -1,344 +1,520 @@
 {% extends "base.html" %}
 {% load static dashboard_extras %}
 
-{% block title %}Kanban — Tickets | iConnect{% endblock %}
+{% block title %}Kanban — {{ agente_selecionado.get_full_name|default:agente_selecionado.username }} | iConnect{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --kb-bg: #f1f5f9;
+    --kb-card-bg: #ffffff;
+    --kb-card-hover: #f8fafc;
+    --kb-text: #1e293b;
+    --kb-text-sec: #64748b;
+    --kb-text-muted: #94a3b8;
+    --kb-border: #e2e8f0;
+    --kb-radius: 10px;
+    --kb-col-width: 280px;
+}
+body.dark-version {
+    --kb-bg: #0f172a;
+    --kb-card-bg: #1e293b;
+    --kb-card-hover: #334155;
+    --kb-text: #f1f5f9;
+    --kb-text-sec: #94a3b8;
+    --kb-text-muted: #475569;
+    --kb-border: #334155;
+}
+.kb-agent-bar {
+    background: var(--kb-card-bg); border: 1px solid var(--kb-border);
+    border-radius: var(--kb-radius); padding: 14px 20px;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.kb-agent-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700; color: #fff;
+    background: linear-gradient(195deg, #06b6d4, #0891b2);
+    flex-shrink: 0;
+}
+.kb-agent-info h6 { margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--kb-text); }
+.kb-agent-info span { font-size: 0.72rem; color: var(--kb-text-muted); }
+.kb-agent-select {
+    font-size: 0.8rem; border-radius: 8px; border: 1px solid var(--kb-border);
+    background: var(--kb-bg); color: var(--kb-text); height: 36px; padding: 4px 12px;
+    min-width: 200px;
+}
+.kb-agent-select:focus { border-color: #06b6d4; box-shadow: 0 0 0 2px rgba(6,182,212,0.15); }
+.kb-toolbar {
+    background: var(--kb-card-bg); border: 1px solid var(--kb-border);
+    border-radius: var(--kb-radius); padding: 8px 16px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.kb-toolbar .form-select,
+.kb-toolbar .form-control {
+    font-size: 0.78rem; border-radius: 8px; border: 1px solid var(--kb-border);
+    background: var(--kb-bg); color: var(--kb-text); height: 32px; padding: 4px 10px;
+}
+.kb-toolbar .form-select:focus,
+.kb-toolbar .form-control:focus { border-color: #06b6d4; box-shadow: 0 0 0 2px rgba(6,182,212,0.15); }
+.kb-search { position: relative; }
+.kb-search i {
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    font-size: 13px; color: var(--kb-text-muted); pointer-events: none;
+}
+.kb-search input { padding-left: 30px !important; width: 180px; }
+.kb-counter {
+    font-size: 0.72rem; color: var(--kb-text-muted); font-weight: 500;
+    margin-left: auto; white-space: nowrap;
+}
+.kb-board {
+    display: flex; gap: 12px; overflow-x: auto; padding-bottom: 16px;
+    min-height: calc(100vh - 300px); scroll-snap-type: x proximity;
+}
+.kb-board::-webkit-scrollbar { height: 6px; }
+.kb-board::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+.kb-col {
+    flex: 0 0 var(--kb-col-width); min-width: var(--kb-col-width);
+    display: flex; flex-direction: column; scroll-snap-align: start;
+}
+.kb-col-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px; margin-bottom: 8px; border-radius: var(--kb-radius);
+    background: var(--kb-card-bg); border: 1px solid var(--kb-border);
+    position: sticky; top: 0; z-index: 2;
+}
+.kb-col-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.kb-col-title {
+    font-size: 0.8rem; font-weight: 700; color: var(--kb-text);
+    margin: 0 0 0 8px; flex-grow: 1;
+}
+.kb-col-count {
+    font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+    color: #fff; min-width: 22px; text-align: center;
+}
+.kb-cards {
+    flex: 1; display: flex; flex-direction: column; gap: 5px; padding: 5px;
+    border: 2px dashed transparent; border-radius: var(--kb-radius);
+    transition: all 0.2s; min-height: 100px;
+}
+.kb-cards.drag-over { border-color: #06b6d4; background: rgba(6,182,212,0.04); }
+.kb-card {
+    background: var(--kb-card-bg); border: 1px solid var(--kb-border);
+    border-radius: 8px; padding: 9px 11px; cursor: grab;
+    transition: all 0.15s; border-left: 3px solid transparent;
+}
+.kb-card:hover {
+    background: var(--kb-card-hover);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06); transform: translateY(-1px);
+}
+.kb-card:active { cursor: grabbing; }
+.kb-card.dragging { opacity: 0.4; }
+.kb-card[data-priority="critica"] { border-left-color: #ef4444; }
+.kb-card[data-priority="alta"]    { border-left-color: #f59e0b; }
+.kb-card[data-priority="media"]   { border-left-color: #06b6d4; }
+.kb-card[data-priority="baixa"]   { border-left-color: #22c55e; }
+.kb-card-top {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px;
+}
+.kb-card-num {
+    font-size: 0.68rem; font-weight: 700; color: var(--kb-text-muted);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+}
+.kb-card-title {
+    font-size: 0.78rem; font-weight: 600; color: var(--kb-text); line-height: 1.3;
+    margin-bottom: 5px; display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+}
+.kb-card-meta {
+    display: flex; align-items: center; justify-content: space-between; gap: 6px;
+}
+.kb-card-client {
+    font-size: 0.66rem; color: var(--kb-text-sec); display: flex; align-items: center;
+    gap: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.kb-card-pdv {
+    font-size: 0.64rem; color: #06b6d4; display: flex; align-items: center;
+    gap: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.kb-card-time { font-size: 0.6rem; color: var(--kb-text-muted); }
+.kb-load-more { text-align: center; padding: 8px; }
+.kb-load-more a {
+    font-size: 0.7rem; font-weight: 600; color: #06b6d4; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px;
+    border-radius: 6px; background: rgba(6,182,212,0.08); transition: all 0.2s;
+}
+.kb-load-more a:hover { background: rgba(6,182,212,0.15); }
+.kb-empty { text-align: center; padding: 30px 10px; color: var(--kb-text-muted); }
+.kb-empty i { font-size: 28px; opacity: 0.3; }
+.kb-empty p { font-size: 0.72rem; margin: 6px 0 0; }
+.kb-toast {
+    position: fixed; top: 80px; right: 20px; z-index: 9999; min-width: 260px;
+    padding: 12px 16px; border-radius: 10px; font-size: 0.82rem; font-weight: 500;
+    color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    animation: kbSlideIn 0.3s ease; display: flex; align-items: center; gap: 8px;
+}
+.kb-toast.success { background: #22c55e; }
+.kb-toast.error   { background: #ef4444; }
+@keyframes kbSlideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+}
+.kb-sem-agente .kb-col-header { border: 1px dashed #ef4444; background: rgba(239,68,68,0.04); }
+.kb-sem-agente .kb-card { border-left-color: #ef4444 !important; }
+@media (max-width: 768px) {
+    .kb-col { --kb-col-width: 250px; }
+    .kb-search input { width: 130px; }
+    .kb-agent-bar { padding: 10px 14px; gap: 10px; }
+    .kb-agent-avatar { width: 32px; height: 32px; font-size: 13px; }
+}
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-2">
     <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-lg-8 col-md-7">
-            <div class="ms-3">
-                <h3 class="mb-0 h4 font-weight-bolder">Kanban Board</h3>
-                <p class="mb-0 text-sm text-secondary">Arraste tickets entre colunas para atualizar o status</p>
-            </div>
+    <div class="d-flex align-items-center justify-content-between mb-3 px-2">
+        <div>
+            <h5 class="mb-0 font-weight-bolder" style="color: var(--kb-text);">
+                <i class="material-symbols-rounded align-middle me-1" style="font-size:22px;color:#06b6d4;">view_kanban</i>
+                Kanban
+            </h5>
         </div>
-        <div class="col-lg-4 col-md-5 text-end my-auto pe-4">
+        <div class="d-flex gap-2">
             <a href="{% url 'dashboard:ticket_list' %}" class="btn btn-sm btn-outline-secondary mb-0">
                 <i class="material-symbols-rounded text-sm me-1">list</i> Lista
             </a>
-            <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-sm mb-0 ms-1" style="background:linear-gradient(195deg,#06b6d4,#0891b2);color:#fff;">
-                <i class="material-symbols-rounded text-sm me-1">add</i> Novo Card
+            <a href="{% url 'dashboard:ticket_create' %}" class="btn btn-sm mb-0" style="background:linear-gradient(195deg,#06b6d4,#0891b2);color:#fff;">
+                <i class="material-symbols-rounded text-sm me-1">add</i> Novo Ticket
             </a>
         </div>
     </div>
 
-    <!-- Filtros -->
-    <div class="row mb-3">
-        <div class="col-12">
-            <div class="card shadow-sm border-0">
-                <div class="card-body py-2 px-3">
-                    <form method="get" class="d-flex gap-3 align-items-center flex-wrap">
-                        <div class="d-flex align-items-center gap-2">
-                            <label class="text-sm text-muted mb-0">Agente:</label>
-                            <select name="agente" class="form-select form-select-sm" style="width:180px;" onchange="this.form.submit()">
-                                <option value="">Todos</option>
-                                {% for ag in agentes %}
-                                <option value="{{ ag.id }}" {% if request.GET.agente == ag.id|stringformat:"d" %}selected{% endif %}>
-                                    {{ ag.get_full_name|default:ag.username }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <label class="text-sm text-muted mb-0">Sintoma:</label>
-                            <select name="categoria" class="form-select form-select-sm" style="width:180px;" onchange="this.form.submit()">
-                                <option value="">Todas</option>
-                                {% for cat in categorias %}
-                                <option value="{{ cat.id }}" {% if request.GET.categoria == cat.id|stringformat:"d" %}selected{% endif %}>
-                                    {{ cat.nome }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </form>
-                </div>
-            </div>
+    <!-- Barra do agente -->
+    <div class="kb-agent-bar mb-3">
+        <div class="kb-agent-avatar">
+            {{ agente_selecionado.first_name|first|default:agente_selecionado.username|first|upper }}
         </div>
+        <div class="kb-agent-info" style="flex:1;">
+            <h6>{{ agente_selecionado.get_full_name|default:agente_selecionado.username }}</h6>
+            <span>
+                {{ total_tickets }} ticket{{ total_tickets|pluralize:"s" }} atribuído{{ total_tickets|pluralize:"s" }}
+                {% if agente_selecionado == request.user %} — <strong style="color:#06b6d4;">Meus tickets</strong>{% endif %}
+            </span>
+        </div>
+        {% if is_manager %}
+        <form method="get" id="kbAgentForm" class="d-flex align-items-center gap-2">
+            <!-- Manter filtros ao trocar agente -->
+            {% if request.GET.prioridade %}<input type="hidden" name="prioridade" value="{{ request.GET.prioridade }}">{% endif %}
+            {% if request.GET.categoria %}<input type="hidden" name="categoria" value="{{ request.GET.categoria }}">{% endif %}
+            {% if request.GET.q %}<input type="hidden" name="q" value="{{ request.GET.q }}">{% endif %}
+            <select name="agente" class="kb-agent-select" onchange="this.form.submit()">
+                <option value="{{ request.user.id }}">Meus Tickets</option>
+                {% for ag in agentes %}
+                    {% if ag.id != request.user.id %}
+                    <option value="{{ ag.id }}" {% if agente_selecionado.id == ag.id %}selected{% endif %}>
+                        {{ ag.get_full_name|default:ag.username }}
+                    </option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </form>
+        {% endif %}
+    </div>
+
+    <!-- Toolbar filtros -->
+    <div class="kb-toolbar mb-3">
+        <form method="get" class="d-flex gap-2 align-items-center flex-wrap w-100" id="kbFilterForm">
+            <!-- Manter agente ao mudar filtros -->
+            {% if request.GET.agente %}<input type="hidden" name="agente" value="{{ request.GET.agente }}">{% endif %}
+            <div class="kb-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="q" class="form-control" placeholder="Buscar..."
+                       value="{{ request.GET.q|default:'' }}" autocomplete="off">
+            </div>
+            <select name="prioridade" class="form-select" style="width:120px;" onchange="this.form.submit()">
+                <option value="">Prioridade</option>
+                <option value="critica" {% if request.GET.prioridade == "critica" %}selected{% endif %}>Critica</option>
+                <option value="alta" {% if request.GET.prioridade == "alta" %}selected{% endif %}>Alta</option>
+                <option value="media" {% if request.GET.prioridade == "media" %}selected{% endif %}>Media</option>
+                <option value="baixa" {% if request.GET.prioridade == "baixa" %}selected{% endif %}>Baixa</option>
+            </select>
+            <select name="categoria" class="form-select" style="width:150px;" onchange="this.form.submit()">
+                <option value="">Categoria</option>
+                {% for cat in categorias %}
+                <option value="{{ cat.id }}" {% if request.GET.categoria == cat.id|stringformat:"d" %}selected{% endif %}>
+                    {{ cat.nome }}
+                </option>
+                {% endfor %}
+            </select>
+            {% if request.GET.q or request.GET.prioridade or request.GET.categoria %}
+            <a href="{% url 'dashboard:ticket_kanban' %}{% if request.GET.agente %}?agente={{ request.GET.agente }}{% endif %}"
+               class="btn btn-sm btn-outline-secondary mb-0" style="height:32px;font-size:0.72rem;">
+                <i class="fa-solid fa-xmark me-1"></i>Limpar
+            </a>
+            {% endif %}
+            <div class="kb-counter">
+                <i class="fa-solid fa-ticket" style="font-size:10px;margin-right:3px;"></i>
+                {{ total_tickets }} ticket{{ total_tickets|pluralize:"s" }}
+            </div>
+        </form>
     </div>
 
     <!-- Kanban Board -->
-    <div class="kanban-board d-flex gap-3 overflow-auto pb-3" role="region" aria-label="Quadro Kanban de tickets" style="min-height:60vh;">
-        {% for col in columns %}
-        <div class="kanban-column flex-shrink-0" data-status="{{ col.status }}" role="region" aria-label="Coluna {{ col.label }}" style="width:280px;min-width:280px;">
-            <div class="kanban-column-header d-flex align-items-center justify-content-between mb-3 px-2">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-{{ col.color }}" style="min-width:10px;height:10px;padding:0;border-radius:50%;" aria-hidden="true"></span>
-                    <h6 class="mb-0 text-sm font-weight-bold" id="col-{{ col.status }}">{{ col.label }}</h6>
+    <div class="kb-board" role="region" aria-label="Kanban de {{ agente_selecionado.get_full_name }}">
+        {% if sem_agente_col %}
+        <!-- Coluna especial: Sem Agente -->
+        <div class="kb-col kb-sem-agente" data-status="sem_agente">
+            <div class="kb-col-header">
+                <div class="d-flex align-items-center">
+                    <span class="kb-col-dot" style="background:{{ sem_agente_col.color }};"></span>
+                    <span class="kb-col-title">{{ sem_agente_col.label }}</span>
                 </div>
-                <span class="badge bg-{{ col.color }} bg-gradient rounded-pill" aria-live="polite" aria-label="{{ col.count }} tickets">{{ col.count }}</span>
+                <span class="kb-col-count" style="background:{{ sem_agente_col.color }};">{{ sem_agente_col.count }}</span>
+            </div>
+            <div class="kb-cards" data-status="sem_agente" role="list">
+                {% for ticket in sem_agente_col.tickets %}
+                <div class="kb-card" draggable="false" role="listitem"
+                     data-ticket-id="{{ ticket.id }}" data-priority="{{ ticket.prioridade }}"
+                     onclick="window.location='{% url 'dashboard:ticket_detail' ticket.pk %}'">
+                    <div class="kb-card-top">
+                        <span class="kb-card-num">#{{ ticket.numero }}</span>
+                        <span class="kb-card-time">{{ ticket.criado_em|timesince|truncatewords:2 }}</span>
+                    </div>
+                    <div class="kb-card-title">{{ ticket.titulo|truncatechars:60 }}</div>
+                    <div class="kb-card-meta">
+                        <div class="kb-card-client">
+                            <i class="fa-solid fa-user" style="font-size:9px;"></i>
+                            {{ ticket.cliente.nome|default:"—"|truncatechars:18 }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% if sem_agente_col.has_more %}
+                <div class="kb-load-more">
+                    <a href="{% url 'dashboard:ticket_list' %}?sem_agente=1">
+                        <i class="fa-solid fa-arrow-right" style="font-size:10px;"></i>
+                        Ver todos os {{ sem_agente_col.count }}
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% for col in columns %}
+        <div class="kb-col" data-status="{{ col.status }}">
+            <div class="kb-col-header">
+                <div class="d-flex align-items-center">
+                    <span class="kb-col-dot" style="background:{{ col.color }};"></span>
+                    <span class="kb-col-title">{{ col.label }}</span>
+                </div>
+                <span class="kb-col-count" style="background:{{ col.color }};">{{ col.count }}</span>
             </div>
 
-            <div class="kanban-cards d-flex flex-column gap-2"
-                 data-status="{{ col.status }}"
-                 role="list"
-                 aria-labelledby="col-{{ col.status }}"
-                 ondrop="kanbanDrop(event)" ondragover="kanbanDragOver(event)" ondragleave="kanbanDragLeave(event)"
-                 style="min-height:200px;border:2px dashed transparent;border-radius:12px;padding:4px;transition:border-color .2s;">
+            <div class="kb-cards" data-status="{{ col.status }}" role="list"
+                 ondrop="kbDrop(event)" ondragover="kbDragOver(event)" ondragleave="kbDragLeave(event)">
 
                 {% for ticket in col.tickets %}
-                <div class="kanban-card card shadow-sm border-0 mb-0 cursor-pointer"
-                     draggable="true"
-                     role="listitem"
-                     tabindex="0"
-                     aria-roledescription="ticket arrastável"
-                     aria-label="Ticket #{{ ticket.numero }} — {{ ticket.titulo|truncatechars:40 }}"
-                     data-ticket-id="{{ ticket.id }}"
-                     ondragstart="kanbanDragStart(event)"
-                     onclick="window.location='{% url 'dashboard:ticket_detail' ticket.pk %}'"
-                     onkeydown="kanbanCardKeydown(event, '{% url 'dashboard:ticket_detail' ticket.pk %}')">
+                <div class="kb-card" draggable="true" role="listitem"
+                     data-ticket-id="{{ ticket.id }}" data-priority="{{ ticket.prioridade }}"
+                     ondragstart="kbDragStart(event)" ondragend="kbDragEnd(event)"
+                     onclick="window.location='{% url 'dashboard:ticket_detail' ticket.pk %}'">
 
-                    <div class="card-body p-3">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <span class="text-xs text-muted font-weight-bold">#{{ ticket.numero }}</span>
-                            {% priority_badge ticket.prioridade %}
-                        </div>
-
-                        <h6 class="text-sm font-weight-bold mb-2" style="line-height:1.3;">
-                            {{ ticket.titulo|truncatechars:60 }}
-                        </h6>
-
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div class="d-flex align-items-center gap-1">
-                                <i class="material-icons text-muted" style="font-size:14px;">person</i>
-                                <span class="text-xs text-muted">
-                                    {{ ticket.cliente.nome|default:"—"|truncatechars:18 }}
-                                </span>
+                    <div class="kb-card-top">
+                        <span class="kb-card-num">#{{ ticket.numero }}</span>
+                        <span class="kb-card-time">{{ ticket.criado_em|timesince|truncatewords:2 }}</span>
+                    </div>
+                    <div class="kb-card-title">{{ ticket.titulo|truncatechars:60 }}</div>
+                    <div class="kb-card-meta">
+                        <div style="overflow:hidden;flex:1;">
+                            <div class="kb-card-client">
+                                <i class="fa-solid fa-user" style="font-size:9px;"></i>
+                                {{ ticket.cliente.nome|default:"—"|truncatechars:18 }}
                             </div>
-                            {% if ticket.agente %}
-                            <div title="{{ ticket.agente.get_full_name }}" class="avatar-xs rounded-circle d-flex align-items-center justify-content-center"
-                                 style="width:24px;height:24px;background:linear-gradient(195deg,#06b6d4,#0891b2);color:#fff;font-size:10px;font-weight:700;">
-                                {{ ticket.agente.first_name|first|default:ticket.agente.username|first|upper }}
+                            {% if ticket.ponto_de_venda %}
+                            <div class="kb-card-pdv">
+                                <i class="fa-solid fa-store" style="font-size:8px;"></i>
+                                {{ ticket.ponto_de_venda.inscricao_estadual|default:"—" }} - {{ ticket.ponto_de_venda.nome_fantasia|truncatechars:16 }}
                             </div>
                             {% endif %}
                         </div>
-
-                        {% if ticket.sintoma %}
-                        <div class="mt-2">
-                            <span class="badge bg-light text-dark" style="font-size:10px;">{{ ticket.sintoma }}</span>
-                        </div>
-                        {% endif %}
                     </div>
                 </div>
                 {% empty %}
-                <div class="text-center py-4 text-muted">
-                    <i class="material-symbols-rounded" style="font-size:32px;opacity:0.3;">inbox</i>
-                    <p class="text-xs mt-1 mb-0">Nenhum ticket</p>
+                <div class="kb-empty">
+                    <i class="material-symbols-rounded">inbox</i>
+                    <p>Nenhum ticket</p>
                 </div>
                 {% endfor %}
+
+                {% if col.has_more %}
+                <div class="kb-load-more">
+                    <a href="{% url 'dashboard:ticket_list' %}?status={{ col.status }}&agente={{ agente_selecionado.id }}">
+                        <i class="fa-solid fa-arrow-right" style="font-size:10px;"></i>
+                        Ver todos os {{ col.count }}
+                    </a>
+                </div>
+                {% endif %}
             </div>
         </div>
         {% endfor %}
     </div>
 </div>
+{% endblock %}
 
-<!-- Kanban Drag & Drop + Touch + AJAX update -->
+{% block extra_js %}
 <script>
-    let draggedTicketId = null;
-
-    // Keyboard navigation for cards
-    function kanbanCardKeydown(e, url) {
-        if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            window.location = url;
-        }
-    }
-
-    function kanbanDragStart(e) {
-        draggedTicketId = e.target.closest('.kanban-card').dataset.ticketId;
-        e.dataTransfer.effectAllowed = 'move';
-        e.target.closest('.kanban-card').style.opacity = '0.5';
-    }
-
-    function kanbanDragOver(e) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        e.currentTarget.style.borderColor = '#06b6d4';
-        e.currentTarget.style.background = 'rgba(6,182,212,0.05)';
-    }
-
-    function kanbanDragLeave(e) {
-        e.currentTarget.style.borderColor = 'transparent';
-        e.currentTarget.style.background = 'transparent';
-    }
-
-    function kanbanDrop(e) {
-        e.preventDefault();
-        e.currentTarget.style.borderColor = 'transparent';
-        e.currentTarget.style.background = 'transparent';
-
-        const newStatus = e.currentTarget.dataset.status;
-        if (!draggedTicketId || !newStatus) return;
-
-        // Move card visually
-        const card = document.querySelector(`.kanban-card[data-ticket-id="${draggedTicketId}"]`);
-        if (card) {
-            card.style.opacity = '1';
-            e.currentTarget.appendChild(card);
-        }
-
-        // AJAX update
-        fetch(`/api/v1/tickets/${draggedTicketId}/`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken'),
-            },
-            body: JSON.stringify({ status: newStatus }),
-        })
-        .then(r => {
-            if (!r.ok) throw new Error('Falha ao atualizar');
-            showToast(`Ticket movido para ${newStatus.replace('_',' ')}`, 'success');
-            updateColumnCounts();
-        })
-        .catch(err => {
-            console.error(err);
-            showToast('Erro ao atualizar ticket', 'danger');
-            location.reload();
+(function() {
+    var searchInput = document.querySelector('.kb-search input');
+    if (searchInput) {
+        var timer;
+        searchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') { document.getElementById('kbFilterForm').submit(); return; }
+            clearTimeout(timer);
+            timer = setTimeout(function() {
+                if (searchInput.value.length >= 3 || searchInput.value.length === 0)
+                    document.getElementById('kbFilterForm').submit();
+            }, 600);
         });
     }
 
-    function updateColumnCounts() {
-        document.querySelectorAll('.kanban-column').forEach(col => {
-            const cards = col.querySelectorAll('.kanban-card').length;
-            const badge = col.querySelector('.kanban-column-header .badge.rounded-pill');
+    var draggedId = null, draggedEl = null;
+
+    window.kbDragStart = function(e) {
+        draggedEl = e.target.closest('.kb-card');
+        draggedId = draggedEl.dataset.ticketId;
+        draggedEl.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', draggedId);
+    };
+    window.kbDragEnd = function(e) {
+        if (draggedEl) draggedEl.classList.remove('dragging');
+        document.querySelectorAll('.kb-cards').forEach(function(z) { z.classList.remove('drag-over'); });
+    };
+    window.kbDragOver = function(e) {
+        e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+        e.currentTarget.classList.add('drag-over');
+    };
+    window.kbDragLeave = function(e) { e.currentTarget.classList.remove('drag-over'); };
+    window.kbDrop = function(e) {
+        e.preventDefault();
+        e.currentTarget.classList.remove('drag-over');
+        var newStatus = e.currentTarget.dataset.status;
+        if (!draggedId || !newStatus || newStatus === 'sem_agente') return;
+        var card = document.querySelector('.kb-card[data-ticket-id="' + draggedId + '"]');
+        if (!card) return;
+        var emptyMsg = e.currentTarget.querySelector('.kb-empty');
+        if (emptyMsg) emptyMsg.remove();
+        card.classList.remove('dragging');
+        var loadMore = e.currentTarget.querySelector('.kb-load-more');
+        if (loadMore) e.currentTarget.insertBefore(card, loadMore);
+        else e.currentTarget.appendChild(card);
+        updateCounts();
+        moveTicket(draggedId, newStatus);
+    };
+
+    function moveTicket(ticketId, newStatus) {
+        var formData = new FormData();
+        formData.append('status', newStatus);
+        var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+        fetch('/dashboard/tickets/' + ticketId + '/update-status/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken },
+            body: formData,
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.ok && data.redirect) {
+                showToast('Status atualizado! Redirecionando...', 'success');
+                setTimeout(function() { window.location.href = data.redirect; }, 600);
+            } else {
+                showToast('Erro: ' + (data.error || 'Falha'), 'error');
+                setTimeout(function() { location.reload(); }, 1500);
+            }
+        })
+        .catch(function() {
+            showToast('Erro ao atualizar ticket', 'error');
+            setTimeout(function() { location.reload(); }, 1500);
+        });
+    }
+
+    function updateCounts() {
+        document.querySelectorAll('.kb-col:not(.kb-sem-agente)').forEach(function(col) {
+            var cards = col.querySelectorAll('.kb-card').length;
+            var badge = col.querySelector('.kb-col-count');
             if (badge) badge.textContent = cards;
         });
     }
-
     function getCookie(name) {
-        let val = null;
-        document.cookie.split(';').forEach(c => {
+        var val = null;
+        document.cookie.split(';').forEach(function(c) {
             c = c.trim();
             if (c.startsWith(name + '=')) val = decodeURIComponent(c.substring(name.length + 1));
         });
         return val;
     }
-
     function showToast(msg, type) {
-        const toast = document.createElement('div');
-        toast.className = `alert alert-${type} position-fixed shadow-lg`;
-        toast.style.cssText = 'top:80px;right:20px;z-index:9999;min-width:280px;animation:fadeIn .3s;';
-        toast.setAttribute('role', 'alert');
-        toast.setAttribute('aria-live', 'assertive');
-        const icon = document.createElement('i');
-        icon.className = 'material-symbols-rounded align-middle me-2';
-        icon.style.fontSize = '18px';
-        icon.setAttribute('aria-hidden', 'true');
-        icon.textContent = type === 'success' ? 'check_circle' : 'error';
-        const text = document.createTextNode(msg);
-        toast.appendChild(icon);
-        toast.appendChild(text);
+        var toast = document.createElement('div');
+        toast.className = 'kb-toast ' + type;
+        var icon = type === 'success' ? 'check_circle' : 'error';
+        toast.innerHTML = '<i class="material-symbols-rounded" style="font-size:18px;">' + icon + '</i>' + msg;
         document.body.appendChild(toast);
-        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 2500);
+        setTimeout(function() {
+            toast.style.opacity = '0'; toast.style.transform = 'translateX(100%)';
+            toast.style.transition = 'all 0.3s';
+            setTimeout(function() { toast.remove(); }, 300);
+        }, 3000);
     }
 
-    // ===== Touch Drag-and-Drop for Mobile =====
-    (function initTouchDragDrop() {
-        let touchCard = null;
-        let touchClone = null;
-        let touchStartX = 0, touchStartY = 0;
-        let longPressTimer = null;
-        const LONG_PRESS_MS = 400;
-
-        document.querySelectorAll('.kanban-card').forEach(card => {
-            card.addEventListener('touchstart', onTouchStart, {passive: false});
-            card.addEventListener('touchmove', onTouchMove, {passive: false});
-            card.addEventListener('touchend', onTouchEnd, {passive: false});
-        });
-
-        function onTouchStart(e) {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-            const card = e.currentTarget;
-            longPressTimer = setTimeout(() => {
-                touchCard = card;
-                touchCard.style.opacity = '0.5';
-                // Create floating clone
-                touchClone = card.cloneNode(true);
-                touchClone.style.cssText = 'position:fixed;z-index:9999;width:260px;pointer-events:none;transform:rotate(3deg);opacity:0.9;';
-                touchClone.style.left = (touchStartX - 130) + 'px';
-                touchClone.style.top = (touchStartY - 40) + 'px';
-                document.body.appendChild(touchClone);
-                navigator.vibrate && navigator.vibrate(30);
-            }, LONG_PRESS_MS);
+    // Touch Drag (mobile)
+    var touchTimer = null, touchClone = null, touchDragging = false, touchCard = null;
+    document.addEventListener('touchstart', function(e) {
+        var card = e.target.closest('.kb-card');
+        if (!card || !card.getAttribute('draggable') || card.getAttribute('draggable') === 'false') return;
+        touchTimer = setTimeout(function() {
+            touchDragging = true; touchCard = card;
+            draggedId = card.dataset.ticketId;
+            card.classList.add('dragging');
+            touchClone = card.cloneNode(true);
+            touchClone.style.cssText = 'position:fixed;z-index:9999;width:' + card.offsetWidth + 'px;opacity:0.85;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,0.2);transform:rotate(2deg);';
+            document.body.appendChild(touchClone);
+            if (navigator.vibrate) navigator.vibrate(30);
+        }, 400);
+    }, { passive: true });
+    document.addEventListener('touchmove', function(e) {
+        if (!touchDragging) { clearTimeout(touchTimer); return; }
+        e.preventDefault();
+        var touch = e.touches[0];
+        if (touchClone) { touchClone.style.left = (touch.clientX - 40) + 'px'; touchClone.style.top = (touch.clientY - 20) + 'px'; }
+        var el = document.elementFromPoint(touch.clientX, touch.clientY);
+        document.querySelectorAll('.kb-cards').forEach(function(z) { z.classList.remove('drag-over'); });
+        if (el) { var zone = el.closest('.kb-cards'); if (zone && zone.dataset.status !== 'sem_agente') zone.classList.add('drag-over'); }
+    }, { passive: false });
+    document.addEventListener('touchend', function(e) {
+        clearTimeout(touchTimer);
+        if (!touchDragging) return;
+        touchDragging = false;
+        if (touchClone) touchClone.remove();
+        var touch = e.changedTouches[0];
+        var el = document.elementFromPoint(touch.clientX, touch.clientY);
+        document.querySelectorAll('.kb-cards').forEach(function(z) { z.classList.remove('drag-over'); });
+        if (el && touchCard) {
+            var zone = el.closest('.kb-cards');
+            if (zone && zone.dataset.status !== 'sem_agente') {
+                var newStatus = zone.dataset.status;
+                touchCard.classList.remove('dragging');
+                var emptyMsg = zone.querySelector('.kb-empty');
+                if (emptyMsg) emptyMsg.remove();
+                var loadMore = zone.querySelector('.kb-load-more');
+                if (loadMore) zone.insertBefore(touchCard, loadMore);
+                else zone.appendChild(touchCard);
+                updateCounts();
+                moveTicket(draggedId, newStatus);
+            } else { touchCard.classList.remove('dragging'); }
         }
-
-        function onTouchMove(e) {
-            if (!touchCard) {
-                // Check if moved too far before long press
-                const dx = Math.abs(e.touches[0].clientX - touchStartX);
-                const dy = Math.abs(e.touches[0].clientY - touchStartY);
-                if (dx > 10 || dy > 10) clearTimeout(longPressTimer);
-                return;
-            }
-            e.preventDefault();
-            const x = e.touches[0].clientX;
-            const y = e.touches[0].clientY;
-            if (touchClone) {
-                touchClone.style.left = (x - 130) + 'px';
-                touchClone.style.top = (y - 40) + 'px';
-            }
-            // Highlight drop zone
-            document.querySelectorAll('.kanban-cards').forEach(zone => {
-                const rect = zone.getBoundingClientRect();
-                if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-                    zone.style.borderColor = '#06b6d4';
-                    zone.style.background = 'rgba(6,182,212,0.05)';
-                } else {
-                    zone.style.borderColor = 'transparent';
-                    zone.style.background = 'transparent';
-                }
-            });
-        }
-
-        function onTouchEnd(e) {
-            clearTimeout(longPressTimer);
-            if (!touchCard) return;
-            if (touchClone) { touchClone.remove(); touchClone = null; }
-            touchCard.style.opacity = '1';
-
-            const x = e.changedTouches[0].clientX;
-            const y = e.changedTouches[0].clientY;
-            let targetZone = null;
-            document.querySelectorAll('.kanban-cards').forEach(zone => {
-                zone.style.borderColor = 'transparent';
-                zone.style.background = 'transparent';
-                const rect = zone.getBoundingClientRect();
-                if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-                    targetZone = zone;
-                }
-            });
-
-            if (targetZone) {
-                const newStatus = targetZone.dataset.status;
-                const ticketId = touchCard.dataset.ticketId;
-                targetZone.appendChild(touchCard);
-                updateColumnCounts();
-                // AJAX update
-                fetch(`/api/v1/tickets/${ticketId}/`, {
-                    method: 'PATCH',
-                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
-                    body: JSON.stringify({status: newStatus}),
-                })
-                .then(r => { if (!r.ok) throw new Error(); showToast(`Ticket movido para ${newStatus.replace('_',' ')}`, 'success'); })
-                .catch(() => { showToast('Erro ao atualizar ticket', 'danger'); location.reload(); });
-            }
-            touchCard = null;
-        }
-    })();
+        touchCard = null;
+    });
+})();
 </script>
-
-<style>
-    .kanban-card { transition: transform .15s, box-shadow .15s; border-radius: 12px !important; }
-    .kanban-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.1) !important; }
-    .kanban-card[draggable="true"] { cursor: grab; }
-    .kanban-card:active { cursor: grabbing; }
-    .kanban-board::-webkit-scrollbar { height: 8px; }
-    .kanban-board::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
-    .kanban-board::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
-    .dark-version .kanban-card { background: #1e293b !important; border: 1px solid #334155 !important; }
-    .dark-version .kanban-card .badge.bg-light { background: #334155 !important; color: #e2e8f0 !important; }
-    @keyframes fadeIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
-</style>
 {% endblock %}

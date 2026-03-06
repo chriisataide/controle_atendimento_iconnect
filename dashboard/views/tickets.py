@@ -43,49 +43,138 @@ User = get_user_model()
 @method_decorator(login_required, name="dispatch")
 @method_decorator(role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente'), name='dispatch')
 class KanbanBoardView(TemplateView):
-    """Visualização Kanban do pipeline de tickets"""
+    """Visualização Kanban do pipeline de tickets — organizado por agente."""
 
     template_name = "dashboard/tickets/kanban.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        base_qs = Ticket.objects.select_related("cliente", "agente", "categoria").order_by("-prioridade", "-criado_em")
+        user = self.request.user
 
-        # RBAC: filtrar tickets por papel do usuário
-        base_qs = get_role_filtered_tickets(self.request.user, base_qs)
+        # Determinar se é gestor usando o RBAC
+        from ..utils.rbac import get_user_role
+        user_role = get_user_role(user)
+        is_manager = user_role in ("admin", "gerente", "supervisor")
+
+        agentes_qs = User.objects.filter(
+            perfilagente__isnull=False, is_active=True
+        ).select_related("perfilagente").order_by("first_name", "username")
+
+        # Agente selecionado (padrão: o próprio usuário logado)
+        agente_id = self.request.GET.get("agente")
+        if agente_id:
+            try:
+                agente_selecionado = agentes_qs.get(pk=agente_id)
+            except User.DoesNotExist:
+                agente_selecionado = user
+        else:
+            agente_selecionado = user
+
+        # Se não é gerente, forçar o próprio agente
+        if not is_manager:
+            agente_selecionado = user
+
+        # Queryset base: tickets do agente selecionado
+        base_qs = Ticket.objects.select_related(
+            "cliente", "agente", "categoria", "ponto_de_venda"
+        ).filter(agente=agente_selecionado).order_by("-prioridade", "-criado_em")
 
         # Filtros opcionais
-        agente = self.request.GET.get("agente")
-        if agente:
-            base_qs = base_qs.filter(agente_id=agente)
         categoria = self.request.GET.get("categoria")
         if categoria:
             base_qs = base_qs.filter(categoria_id=categoria)
-
-        columns = [
-            ("aberto", "Aberto", "info"),
-            ("em_andamento", "Em Andamento", "warning"),
-            ("pendente", "Pendente", "secondary"),
-            ("resolvido", "Resolvido", "success"),
-            ("fechado", "Fechado", "dark"),
-        ]
-        kanban_columns = []
-        for status_key, label, color in columns:
-            tickets = base_qs.filter(status=status_key)[:50]
-            kanban_columns.append(
-                {
-                    "status": status_key,
-                    "label": label,
-                    "color": color,
-                    "tickets": tickets,
-                    "count": tickets.count() if hasattr(tickets, "count") else len(tickets),
-                }
+        prioridade = self.request.GET.get("prioridade")
+        if prioridade:
+            base_qs = base_qs.filter(prioridade=prioridade)
+        busca = self.request.GET.get("q", "").strip()
+        if busca:
+            base_qs = base_qs.filter(
+                Q(numero__icontains=busca) | Q(titulo__icontains=busca)
             )
 
+        # Também buscar tickets não atribuídos (apenas para gerentes)
+        sem_agente_qs = None
+        if is_manager:
+            sem_agente_qs = Ticket.objects.select_related(
+                "cliente", "agente", "categoria", "ponto_de_venda"
+            ).filter(agente__isnull=True).order_by("-prioridade", "-criado_em")
+            if categoria:
+                sem_agente_qs = sem_agente_qs.filter(categoria_id=categoria)
+            if prioridade:
+                sem_agente_qs = sem_agente_qs.filter(prioridade=prioridade)
+            if busca:
+                sem_agente_qs = sem_agente_qs.filter(
+                    Q(numero__icontains=busca) | Q(titulo__icontains=busca)
+                )
+
+        ITEMS_PER_COL = 25
+        status_cols = [
+            ("aberto", "Aberto", "#06b6d4"),
+            ("em_andamento", "Em Andamento", "#f59e0b"),
+            ("resolvido", "Resolvido", "#22c55e"),
+            ("fechado", "Fechado", "#64748b"),
+        ]
+
+        kanban_columns = []
+        for status_key, label, color in status_cols:
+            col_qs = base_qs.filter(status=status_key)
+            total = col_qs.count()
+            kanban_columns.append({
+                "status": status_key,
+                "label": label,
+                "color": color,
+                "tickets": col_qs[:ITEMS_PER_COL],
+                "count": total,
+                "has_more": total > ITEMS_PER_COL,
+            })
+
+        # Coluna de tickets sem agente
+        sem_agente_col = None
+        if is_manager and sem_agente_qs is not None:
+            total_sa = sem_agente_qs.count()
+            if total_sa > 0:
+                sem_agente_col = {
+                    "status": "sem_agente",
+                    "label": "Sem Agente",
+                    "color": "#ef4444",
+                    "tickets": sem_agente_qs[:ITEMS_PER_COL],
+                    "count": total_sa,
+                    "has_more": total_sa > ITEMS_PER_COL,
+                }
+
         context["columns"] = kanban_columns
-        context["agentes"] = User.objects.filter(perfilagente__isnull=False, is_active=True).order_by("first_name")
+        context["sem_agente_col"] = sem_agente_col
+        context["agentes"] = agentes_qs
+        context["agente_selecionado"] = agente_selecionado
+        context["is_manager"] = is_manager
         context["categorias"] = CategoriaTicket.objects.all()
+        context["total_tickets"] = sum(c["count"] for c in kanban_columns)
         return context
+
+
+@login_required
+@role_required('admin', 'gerente', 'supervisor', 'tecnico_senior', 'agente')
+def kanban_update_status(request, pk):
+    """Atualiza status do ticket via POST (usado pelo drag-drop do Kanban)."""
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=405)
+    ticket = get_object_or_404(Ticket, pk=pk)
+    new_status = request.POST.get("status", "").strip()
+    valid_statuses = [s[0] for s in StatusTicket.choices]
+    if new_status not in valid_statuses:
+        return JsonResponse({"error": "Status inválido"}, status=400)
+    old_status_display = ticket.get_status_display()
+    ticket.status = new_status
+    ticket.save(update_fields=["status"])
+    new_status_display = ticket.get_status_display()
+    InteracaoTicket.objects.create(
+        ticket=ticket,
+        usuario=request.user,
+        mensagem=f'Status alterado de "{old_status_display}" para "{new_status_display}" (via Kanban)',
+        tipo="status_change",
+        eh_publico=False,
+    )
+    return JsonResponse({"ok": True, "redirect": reverse("dashboard:ticket_detail", args=[ticket.pk])})
 
 
 # ========== SISTEMA DE TICKETS ==========
@@ -545,7 +634,7 @@ def add_interaction(request, ticket_id):
 
         if mensagem:
             InteracaoTicket.objects.create(
-                ticket=ticket, usuario=request.user, mensagem=mensagem, eh_publico=eh_publico
+                ticket=ticket, usuario=request.user, mensagem=mensagem, tipo="resposta", eh_publico=eh_publico
             )
             messages.success(request, "Interação adicionada com sucesso!")
         else:
@@ -587,6 +676,7 @@ def update_ticket_status(request):
                 ticket=ticket,
                 usuario=request.user,
                 mensagem=f'Status alterado de "{old_status_display}" para "{new_status_display}"',
+                tipo="status_change",
                 eh_publico=False,
             )
 
@@ -623,7 +713,7 @@ class AgenteDashboardView(TemplateView):
         context["meus_tickets_abertos"] = tickets_agente.filter(status__in=["aberto", "em_andamento"]).count()
         context["meus_tickets_total"] = tickets_agente.count()
         context["tickets_nao_atribuidos"] = Ticket.objects.filter(agente__isnull=True, status="aberto").count()
-        context["tickets_recentes"] = tickets_agente.select_related("cliente", "categoria").order_by("-atualizado_em")[
+        context["tickets_recentes"] = tickets_agente.select_related("cliente", "categoria", "ponto_de_venda").order_by("-atualizado_em")[
             :5
         ]
 
@@ -649,8 +739,53 @@ class AgenteTicketsView(ListView):
     paginate_by = 15
 
     def get_queryset(self):
-        return (
+        qs = (
             Ticket.objects.filter(agente=self.request.user)
-            .select_related("cliente", "categoria")
+            .select_related("cliente", "categoria", "ponto_de_venda")
             .order_by("-atualizado_em")
         )
+
+        # Filtros
+        status_filter = self.request.GET.get("status")
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+
+        prioridade_filter = self.request.GET.get("prioridade")
+        if prioridade_filter:
+            qs = qs.filter(prioridade=prioridade_filter)
+
+        search = self.request.GET.get("search", "").strip()
+        if search:
+            qs = qs.filter(
+                Q(numero__icontains=search)
+                | Q(titulo__icontains=search)
+                | Q(cliente__nome__icontains=search)
+                | Q(sintoma__icontains=search)
+            )
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user_tickets = Ticket.objects.filter(agente=self.request.user)
+
+        context["kpi_total"] = user_tickets.count()
+        context["kpi_abertos"] = user_tickets.filter(status=StatusTicket.ABERTO).count()
+        context["kpi_andamento"] = user_tickets.filter(status=StatusTicket.EM_ANDAMENTO).count()
+        context["kpi_resolvidos"] = user_tickets.filter(
+            status__in=[StatusTicket.RESOLVIDO, StatusTicket.FECHADO]
+        ).count()
+        context["kpi_criticos"] = user_tickets.filter(
+            prioridade=PrioridadeTicket.CRITICA,
+            status__in=[StatusTicket.ABERTO, StatusTicket.EM_ANDAMENTO],
+        ).count()
+
+        context["status_choices"] = StatusTicket.choices
+        context["prioridade_choices"] = PrioridadeTicket.choices
+        context["filters"] = {
+            "status": self.request.GET.get("status", ""),
+            "prioridade": self.request.GET.get("prioridade", ""),
+            "search": self.request.GET.get("search", ""),
+        }
+
+        return context

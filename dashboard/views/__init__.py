@@ -140,6 +140,7 @@ from .tickets import (
     TicketListView,
     TicketUpdateView,
     add_interaction,
+    kanban_update_status,
     update_ticket_status,
 )
 

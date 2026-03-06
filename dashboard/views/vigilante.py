@@ -128,7 +128,7 @@ def vigilante_dashboard(request):
         .order_by("-total")[:10]
     )
     empresas_labels = [e["empresa"] for e in gastos_empresa]
-    empresas_valores = [float(e["total"]) for e in gastos_empresa]
+    empresas_valores = [float(e["total"] or 0) for e in gastos_empresa]
 
     # 3. Distribuição por UF
     gastos_uf = (
@@ -137,7 +137,7 @@ def vigilante_dashboard(request):
         .order_by("-total")
     )
     ufs_labels = [u["uf"] for u in gastos_uf]
-    ufs_valores = [float(u["total"]) for u in gastos_uf]
+    ufs_valores = [float(u["total"] or 0) for u in gastos_uf]
 
     # 4. Tendência diária (últimos 30 dias)
     trinta_dias = hoje - timedelta(days=29)

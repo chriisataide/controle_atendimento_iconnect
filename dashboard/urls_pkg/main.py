@@ -73,7 +73,6 @@ urlpatterns = [
     # SLA Management System
     path("sla/", sla.sla_dashboard, name="sla_dashboard"),
     path("sla/policies/", sla.sla_policies, name="sla_policies"),
-    path("sla/alerts/", sla.sla_alerts, name="sla_alerts"),
     path("sla/reports/", sla.sla_reports, name="sla_reports"),
     # SLA APIs
     path("api/sla/dashboard/", sla.api_sla_dashboard_data, name="api_sla_dashboard_data"),

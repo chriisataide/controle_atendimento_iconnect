@@ -315,24 +315,31 @@ class SLAMonitor:
         try:
             now = timezone.now()
 
-            # Tickets ativos
-            active_tickets = Ticket.objects.filter(
-                status__in=[StatusTicket.ABERTO, StatusTicket.EM_ANDAMENTO, StatusTicket.AGUARDANDO_CLIENTE]
+            # TODOS os SLA Histories (inclui resolvidos/fechados)
+            all_sla_histories = SLAHistory.objects.select_related(
+                "ticket", "ticket__cliente", "ticket__agente", "ticket__categoria", "ticket__ponto_de_venda", "sla_policy"
+            )
+            total_with_sla = all_sla_histories.count()
+
+            # Contagem por status SLA
+            on_track = all_sla_histories.filter(status="on_track").count()
+            warnings = all_sla_histories.filter(status="warning").count()
+            breached = all_sla_histories.filter(status="breached").count()
+            escalated = all_sla_histories.filter(status="escalated").count()
+            completed = all_sla_histories.filter(status="completed").count()
+
+            # Compliance = tickets no prazo (on_track + completed) / total
+            compliant = on_track + completed
+            compliance_rate = (compliant / total_with_sla * 100) if total_with_sla > 0 else 100
+
+            # Tickets ativos (para métricas de urgência)
+            active_sla = all_sla_histories.filter(
+                ticket__status__in=[StatusTicket.ABERTO, StatusTicket.EM_ANDAMENTO, StatusTicket.AGUARDANDO_CLIENTE]
             )
 
-            # SLA Histories correspondentes
-            sla_histories = SLAHistory.objects.filter(ticket__in=active_tickets).select_related("ticket", "sla_policy")
-
-            # Estatísticas
-            total_active = active_tickets.count()
-            on_track = sla_histories.filter(status="on_track").count()
-            warnings = sla_histories.filter(status="warning").count()
-            breached = sla_histories.filter(status="breached").count()
-            escalated = sla_histories.filter(status="escalated").count()
-
-            # Tickets críticos (próximos ao vencimento)
+            # Tickets críticos (próximos ao vencimento ou violados)
             critical_tickets = []
-            for sla_history in sla_histories.filter(status__in=["warning", "breached"]):
+            for sla_history in active_sla.filter(status__in=["warning", "breached"]):
                 metrics = sla_calculator.calculate_sla_metrics(sla_history)
                 critical_tickets.append(
                     {
@@ -347,12 +354,19 @@ class SLAMonitor:
             critical_tickets.sort(key=lambda x: x["time_remaining"] or timedelta(0))
 
             return {
-                "total_active_tickets": total_active,
-                "sla_stats": {"on_track": on_track, "warnings": warnings, "breached": breached, "escalated": escalated},
-                "compliance_rate": (on_track / total_active * 100) if total_active > 0 else 100,
-                "critical_tickets": critical_tickets[:10],  # Top 10 mais críticos
-                "alerts_last_24h": SLAAlert.objects.filter(created_at__gte=now - timedelta(hours=24)).count(),
-                "escalations_last_24h": SLAHistory.objects.filter(escalated_at__gte=now - timedelta(hours=24)).count(),
+                "total_tickets": total_with_sla,
+                "total_active_tickets": active_sla.count(),
+                "sla_stats": {
+                    "on_track": on_track,
+                    "warnings": warnings,
+                    "breached": breached,
+                    "escalated": escalated,
+                    "completed": completed,
+                },
+                "no_prazo_total": on_track + completed,
+                "fora_prazo_total": breached + escalated,
+                "compliance_rate": compliance_rate,
+                "critical_tickets": critical_tickets[:10],
             }
 
         except Exception as e:

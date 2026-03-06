@@ -466,7 +466,7 @@ class SLAHistory(models.Model):
     STATUS_CHOICES = [
         ("on_track", "No Prazo"),
         ("warning", "Alerta"),
-        ("breached", "Violado"),
+        ("breached", "Fora do Prazo"),
         ("escalated", "Escalado"),
         ("completed", "Concluído"),
     ]

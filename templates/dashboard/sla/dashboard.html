@@ -31,8 +31,27 @@
             <div class="card-header p-2 ps-3">
                 <div class="d-flex justify-content-between">
                     <div>
+                        <p class="text-sm mb-0 text-capitalize">Total</p>
+                        <h4 class="mb-0" id="total-count">{{ dashboard_data.total_tickets|default:"0" }}</h4>
+                    </div>
+                    <div class="icon icon-md icon-shape shadow-sm border-radius-lg text-center" style="background: linear-gradient(195deg, #334155, #1e293b);">
+                        <i class="material-symbols-rounded opacity-10 text-white">confirmation_number</i>
+                    </div>
+                </div>
+            </div>
+            <hr class="dark horizontal my-0">
+            <div class="card-footer p-2 ps-3">
+                <p class="mb-0 text-xs">Tickets com SLA</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-4">
+        <div class="card">
+            <div class="card-header p-2 ps-3">
+                <div class="d-flex justify-content-between">
+                    <div>
                         <p class="text-sm mb-0 text-capitalize">No Prazo</p>
-                        <h4 class="mb-0" id="on-track-count">{{ dashboard_data.sla_stats.on_track|default:"0" }}</h4>
+                        <h4 class="mb-0" style="color: #22c55e;" id="no-prazo-count">{{ dashboard_data.no_prazo_total|default:"0" }}</h4>
                     </div>
                     <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
                         <i class="material-symbols-rounded opacity-10">check_circle</i>
@@ -41,7 +60,7 @@
             </div>
             <hr class="dark horizontal my-0">
             <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm">Tickets dentro do SLA</p>
+                <p class="mb-0 text-xs"><span class="text-success font-weight-bold">{{ dashboard_data.sla_stats.completed|default:"0" }}</span> concluídos · <span class="text-success font-weight-bold">{{ dashboard_data.sla_stats.on_track|default:"0" }}</span> ativos</p>
             </div>
         </div>
     </div>
@@ -51,7 +70,7 @@
                 <div class="d-flex justify-content-between">
                     <div>
                         <p class="text-sm mb-0 text-capitalize">Em Alerta</p>
-                        <h4 class="mb-0" id="warning-count">{{ dashboard_data.sla_stats.warnings|default:"0" }}</h4>
+                        <h4 class="mb-0" style="color: #f59e0b;" id="warning-count">{{ dashboard_data.sla_stats.warnings|default:"0" }}</h4>
                     </div>
                     <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
                         <i class="material-symbols-rounded opacity-10">warning</i>
@@ -60,7 +79,7 @@
             </div>
             <hr class="dark horizontal my-0">
             <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm">Próximos ao vencimento</p>
+                <p class="mb-0 text-xs">Próximos ao vencimento</p>
             </div>
         </div>
     </div>
@@ -69,8 +88,8 @@
             <div class="card-header p-2 ps-3">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <p class="text-sm mb-0 text-capitalize">Violados</p>
-                        <h4 class="mb-0" id="breached-count">{{ dashboard_data.sla_stats.breached|default:"0" }}</h4>
+                        <p class="text-sm mb-0 text-capitalize">Fora do Prazo</p>
+                        <h4 class="mb-0" style="color: #ef4444;" id="breached-count">{{ dashboard_data.fora_prazo_total|default:"0" }}</h4>
                     </div>
                     <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
                         <i class="material-symbols-rounded opacity-10">error</i>
@@ -79,26 +98,7 @@
             </div>
             <hr class="dark horizontal my-0">
             <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm">SLA descumprido</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-sm-6 mb-4">
-        <div class="card">
-            <div class="card-header p-2 ps-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-sm mb-0 text-capitalize">Escalados</p>
-                        <h4 class="mb-0" id="escalated-count">{{ dashboard_data.sla_stats.escalated|default:"0" }}</h4>
-                    </div>
-                    <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">trending_up</i>
-                    </div>
-                </div>
-            </div>
-            <hr class="dark horizontal my-0">
-            <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm">Escalonados para supervisor</p>
+                <p class="mb-0 text-xs"><span class="text-danger font-weight-bold">{{ dashboard_data.sla_stats.breached|default:"0" }}</span> expirados · <span class="text-danger font-weight-bold">{{ dashboard_data.sla_stats.escalated|default:"0" }}</span> escalados</p>
             </div>
         </div>
     </div>
@@ -116,60 +116,51 @@
             </div>
             <div class="card-body">
                 <div class="row align-items-center">
-                    <div class="col-md-4 text-center">
+                    <div class="col-md-5 text-center">
                         <div class="position-relative d-inline-block">
-                            <canvas id="complianceGauge" width="160" height="160"></canvas>
+                            <canvas id="complianceGauge" width="180" height="180"></canvas>
                             <div class="position-absolute top-50 start-50 translate-middle">
                                 <h3 class="mb-0 font-weight-bolder" id="compliance-rate">{{ dashboard_data.compliance_rate|floatformat:1|default:"0" }}%</h3>
                                 <small class="text-muted">Compliance</small>
                             </div>
                         </div>
+                        <div class="d-flex justify-content-center gap-3 mt-2">
+                            <span class="text-xs"><i class="fas fa-circle me-1" style="color:#22c55e;"></i>No Prazo</span>
+                            <span class="text-xs"><i class="fas fa-circle me-1" style="color:#ef4444;"></i>Fora do Prazo</span>
+                        </div>
                     </div>
-                    <div class="col-md-8">
-                        <div class="row">
-                            <div class="col-6 mb-3">
-                                <div class="d-flex align-items-center">
-                                    <div class="icon icon-sm icon-shape bg-gradient-dark shadow text-center border-radius-md me-2">
-                                        <i class="material-symbols-rounded text-white opacity-10" style="font-size:14px;">confirmation_number</i>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs text-muted mb-0">Tickets Ativos</p>
-                                        <h6 class="mb-0" id="total-active">{{ dashboard_data.total_active_tickets|default:"0" }}</h6>
-                                    </div>
-                                </div>
+                    <div class="col-md-7">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="text-sm">No Prazo</span>
+                                <span class="text-sm font-weight-bold" style="color:#22c55e;" id="gauge-no-prazo">{{ dashboard_data.no_prazo_total|default:"0" }} de {{ dashboard_data.total_tickets|default:"0" }}</span>
                             </div>
-                            <div class="col-6 mb-3">
-                                <div class="d-flex align-items-center">
-                                    <div class="icon icon-sm icon-shape bg-gradient-warning shadow text-center border-radius-md me-2">
-                                        <i class="material-symbols-rounded text-white opacity-10" style="font-size:14px;">notifications</i>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs text-muted mb-0">Alertas (24h)</p>
-                                        <h6 class="mb-0" id="alerts-24h">{{ dashboard_data.alerts_last_24h|default:"0" }}</h6>
-                                    </div>
-                                </div>
+                            <div class="progress" style="height:8px;">
+                                <div class="progress-bar" style="width:{{ dashboard_data.compliance_rate|floatformat:0|default:'0' }}%; background-color:#22c55e;" id="gauge-bar-prazo"></div>
                             </div>
-                            <div class="col-6">
-                                <div class="d-flex align-items-center">
-                                    <div class="icon icon-sm icon-shape bg-gradient-primary shadow text-center border-radius-md me-2">
-                                        <i class="material-symbols-rounded text-white opacity-10" style="font-size:14px;">call_made</i>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs text-muted mb-0">Escalações (24h)</p>
-                                        <h6 class="mb-0" id="escalations-24h">{{ dashboard_data.escalations_last_24h|default:"0" }}</h6>
-                                    </div>
-                                </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="text-sm">Fora do Prazo</span>
+                                <span class="text-sm font-weight-bold" style="color:#ef4444;" id="gauge-fora-prazo">{{ dashboard_data.fora_prazo_total|default:"0" }} de {{ dashboard_data.total_tickets|default:"0" }}</span>
                             </div>
-                            <div class="col-6">
-                                <div class="d-flex align-items-center">
-                                    <div class="icon icon-sm icon-shape bg-gradient-danger shadow text-center border-radius-md me-2">
-                                        <i class="material-symbols-rounded text-white opacity-10" style="font-size:14px;">gpp_bad</i>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs text-muted mb-0">Tickets Críticos</p>
-                                        <h6 class="mb-0" id="critical-count">{{ dashboard_data.critical_tickets|length|default:"0" }}</h6>
-                                    </div>
-                                </div>
+                            <div class="progress" style="height:8px;">
+                                {% widthratio dashboard_data.fora_prazo_total dashboard_data.total_tickets 100 as fora_pct %}
+                                <div class="progress-bar" style="width:{{ fora_pct|default:'0' }}%; background-color:#ef4444;" id="gauge-bar-fora"></div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between border-top pt-2 mt-1">
+                            <div class="text-center">
+                                <p class="text-xs text-muted mb-0">Ativos</p>
+                                <h6 class="mb-0" id="total-active">{{ dashboard_data.total_active_tickets|default:"0" }}</h6>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xs text-muted mb-0">Críticos</p>
+                                <h6 class="mb-0 text-danger" id="critical-count">{{ dashboard_data.critical_tickets|length|default:"0" }}</h6>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xs text-muted mb-0">Em Alerta</p>
+                                <h6 class="mb-0 text-warning" id="gauge-alertas">{{ dashboard_data.sla_stats.warnings|default:"0" }}</h6>
                             </div>
                         </div>
                     </div>
@@ -189,8 +180,8 @@
                 <a href="{% url 'dashboard:sla_policies' %}" class="btn bg-gradient-dark btn-sm w-100 mb-2">
                     <i class="material-symbols-rounded text-sm me-1">policy</i> Gerenciar Políticas
                 </a>
-                <a href="{% url 'dashboard:sla_alerts' %}" class="btn bg-gradient-warning btn-sm w-100 mb-2">
-                    <i class="material-symbols-rounded text-sm me-1">notifications_active</i> Ver Alertas
+                <a href="{% url 'dashboard:notifications' %}?search=SLA" class="btn bg-gradient-warning btn-sm w-100 mb-2">
+                    <i class="material-symbols-rounded text-sm me-1">notifications_active</i> Ver Notificações SLA
                 </a>
                 <a href="{% url 'dashboard:sla_reports' %}" class="btn bg-gradient-info btn-sm w-100 mb-2">
                     <i class="material-symbols-rounded text-sm me-1">analytics</i> Relatórios SLA
@@ -211,7 +202,9 @@
                 <h6 class="mb-0">Distribuição de Status SLA</h6>
             </div>
             <div class="card-body">
-                <canvas id="slaDistributionChart" height="250"></canvas>
+                <div style="position: relative; height: 250px;">
+                    <canvas id="slaDistributionChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -289,7 +282,7 @@
                         <thead>
                             <tr>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ticket</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cliente</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Unidade</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Agente</th>
                                 <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status SLA</th>
                                 <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">% Decorrido</th>
@@ -307,15 +300,22 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td><span class="text-xs">{{ td.ticket.cliente.nome|default:"-"|truncatechars:20 }}</span></td>
+                                <td>
+                                    {% if td.ticket.ponto_de_venda %}
+                                    <p class="text-xs font-weight-bold mb-0">{{ td.ticket.ponto_de_venda.nome_fantasia|default:"—"|truncatechars:25 }}</p>
+                                    <p class="text-xs text-secondary mb-0">{{ td.ticket.ponto_de_venda.inscricao_estadual|default:"—" }}</p>
+                                    {% else %}
+                                    <span class="text-xs text-secondary">—</span>
+                                    {% endif %}
+                                </td>
                                 <td>
                                     <span class="text-xs">
-                                        {% if td.ticket.agente %}{{ td.ticket.agente.get_full_name|truncatechars:18 }}{% else %}<span class="text-warning">Não atribuído</span>{% endif %}
+                                        {% if td.ticket.agente %}{{ td.ticket.agente.get_full_name|default:td.ticket.agente.username|truncatechars:18 }}{% else %}<span class="text-warning">Não atribuído</span>{% endif %}
                                     </span>
                                 </td>
                                 <td class="text-center">
                                     {% if td.sla_history.status == 'breached' %}
-                                    <span class="badge bg-gradient-danger">Violado</span>
+                                    <span class="badge bg-gradient-danger">Fora do Prazo</span>
                                     {% elif td.sla_history.status == 'warning' %}
                                     <span class="badge bg-gradient-warning">Alerta</span>
                                     {% elif td.sla_history.status == 'escalated' %}
@@ -381,15 +381,17 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
+{% localize off %}
 document.addEventListener('DOMContentLoaded', function() {
     // --- Compliance Gauge (Doughnut) ---
     const compRate = parseFloat("{{ dashboard_data.compliance_rate|floatformat:1|default:'0' }}".replace(',', '.'));
     new Chart(document.getElementById('complianceGauge'), {
         type: 'doughnut',
         data: {
+            labels: ['No Prazo', 'Fora do Prazo'],
             datasets: [{
                 data: [compRate, 100 - compRate],
-                backgroundColor: ['#06b6d4', '#e2e8f0'],
+                backgroundColor: ['#22c55e', '#ef4444'],
                 borderWidth: 0
             }]
         },
@@ -401,21 +403,19 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // --- Distribution Bar Chart ---
+    const noPrazo = {{ dashboard_data.no_prazo_total|default:'0' }};
+    const emAlerta = {{ dashboard_data.sla_stats.warnings|default:'0' }};
+    const foraPrazo = {{ dashboard_data.fora_prazo_total|default:'0' }};
     new Chart(document.getElementById('slaDistributionChart'), {
         type: 'bar',
         data: {
-            labels: ['No Prazo', 'Alerta', 'Violado', 'Escalado'],
+            labels: ['No Prazo', 'Em Alerta', 'Fora do Prazo'],
             datasets: [{
                 label: 'Tickets',
-                data: [
-                    parseInt("{{ dashboard_data.sla_stats.on_track|default:'0' }}"),
-                    parseInt("{{ dashboard_data.sla_stats.warnings|default:'0' }}"),
-                    parseInt("{{ dashboard_data.sla_stats.breached|default:'0' }}"),
-                    parseInt("{{ dashboard_data.sla_stats.escalated|default:'0' }}")
-                ],
-                backgroundColor: ['#66bb6a', '#ffa726', '#ef5350', '#42a5f5'],
+                data: [noPrazo, emAlerta, foraPrazo],
+                backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'],
                 borderRadius: 6,
-                maxBarThickness: 40
+                maxBarThickness: 50
             }]
         },
         options: {
@@ -441,15 +441,16 @@ function refreshSLAData() {
         .then(data => {
             if (data.success) {
                 const d = data.data;
-                document.getElementById('on-track-count').textContent = d.sla_stats?.on_track || 0;
+                document.getElementById('total-count').textContent = d.total_tickets || 0;
+                document.getElementById('no-prazo-count').textContent = d.no_prazo_total || 0;
                 document.getElementById('warning-count').textContent = d.sla_stats?.warnings || 0;
-                document.getElementById('breached-count').textContent = d.sla_stats?.breached || 0;
-                document.getElementById('escalated-count').textContent = d.sla_stats?.escalated || 0;
+                document.getElementById('breached-count').textContent = d.fora_prazo_total || 0;
                 document.getElementById('compliance-rate').textContent = (d.compliance_rate || 0).toFixed(1) + '%';
                 document.getElementById('total-active').textContent = d.total_active_tickets || 0;
-                document.getElementById('alerts-24h').textContent = d.alerts_last_24h || 0;
-                document.getElementById('escalations-24h').textContent = d.escalations_last_24h || 0;
                 document.getElementById('critical-count').textContent = (d.critical_tickets || []).length;
+                document.getElementById('gauge-no-prazo').textContent = (d.no_prazo_total || 0) + ' de ' + (d.total_tickets || 0);
+                document.getElementById('gauge-fora-prazo').textContent = (d.fora_prazo_total || 0) + ' de ' + (d.total_tickets || 0);
+                document.getElementById('gauge-alertas').textContent = d.sla_stats?.warnings || 0;
             }
         }).catch(e => console.error('Erro ao atualizar SLA:', e));
 }
@@ -465,7 +466,7 @@ function runSLAMonitor() {
     .then(data => {
         if (data.success) {
             const s = data.stats;
-            alert(`Monitor executado!\n${s.tickets_monitored} tickets monitorados\n${s.warnings_sent} alertas enviados\n${s.breaches_detected} violações detectadas\n${s.escalations_made} escalações`);
+            alert(`Monitor executado!\n${s.tickets_monitored} tickets monitorados\n${s.warnings_sent} alertas enviados\n${s.breaches_detected} fora do prazo detectados\n${s.escalations_made} escalações`);
             refreshSLAData();
         } else {
             alert('Erro: ' + (data.error || 'Erro desconhecido'));
@@ -532,5 +533,6 @@ function viewSLADetails(ticketId) {
             content.innerHTML = '<div class="text-center py-4"><p class="text-sm text-danger">Erro ao carregar dados</p></div>';
         });
 }
+{% endlocalize %}
 </script>
 {% endblock %}

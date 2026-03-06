@@ -77,7 +77,7 @@ class ClientePortalView(TemplateView):
             context["tickets_em_andamento"] = all_tickets.filter(status="em_andamento").count()
             context["tickets_resolvidos"] = all_tickets.filter(status="resolvido").count()
             context["tickets_fechados"] = all_tickets.filter(status="fechado").count()
-            context["tickets_recentes"] = all_tickets.order_by("-criado_em")[:10]
+            context["tickets_recentes"] = all_tickets.select_related("cliente", "agente", "ponto_de_venda").order_by("-criado_em")[:10]
             context["tickets_alta_prioridade"] = all_tickets.filter(prioridade="alta").count()
             context["tickets_media_prioridade"] = all_tickets.filter(prioridade="media").count()
             context["tickets_baixa_prioridade"] = all_tickets.filter(prioridade="baixa").count()
@@ -106,7 +106,7 @@ class ClientePortalView(TemplateView):
                 context["tickets_em_andamento"] = tickets_cliente.filter(status="em_andamento").count()
                 context["tickets_resolvidos"] = tickets_cliente.filter(status="resolvido").count()
                 context["tickets_fechados"] = tickets_cliente.filter(status="fechado").count()
-                context["tickets_recentes"] = tickets_cliente.order_by("-criado_em")[:5]
+                context["tickets_recentes"] = tickets_cliente.select_related("agente", "ponto_de_venda").order_by("-criado_em")[:5]
                 context["tickets_alta_prioridade"] = tickets_cliente.filter(prioridade="alta").count()
                 context["tickets_media_prioridade"] = tickets_cliente.filter(prioridade="media").count()
                 context["tickets_baixa_prioridade"] = tickets_cliente.filter(prioridade="baixa").count()

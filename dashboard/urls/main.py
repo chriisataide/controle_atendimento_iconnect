@@ -18,6 +18,7 @@ urlpatterns = [
     # Sistema de Tickets
     path("tickets/", views.TicketListView.as_view(), name="ticket_list"),
     path("tickets/kanban/", views.KanbanBoardView.as_view(), name="ticket_kanban"),
+    path("tickets/<int:pk>/update-status/", views.kanban_update_status, name="ticket_update_status"),
     path("tickets/novo/", views.TicketCreateView.as_view(), name="ticket_create"),
     path("tickets/<int:pk>/", views.TicketDetailView.as_view(), name="ticket_detail"),
     path("tickets/<int:pk>/editar/", views.TicketUpdateView.as_view(), name="ticket_update"),
@@ -82,7 +83,6 @@ urlpatterns = [
     # SLA Management System
     path("sla/", sla.sla_dashboard, name="sla_dashboard"),
     path("sla/policies/", sla.sla_policies, name="sla_policies"),
-    path("sla/alerts/", sla.sla_alerts, name="sla_alerts"),
     path("sla/reports/", sla.sla_reports, name="sla_reports"),
     # SLA APIs
     path("api/sla/dashboard/", sla.api_sla_dashboard_data, name="api_sla_dashboard_data"),

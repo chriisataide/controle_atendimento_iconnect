@@ -55,6 +55,8 @@ class RegistroVigilante(models.Model):
 
     @property
     def duracao_formatada(self):
+        if self.duracao_minutos is None:
+            return "—"
         h = int(self.duracao_minutos // 60)
         m = int(self.duracao_minutos % 60)
         return f"{h}h {m}min"

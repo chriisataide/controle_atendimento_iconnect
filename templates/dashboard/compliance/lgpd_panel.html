@@ -238,7 +238,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script nonce="{% csp_nonce %}">
+<script>
 function processRequest(pk, action) {
     const actionLabel = action === 'approve' ? 'aprovar' : 'rejeitar';
     if (!confirm(`Deseja ${actionLabel} esta solicitação LGPD?`)) return;

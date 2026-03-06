@@ -1369,15 +1369,6 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {% if 'sla_alerts' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:sla_alerts' %}" onclick="event.stopPropagation()">
-                                    <i class="material-icons">warning_amber</i>
-                                    <span class="nav-link-text ms-1">Alertas SLA</span>
-                                    {% if sla_alerts_count and sla_alerts_count > 0 %}
-                                    <span class="sb-badge sb-badge-red ms-auto">{{ sla_alerts_count }}</span>
-                                    {% endif %}
-                                </a>
-                            </li>
-                            <li class="nav-item">
                                 <a class="nav-link {% if 'sla_reports' in request.resolver_match.url_name %}active{% else %}text-dark{% endif %}" href="{% url 'dashboard:sla_reports' %}" onclick="event.stopPropagation()">
                                     <i class="material-icons">analytics</i>
                                     <span class="nav-link-text ms-1">Relatórios SLA</span>
