@@ -6,7 +6,7 @@ import logging
 from decimal import Decimal
 
 from django.contrib.auth.decorators import login_required
-from django.db.models import Avg, Count, DecimalField, ExpressionWrapper, F, Sum
+from django.db.models import Avg, Count, DecimalField, ExpressionWrapper, F, Q as models_Q, Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
@@ -23,7 +23,17 @@ def api_produtos_ativos(request):
     """API para listar produtos ativos para seleção"""
     from ..models import Produto
 
+    categoria_id = request.GET.get("categoria")
+    query = request.GET.get("q", "")
+
     produtos = Produto.objects.filter(status="ativo").select_related("categoria", "unidade_medida").order_by("nome")
+
+    if categoria_id:
+        produtos = produtos.filter(categoria_id=categoria_id)
+    if query and len(query) >= 2:
+        produtos = produtos.filter(
+            models_Q(nome__icontains=query) | models_Q(codigo__icontains=query)
+        )
 
     data = []
     for produto in produtos:
@@ -37,6 +47,7 @@ def api_produtos_ativos(request):
                 "preco_locacao": float(produto.preco_locacao),
                 "unidade_medida": produto.unidade_medida.sigla if produto.unidade_medida else "un",
                 "categoria": produto.categoria.nome if produto.categoria else "",
+                "categoria_id": produto.categoria_id,
                 "estoque_atual": float(produto.estoque_atual) if produto.controla_estoque else None,
             }
         )

@@ -502,7 +502,8 @@ def export_tickets_excel(request):
     ws.title = "Tickets"
 
     headers = [
-        "Número", "Empresa", "Ponto de Venda", "Status", "Prioridade",
+        "Número", "Empresa", "Ponto de Venda", "UNIORG / Cód. PdV",
+        "Status", "Prioridade",
         "Tipo", "Sintoma", "Subtipo", "Agente",
         "Criado em", "Resolvido em",
     ]
@@ -520,6 +521,7 @@ def export_tickets_excel(request):
             t.numero,
             t.cliente.nome if t.cliente else "",
             str(t.ponto_de_venda) if t.ponto_de_venda else "",
+            t.ponto_de_venda.uniorg if t.ponto_de_venda else "",
             t.get_status_display() if hasattr(t, "get_status_display") else t.status,
             t.get_prioridade_display() if hasattr(t, "get_prioridade_display") else t.prioridade,
             t.get_tipo_display() if hasattr(t, "get_tipo_display") else t.tipo,

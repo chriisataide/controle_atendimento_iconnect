@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load l10n %}
 
 {% block title %}Sala de Monitoramento - iConnect{% endblock %}
 {% block page_title %}Sala de Monitoramento{% endblock %}
@@ -380,6 +381,7 @@
 {% endblock %}
 
 {% block extra_js %}
+{% localize off %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   var mesesLabels = {{ meses_labels|safe }};
@@ -638,4 +640,5 @@ function clearFilters() {
   window.location.search = '';
 }
 </script>
+{% endlocalize %}
 {% endblock %}

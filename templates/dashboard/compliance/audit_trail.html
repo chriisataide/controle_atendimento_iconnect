@@ -1,63 +1,208 @@
 {% extends 'base.html' %}
 {% load static dashboard_extras %}
+{% load l10n %}
 
 {% block title %}Trilha de Auditoria — iConnect{% endblock %}
 {% block page_title %}Trilha de Auditoria{% endblock %}
 {% block breadcrumb_title %}Compliance{% endblock %}
 
+{% block extra_css %}
+<style>
+  /* ─── Audit Dashboard ─── */
+  .aud-header { margin-bottom: 1.5rem; }
+  .aud-header h3 { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin: 0; }
+  .aud-header p { font-size: .82rem; color: #64748b; margin: .2rem 0 0; }
+
+  .aud-kpi { border: none; border-radius: 12px; overflow: hidden; transition: transform .15s, box-shadow .15s; }
+  .aud-kpi:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(15,23,42,.12); }
+  .aud-kpi .kpi-body { padding: 1rem 1.15rem; display: flex; justify-content: space-between; align-items: flex-start; }
+  .aud-kpi .kpi-label { font-size: .72rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; margin-bottom: .2rem; }
+  .aud-kpi .kpi-value { font-size: 1.6rem; font-weight: 800; color: #1e293b; line-height: 1.1; }
+  .aud-kpi .kpi-sub { font-size: .68rem; color: #94a3b8; margin-top: .25rem; }
+  .aud-kpi .kpi-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .aud-kpi .kpi-icon i { color: #fff; font-size: 1.3rem; }
+
+  .aud-card { border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+  .aud-card-header {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    border-radius: 10px;
+    padding: .75rem 1rem;
+    margin: -1rem 1rem 0;
+    position: relative; z-index: 2;
+    box-shadow: 0 4px 12px rgba(15,23,42,.25);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .aud-card-header h6 { color: #fff; margin: 0; font-size: .82rem; font-weight: 600; }
+  .aud-card-header .sub { color: rgba(255,255,255,.5); font-size: .68rem; }
+
+  .aud-filters {
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
+    padding: .65rem .85rem; margin-bottom: 1rem;
+    display: flex; gap: .6rem; align-items: flex-end; flex-wrap: wrap;
+  }
+  .aud-filters label { font-size: .62rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: .4px; display: block; margin-bottom: .1rem; }
+  .aud-filters select, .aud-filters input[type="text"] {
+    border: 1px solid #e2e8f0; border-radius: 8px; padding: .3rem .6rem;
+    font-size: .78rem; color: #334155; background: #fff; outline: none;
+    min-width: 120px;
+  }
+  .aud-filters select:focus, .aud-filters input:focus { border-color: #06b6d4; box-shadow: 0 0 0 2px rgba(6,182,212,.12); }
+  .aud-search-wrap { position: relative; }
+  .aud-search-wrap i { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 16px; color: #94a3b8; }
+  .aud-search-wrap input { padding-left: 30px; min-width: 200px; }
+
+  .aud-chip {
+    display: inline-flex; align-items: center; gap: .2rem;
+    padding: .15rem .5rem; border-radius: 6px;
+    font-size: .65rem; font-weight: 600;
+  }
+  .aud-chip-active { background: #0f172a; color: #fff; }
+  .aud-chip-active a { color: rgba(255,255,255,.7); text-decoration: none; font-size: .75rem; }
+  .aud-chip-active a:hover { color: #fff; }
+  .aud-chip-clear { background: #f1f5f9; color: #64748b; cursor: pointer; text-decoration: none; }
+  .aud-chip-clear:hover { background: #e2e8f0; color: #334155; }
+
+  /* Severity badges */
+  .aud-sev { display: inline-flex; align-items: center; gap: .2rem; padding: .12rem .45rem; border-radius: 4px; font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; }
+  .aud-sev-low { background: #f0fdf4; color: #166534; }
+  .aud-sev-medium { background: #fef3c7; color: #92400e; }
+  .aud-sev-high { background: #fee2e2; color: #991b1b; }
+  .aud-sev-critical { background: #7f1d1d; color: #fecaca; }
+
+  /* Event type badges */
+  .aud-type { display: inline-flex; align-items: center; gap: .2rem; padding: .15rem .45rem; border-radius: 5px; font-size: .62rem; font-weight: 600; }
+  .aud-type-login { background: #dbeafe; color: #1e40af; }
+  .aud-type-logout { background: #e0e7ff; color: #3730a3; }
+  .aud-type-create { background: #dcfce7; color: #166534; }
+  .aud-type-update { background: #fef3c7; color: #92400e; }
+  .aud-type-delete { background: #fee2e2; color: #991b1b; }
+  .aud-type-view { background: #f0fdf4; color: #14532d; }
+  .aud-type-export { background: #f3e8ff; color: #6b21a8; }
+  .aud-type-import { background: #ecfdf5; color: #065f46; }
+  .aud-type-permission_change { background: #fce7f3; color: #9d174d; }
+  .aud-type-security_event { background: #7f1d1d; color: #fecaca; }
+  .aud-type-system_event { background: #f1f5f9; color: #475569; }
+
+  .aud-table th {
+    font-size: .65rem; text-transform: uppercase; color: #94a3b8; font-weight: 700;
+    letter-spacing: .5px; border-bottom: 2px solid #f1f5f9; padding: .55rem .7rem; white-space: nowrap;
+  }
+  .aud-table td { padding: .5rem .7rem; vertical-align: middle; font-size: .8rem; border-bottom: 1px solid #f8fafc; }
+  .aud-table tr:hover td { background: #f0fdfa; }
+
+  .aud-avatar {
+    width: 28px; height: 28px; border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: .65rem; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+
+  .aud-flag { font-size: 16px; cursor: default; }
+  .aud-flag-suspicious { color: #ef4444; }
+  .aud-flag-review { color: #f59e0b; }
+
+  .aud-empty { text-align: center; padding: 3rem 1rem; }
+  .aud-empty i { font-size: 3rem; color: #cbd5e1; display: block; margin-bottom: .5rem; }
+
+  .aud-pagination .page-link {
+    border: none; color: #64748b; font-size: .78rem; font-weight: 600;
+    padding: .35rem .7rem; border-radius: 8px; margin: 0 .1rem;
+  }
+  .aud-pagination .page-item.active .page-link { background: #0f172a; color: #fff; }
+  .aud-pagination .page-link:hover { background: #f1f5f9; }
+
+  .aud-compliance-item { border-bottom: 1px solid #f1f5f9; padding: .6rem 0; }
+  .aud-compliance-item:last-child { border: none; }
+  .aud-compliance-check { color: #10b981; font-size: 18px; }
+
+  .aud-chart-card { border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+
+  /* Dark mode */
+  .dark-version .aud-kpi .kpi-value { color: var(--text-primary); }
+  .dark-version .aud-kpi .kpi-label { color: var(--text-secondary); }
+  .dark-version .aud-filters { background: var(--bg-secondary); border-color: var(--border-color); }
+  .dark-version .aud-table tr:hover td { background: rgba(6,182,212,.06); }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid py-2">
 
+  <!-- Header -->
+  <div class="row aud-header">
+    <div class="col-lg-8 col-md-7">
+      <div class="ms-3">
+        <h3><i class="material-symbols-rounded me-2" style="vertical-align:-4px; color:#06b6d4;">shield</i>Trilha de Auditoria</h3>
+        <p>Registro completo de ações do sistema — Conformidade BACEN 4.658 / LGPD</p>
+      </div>
+    </div>
+    <div class="col-lg-4 col-md-5 text-end d-flex align-items-center justify-content-end gap-2">
+      <a href="{% url 'dashboard:compliance_lgpd' %}" class="btn btn-sm btn-outline-dark mb-0">
+        <i class="material-symbols-rounded text-sm me-1">privacy_tip</i> LGPD
+      </a>
+      <a href="{% url 'dashboard:compliance_audit_export' %}" class="btn btn-sm bg-gradient-dark mb-0">
+        <i class="material-symbols-rounded text-sm me-1">download</i> Exportar Excel
+      </a>
+    </div>
+  </div>
+
   <!-- KPI Cards -->
   <div class="row mb-4">
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-      <div class="card ic-kpi-card">
-        <div class="card-header p-3 pt-2">
-          <div class="ic-kpi-icon mt-n4 shadow" style="background: linear-gradient(195deg, var(--ic-accent), var(--ic-accent-dark));">
-            <span class="material-symbols-rounded">schedule</span>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-3">
+      <div class="card aud-kpi">
+        <div class="kpi-body">
+          <div>
+            <p class="kpi-label">Últimas 24h</p>
+            <p class="kpi-value mb-0">{{ stats.total_24h }}</p>
+            <p class="kpi-sub">eventos registrados</p>
           </div>
-          <div class="text-end pt-1">
-            <p class="ic-kpi-label">Últimas 24h</p>
-            <h4 class="ic-kpi-value">{{ stats.total_24h }}</h4>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-      <div class="card ic-kpi-card">
-        <div class="card-header p-3 pt-2">
-          <div class="ic-kpi-icon mt-n4 shadow" style="background: linear-gradient(195deg, var(--ic-primary), var(--ic-primary-dark));">
-            <span class="material-symbols-rounded">date_range</span>
-          </div>
-          <div class="text-end pt-1">
-            <p class="ic-kpi-label">Últimos 7 dias</p>
-            <h4 class="ic-kpi-value">{{ stats.total_7d }}</h4>
+          <div class="kpi-icon" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">
+            <i class="material-symbols-rounded">schedule</i>
           </div>
         </div>
       </div>
     </div>
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-      <div class="card ic-kpi-card">
-        <div class="card-header p-3 pt-2">
-          <div class="ic-kpi-icon mt-n4 shadow" style="background: linear-gradient(195deg, var(--ic-danger), #dc2626);">
-            <span class="material-symbols-rounded">gpp_maybe</span>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-3">
+      <div class="card aud-kpi">
+        <div class="kpi-body">
+          <div>
+            <p class="kpi-label">Últimos 7 dias</p>
+            <p class="kpi-value mb-0">{{ stats.total_7d }}</p>
+            <p class="kpi-sub">de {{ stats.total_all }} total</p>
           </div>
-          <div class="text-end pt-1">
-            <p class="ic-kpi-label">Suspeitos</p>
-            <h4 class="ic-kpi-value">{{ stats.suspicious }}</h4>
+          <div class="kpi-icon" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">
+            <i class="material-symbols-rounded">date_range</i>
           </div>
         </div>
       </div>
     </div>
-    <div class="col-xl-3 col-sm-6">
-      <div class="card ic-kpi-card">
-        <div class="card-header p-3 pt-2">
-          <div class="ic-kpi-icon mt-n4 shadow" style="background: linear-gradient(195deg, var(--ic-warning), #d97706);">
-            <span class="material-symbols-rounded">shield</span>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-3">
+      <div class="card aud-kpi">
+        <div class="kpi-body">
+          <div>
+            <p class="kpi-label">Suspeitos</p>
+            <p class="kpi-value mb-0" {% if stats.suspicious > 0 %}style="color:#ef4444;"{% endif %}>{{ stats.suspicious }}</p>
+            <p class="kpi-sub">não resolvidos</p>
           </div>
-          <div class="text-end pt-1">
-            <p class="ic-kpi-label">Alertas Segurança</p>
-            <h4 class="ic-kpi-value">{{ stats.security_alerts }}</h4>
+          <div class="kpi-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+            <i class="material-symbols-rounded">gpp_maybe</i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-3">
+      <div class="card aud-kpi">
+        <div class="kpi-body">
+          <div>
+            <p class="kpi-label">Alertas de Segurança</p>
+            <p class="kpi-value mb-0" {% if stats.security_alerts > 0 %}style="color:#f59e0b;"{% endif %}>{{ stats.security_alerts }}</p>
+            <p class="kpi-sub">em aberto</p>
+          </div>
+          <div class="kpi-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+            <i class="material-symbols-rounded">shield</i>
           </div>
         </div>
       </div>
@@ -67,67 +212,61 @@
   <!-- Filtros + Tabela -->
   <div class="row">
     <div class="col-12">
-      <div class="card ic-card mb-4">
-        <div class="card-header pb-0">
-          <div class="ic-page-header">
+      <div class="card aud-card mb-4">
+        <div class="card-header pb-0 p-3">
+          <div class="aud-card-header">
             <div>
-              <h6 class="ic-page-title">
-                <span class="material-symbols-rounded me-2" style="vertical-align:-4px;">policy</span>
-                Eventos de Auditoria
-              </h6>
-              <p class="ic-page-subtitle">Registro completo de ações — Conformidade BACEN/LGPD</p>
-            </div>
-            <div class="d-flex gap-2">
-              <a href="{% url 'dashboard:compliance_audit_export' %}" class="ic-btn-slate" title="Exportar Excel">
-                <span class="material-symbols-rounded" style="font-size:18px;">download</span> Exportar Excel
-              </a>
+              <h6><i class="material-symbols-rounded text-sm me-1">policy</i> Eventos de Auditoria</h6>
+              <span class="sub">{{ stats.total_all }} registros &bull; Paginação de 50</span>
             </div>
           </div>
 
           <!-- Filtros -->
-          <form method="get" class="row g-2 mb-3" id="auditFilterForm">
-            <div class="col-md-3">
-              <div class="ic-search-box">
-                <span class="material-symbols-rounded search-icon">search</span>
-                <input type="text" name="q" class="form-control form-control-sm" placeholder="Buscar ação, IP, usuário..." value="{{ request.GET.q|default:'' }}">
-              </div>
+          <form method="get" class="aud-filters mt-3" id="auditFilterForm">
+            <div class="aud-search-wrap">
+              <i class="material-symbols-rounded">search</i>
+              <input type="text" name="q" placeholder="Buscar ação, IP, usuário..." value="{{ request.GET.q|default:'' }}">
             </div>
-            <div class="col-md-2">
-              <select name="type" class="form-select form-select-sm" onchange="this.form.submit()">
-                <option value="">Todos os tipos</option>
+            <div>
+              <label>Tipo</label>
+              <select name="type" onchange="this.form.submit()">
+                <option value="">Todos</option>
                 {% for value, label in event_types %}
                 <option value="{{ value }}" {% if request.GET.type == value %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
               </select>
             </div>
-            <div class="col-md-2">
-              <select name="severity" class="form-select form-select-sm" onchange="this.form.submit()">
-                <option value="">Todas severidades</option>
+            <div>
+              <label>Severidade</label>
+              <select name="severity" onchange="this.form.submit()">
+                <option value="">Todas</option>
                 {% for value, label in severity_levels %}
                 <option value="{{ value }}" {% if request.GET.severity == value %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
               </select>
             </div>
-            <div class="col-md-2">
-              <select name="user" class="form-select form-select-sm" onchange="this.form.submit()">
-                <option value="">Todos os usuários</option>
+            <div>
+              <label>Usuário</label>
+              <select name="user" onchange="this.form.submit()">
+                <option value="">Todos</option>
                 {% for u in users %}
                 <option value="{{ u.pk }}" {% if request.GET.user == u.pk|stringformat:"d" %}selected{% endif %}>{{ u.get_full_name|default:u.username }}</option>
                 {% endfor %}
               </select>
             </div>
-            <div class="col-md-2">
-              <select name="days" class="form-select form-select-sm" onchange="this.form.submit()">
-                <option value="">Todo o período</option>
-                <option value="1" {% if request.GET.days == '1' %}selected{% endif %}>Últimas 24h</option>
-                <option value="7" {% if request.GET.days == '7' %}selected{% endif %}>Últimos 7 dias</option>
-                <option value="30" {% if request.GET.days == '30' %}selected{% endif %}>Últimos 30 dias</option>
-                <option value="90" {% if request.GET.days == '90' %}selected{% endif %}>Últimos 90 dias</option>
+            <div>
+              <label>Período</label>
+              <select name="days" onchange="this.form.submit()">
+                <option value="">Tudo</option>
+                <option value="1" {% if request.GET.days == '1' %}selected{% endif %}>24h</option>
+                <option value="7" {% if request.GET.days == '7' %}selected{% endif %}>7 dias</option>
+                <option value="30" {% if request.GET.days == '30' %}selected{% endif %}>30 dias</option>
+                <option value="90" {% if request.GET.days == '90' %}selected{% endif %}>90 dias</option>
               </select>
             </div>
-            <div class="col-md-1 d-flex align-items-center">
-              <label class="form-check-label text-xs me-1">Suspeitos</label>
-              <input type="checkbox" name="suspicious" value="1" {% if request.GET.suspicious == '1' %}checked{% endif %} onchange="this.form.submit()" class="form-check-input mt-0">
+            <div class="d-flex align-items-center gap-1">
+              <input type="checkbox" name="suspicious" value="1" id="chkSusp" {% if request.GET.suspicious == '1' %}checked{% endif %} onchange="this.form.submit()" class="form-check-input mt-0" style="width:16px;height:16px;">
+              <label for="chkSusp" style="margin:0;cursor:pointer;">Suspeitos</label>
             </div>
           </form>
 
@@ -135,13 +274,13 @@
           {% if active_filters %}
           <div class="d-flex flex-wrap gap-1 mb-3">
             {% for key, value in active_filters.items %}
-            <span class="ic-filter-chip active">
+            <span class="aud-chip aud-chip-active">
               {{ key }}: {{ value }}
-              <a href="?{% for k, v in active_filters.items %}{% if k != key %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="text-white ms-1" style="text-decoration:none;">&times;</a>
+              <a href="?{% for k, v in active_filters.items %}{% if k != key %}{{ k }}={{ v }}&{% endif %}{% endfor %}">&times;</a>
             </span>
             {% endfor %}
-            <a href="{% url 'dashboard:audit_trail' %}" class="ic-filter-chip">
-              <span class="material-symbols-rounded" style="font-size:14px;">close</span> Limpar filtros
+            <a href="{% url 'dashboard:compliance_audit' %}" class="aud-chip aud-chip-clear">
+              <i class="material-symbols-rounded" style="font-size:12px;">close</i> Limpar
             </a>
           </div>
           {% endif %}
@@ -149,72 +288,69 @@
 
         <div class="card-body px-0 pt-0 pb-2">
           <div class="table-responsive p-0">
-            <table class="table align-items-center mb-0">
+            <table class="table aud-table mb-0">
               <thead>
                 <tr>
-                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Data/Hora</th>
-                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tipo</th>
-                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Severidade</th>
-                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Usuário</th>
-                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Ação</th>
-                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">IP</th>
-                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Flags</th>
+                  <th>Data/Hora</th>
+                  <th>Tipo</th>
+                  <th>Severidade</th>
+                  <th>Usuário</th>
+                  <th>Ação</th>
+                  <th>IP</th>
+                  <th class="text-center">Flags</th>
                 </tr>
               </thead>
               <tbody>
                 {% for event in events %}
                 <tr>
-                  <td>
-                    <p class="text-xs font-weight-bold mb-0">{{ event.timestamp|date:"d/m/Y" }}</p>
-                    <p class="text-xs text-secondary mb-0">{{ event.timestamp|date:"H:i:s" }}</p>
+                  <td style="white-space:nowrap;">
+                    <span class="text-xs font-weight-bold" style="color:#334155;">{{ event.timestamp|date:"d/m/Y" }}</span><br>
+                    <span class="text-xs" style="color:#94a3b8;">{{ event.timestamp|date:"H:i:s" }}</span>
                   </td>
                   <td>
-                    <span class="ic-badge ic-badge-{{ event.event_type }}">{{ event.get_event_type_display }}</span>
+                    <span class="aud-type aud-type-{{ event.event_type }}">
+                      {{ event.get_event_type_display }}
+                    </span>
                   </td>
                   <td>
-                    {% if event.severity == 'critical' %}
-                      <span class="ic-badge ic-badge-critica">{{ event.get_severity_display }}</span>
-                    {% elif event.severity == 'high' %}
-                      <span class="ic-badge ic-badge-alta">{{ event.get_severity_display }}</span>
-                    {% elif event.severity == 'medium' %}
-                      <span class="ic-badge ic-badge-media">{{ event.get_severity_display }}</span>
-                    {% else %}
-                      <span class="ic-badge ic-badge-baixa">{{ event.get_severity_display }}</span>
-                    {% endif %}
+                    <span class="aud-sev aud-sev-{{ event.severity }}">
+                      {{ event.get_severity_display }}
+                    </span>
                   </td>
                   <td>
-                    <div class="d-flex align-items-center">
-                      <div class="ic-avatar ic-avatar-sm ic-avatar-primary me-2">
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="aud-avatar" style="background:{% if event.user %}#334155{% else %}#94a3b8{% endif %};">
                         {% if event.user %}{{ event.user.first_name.0|default:event.user.username.0|upper }}{% else %}S{% endif %}
                       </div>
-                      <div>
-                        <h6 class="mb-0 text-sm">{% if event.user %}{{ event.user.get_full_name|default:event.user.username }}{% else %}Sistema{% endif %}</h6>
-                      </div>
+                      <span class="text-xs font-weight-bold">{% if event.user %}{{ event.user.get_full_name|default:event.user.username }}{% else %}Sistema{% endif %}</span>
                     </div>
                   </td>
                   <td>
-                    <p class="text-xs font-weight-bold mb-0">{{ event.action|truncatechars:50 }}</p>
-                    <p class="text-xs text-secondary mb-0">{{ event.description|truncatechars:80 }}</p>
+                    <p class="text-xs font-weight-bold mb-0" style="color:#334155;">{{ event.action|truncatechars:45 }}</p>
+                    {% if event.description %}<p class="text-xs mb-0" style="color:#94a3b8;">{{ event.description|truncatechars:70 }}</p>{% endif %}
                   </td>
                   <td>
-                    <span class="text-xs text-secondary font-weight-bold">{{ event.ip_address }}</span>
+                    <code style="font-size:.7rem; color:#64748b; background:#f1f5f9; padding:.1rem .35rem; border-radius:4px;">{{ event.ip_address|default:"-" }}</code>
                   </td>
-                  <td class="align-middle text-center">
+                  <td class="text-center" style="white-space:nowrap;">
                     {% if event.is_suspicious %}
-                      <span class="material-symbols-rounded text-danger" title="Suspeito" style="font-size:18px;">warning</span>
+                      <i class="material-symbols-rounded aud-flag aud-flag-suspicious" title="Suspeito">warning</i>
                     {% endif %}
                     {% if event.requires_review %}
-                      <span class="material-symbols-rounded text-warning" title="Requer revisão" style="font-size:18px;">rate_review</span>
+                      <i class="material-symbols-rounded aud-flag aud-flag-review" title="Requer revisão">rate_review</i>
+                    {% endif %}
+                    {% if not event.is_suspicious and not event.requires_review %}
+                      <span style="color:#cbd5e1;">—</span>
                     {% endif %}
                   </td>
                 </tr>
                 {% empty %}
                 <tr>
                   <td colspan="7">
-                    <div class="ic-empty-state">
-                      <span class="material-symbols-rounded">policy</span>
-                      <h6>Nenhum evento encontrado</h6>
-                      <p>Ajuste os filtros ou aguarde novas ações no sistema.</p>
+                    <div class="aud-empty">
+                      <i class="material-symbols-rounded">policy</i>
+                      <h6 class="text-sm" style="color:#64748b;">Nenhum evento encontrado</h6>
+                      <p class="text-xs" style="color:#94a3b8;">Ajuste os filtros ou aguarde novas ações.</p>
                     </div>
                   </td>
                 </tr>
@@ -225,12 +361,12 @@
 
           <!-- Paginação -->
           {% if is_paginated %}
-          <nav class="d-flex justify-content-center mt-3">
-            <ul class="pagination ic-pagination pagination-sm">
+          <nav class="d-flex justify-content-center mt-3 mb-2">
+            <ul class="pagination aud-pagination mb-0">
               {% if page_obj.has_previous %}
               <li class="page-item">
                 <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for k, v in active_filters.items %}&{{ k }}={{ v }}{% endfor %}">
-                  <span class="material-symbols-rounded" style="font-size:16px;">chevron_left</span>
+                  <i class="material-symbols-rounded" style="font-size:14px;">chevron_left</i>
                 </a>
               </li>
               {% endif %}
@@ -246,7 +382,7 @@
               {% if page_obj.has_next %}
               <li class="page-item">
                 <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for k, v in active_filters.items %}&{{ k }}={{ v }}{% endfor %}">
-                  <span class="material-symbols-rounded" style="font-size:16px;">chevron_right</span>
+                  <i class="material-symbols-rounded" style="font-size:14px;">chevron_right</i>
                 </a>
               </li>
               {% endif %}
@@ -258,89 +394,258 @@
     </div>
   </div>
 
-  <!-- Chart de Eventos por Tipo (últimos 7 dias) -->
-  <div class="row">
-    <div class="col-lg-6">
-      <div class="card ic-card">
+  <!-- Gráficos -->
+  <div class="row mt-2">
+    <!-- Tendência Diária -->
+    <div class="col-lg-4 mb-4">
+      <div class="card aud-chart-card h-100">
         <div class="card-header pb-0 p-3">
-          <h6 class="mb-0">
-            <span class="material-symbols-rounded me-1" style="vertical-align:-4px;">bar_chart</span>
-            Eventos por Tipo (7 dias)
+          <h6 class="text-sm mb-0" style="color:#334155;">
+            <i class="material-symbols-rounded text-sm me-1" style="color:#06b6d4;">trending_up</i>
+            Tendência Diária
           </h6>
+          <p class="text-xs" style="color:#94a3b8;">Últimos 7 dias</p>
         </div>
-        <div class="card-body p-3">
-          <canvas id="auditTypeChart" height="200"></canvas>
+        <div class="card-body p-3 pt-0">
+          <canvas id="chartTrend" height="180"></canvas>
         </div>
       </div>
     </div>
-    <div class="col-lg-6">
-      <div class="card ic-card">
+
+    <!-- Eventos por Tipo -->
+    <div class="col-lg-4 mb-4">
+      <div class="card aud-chart-card h-100">
         <div class="card-header pb-0 p-3">
-          <div class="d-flex justify-content-between align-items-center">
-            <h6 class="mb-0">
-              <span class="material-symbols-rounded me-1" style="vertical-align:-4px;">security</span>
-              Compliance
-            </h6>
-            <span class="ic-compliance-badge ic-compliance-bacen">BACEN 4.658</span>
-            <span class="ic-compliance-badge ic-compliance-lgpd ms-1">LGPD</span>
-          </div>
+          <h6 class="text-sm mb-0" style="color:#334155;">
+            <i class="material-symbols-rounded text-sm me-1" style="color:#6366f1;">bar_chart</i>
+            Eventos por Tipo
+          </h6>
+          <p class="text-xs" style="color:#94a3b8;">Últimos 7 dias</p>
         </div>
-        <div class="card-body p-3">
-          <ul class="list-group list-group-flush">
-            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-              <span class="text-sm">Logs retidos (mínimo 5 anos)</span>
-              <span class="ic-badge ic-badge-resolvido">Conforme</span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-              <span class="text-sm">Rastreabilidade de acesso PII</span>
-              <span class="ic-badge ic-badge-resolvido">Ativo</span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-              <span class="text-sm">Detecção de atividade suspeita</span>
-              <span class="ic-badge ic-badge-resolvido">Ativo</span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-              <span class="text-sm">Exportação para auditoria externa</span>
-              <span class="ic-badge ic-badge-resolvido">Disponível</span>
-            </li>
-          </ul>
+        <div class="card-body p-3 pt-0">
+          <canvas id="auditTypeChart" height="180"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Severidade -->
+    <div class="col-lg-4 mb-4">
+      <div class="card aud-chart-card h-100">
+        <div class="card-header pb-0 p-3">
+          <h6 class="text-sm mb-0" style="color:#334155;">
+            <i class="material-symbols-rounded text-sm me-1" style="color:#f59e0b;">donut_large</i>
+            Por Severidade
+          </h6>
+          <p class="text-xs" style="color:#94a3b8;">Últimos 7 dias</p>
+        </div>
+        <div class="card-body p-3 pt-0 d-flex align-items-center justify-content-center">
+          <canvas id="chartSev" height="180"></canvas>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Compliance Panel -->
+  <div class="row">
+    <div class="col-lg-6 mb-4">
+      <div class="card aud-chart-card h-100">
+        <div class="card-header p-3 pb-0">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="text-sm mb-0" style="color:#334155;">
+              <i class="material-symbols-rounded text-sm me-1" style="color:#10b981;">verified</i>
+              Status de Compliance
+            </h6>
+            <div class="d-flex gap-1">
+              <span style="display:inline-flex;align-items:center;gap:.2rem;padding:.12rem .45rem;border-radius:5px;font-size:.6rem;font-weight:700;background:#dbeafe;color:#1e40af;">BACEN 4.658</span>
+              <span style="display:inline-flex;align-items:center;gap:.2rem;padding:.12rem .45rem;border-radius:5px;font-size:.6rem;font-weight:700;background:#dcfce7;color:#166534;">LGPD</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-3">
+          <div class="aud-compliance-item d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+              <i class="material-symbols-rounded aud-compliance-check">check_circle</i>
+              <span class="text-sm">Logs retidos (mínimo 5 anos)</span>
+            </div>
+            <span class="aud-sev aud-sev-low">Conforme</span>
+          </div>
+          <div class="aud-compliance-item d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+              <i class="material-symbols-rounded aud-compliance-check">check_circle</i>
+              <span class="text-sm">Rastreabilidade de acesso PII</span>
+            </div>
+            <span class="aud-sev aud-sev-low">Ativo</span>
+          </div>
+          <div class="aud-compliance-item d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+              <i class="material-symbols-rounded aud-compliance-check">check_circle</i>
+              <span class="text-sm">Detecção de atividade suspeita</span>
+            </div>
+            <span class="aud-sev aud-sev-low">Ativo</span>
+          </div>
+          <div class="aud-compliance-item d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+              <i class="material-symbols-rounded aud-compliance-check">check_circle</i>
+              <span class="text-sm">Exportação para auditoria externa</span>
+            </div>
+            <span class="aud-sev aud-sev-low">Disponível</span>
+          </div>
+          <div class="aud-compliance-item d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+              <i class="material-symbols-rounded aud-compliance-check">check_circle</i>
+              <span class="text-sm">Registro de IP e User-Agent</span>
+            </div>
+            <span class="aud-sev aud-sev-low">Ativo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+      <div class="card aud-chart-card h-100">
+        <div class="card-header p-3 pb-0">
+          <h6 class="text-sm mb-0" style="color:#334155;">
+            <i class="material-symbols-rounded text-sm me-1" style="color:#6366f1;">info</i>
+            Resumo do Sistema
+          </h6>
+        </div>
+        <div class="card-body p-3">
+          <div class="aud-compliance-item d-flex justify-content-between align-items-center">
+            <span class="text-sm" style="color:#64748b;">Total de eventos registrados</span>
+            <strong class="text-sm" style="color:#334155;">{{ stats.total_all }}</strong>
+          </div>
+          <div class="aud-compliance-item d-flex justify-content-between align-items-center">
+            <span class="text-sm" style="color:#64748b;">Eventos nos últimos 30 dias</span>
+            <strong class="text-sm" style="color:#334155;">{{ stats.total_30d }}</strong>
+          </div>
+          <div class="aud-compliance-item d-flex justify-content-between align-items-center">
+            <span class="text-sm" style="color:#64748b;">Eventos suspeitos pendentes</span>
+            <strong class="text-sm" {% if stats.suspicious > 0 %}style="color:#ef4444;"{% else %}style="color:#10b981;"{% endif %}>{{ stats.suspicious }}</strong>
+          </div>
+          <div class="aud-compliance-item d-flex justify-content-between align-items-center">
+            <span class="text-sm" style="color:#64748b;">Alertas de segurança abertos</span>
+            <strong class="text-sm" {% if stats.security_alerts > 0 %}style="color:#f59e0b;"{% else %}style="color:#10b981;"{% endif %}>{{ stats.security_alerts }}</strong>
+          </div>
+          <div class="aud-compliance-item d-flex justify-content-between align-items-center">
+            <span class="text-sm" style="color:#64748b;">Painel LGPD</span>
+            <a href="{% url 'dashboard:compliance_lgpd' %}" class="text-sm font-weight-bold" style="color:#06b6d4; text-decoration:none;">
+              Acessar <i class="material-symbols-rounded" style="font-size:14px;vertical-align:-3px;">arrow_forward</i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 {% endblock %}
 
 {% block extra_js %}
+{% localize off %}
+<script src="{% static 'js/plugins/chartjs.min.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const labels = {{ chart_labels|safe }};
-    const data = {{ chart_data|safe }};
-    const ctx = document.getElementById('auditTypeChart');
-    if (ctx && labels.length > 0) {
-        new Chart(ctx, {
-            type: 'bar',
+    var CYAN = '#06b6d4';
+    var SLATE = '#334155';
+    var INDIGO = '#6366f1';
+
+    // 1. Tendência Diária (line chart)
+    var ctxTrend = document.getElementById('chartTrend');
+    if (ctxTrend) {
+        var grad = ctxTrend.getContext('2d').createLinearGradient(0, 0, 0, 180);
+        grad.addColorStop(0, 'rgba(6,182,212,.2)');
+        grad.addColorStop(1, 'rgba(6,182,212,.02)');
+
+        new Chart(ctxTrend, {
+            type: 'line',
             data: {
-                labels: labels,
+                labels: {{ trend_labels|safe }},
                 datasets: [{
                     label: 'Eventos',
-                    data: data,
-                    backgroundColor: 'rgba(6, 182, 212, 0.7)',
-                    borderColor: '#06b6d4',
-                    borderWidth: 1,
-                    borderRadius: 6,
+                    data: {{ trend_data|safe }},
+                    borderColor: CYAN,
+                    backgroundColor: grad,
+                    fill: true,
+                    tension: .4,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: CYAN,
+                    borderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { beginAtZero: true, ticks: { precision: 0 } },
-                    x: { grid: { display: false } }
+                    y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 } }, grid: { color: '#f1f5f9' } },
+                    x: { ticks: { font: { size: 10 } }, grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    // 2. Eventos por Tipo (bar chart horizontal)
+    var ctxType = document.getElementById('auditTypeChart');
+    if (ctxType) {
+        var labels = {{ chart_labels|safe }};
+        var data = {{ chart_data|safe }};
+        var barPalette = [CYAN, INDIGO, '#f59e0b', '#ef4444', '#22c55e', '#0891b2', '#7c3aed', '#ea580c', '#64748b', '#0d9488', '#dc2626'];
+        if (labels.length > 0) {
+            new Chart(ctxType, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Eventos',
+                        data: data,
+                        backgroundColor: data.map(function(_, i) { return barPalette[i % barPalette.length] + '33'; }),
+                        borderColor: data.map(function(_, i) { return barPalette[i % barPalette.length]; }),
+                        borderWidth: 2,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 } }, grid: { color: '#f1f5f9' } },
+                        y: { ticks: { font: { size: 10 } }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+    }
+
+    // 3. Severidade (doughnut)
+    var ctxSev = document.getElementById('chartSev');
+    if (ctxSev) {
+        var sevData = {{ sev_data|safe }};
+        var hasData = sevData.some(function(v) { return v > 0; });
+        new Chart(ctxSev, {
+            type: 'doughnut',
+            data: {
+                labels: hasData ? {{ sev_labels|safe }} : ['Sem dados'],
+                datasets: [{
+                    data: hasData ? sevData : [1],
+                    backgroundColor: hasData ? ['#22c55e', '#f59e0b', '#ef4444', '#7f1d1d'] : ['#e5e7eb'],
+                    borderWidth: 0,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, padding: 10, font: { size: 10 } } }
                 }
             }
         });
     }
 });
 </script>
+{% endlocalize %}
 {% endblock %}

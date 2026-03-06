@@ -440,7 +440,7 @@
       {% endif %}
 
       <!-- Produtos e Serviços -->
-      {% if ticket.status == 'em_andamento' or ticket.status == 'resolvido' or ticket.status == 'fechado' %}
+      {% if has_itens or ticket.status == 'em_andamento' %}
       <div class="card mb-4" id="produtosServicosCard">
         <div class="card-header p-3 pb-0">
           <div class="d-flex justify-content-between align-items-center">
@@ -578,26 +578,104 @@
   </div>
 </div>
 
+<!-- Modal de Confirmação de Status -->
+<div class="modal fade" id="statusModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(195deg, #334155, #1e293b);">
+        <h6 class="modal-title text-white mb-0">
+          <i class="material-symbols-rounded me-2 text-sm">swap_horiz</i>
+          Alterar Status do Ticket
+        </h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="text-center mb-3">
+          <div class="icon icon-lg icon-shape shadow text-center border-radius-xl mb-3" id="statusModalIcon" style="background: linear-gradient(195deg, #06b6d4, #0891b2);">
+            <i class="material-symbols-rounded text-white" id="statusModalIconI">swap_horiz</i>
+          </div>
+          <p class="text-sm mb-2">Deseja alterar o status deste ticket?</p>
+          <div class="d-flex justify-content-center align-items-center gap-2">
+            <span class="badge badge-sm" id="statusModalFrom">Atual</span>
+            <i class="material-symbols-rounded text-secondary" style="font-size:1.2rem;">arrow_forward</i>
+            <span class="badge badge-sm" id="statusModalTo">Novo</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-outline-secondary mb-0" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-sm mb-0" id="statusModalConfirm" style="background: linear-gradient(195deg, #06b6d4, #0891b2); color: #fff;">
+          <i class="material-symbols-rounded text-sm me-1">check</i> Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
+const STATUS_CONFIG = {
+  'aberto':             { label: 'Aberto',              bg: 'bg-gradient-secondary', icon: 'fiber_new' },
+  'em_andamento':       { label: 'Em Andamento',        bg: 'bg-gradient-warning',   icon: 'play_arrow' },
+  'resolvido':          { label: 'Resolvido',           bg: 'bg-gradient-info',      icon: 'check_circle' },
+  'fechado':            { label: 'Fechado',             bg: 'bg-gradient-success',   icon: 'done_all' },
+  'aguardando_cliente': { label: 'Aguardando Cliente',  bg: 'bg-gradient-dark',      icon: 'schedule' },
+};
+
+let pendingStatusTicketId = null;
+let pendingStatusValue = null;
+
 function updateTicketStatus(ticketId, newStatus) {
-  if (confirm('Deseja alterar o status deste ticket?')) {
-    fetch("{% url 'dashboard:update_ticket_status' %}", {
-      method: 'POST',
-      headers: {
-        'X-CSRFToken': '{{ csrf_token }}',
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'X-Requested-With': 'XMLHttpRequest'
-      },
-      body: `ticket_id=${ticketId}&status=${newStatus}`
-    })
-    .then(r => r.json())
-    .then(data => {
-      if (data.success) { location.reload(); }
-      else { alert('Erro: ' + (data.message || 'Erro desconhecido')); }
-    })
-    .catch(e => alert('Erro: ' + e.message));
-  }
+  const currentStatus = '{{ ticket.status }}';
+  const from = STATUS_CONFIG[currentStatus] || { label: currentStatus, bg: 'bg-gradient-secondary' };
+  const to = STATUS_CONFIG[newStatus] || { label: newStatus, bg: 'bg-gradient-secondary' };
+
+  const fromBadge = document.getElementById('statusModalFrom');
+  const toBadge = document.getElementById('statusModalTo');
+  fromBadge.className = `badge badge-sm ${from.bg}`;
+  fromBadge.textContent = from.label;
+  toBadge.className = `badge badge-sm ${to.bg}`;
+  toBadge.textContent = to.label;
+
+  const confirmBtn = document.getElementById('statusModalConfirm');
+  confirmBtn.className = `btn btn-sm mb-0 ${to.bg} text-white`;
+
+  pendingStatusTicketId = ticketId;
+  pendingStatusValue = newStatus;
+
+  const modal = new bootstrap.Modal(document.getElementById('statusModal'));
+  modal.show();
 }
+
+document.getElementById('statusModalConfirm').addEventListener('click', function() {
+  if (!pendingStatusTicketId || !pendingStatusValue) return;
+  this.disabled = true;
+  this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Processando...';
+
+  fetch("{% url 'dashboard:update_ticket_status' %}", {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': '{{ csrf_token }}',
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: `ticket_id=${pendingStatusTicketId}&status=${pendingStatusValue}`
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) { location.reload(); }
+    else {
+      this.disabled = false;
+      this.innerHTML = '<i class="material-symbols-rounded text-sm me-1">check</i> Confirmar';
+      bootstrap.Modal.getInstance(document.getElementById('statusModal')).hide();
+      alert('Erro: ' + (data.message || 'Erro desconhecido'));
+    }
+  })
+  .catch(e => {
+    this.disabled = false;
+    this.innerHTML = '<i class="material-symbols-rounded text-sm me-1">check</i> Confirmar';
+    alert('Erro: ' + e.message);
+  });
+});
 
 let produtosDisponiveis = [];
 function carregarProdutos() {
@@ -668,27 +746,42 @@ function addItemToTicket() {
 function carregarItensAtendimento() {
   const container = document.getElementById('itensAtendimentoList');
   if (!container) return;
+  const fmt = v => parseFloat(v).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
   fetch(`/dashboard/api/ticket-itens/{{ ticket.id }}/`)
     .then(r => r.json()).then(data => {
       const ld = document.getElementById('loadingItens');
       const fin = document.getElementById('resumoFinanceiro');
       if (ld) ld.style.display = 'none';
       if (data.itens && data.itens.length > 0) {
-        container.innerHTML = data.itens.map(item => `
-          <div class="d-flex align-items-center justify-content-between mb-2 p-2 rounded" style="background: #f8fafc;">
-            <div>
-              <span class="text-xs font-weight-bold">${item.produto_nome}</span>
-              <span class="badge badge-sm ms-1" style="background: #e2e8f0; color: #334155;">${item.tipo_item}</span>
-              <br><span class="text-xs text-secondary">${item.quantidade}x R$ ${parseFloat(item.valor_unitario).toFixed(2)}${item.desconto_percentual > 0 ? ' (-' + item.desconto_percentual + '%)' : ''}</span>
+        container.innerHTML = data.itens.map(item => {
+          const vTotal = parseFloat(item.valor_total);
+          const vUnit = parseFloat(item.valor_unitario);
+          const descPct = item.desconto_percentual || 0;
+          return `
+          <div class="d-flex align-items-center justify-content-between mb-2 p-2 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+            <div style="min-width:0;">
+              <div class="d-flex align-items-center gap-1 flex-wrap">
+                <span class="text-xs font-weight-bold" style="color:#334155;">${item.produto_nome}</span>
+                <span class="badge badge-sm" style="background: ${item.tipo_item === 'servico' ? '#dbeafe' : '#ecfdf5'}; color: ${item.tipo_item === 'servico' ? '#1e40af' : '#065f46'}; font-size:.6rem;">${item.tipo_item === 'servico' ? 'Serviço' : 'Produto'}</span>
+              </div>
+              <span class="text-xs text-secondary">${item.quantidade}x R$ ${fmt(vUnit)}${descPct > 0 ? ` <span style="color:#ef4444;">(-${descPct}%)</span>` : ''}</span>
             </div>
-            <span class="text-sm font-weight-bold" style="color: #06b6d4;">R$ ${parseFloat(item.valor_total).toFixed(2)}</span>
-          </div>
-        `).join('');
+            <div class="d-flex align-items-center gap-2">
+              <span class="text-sm font-weight-bold" style="color: #06b6d4;">R$ ${fmt(vTotal)}</span>
+              {% if ticket.status == 'em_andamento' %}
+              <button type="button" onclick="removerItem(${item.id})" class="btn btn-link btn-sm p-0 mb-0" style="color:#ef4444;" title="Remover">
+                <i class="material-symbols-rounded text-sm">delete</i>
+              </button>
+              {% endif %}
+            </div>
+          </div>`;
+        }).join('');
         if (fin) {
           fin.style.display = 'block';
-          document.getElementById('subtotalValue').textContent = `R$ ${data.resumo.subtotal.toFixed(2)}`;
-          document.getElementById('descontoValue').textContent = `R$ ${data.resumo.desconto.toFixed(2)}`;
-          document.getElementById('totalValue').textContent = `R$ ${data.resumo.total.toFixed(2)}`;
+          fin.style.background = '#f1f5f9';
+          document.getElementById('subtotalValue').textContent = `R$ ${fmt(data.resumo.subtotal)}`;
+          document.getElementById('descontoValue').textContent = `R$ ${fmt(data.resumo.desconto)}`;
+          document.getElementById('totalValue').textContent = `R$ ${fmt(data.resumo.total)}`;
         }
       } else {
         container.innerHTML = '<p class="text-xs text-muted text-center mb-0 py-2">Nenhum item adicionado</p>';

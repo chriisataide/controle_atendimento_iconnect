@@ -8,7 +8,8 @@ import logging
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.db.models import Avg, DurationField, ExpressionWrapper, F, Q
+from django.db import models
+from django.db.models import Avg, Count, DurationField, ExpressionWrapper, F, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -18,6 +19,7 @@ from django.views.generic import CreateView, DetailView, ListView, TemplateView,
 
 from ..forms import TicketCreateForm
 from ..models import (
+    CategoriaEstoque,
     CategoriaTicket,
     Cliente,
     InteracaoTicket,
@@ -203,7 +205,7 @@ class TicketDetailView(DetailView):
 
     def get_queryset(self):
         base_qs = Ticket.objects.select_related("cliente", "categoria", "agente").prefetch_related(
-            "interacoes__usuario"
+            "interacoes__usuario", "itens_atendimento__produto"
         )
         return get_role_filtered_tickets(self.request.user, base_qs)
 
@@ -223,6 +225,9 @@ class TicketDetailView(DetailView):
             completos = registros.exclude(valor__isnull=True)
             context["valor_total_vigilante"] = sum(float(r.valor) for r in completos if r.valor)
             context["has_pendentes"] = registros.filter(fim__isnull=True).exists()
+
+        # Itens de atendimento (produtos/serviços)
+        context["has_itens"] = self.object.itens_atendimento.exists()
 
         # Descrição limpa (sem a tabela de resumo gerada automaticamente)
         desc = self.object.descricao or ""
@@ -246,6 +251,9 @@ class TicketCreateView(CreateView):
         context["clientes"] = Cliente.objects.all().order_by("nome")
         context["pontos_de_venda"] = PontoDeVenda.objects.select_related("cliente").all().order_by("nome_fantasia")
         context["categorias"] = CategoriaTicket.objects.all()
+        context["categorias_produto"] = CategoriaEstoque.objects.annotate(
+            total_produtos=Count("produto", filter=models.Q(produto__status="ativo"))
+        ).filter(total_produtos__gt=0).order_by("nome")
 
         try:
             cliente = Cliente.objects.get(email=self.request.user.email)

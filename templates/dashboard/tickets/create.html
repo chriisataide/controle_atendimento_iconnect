@@ -532,7 +532,7 @@
   .tk-fmt-btn:hover { background: var(--tk-slate-200); border-color: var(--tk-slate-300); }
   .tk-fmt-btn i { font-size: .95rem; }
   .tk-editor-content {
-    min-height: 200px;
+    min-height: 280px;
     padding: 1rem 1.15rem;
     font-size: .875rem;
     outline: none;
@@ -647,51 +647,195 @@
   /* ============================
      PRODUTOS/SERVIÇOS
      ============================ */
+  .tk-prod-fields {
+    display: flex;
+    gap: .75rem;
+    margin-bottom: .75rem;
+  }
+  .tk-prod-field-group {
+    display: flex;
+    flex-direction: column;
+  }
+  .tk-prod-field-group select,
+  .tk-prod-field-group .form-control-sm {
+    font-size: .82rem !important;
+    border: 1.5px solid var(--tk-slate-200) !important;
+    border-radius: 8px !important;
+    height: 38px;
+  }
+  .tk-prod-field-group:first-child {
+    width: 220px;
+    flex-shrink: 0;
+  }
+  .tk-prod-field-grow {
+    flex: 1;
+  }
+  .tk-prod-label {
+    font-size: .72rem;
+    font-weight: 600;
+    color: var(--tk-slate-500);
+    margin-bottom: .25rem;
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+  }
+  .tk-search-input-wrap {
+    position: relative;
+  }
+  .tk-search-icon {
+    position: absolute;
+    left: .65rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--tk-slate-400);
+    font-size: 1.1rem;
+    pointer-events: none;
+  }
+  .tk-search-input {
+    padding-left: 2.2rem !important;
+  }
+  @media (max-width: 576px) {
+    .tk-prod-fields { flex-direction: column; }
+    .tk-prod-field-group:first-child { width: 100%; }
+  }
+
+  .tk-item-selected {
+    background: var(--tk-slate-50);
+    border: 1.5px solid var(--tk-cyan-200);
+    border-radius: 8px;
+    padding: .75rem;
+    margin-bottom: .75rem;
+    animation: tk-fadeIn .2s ease;
+  }
+  .tk-item-sel-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: .6rem;
+    gap: .5rem;
+  }
+  .tk-item-sel-name {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+    font-size: .85rem;
+    min-width: 0;
+  }
+  .tk-item-sel-name strong {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tk-item-sel-prices {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    flex-shrink: 0;
+  }
+  .tk-prod-price-tag {
+    font-size: .78rem;
+    font-weight: 700;
+    color: var(--tk-cyan-600);
+    background: rgba(6,182,212,.08);
+    padding: .2rem .5rem;
+    border-radius: 6px;
+  }
+  .tk-prod-price-tag.loc {
+    color: var(--tk-blue-600);
+    background: rgba(59,130,246,.08);
+  }
+  .tk-item-sel-fields {
+    display: flex;
+    align-items: flex-end;
+    gap: .5rem;
+    flex-wrap: wrap;
+  }
+  .tk-sel-field {
+    flex: 1;
+    min-width: 65px;
+  }
+  .tk-sel-field label {
+    display: block;
+    font-size: .68rem;
+    color: var(--tk-slate-500);
+    font-weight: 600;
+    margin-bottom: .15rem;
+  }
+  .tk-sel-field .form-control-sm {
+    font-size: .8rem !important;
+    border-radius: 6px !important;
+  }
+  .tk-btn-clear-sel {
+    background: none; border: none;
+    cursor: pointer; color: var(--tk-slate-400);
+    padding: .15rem; line-height: 1;
+    transition: color .15s;
+    font-size: .95rem;
+  }
+  .tk-btn-clear-sel:hover { color: var(--tk-red-500); }
+  .tk-btn-add-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    padding: .4rem .85rem;
+    border: none;
+    border-radius: 6px;
+    background: var(--tk-cyan-500);
+    color: #fff;
+    font-size: .78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s;
+    white-space: nowrap;
+    height: 34px;
+  }
+  .tk-btn-add-inline:hover { background: var(--tk-cyan-600); }
+  .tk-btn-add-inline:disabled { opacity: .5; cursor: not-allowed; }
+  .tk-btn-add-inline i { font-size: .95rem; }
   .tk-produto-search { position: relative; }
   .tk-produto-suggestions {
     position: absolute;
-    top: calc(100% + 4px);
+    top: calc(100% + 2px);
     left: 0; right: 0; z-index: 50;
     background: #fff;
     border: 1px solid var(--tk-slate-200);
-    border-radius: var(--tk-radius-sm);
-    max-height: 250px;
+    border-radius: 8px;
+    max-height: 240px;
     overflow-y: auto;
     display: none;
-    box-shadow: var(--tk-shadow-lg);
+    box-shadow: 0 8px 24px rgba(0,0,0,.12);
   }
   .tk-produto-suggestions.show { display: block; }
   .tk-prod-item {
-    padding: .65rem .85rem;
+    padding: .55rem .75rem;
     cursor: pointer;
     border-bottom: 1px solid var(--tk-slate-100);
     transition: background .15s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
+  .tk-prod-item:last-child { border-bottom: none; }
   .tk-prod-item:hover { background: var(--tk-cyan-50); }
-  .tk-prod-info {
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .tk-prod-name { font-weight: 600; color: var(--tk-slate-700); font-size: .85rem; }
-  .tk-prod-code { font-size: .72rem; color: var(--tk-slate-500); }
-  .tk-prod-price { font-weight: 700; color: var(--tk-cyan-600); font-size: .85rem; }
+  .tk-prod-name { font-weight: 600; color: var(--tk-slate-700); font-size: .82rem; }
+  .tk-prod-code { font-size: .7rem; color: var(--tk-slate-400); margin-left: .35rem; }
+  .tk-prod-price { font-weight: 700; color: var(--tk-cyan-600); font-size: .82rem; }
   .tk-prod-type {
-    font-size: .62rem; padding: .15rem .4rem; border-radius: 4px;
+    font-size: .6rem; padding: .12rem .35rem; border-radius: 4px;
     background: var(--tk-slate-100); color: var(--tk-slate-500);
-    font-weight: 600; text-transform: uppercase;
+    font-weight: 600; text-transform: uppercase; letter-spacing: .3px;
   }
   .tk-item-card {
-    background: var(--tk-slate-50);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
     border: 1px solid var(--tk-slate-200);
-    border-radius: var(--tk-radius-sm);
-    padding: 1rem;
-    margin-bottom: .65rem;
-    animation: tk-fadeIn .25s ease;
+    border-radius: 8px;
+    padding: .6rem .75rem;
+    margin-bottom: .4rem;
+    animation: tk-fadeIn .2s ease;
   }
-  .tk-item-header {
-    display: flex; justify-content: space-between; align-items: flex-start;
-    margin-bottom: .5rem;
-  }
-  .tk-item-header h6 { margin: 0; font-size: .85rem; color: var(--tk-slate-700); font-weight: 600; }
   .tk-btn-remove {
     background: none; border: none; color: var(--tk-red-500);
     cursor: pointer; padding: .2rem; border-radius: 4px;
@@ -719,21 +863,10 @@
 
   .tk-empty-produtos {
     text-align: center; padding: 1.5rem; color: var(--tk-slate-400);
+    font-size: .82rem;
   }
-  .tk-empty-produtos i { font-size: 2rem; display: block; margin-bottom: .35rem; }
-  .tk-btn-add-produto {
-    background: linear-gradient(135deg, var(--tk-cyan-500), var(--tk-cyan-600));
-    color: #fff; border: none; border-radius: var(--tk-radius-sm);
-    padding: .5rem .85rem; font-size: .78rem; font-weight: 600;
-    transition: var(--tk-transition);
-    display: flex; align-items: center; gap: .35rem;
-  }
-  .tk-btn-add-produto:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(6,182,212,.3);
-    color: #fff;
-  }
-  .tk-btn-add-produto:disabled { opacity: .5; cursor: not-allowed; }
+  .tk-empty-produtos i { font-size: 1.8rem; display: block; margin-bottom: .25rem; color: var(--tk-slate-300); }
+  .tk-empty-produtos p { margin: 0; }
 
   /* ============================
      CÁLCULO VIGILANTE (dentro do ticket)
@@ -1076,10 +1209,16 @@
   .dark-version .tk-preview-value { color: var(--text-primary); }
   .dark-version .tk-tpl-option { background: rgba(255,255,255,.9); }
   .dark-version .tk-produto-suggestions { background: var(--bg-card); border-color: var(--border-color); }
+  .dark-version .tk-prod-field-group select,
+  .dark-version .tk-prod-field-group .form-control-sm { background: var(--bg-primary) !important; border-color: var(--border-color) !important; color: var(--text-primary) !important; }
+  .dark-version .tk-prod-label { color: var(--text-secondary); }
+  .dark-version .tk-item-selected { background: var(--bg-primary); border-color: var(--border-color); }
+  .dark-version .tk-btn-clear-sel { color: var(--text-secondary); }
+  .dark-version .tk-sel-field label { color: var(--text-secondary); }
+  .dark-version .tk-item-card { background: var(--bg-primary); border-color: var(--border-color); }
   .dark-version .tk-prod-item:hover { background: rgba(6,182,212,.06); }
   .dark-version .tk-prod-name { color: var(--text-primary); }
   .dark-version .tk-item-card { background: var(--bg-primary); border-color: var(--border-color); }
-  .dark-version .tk-item-header h6 { color: var(--text-primary); }
   .dark-version .tk-btn-secondary { background: var(--bg-primary); color: var(--text-secondary); border-color: var(--border-color); }
 </style>
 {% endblock %}
@@ -1408,6 +1547,16 @@
                 <button type="button" class="tk-fmt-btn" data-command="createLink" title="Link">
                   <i class="material-symbols-rounded" style="font-size:.95rem;">link</i>
                 </button>
+                <div class="divider"></div>
+                <button type="button" class="tk-fmt-btn" data-command="strikeThrough" title="Tachado">
+                  <s>S</s>
+                </button>
+                <button type="button" class="tk-fmt-btn" data-command="insertHorizontalRule" title="Linha horizontal">
+                  <i class="material-symbols-rounded" style="font-size:.95rem;">horizontal_rule</i>
+                </button>
+                <button type="button" class="tk-fmt-btn" data-command="removeFormat" title="Limpar formatação">
+                  <i class="material-symbols-rounded" style="font-size:.95rem;">format_clear</i>
+                </button>
               </div>
               <div class="tk-editor-content" id="editorContent" contenteditable="true"></div>
               <div class="tk-editor-footer">
@@ -1418,38 +1567,27 @@
             {{ form.descricao }}
           </div>
 
-          <div class="row">
-            <div class="col-md-6">
-              <div class="tk-field">
-                <label>Prioridade <span class="required-dot"></span></label>
-                <div class="tk-priority-options" id="priorityOptions">
-                  <div class="tk-priority-opt" data-value="baixa">
-                    <span class="dot"></span>
-                    Baixa
-                  </div>
-                  <div class="tk-priority-opt selected" data-value="media">
-                    <span class="dot"></span>
-                    Média
-                  </div>
-                  <div class="tk-priority-opt" data-value="alta">
-                    <span class="dot"></span>
-                    Alta
-                  </div>
-                  <div class="tk-priority-opt" data-value="critica">
-                    <span class="dot"></span>
-                    Crítica
-                  </div>
-                </div>
-                <div style="display:none;">{{ form.prioridade }}</div>
+          <div class="tk-field">
+            <label>Prioridade <span class="required-dot"></span></label>
+            <div class="tk-priority-options" id="priorityOptions">
+              <div class="tk-priority-opt" data-value="baixa">
+                <span class="dot"></span>
+                Baixa
+              </div>
+              <div class="tk-priority-opt selected" data-value="media">
+                <span class="dot"></span>
+                Média
+              </div>
+              <div class="tk-priority-opt" data-value="alta">
+                <span class="dot"></span>
+                Alta
+              </div>
+              <div class="tk-priority-opt" data-value="critica">
+                <span class="dot"></span>
+                Crítica
               </div>
             </div>
-            <div class="col-md-6">
-              <div class="tk-field">
-                <label>Tags</label>
-                {{ form.tags }}
-                <span class="field-hint">Separe por vírgula (ex: sistema, login, urgente)</span>
-              </div>
-            </div>
+            <div style="display:none;">{{ form.prioridade }}</div>
           </div>
         </div>
 
@@ -1543,65 +1681,77 @@
           <!-- Formulário padrão de Produtos (oculta quando cálculo ativo) -->
           <div id="produtosNormalSection">
 
-          <div class="row align-items-end">
-            <div class="col-md-8">
-              <div class="tk-field tk-produto-search">
-                <label>Buscar Produto ou Serviço</label>
-                <input type="text" id="produtoSearch" class="form-control" placeholder="Digite o nome ou código do produto..." autocomplete="off">
-                <div class="tk-produto-suggestions" id="produtoSuggestions"></div>
-              </div>
+          <!-- Dois campos: Categoria + Busca -->
+          <div class="tk-prod-fields">
+            <div class="tk-prod-field-group">
+              <label class="tk-prod-label">Categoria LPU</label>
+              <select id="catFilter" class="form-control form-control-sm">
+                <option value="">Todas as categorias</option>
+                {% for cat in categorias_produto %}
+                <option value="{{ cat.id }}">{{ cat.nome }} ({{ cat.total_produtos }})</option>
+                {% endfor %}
+              </select>
             </div>
-            <div class="col-md-4">
-              <div class="tk-field">
-                <button type="button" class="tk-btn-add-produto w-100" id="btnAddProduto" disabled>
-                  <i class="material-symbols-rounded" style="font-size:1rem;">add_circle</i>
-                  Adicionar Item
-                </button>
+            <div class="tk-prod-field-group tk-prod-field-grow tk-produto-search">
+              <label class="tk-prod-label">Produto / Serviço</label>
+              <div class="tk-search-input-wrap">
+                <i class="material-symbols-rounded tk-search-icon">search</i>
+                <input type="text" id="produtoSearch" class="form-control form-control-sm tk-search-input" placeholder="Digite para buscar..." autocomplete="off">
               </div>
+              <div class="tk-produto-suggestions" id="produtoSuggestions"></div>
             </div>
           </div>
 
-          <div id="produtoSelecionadoInfo" style="display:none;" class="mb-3">
-            <div class="tk-item-card">
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <strong id="prodSelNome" class="text-sm"></strong>
-                  <span id="prodSelTipo" class="tk-prod-type ms-2"></span>
+          <!-- Produto selecionado -->
+          <div id="produtoSelecionadoInfo" style="display:none;">
+            <div class="tk-item-selected">
+              <div class="tk-item-sel-top">
+                <div class="tk-item-sel-name">
+                  <i class="material-symbols-rounded" style="font-size:1rem;color:var(--tk-cyan-500);">check_circle</i>
+                  <strong id="prodSelNome"></strong>
+                  <span id="prodSelTipo" class="tk-prod-type"></span>
                 </div>
-                <div class="text-end">
-                  <span id="prodSelPreco" class="tk-prod-price"></span>
-                  <span id="prodSelPrecoLoc" class="tk-prod-price ms-2" style="color:var(--tk-blue-600);display:none;"></span>
+                <div class="tk-item-sel-prices">
+                  <span id="prodSelPreco" class="tk-prod-price-tag"></span>
+                  <span id="prodSelPrecoLoc" class="tk-prod-price-tag loc" style="display:none;"></span>
+                  <button type="button" class="tk-btn-clear-sel" id="btnClearProduto" title="Limpar">
+                    <i class="material-symbols-rounded">close</i>
+                  </button>
                 </div>
               </div>
-              <div class="row mt-2 g-2">
-                <div class="col-3">
-                  <label class="d-block" style="font-size:.72rem;color:var(--tk-slate-500);font-weight:600;">Tipo de Preço</label>
+              <div class="tk-item-sel-fields">
+                <div class="tk-sel-field" id="tipoPrecoWrap">
+                  <label>Tipo</label>
                   <select id="prodTipoPreco" class="form-control form-control-sm">
                     <option value="venda">Venda</option>
                     <option value="locacao">Locação</option>
                   </select>
                 </div>
-                <div class="col-3">
-                  <label class="d-block" style="font-size:.72rem;color:var(--tk-slate-500);font-weight:600;">Quantidade</label>
+                <div class="tk-sel-field">
+                  <label>Qtd</label>
                   <input type="number" id="prodQtd" class="form-control form-control-sm" value="1" min="1" step="1">
                 </div>
-                <div class="col-3">
-                  <label class="d-block" style="font-size:.72rem;color:var(--tk-slate-500);font-weight:600;">Valor Unit. (R$)</label>
+                <div class="tk-sel-field">
+                  <label>Valor (R$)</label>
                   <input type="number" id="prodValor" class="form-control form-control-sm" step="0.01" min="0">
                 </div>
-                <div class="col-3">
-                  <label class="d-block" style="font-size:.72rem;color:var(--tk-slate-500);font-weight:600;">Desconto (%)</label>
+                <div class="tk-sel-field">
+                  <label>Desc (%)</label>
                   <input type="number" id="prodDesconto" class="form-control form-control-sm" value="0" min="0" max="100" step="1">
                 </div>
+                <button type="button" class="tk-btn-add-inline" id="btnAddProduto" disabled>
+                  <i class="material-symbols-rounded">add</i>
+                  Adicionar
+                </button>
               </div>
             </div>
           </div>
 
+          <!-- Lista de itens adicionados -->
           <div id="itensList">
             <div class="tk-empty-produtos" id="emptyProdutos">
-              <i class="material-symbols-rounded">shopping_cart</i>
-              <p style="font-size:.82rem;">Nenhum produto ou serviço adicionado</p>
-              <small>Busque e adicione itens acima</small>
+              <i class="material-symbols-rounded">inventory_2</i>
+              <p>Nenhum item adicionado</p>
             </div>
           </div>
 
@@ -1753,10 +1903,7 @@
             <i class="material-symbols-rounded">check_circle</i>
             Anexe prints de tela ou documentos relevantes
           </li>
-          <li>
-            <i class="material-symbols-rounded">check_circle</i>
-            Tags facilitam a busca e organização dos tickets
-          </li>
+
         </ul>
       </div>
     </div>
@@ -2894,26 +3041,52 @@ document.addEventListener('DOMContentLoaded', function() {
     let produtoSelecionado = null;
     let itensAdicionados = [];
     let produtoDebounce = null;
+    let categoriaAtiva = '';
+
+    // Category select
+    const catFilter = document.getElementById('catFilter');
+    if (catFilter) {
+        catFilter.addEventListener('change', function() {
+            categoriaAtiva = this.value;
+            const query = produtoSearch ? produtoSearch.value : '';
+            if (query.length >= 2 || categoriaAtiva) {
+                searchProdutos(query);
+            }
+        });
+    }
 
     if (produtoSearch) {
         produtoSearch.addEventListener('input', function() {
             clearTimeout(produtoDebounce);
             produtoDebounce = setTimeout(() => searchProdutos(this.value), 300);
         });
+
+        produtoSearch.addEventListener('focus', function() {
+            if (categoriaAtiva && this.value.length < 2) {
+                searchProdutos('');
+            }
+        });
     }
 
     function searchProdutos(query) {
-        if (!query || query.length < 2) {
+        if (!query && !categoriaAtiva) {
             if (produtoSuggestions) produtoSuggestions.classList.remove('show');
             return;
         }
-        fetch(`{% url 'dashboard:api_produtos_ativos' %}`)
+        let url = `{% url 'dashboard:api_produtos_ativos' %}?`;
+        if (categoriaAtiva) url += `categoria=${categoriaAtiva}&`;
+        if (query && query.length >= 2) url += `q=${encodeURIComponent(query)}&`;
+
+        fetch(url)
             .then(r => r.json())
             .then(data => {
-                const q = query.toLowerCase();
-                const matches = data.filter(p =>
-                    p.nome.toLowerCase().includes(q) || (p.codigo || '').toLowerCase().includes(q)
-                );
+                let matches = data;
+                if (query && query.length >= 2 && !categoriaAtiva) {
+                    const q = query.toLowerCase();
+                    matches = data.filter(p =>
+                        p.nome.toLowerCase().includes(q) || (p.codigo || '').toLowerCase().includes(q)
+                    );
+                }
                 renderProdutoSuggestions(matches);
             })
             .catch(() => {
@@ -2925,33 +3098,41 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!produtoSuggestions) return;
         produtoSuggestions.innerHTML = '';
         if (products.length === 0) {
-            produtoSuggestions.innerHTML = '<div class="tk-sug-empty"><i class="material-symbols-rounded">search_off</i>Nenhum produto encontrado</div>';
+            produtoSuggestions.innerHTML = '<div class="text-center py-3" style="font-size:.8rem;color:var(--tk-slate-400);"><i class="material-symbols-rounded d-block mb-1" style="font-size:1.3rem;">search_off</i>Nenhum produto encontrado</div>';
             produtoSuggestions.classList.add('show');
             return;
         }
-        products.slice(0, 10).forEach(p => {
+        products.slice(0, 15).forEach(p => {
             const div = document.createElement('div');
             div.className = 'tk-prod-item';
-            const locInfo = p.preco_locacao > 0
-                ? `<span class="tk-prod-price" style="color:var(--tk-blue-600);">Loc: R$ ${p.preco_locacao.toFixed(2).replace('.', ',')}</span>`
-                : '';
             div.innerHTML = `
-                <div class="tk-prod-info">
-                    <div>
-                        <span class="tk-prod-name">${p.nome}</span>
-                        <span class="tk-prod-code">${p.codigo || ''}</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="tk-prod-type">${p.tipo}</span>
-                        <span class="tk-prod-price">Venda: R$ ${p.preco_venda.toFixed(2).replace('.', ',')}</span>
-                        ${locInfo}
-                    </div>
+                <div>
+                    <span class="tk-prod-name">${p.nome}</span>
+                    <span class="tk-prod-code">${p.codigo || ''}</span>
                 </div>
+                <span class="tk-prod-price">R$ ${p.preco_venda.toFixed(2).replace('.', ',')}</span>
             `;
             div.addEventListener('click', () => selectProduto(p));
             produtoSuggestions.appendChild(div);
         });
+        if (products.length > 15) {
+            const more = document.createElement('div');
+            more.className = 'text-center py-2';
+            more.innerHTML = `<small style="color:var(--tk-slate-400);font-size:.72rem;">+${products.length - 15} resultados — refine a busca</small>`;
+            produtoSuggestions.appendChild(more);
+        }
         produtoSuggestions.classList.add('show');
+    }
+
+    // Clear selection button
+    const btnClearProduto = document.getElementById('btnClearProduto');
+    if (btnClearProduto) {
+        btnClearProduto.addEventListener('click', () => {
+            produtoSelecionado = null;
+            if (produtoSearch) produtoSearch.value = '';
+            if (btnAddProduto) btnAddProduto.disabled = true;
+            document.getElementById('produtoSelecionadoInfo').style.display = 'none';
+        });
     }
 
     function selectProduto(p) {
@@ -2962,21 +3143,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const info = document.getElementById('produtoSelecionadoInfo');
         if (info) {
             document.getElementById('prodSelNome').textContent = p.nome;
-            document.getElementById('prodSelTipo').textContent = p.tipo;
-            document.getElementById('prodSelPreco').textContent = `Venda: R$ ${p.preco_venda.toFixed(2).replace('.', ',')}`;
+            document.getElementById('prodSelTipo').textContent = p.categoria || p.tipo;
+            document.getElementById('prodSelPreco').textContent = `R$ ${p.preco_venda.toFixed(2).replace('.', ',')}`;
 
             const precoLocEl = document.getElementById('prodSelPrecoLoc');
-            const tipoPrecoEl = document.getElementById('prodTipoPreco');
+            const tipoPrecoWrap = document.getElementById('tipoPrecoWrap');
             if (p.preco_locacao > 0) {
-                precoLocEl.textContent = `Locação: R$ ${p.preco_locacao.toFixed(2).replace('.', ',')}`;
+                precoLocEl.textContent = `Loc: R$ ${p.preco_locacao.toFixed(2).replace('.', ',')}`;
                 precoLocEl.style.display = '';
-                tipoPrecoEl.closest('.col-3').style.display = '';
+                if (tipoPrecoWrap) tipoPrecoWrap.style.display = '';
             } else {
                 precoLocEl.style.display = 'none';
-                tipoPrecoEl.closest('.col-3').style.display = 'none';
+                if (tipoPrecoWrap) tipoPrecoWrap.style.display = 'none';
             }
 
-            tipoPrecoEl.value = 'venda';
+            document.getElementById('prodTipoPreco').value = 'venda';
             document.getElementById('prodValor').value = p.preco_venda.toFixed(2);
             document.getElementById('prodQtd').value = 1;
             document.getElementById('prodDesconto').value = 0;
@@ -3043,22 +3224,24 @@ document.addEventListener('DOMContentLoaded', function() {
             const desc = sub * (item.descontoPercentual / 100);
             subtotal += sub;
             totalDescontos += desc;
+            const liquid = (sub - desc);
 
             const div = document.createElement('div');
             div.className = 'tk-item-card';
             div.innerHTML = `
-                <div class="tk-item-header">
-                    <h6>${item.produto.nome} <span class="tk-prod-type ms-2">${item.produto.tipo}</span></h6>
-                    <button type="button" class="tk-btn-remove" data-idx="${i}">
-                        <i class="material-symbols-rounded" style="font-size:1.1rem;">delete</i>
-                    </button>
+                <div style="min-width:0;">
+                    <div style="font-size:.82rem;font-weight:600;color:var(--tk-slate-700);">${item.produto.nome}</div>
+                    <div style="font-size:.72rem;color:var(--tk-slate-500);margin-top:.15rem;">
+                        <span class="badge badge-sm ${item.tipoPreco === 'locacao' ? 'bg-gradient-info' : 'bg-gradient-success'}" style="font-size:.6rem;">${item.tipoPreco === 'locacao' ? 'Locação' : 'Venda'}</span>
+                        ${item.quantidade}x R$ ${item.valorUnitario.toFixed(2).replace('.', ',')}
+                        ${item.descontoPercentual > 0 ? `<span style="color:var(--tk-red-400);">-${item.descontoPercentual}%</span>` : ''}
+                    </div>
                 </div>
-                <div class="d-flex gap-3" style="font-size:.8rem;color:var(--tk-slate-600);">
-                    <span class="badge badge-sm ${item.tipoPreco === 'locacao' ? 'bg-gradient-info' : 'bg-gradient-success'}" style="font-size:.65rem;">${item.tipoPreco === 'locacao' ? 'Locação' : 'Venda'}</span>
-                    <span>Qtd: <strong>${item.quantidade}</strong></span>
-                    <span>Valor: <strong>R$ ${item.valorUnitario.toFixed(2).replace('.', ',')}</strong></span>
-                    ${item.descontoPercentual > 0 ? `<span>Desc: <strong>${item.descontoPercentual}%</strong></span>` : ''}
-                    <span class="ms-auto fw-bold" style="color:var(--tk-cyan-600);">R$ ${(sub - desc).toFixed(2).replace('.', ',')}</span>
+                <div class="d-flex align-items-center gap-2">
+                    <strong style="font-size:.85rem;color:var(--tk-cyan-600);">R$ ${liquid.toFixed(2).replace('.', ',')}</strong>
+                    <button type="button" class="tk-btn-remove" data-idx="${i}" style="background:none;border:none;color:var(--tk-slate-400);cursor:pointer;padding:.15rem;">
+                        <i class="material-symbols-rounded" style="font-size:1rem;">delete</i>
+                    </button>
                 </div>
             `;
             itensList.insertBefore(div, emptyProdutos);

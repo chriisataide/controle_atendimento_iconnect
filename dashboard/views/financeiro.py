@@ -194,6 +194,28 @@ def dashboard_financeiro(request):
         .order_by("-total_faturado")[:5]
     )
 
+    # ── Chamados em aberto com valor (para o usuário saber de onde vem o "Em Aberto") ──
+    chamados_em_aberto = (
+        Ticket.objects.filter(
+            status__in=["aberto", "em_andamento", "aguardando_cliente"],
+            itens_atendimento__isnull=False,
+        )
+        .distinct()
+        .annotate(
+            valor_total=Sum(
+                ExpressionWrapper(
+                    F("itens_atendimento__quantidade")
+                    * F("itens_atendimento__valor_unitario")
+                    * (1 - F("itens_atendimento__desconto_percentual") / 100),
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                )
+            )
+        )
+        .filter(valor_total__gt=0)
+        .select_related("cliente", "agente", "categoria")
+        .order_by("-criado_em")[:10]
+    )
+
     context = {
         "title": "Dashboard Financeiro",
         "page": "financeiro_dashboard",
@@ -219,6 +241,7 @@ def dashboard_financeiro(request):
         "top_produtos": top_produtos,
         "ultimos_chamados": ultimos_chamados,
         "top_clientes": top_clientes,
+        "chamados_em_aberto": chamados_em_aberto,
     }
     return render(request, "financeiro/dashboard.html", context)
 

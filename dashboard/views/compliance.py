@@ -74,10 +74,16 @@ class AuditTrailView(ListView):
         now = timezone.now()
         last_24h = now - timedelta(hours=24)
         last_7d = now - timedelta(days=7)
+        last_30d = now - timedelta(days=30)
+
+        total_all = AuditEvent.objects.count()
+        total_30d = AuditEvent.objects.filter(timestamp__gte=last_30d).count()
 
         ctx['stats'] = {
             'total_24h': AuditEvent.objects.filter(timestamp__gte=last_24h).count(),
             'total_7d': AuditEvent.objects.filter(timestamp__gte=last_7d).count(),
+            'total_30d': total_30d,
+            'total_all': total_all,
             'suspicious': AuditEvent.objects.filter(is_suspicious=True, is_resolved=False).count(),
             'security_alerts': SecurityAlert.objects.exclude(status='resolved').count(),
         }
@@ -94,6 +100,41 @@ class AuditTrailView(ListView):
         )
         ctx['chart_labels'] = json.dumps([t['event_type'] for t in type_counts])
         ctx['chart_data'] = json.dumps([t['count'] for t in type_counts])
+
+        # Tendência diária (últimos 7 dias)
+        from django.db.models.functions import TruncDate
+        trend_qs = (
+            AuditEvent.objects.filter(timestamp__gte=last_7d)
+            .annotate(dia=TruncDate('timestamp'))
+            .values('dia')
+            .annotate(count=Count('id'))
+            .order_by('dia')
+        )
+        trend_map = {item['dia']: item['count'] for item in trend_qs}
+        trend_labels = []
+        trend_data = []
+        for i in range(7):
+            day = (now - timedelta(days=6 - i)).date()
+            trend_labels.append(day.strftime('%d/%m'))
+            trend_data.append(trend_map.get(day, 0))
+        ctx['trend_labels'] = json.dumps(trend_labels)
+        ctx['trend_data'] = json.dumps(trend_data)
+
+        # Contagem por severidade (para doughnut)
+        sev_counts = (
+            AuditEvent.objects.filter(timestamp__gte=last_7d)
+            .values('severity')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
+        sev_map = {s['severity']: s['count'] for s in sev_counts}
+        ctx['sev_labels'] = json.dumps(['Baixa', 'Média', 'Alta', 'Crítica'])
+        ctx['sev_data'] = json.dumps([
+            sev_map.get('low', 0),
+            sev_map.get('medium', 0),
+            sev_map.get('high', 0),
+            sev_map.get('critical', 0),
+        ])
 
         # Filtros ativos (para exibir tags)
         ctx['active_filters'] = {

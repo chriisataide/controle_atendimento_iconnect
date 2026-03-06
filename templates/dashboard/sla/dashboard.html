@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static l10n %}
 
 {% block title %}Dashboard SLA{% endblock %}
 {% block page_title %}Dashboard SLA{% endblock %}
@@ -383,7 +383,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // --- Compliance Gauge (Doughnut) ---
-    const compRate = {{ dashboard_data.compliance_rate|floatformat:1|default:"0" }};
+    const compRate = parseFloat("{{ dashboard_data.compliance_rate|floatformat:1|default:'0' }}".replace(',', '.'));
     new Chart(document.getElementById('complianceGauge'), {
         type: 'doughnut',
         data: {
@@ -408,10 +408,10 @@ document.addEventListener('DOMContentLoaded', function() {
             datasets: [{
                 label: 'Tickets',
                 data: [
-                    {{ dashboard_data.sla_stats.on_track|default:"0" }},
-                    {{ dashboard_data.sla_stats.warnings|default:"0" }},
-                    {{ dashboard_data.sla_stats.breached|default:"0" }},
-                    {{ dashboard_data.sla_stats.escalated|default:"0" }}
+                    parseInt("{{ dashboard_data.sla_stats.on_track|default:'0' }}"),
+                    parseInt("{{ dashboard_data.sla_stats.warnings|default:'0' }}"),
+                    parseInt("{{ dashboard_data.sla_stats.breached|default:'0' }}"),
+                    parseInt("{{ dashboard_data.sla_stats.escalated|default:'0' }}")
                 ],
                 backgroundColor: ['#66bb6a', '#ffa726', '#ef5350', '#42a5f5'],
                 borderRadius: 6,
