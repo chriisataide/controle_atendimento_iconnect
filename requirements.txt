@@ -21,7 +21,7 @@ django-redis==5.4.0
 gunicorn==23.0.0
 
 # Storage
-boto3==1.40.59
+boto3==1.42.63
 django-storages==1.14.4
 
 # Cache
